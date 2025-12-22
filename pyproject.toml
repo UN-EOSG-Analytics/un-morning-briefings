@@ -1,0 +1,10 @@
+[project]
+name = "un-website-boilerplate"
+version = "0.1.0"
+description = "UN Website Boilerplate"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "ipykernel>=7.1.0",
+    "pandas>=2.3.3",
+]

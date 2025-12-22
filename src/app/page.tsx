@@ -9,19 +9,19 @@ export default function HomePage() {
   return (
     <main className="min-h-screen bg-background">
       <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-foreground mb-4">
+        <div className="text-left mb-12">
+          <h1 className="text-4xl font-bold text-foreground mb-1">
             Morning Meeting Briefings
           </h1>
           <p className="text-lg text-slate-600">
-            Create and manage daily briefing entries for the morning meeting
+            Create and manage daily briefing entries
           </p>
         </div>
 
         <div className="grid gap-6 md:grid-cols-2">
           {/* New Entry Card */}
           <Card className="border-slate-200 p-8 hover:border-un-blue transition-colors">
-            <div className="flex flex-col items-center text-center space-y-4">
+            <div className="flex flex-col items-left text-left space-y-4">
               <div className="flex h-16 w-16 items-center justify-center rounded-full bg-un-blue">
                 <FileText className="h-8 w-8 text-white" />
               </div>
@@ -40,7 +40,7 @@ export default function HomePage() {
 
           {/* View Entries Card */}
           <Card className="border-slate-200 p-8 hover:border-un-blue transition-colors">
-            <div className="flex flex-col items-center text-center space-y-4">
+            <div className="flex flex-col items-left text-left space-y-4">
               <div className="flex h-16 w-16 items-center justify-center rounded-full bg-slate-700">
                 <List className="h-8 w-8 text-white" />
               </div>

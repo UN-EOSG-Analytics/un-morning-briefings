@@ -7,7 +7,6 @@ const basePath = process.env.NODE_ENV === 'production' ? (process.env.BASE_PATH 
 // https://nextjs.org/docs/app/api-reference/config/next-config-js/basePath#images
 
 const nextConfig: NextConfig = {
-    output: 'export',
     trailingSlash: true,
     basePath: basePath,
     assetPrefix: basePath,

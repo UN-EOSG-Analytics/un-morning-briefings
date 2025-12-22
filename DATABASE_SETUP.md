@@ -1,6 +1,6 @@
 # Database Setup Guide
 
-This application now uses PostgreSQL for data persistence instead of localStorage.
+This application uses PostgreSQL with the `pg` client for data persistence.
 
 ## Prerequisites
 
@@ -12,8 +12,7 @@ This application now uses PostgreSQL for data persistence instead of localStorag
 ### 1. Install Dependencies
 
 ```bash
-npm install @prisma/client
-npm install -D prisma
+npm install pg @types/pg
 ```
 
 ### 2. Configure Database Connection
@@ -27,25 +26,25 @@ cp .env.example .env
 Edit `.env` and set your PostgreSQL connection string:
 
 ```
-DATABASE_URL="postgresql://user:password@localhost:5432/un_morning_briefings?schema=public"
+DATABASE_URL="postgresql://user:password@localhost:5432/database_name"
 ```
 
-### 3. Initialize Prisma
+### 3. Initialize Database Schema
+
+Run the SQL initialization script to create the schema and tables:
 
 ```bash
-npx prisma generate
-npx prisma db push
+psql $DATABASE_URL -f sql/init.sql
 ```
 
+Or connect to your database and run the contents of `sql/init.sql` manually.
+
 This will:
-- Generate the Prisma Client
-- Create the database tables based on the schema
+- Create the `pu_morning_briefings` schema
+- Create the `entries` and `images` tables
+- Set up foreign key relationships and cascading deletes
 
-### 4. (Optional) Seed Initial Data
-
-If you have existing data in localStorage, you can migrate it manually or start fresh.
-
-### 5. Run the Application
+### 4. Run the Application
 
 ```bash
 npm run dev
@@ -53,57 +52,55 @@ npm run dev
 
 ## Database Schema
 
-The application uses two main tables:
+The application uses the `pu_morning_briefings` schema with two main tables:
 
-### Entry Table
+### entries Table
 - Stores all morning briefing entries
-- Fields: id, category, priority, region, country, headline, date, entry (HTML), sourceUrl, puNote, author, status, timestamps
+- Fields: id, category, priority, region, country, headline, date, entry (TEXT), source_url, pu_note, author, status, created_at, updated_at
 
-### Image Table
-- Stores images embedded in entries
-- Fields: id, entryId, filename, mimeType, data (binary), width, height, position, timestamp
-- Images are stored as BYTEA (binary) in PostgreSQL
-- Automatically deleted when parent entry is deleted (CASCADE)
+### images Table
+- Stores image metadata and references to blob storage
+- Fields: id, entry_id, filename, mime_type, blob_url, width, height, position, created_at
+- Images are stored in blob storage (not in database)
+- Foreign key constraint with CASCADE delete when parent entry is deleted
 
 ## API Endpoints
 
-The application exposes these API routes:
+The application exposes these API routes (server-side only):
 
 - `GET /api/entries` - Get all entries (optionally filter by date)
 - `POST /api/entries` - Create new entry with images
 - `GET /api/entries/[id]` - Get single entry with images
 - `PUT /api/entries/[id]` - Update entry and images
 - `DELETE /api/entries/[id]` - Delete entry (cascades to images)
-- `POST /api/images` - Upload image (returns base64 data URL)
-- `GET /api/images?id=[id]` - Get image binary data
+- `POST /api/images` - Upload image (returns base64 data URL for preview)
+- `GET /api/images?id=[id]` - Redirect to blob storage URL
 
-## Prisma Studio (Database GUI)
+## Database Management
 
-To view and manage your database visually:
+To view and manage your database, you can use:
 
-```bash
-npx prisma studio
-```
+- **pgAdmin** - Desktop GUI for PostgreSQL
+- **psql** - Command-line interface
+- **DBeaver** - Universal database tool
+- **TablePlus** - Modern database GUI
 
-This opens a web interface at http://localhost:5555
+Connect using your `DATABASE_URL`.
 
 ## Common Commands
 
 ```bash
-# Generate Prisma Client after schema changes
-npx prisma generate
+# Connect to database
+psql $DATABASE_URL
 
-# Apply schema changes to database
-npx prisma db push
+# Run schema updates
+psql $DATABASE_URL -f sql/init.sql
 
-# Create a migration
-npx prisma migrate dev --name description
+# View tables in pu_morning_briefings schema
+psql $DATABASE_URL -c "\dt pu_morning_briefings.*"
 
-# Reset database (WARNING: deletes all data)
-npx prisma migrate reset
-
-# View database in browser
-npx prisma studio
+# Query entries
+psql $DATABASE_URL -c "SELECT * FROM pu_morning_briefings.entries LIMIT 10;"
 ```
 
 ## Production Deployment
@@ -111,22 +108,31 @@ npx prisma studio
 For production:
 
 1. Set `DATABASE_URL` in your hosting environment variables
-2. Run `npx prisma generate` during build
-3. Run `npx prisma db push` or `npx prisma migrate deploy`
+2. Run `sql/init.sql` to initialize the database schema
+3. Ensure the database connection pool settings in `lib/db.ts` are appropriate for your environment
 
 ## Troubleshooting
 
 ### Connection Issues
-- Verify PostgreSQL is running
-- Check DATABASE_URL format
-- Ensure database exists
+- Verify PostgreSQL is running: `pg_isready`
+- Check DATABASE_URL format: `postgresql://user:password@host:port/database`
+- Ensure database exists: `psql $DATABASE_URL -c "SELECT 1"`
 - Check firewall/network settings
+- Verify connection pool settings in `lib/db.ts`
 
 ### Schema Issues
-- Run `npx prisma generate` after schema changes
-- Run `npx prisma db push` to sync database
+- Re-run `sql/init.sql` to reset schema
+- Check search_path is set correctly (should default to `pu_morning_briefings`)
+- Use `\dt pu_morning_briefings.*` in psql to list tables
 
-### Migration Issues
-- Use `npx prisma migrate reset` to start fresh (loses data)
-- Use `npx prisma db push` for development
-- Use `npx prisma migrate deploy` for production
+### Query Issues
+- All queries automatically use the `pu_morning_briefings` schema
+- The `query()` helper in `lib/db.ts` sets the search_path automatically
+- Check logs for SQL errors and query execution details
+
+### Data Reset
+To start fresh (WARNING: deletes all data):
+```bash
+psql $DATABASE_URL -c "DROP SCHEMA pu_morning_briefings CASCADE;"
+psql $DATABASE_URL -f sql/init.sql
+```

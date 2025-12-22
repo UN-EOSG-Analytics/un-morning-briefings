@@ -18,13 +18,25 @@ function FormContent() {
     
     const editId = params.get('edit');
     if (editId) {
-      const entries = getAllEntries();
-      const entryToEdit = entries.find((entry) => entry.id === editId);
-      if (entryToEdit) {
-        setInitialData(entryToEdit);
-      }
+      // Load entry data for editing
+      const loadEntry = async () => {
+        try {
+          const entries = await getAllEntries();
+          const entryToEdit = entries.find((entry) => entry.id === editId);
+          if (entryToEdit) {
+            setInitialData(entryToEdit);
+          }
+        } catch (error) {
+          console.error('Error loading entry:', error);
+          alert('Failed to load entry for editing');
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      loadEntry();
+    } else {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   }, []);
 
   const handleSubmit = async (data: MorningMeetingEntry) => {
@@ -32,11 +44,11 @@ function FormContent() {
       const editId = searchParams?.get('edit');
       if (editId) {
         // Update existing entry
-        updateEntry(editId, data);
+        await updateEntry(editId, data);
         alert('Entry updated successfully!');
       } else {
         // Create new entry
-        saveEntry(data);
+        await saveEntry(data);
         alert('Entry submitted successfully!');
       }
       router.push('/list');

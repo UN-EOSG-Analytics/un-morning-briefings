@@ -37,15 +37,17 @@ export function Navbar() {
             <span>Home</span>
           </NavButton>
 
+          <NavButton href="/list" className="text-foreground hover:text-un-blue hover:bg-slate-50">
+            <List className="h-4 w-4 text-slate-600" />
+            <span>View Entries</span>
+          </NavButton>
+
           <NavButton href="/form" className="bg-un-blue text-white hover:bg-un-blue/95">
             <PlusCircle className="h-4 w-4 text-white" />
             <span>New Entry</span>
           </NavButton>
 
-          <NavButton href="/list" className="text-foreground hover:text-un-blue hover:bg-slate-50">
-            <List className="h-4 w-4 text-slate-600" />
-            <span>View Entries</span>
-          </NavButton>
+          
         </div>
 
       </div>

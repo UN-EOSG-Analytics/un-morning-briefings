@@ -6,6 +6,8 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
+  schemas  = ["un_briefings"]
 }
 
 model Entry {
@@ -29,6 +31,7 @@ model Entry {
   @@index([date])
   @@index([priority])
   @@index([region])
+  @@schema("un_briefings")
 }
 
 model Image {
@@ -45,4 +48,5 @@ model Image {
   entry       Entry    @relation(fields: [entryId], references: [id], onDelete: Cascade)
 
   @@index([entryId])
+  @@schema("un_briefings")
 }

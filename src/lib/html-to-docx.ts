@@ -3,6 +3,14 @@
 import { Paragraph, TextRun, HeadingLevel, AlignmentType, ImageRun } from 'docx';
 
 /**
+ * Convert base64 data URL to Buffer
+ */
+function base64ToBuffer(dataUrl: string): Buffer {
+  const base64String = dataUrl.replace(/^data:image\/\w+;base64,/, '');
+  return Buffer.from(base64String, 'base64');
+}
+
+/**
  * Convert HTML content (from TipTap getHTML()) to docx Paragraph elements
  */
 export function parseHtmlContent(html: string): Paragraph[] {
@@ -113,21 +121,57 @@ export function parseHtmlContent(html: string): Paragraph[] {
         })
       );
     } else if (tagName === 'img') {
+      const src = element.getAttribute('src');
       const alt = element.getAttribute('alt') || 'Image';
-      paragraphs.push(
-        new Paragraph({
-          children: [new TextRun({ text: `[Image: ${alt}]`, color: '0000FF', underline: {}, font: 'Roboto' })],
-          spacing: { after: 100 },
-        })
-      );
+      const width = parseInt(element.getAttribute('data-width') || '400');
+      const height = parseInt(element.getAttribute('data-height') || '300');
+
+      if (src) {
+        try {
+          if (src.startsWith('data:')) {
+            // Convert base64 image to buffer and embed
+            const buffer = base64ToBuffer(src);
+            paragraphs.push(
+              new Paragraph({
+                children: [
+                  new ImageRun({
+                    data: buffer,
+                    transformation: {
+                      width,
+                      height,
+                    },
+                  }),
+                ],
+                spacing: { after: 100 },
+              })
+            );
+          } else {
+            // For external URLs, show as link text
+            paragraphs.push(
+              new Paragraph({
+                children: [new TextRun({ text: `[Image: ${alt}]`, color: '0563C1', underline: {}, font: 'Roboto' })],
+                spacing: { after: 100 },
+              })
+            );
+          }
+        } catch (error) {
+          console.error('Error processing image:', error);
+          paragraphs.push(
+            new Paragraph({
+              children: [new TextRun({ text: `[Image: ${alt}]`, color: '0563C1', underline: {}, font: 'Roboto' })],
+              spacing: { after: 100 },
+            })
+          );
+        }
+      }
     }
   }
 
   return paragraphs;
 }
 
-function extractTextRuns(element: Element): TextRun[] {
-  const runs: TextRun[] = [];
+function extractTextRuns(element: Element): any[] {
+  const runs: any[] = [];
 
   for (const node of Array.from(element.childNodes)) {
     if (node.nodeType === Node.TEXT_NODE) {
@@ -161,6 +205,25 @@ function extractTextRuns(element: Element): TextRun[] {
         case 'a':
           runs.push(new TextRun({ text: el.textContent || '', color: '0563C1', underline: {}, font: 'Roboto' }));
           break;
+        case 'img': {
+          const src = el.getAttribute('src');
+          if (src && src.startsWith('data:')) {
+            try {
+              const buffer = base64ToBuffer(src);
+              const width = parseInt(el.getAttribute('data-width') || '200');
+              const height = parseInt(el.getAttribute('data-height') || '150');
+              runs.push(
+                new ImageRun({
+                  data: buffer,
+                  transformation: { width, height },
+                })
+              );
+            } catch (error) {
+              console.error('Error processing inline image:', error);
+            }
+          }
+          break;
+        }
         default:
           const nestedRuns = extractTextRuns(el);
           runs.push(...nestedRuns);

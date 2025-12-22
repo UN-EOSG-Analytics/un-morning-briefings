@@ -1,9 +1,9 @@
 -- Create schema
-CREATE SCHEMA IF NOT EXISTS un_briefings;
+CREATE SCHEMA IF NOT EXISTS pu_morning_briefings;
 
 -- Create entries table
 CREATE TABLE
-    un_briefings.entries (
+    pu_morning_briefings.entries (
         id TEXT PRIMARY KEY,
         category TEXT NOT NULL,
         priority TEXT NOT NULL,
@@ -24,7 +24,7 @@ CREATE TABLE
 -- TODO
 -- Create images table
 CREATE TABLE
-    un_briefings.images (
+    pu_morning_briefings.images (
         id TEXT PRIMARY KEY,
         entry_id TEXT NOT NULL,
         filename TEXT NOT NULL,
@@ -34,7 +34,7 @@ CREATE TABLE
         height INTEGER,
         position INTEGER,
         created_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        CONSTRAINT fk_images_entry_id FOREIGN KEY (entry_id) REFERENCES un_briefings.entries (id) ON UPDATE CASCADE ON DELETE CASCADE
+        CONSTRAINT fk_images_entry_id FOREIGN KEY (entry_id) REFERENCES pu_morning_briefings.entries (id) ON UPDATE CASCADE ON DELETE CASCADE
     );
 
 -- Create index for images table

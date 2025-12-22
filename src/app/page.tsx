@@ -27,11 +27,11 @@ export default function HomePage() {
               </div>
               <h2 className="text-2xl font-semibold text-foreground">Create New Entry</h2>
               <p className="text-slate-600">
-                Submit a new morning meeting briefing entry with details about regional events and developments
+                Submit a new morning meeting briefing entry with key updates and information
               </p>
               <Link href="/form" className="w-full">
                 <Button className="w-full" size="lg">
-                  Create Entry
+                  Create
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
@@ -50,7 +50,7 @@ export default function HomePage() {
               </p>
               <Link href="/list" className="w-full">
                 <Button variant="outline" className="w-full" size="lg">
-                  View All Entries
+                  View All
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>

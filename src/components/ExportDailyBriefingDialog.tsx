@@ -21,6 +21,15 @@ interface ExportDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
+const createSeparator = (
+  length: number = 63,
+  spacing: { before?: number; after?: number } = { after: 200 }
+): Paragraph =>
+  new Paragraph({
+    text: '─'.repeat(length),
+    spacing,
+  });
+
 export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogProps) {
   const [selectedDate, setSelectedDate] = useState<string>(
     new Date().toISOString().split('T')[0]
@@ -93,10 +102,7 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
           spacing: { after: 400 },
         }),
         // Separator
-        new Paragraph({
-          text: '─'.repeat(80),
-          spacing: { after: 200 },
-        }),
+        createSeparator(),
       ];
 
       // Add entries
@@ -128,8 +134,8 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
             children: [
               new TextRun({
                 text: entry.priority === 'sg-attention'
-                  ? '🔴 SG Attention'
-                  : '🔵 Situational Awareness',
+                  ? 'SG Attention'
+                  : 'Situational Awareness',
                 bold: true,
                 color: entry.priority === 'sg-attention' ? 'DC2626' : '2563EB',
                 font: 'Roboto',
@@ -223,12 +229,7 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
         }
 
         // Separator between entries
-        children.push(
-          new Paragraph({
-            text: '─'.repeat(80),
-            spacing: { before: 200, after: 200 },
-          })
-        );
+        children.push(createSeparator());
       });
 
       // Footer

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
+import { query } from '@/lib/db';
 import { blobStorage } from '@/lib/blob-storage';
 
 // GET all entries
@@ -8,19 +8,52 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const date = searchParams.get('date');
 
-    const where = date ? { date: new Date(date) } : {};
+    let sql = `
+      SELECT 
+        e.id,
+        e.category,
+        e.priority,
+        e.region,
+        e.country,
+        e.headline,
+        e.date,
+        e.entry,
+        e.source_url as "sourceUrl",
+        e.pu_note as "puNote",
+        e.author,
+        e.status,
+        e.created_at as "createdAt",
+        e.updated_at as "updatedAt",
+        COALESCE(
+          json_agg(
+            json_build_object(
+              'id', i.id,
+              'entryId', i.entry_id,
+              'filename', i.filename,
+              'mimeType', i.mime_type,
+              'blobUrl', i.blob_url,
+              'width', i.width,
+              'height', i.height,
+              'position', i.position,
+              'createdAt', i.created_at
+            ) ORDER BY i.position NULLS LAST, i.created_at
+          ) FILTER (WHERE i.id IS NOT NULL),
+          '[]'
+        ) as images
+      FROM entries e
+      LEFT JOIN images i ON e.id = i.entry_id
+    `;
 
-    const entries = await prisma.entry.findMany({
-      where,
-      include: {
-        images: true,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
+    const params: any[] = [];
+    if (date) {
+      sql += ` WHERE DATE(e.date) = $1`;
+      params.push(date);
+    }
 
-    return NextResponse.json(entries);
+    sql += ` GROUP BY e.id ORDER BY e.created_at DESC`;
+
+    const result = await query(sql, params);
+    return NextResponse.json(result.rows);
   } catch (error) {
     console.error('Error fetching entries:', error);
     return NextResponse.json({ error: 'Failed to fetch entries' }, { status: 500 });
@@ -50,23 +83,97 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const newEntry = await prisma.entry.create({
-      data: {
-        ...data,
-        date: new Date(data.date),
-        entry,
-        images: uploadedImages.length > 0
-          ? {
-              create: uploadedImages,
-            }
-          : undefined,
-      },
-      include: {
-        images: true,
-      },
-    });
+    // Generate ID
+    const id = crypto.randomUUID();
+    const now = new Date();
 
-    return NextResponse.json(newEntry, { status: 201 });
+    // Insert entry
+    await query(
+      `INSERT INTO entries (
+        id, category, priority, region, country, headline, date, entry,
+        source_url, pu_note, author, status, created_at, updated_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`,
+      [
+        id,
+        data.category,
+        data.priority,
+        data.region,
+        data.country,
+        data.headline,
+        new Date(data.date),
+        entry,
+        data.sourceUrl || null,
+        data.puNote || null,
+        data.author || null,
+        data.status || null,
+        now,
+        now,
+      ]
+    );
+
+    // Insert images if any
+    if (uploadedImages.length > 0) {
+      for (const img of uploadedImages) {
+        await query(
+          `INSERT INTO images (
+            id, entry_id, filename, mime_type, blob_url, width, height, position, created_at
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+          [
+            crypto.randomUUID(),
+            id,
+            img.filename,
+            img.mimeType,
+            img.blobUrl,
+            img.width || null,
+            img.height || null,
+            img.position || null,
+            now,
+          ]
+        );
+      }
+    }
+
+    // Fetch created entry with images
+    const result = await query(
+      `SELECT 
+        e.id,
+        e.category,
+        e.priority,
+        e.region,
+        e.country,
+        e.headline,
+        e.date,
+        e.entry,
+        e.source_url as "sourceUrl",
+        e.pu_note as "puNote",
+        e.author,
+        e.status,
+        e.created_at as "createdAt",
+        e.updated_at as "updatedAt",
+        COALESCE(
+          json_agg(
+            json_build_object(
+              'id', i.id,
+              'entryId', i.entry_id,
+              'filename', i.filename,
+              'mimeType', i.mime_type,
+              'blobUrl', i.blob_url,
+              'width', i.width,
+              'height', i.height,
+              'position', i.position,
+              'createdAt', i.created_at
+            ) ORDER BY i.position NULLS LAST, i.created_at
+          ) FILTER (WHERE i.id IS NOT NULL),
+          '[]'
+        ) as images
+      FROM entries e
+      LEFT JOIN images i ON e.id = i.entry_id
+      WHERE e.id = $1
+      GROUP BY e.id`,
+      [id]
+    );
+
+    return NextResponse.json(result.rows[0], { status: 201 });
   } catch (error) {
     console.error('Error creating entry:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';

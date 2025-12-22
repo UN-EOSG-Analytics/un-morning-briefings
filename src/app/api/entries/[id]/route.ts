@@ -1,22 +1,54 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
+import { query } from '@/lib/db';
 import { blobStorage } from '@/lib/blob-storage';
 
 // GET single entry
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const entry = await prisma.entry.findUnique({
-      where: { id: params.id },
-      include: {
-        images: true,
-      },
-    });
+    const result = await query(
+      `SELECT 
+        e.id,
+        e.category,
+        e.priority,
+        e.region,
+        e.country,
+        e.headline,
+        e.date,
+        e.entry,
+        e.source_url as "sourceUrl",
+        e.pu_note as "puNote",
+        e.author,
+        e.status,
+        e.created_at as "createdAt",
+        e.updated_at as "updatedAt",
+        COALESCE(
+          json_agg(
+            json_build_object(
+              'id', i.id,
+              'entryId', i.entry_id,
+              'filename', i.filename,
+              'mimeType', i.mime_type,
+              'blobUrl', i.blob_url,
+              'width', i.width,
+              'height', i.height,
+              'position', i.position,
+              'createdAt', i.created_at
+            ) ORDER BY i.position NULLS LAST, i.created_at
+          ) FILTER (WHERE i.id IS NOT NULL),
+          '[]'
+        ) as images
+      FROM entries e
+      LEFT JOIN images i ON e.id = i.entry_id
+      WHERE e.id = $1
+      GROUP BY e.id`,
+      [params.id]
+    );
 
-    if (!entry) {
+    if (result.rows.length === 0) {
       return NextResponse.json({ error: 'Entry not found' }, { status: 404 });
     }
 
-    return NextResponse.json(entry);
+    return NextResponse.json(result.rows[0]);
   } catch (error) {
     console.error('Error fetching entry:', error);
     return NextResponse.json({ error: 'Failed to fetch entry' }, { status: 500 });
@@ -31,23 +63,22 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 
     // Delete existing images from blob storage and database if new ones are provided
     if (images) {
-      const existingImages = await prisma.image.findMany({
-        where: { entryId: params.id },
-      });
+      const existingImagesResult = await query(
+        `SELECT id, blob_url FROM images WHERE entry_id = $1`,
+        [params.id]
+      );
 
       // Delete from blob storage
-      for (const img of existingImages) {
+      for (const img of existingImagesResult.rows) {
         try {
-          await blobStorage.delete(img.blobUrl);
+          await blobStorage.delete(img.blob_url);
         } catch (error) {
           console.error('Error deleting blob:', error);
         }
       }
 
       // Delete from database
-      await prisma.image.deleteMany({
-        where: { entryId: params.id },
-      });
+      await query(`DELETE FROM images WHERE entry_id = $1`, [params.id]);
     }
 
     // Upload new images to blob storage
@@ -67,24 +98,130 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       }
     }
 
-    const updatedEntry = await prisma.entry.update({
-      where: { id: params.id },
-      data: {
-        ...data,
-        date: data.date ? new Date(data.date) : undefined,
-        entry,
-        images: uploadedImages.length > 0
-          ? {
-              create: uploadedImages,
-            }
-          : undefined,
-      },
-      include: {
-        images: true,
-      },
-    });
+    // Update entry
+    const updateFields = [];
+    const updateValues = [];
+    let paramCount = 1;
 
-    return NextResponse.json(updatedEntry);
+    if (data.category !== undefined) {
+      updateFields.push(`category = $${paramCount++}`);
+      updateValues.push(data.category);
+    }
+    if (data.priority !== undefined) {
+      updateFields.push(`priority = $${paramCount++}`);
+      updateValues.push(data.priority);
+    }
+    if (data.region !== undefined) {
+      updateFields.push(`region = $${paramCount++}`);
+      updateValues.push(data.region);
+    }
+    if (data.country !== undefined) {
+      updateFields.push(`country = $${paramCount++}`);
+      updateValues.push(data.country);
+    }
+    if (data.headline !== undefined) {
+      updateFields.push(`headline = $${paramCount++}`);
+      updateValues.push(data.headline);
+    }
+    if (data.date !== undefined) {
+      updateFields.push(`date = $${paramCount++}`);
+      updateValues.push(new Date(data.date));
+    }
+    if (entry !== undefined) {
+      updateFields.push(`entry = $${paramCount++}`);
+      updateValues.push(entry);
+    }
+    if (data.sourceUrl !== undefined) {
+      updateFields.push(`source_url = $${paramCount++}`);
+      updateValues.push(data.sourceUrl);
+    }
+    if (data.puNote !== undefined) {
+      updateFields.push(`pu_note = $${paramCount++}`);
+      updateValues.push(data.puNote);
+    }
+    if (data.author !== undefined) {
+      updateFields.push(`author = $${paramCount++}`);
+      updateValues.push(data.author);
+    }
+    if (data.status !== undefined) {
+      updateFields.push(`status = $${paramCount++}`);
+      updateValues.push(data.status);
+    }
+
+    updateFields.push(`updated_at = $${paramCount++}`);
+    updateValues.push(new Date());
+    updateValues.push(params.id);
+
+    if (updateFields.length > 1) {
+      await query(
+        `UPDATE entries SET ${updateFields.join(', ')} WHERE id = $${paramCount}`,
+        updateValues
+      );
+    }
+
+    // Insert new images if any
+    if (uploadedImages.length > 0) {
+      for (const img of uploadedImages) {
+        await query(
+          `INSERT INTO images (
+            id, entry_id, filename, mime_type, blob_url, width, height, position, created_at
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+          [
+            crypto.randomUUID(),
+            params.id,
+            img.filename,
+            img.mimeType,
+            img.blobUrl,
+            img.width || null,
+            img.height || null,
+            img.position || null,
+            new Date(),
+          ]
+        );
+      }
+    }
+
+    // Fetch updated entry with images
+    const result = await query(
+      `SELECT 
+        e.id,
+        e.category,
+        e.priority,
+        e.region,
+        e.country,
+        e.headline,
+        e.date,
+        e.entry,
+        e.source_url as "sourceUrl",
+        e.pu_note as "puNote",
+        e.author,
+        e.status,
+        e.created_at as "createdAt",
+        e.updated_at as "updatedAt",
+        COALESCE(
+          json_agg(
+            json_build_object(
+              'id', i.id,
+              'entryId', i.entry_id,
+              'filename', i.filename,
+              'mimeType', i.mime_type,
+              'blobUrl', i.blob_url,
+              'width', i.width,
+              'height', i.height,
+              'position', i.position,
+              'createdAt', i.created_at
+            ) ORDER BY i.position NULLS LAST, i.created_at
+          ) FILTER (WHERE i.id IS NOT NULL),
+          '[]'
+        ) as images
+      FROM entries e
+      LEFT JOIN images i ON e.id = i.entry_id
+      WHERE e.id = $1
+      GROUP BY e.id`,
+      [params.id]
+    );
+
+    return NextResponse.json(result.rows[0]);
   } catch (error) {
     console.error('Error updating entry:', error);
     return NextResponse.json({ error: 'Failed to update entry' }, { status: 500 });
@@ -95,22 +232,21 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     // Delete images from blob storage first
-    const existingImages = await prisma.image.findMany({
-      where: { entryId: params.id },
-    });
+    const existingImagesResult = await query(
+      `SELECT id, blob_url FROM images WHERE entry_id = $1`,
+      [params.id]
+    );
 
-    for (const img of existingImages) {
+    for (const img of existingImagesResult.rows) {
       try {
-        await blobStorage.delete(img.blobUrl);
+        await blobStorage.delete(img.blob_url);
       } catch (error) {
         console.error('Error deleting blob:', error);
       }
     }
 
     // Delete entry (will cascade delete images from database)
-    await prisma.entry.delete({
-      where: { id: params.id },
-    });
+    await query(`DELETE FROM entries WHERE id = $1`, [params.id]);
 
     return NextResponse.json({ success: true });
   } catch (error) {

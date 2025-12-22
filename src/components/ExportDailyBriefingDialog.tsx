@@ -39,15 +39,32 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
   const handleExport = async () => {
     setIsExporting(true);
     try {
-      const allEntries = getAllEntries();
-      const entriesForDate = allEntries.filter(
-        (entry) => entry.date === selectedDate
-      );
+      const allEntries = await getAllEntries();
+      const entriesForDate = allEntries.filter((entry) => {
+        const entryDate = new Date(entry.date).toISOString().split('T')[0];
+        return entryDate === selectedDate;
+      });
 
       if (entriesForDate.length === 0) {
         alert('No entries found for the selected date.');
         setIsExporting(false);
         return;
+      }
+
+      // Restore images in HTML for each entry
+      for (const entry of entriesForDate) {
+        if (entry.images && entry.images.length > 0) {
+          let html = entry.entry;
+          entry.images.forEach((img: any) => {
+            const ref = `image-ref://img-${img.position}`;
+            const base64Data = typeof img.data === 'string' 
+              ? img.data 
+              : Buffer.from(img.data).toString('base64');
+            const dataUrl = `data:${img.mimeType};base64,${base64Data}`;
+            html = html.replace(ref, dataUrl);
+          });
+          entry.entry = html;
+        }
       }
 
       // Sort by priority (SG Attention first)

@@ -33,14 +33,14 @@ export function MorningMeetingList() {
     loadEntries();
   }, []);
 
-  const loadEntries = () => {
-    const data = getAllEntries();
+  const loadEntries = async () => {
+    const data = await getAllEntries();
     setEntries(data);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this entry?')) {
-      deleteEntry(id);
+      await deleteEntry(id);
       loadEntries();
     }
   };

@@ -1,0 +1,49 @@
+// Prisma schema for UN Morning Briefings
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Entry {
+  id          String   @id @default(cuid())
+  category    String
+  priority    String
+  region      String
+  country     String
+  headline    String
+  date        DateTime
+  entry       String   @db.Text
+  sourceUrl   String?
+  puNote      String?  @db.Text
+  author      String?
+  status      String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  images      Image[]
+
+  @@index([date])
+  @@index([priority])
+  @@index([region])
+}
+
+model Image {
+  id          String   @id @default(cuid())
+  entryId     String
+  filename    String
+  mimeType    String
+  data        Bytes    @db.ByteA
+  width       Int?
+  height      Int?
+  position    Int?
+  createdAt   DateTime @default(now())
+  
+  entry       Entry    @relation(fields: [entryId], references: [id], onDelete: Cascade)
+
+  @@index([entryId])
+}

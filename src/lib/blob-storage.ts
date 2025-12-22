@@ -1,6 +1,7 @@
 import { writeFile, mkdir, readFile, unlink } from 'fs/promises';
 import { existsSync } from 'fs';
 import path from 'path';
+import { BlobServiceClient, StorageSharedKeyCredential } from '@azure/storage-blob';
 
 export interface BlobUploadResult {
   url: string;
@@ -16,10 +17,29 @@ export interface BlobUploadResult {
 class BlobStorageService {
   private storageType: string;
   private localStoragePath: string;
+  private azureAccount?: string;
+  private azureKey?: string;
+  private azureContainer?: string;
+  private blobServiceClient?: BlobServiceClient;
 
   constructor() {
     this.storageType = process.env.BLOB_STORAGE_TYPE || 'local';
     this.localStoragePath = process.env.BLOB_STORAGE_PATH || path.join(process.cwd(), 'uploads');
+    
+    // Azure configuration
+    if (this.storageType === 'azure') {
+      this.azureAccount = process.env.AZURE_STORAGE_ACCOUNT;
+      this.azureKey = process.env.AZURE_STORAGE_KEY;
+      this.azureContainer = process.env.AZURE_STORAGE_CONTAINER || 'morning-briefings';
+      
+      if (this.azureAccount && this.azureKey) {
+        const sharedKeyCredential = new StorageSharedKeyCredential(this.azureAccount, this.azureKey);
+        this.blobServiceClient = new BlobServiceClient(
+          `https://${this.azureAccount}.blob.core.windows.net`,
+          sharedKeyCredential
+        );
+      }
+    }
   }
 
   /**
@@ -129,20 +149,84 @@ class BlobStorageService {
     throw new Error('S3 delete not implemented.');
   }
 
-  // Azure Blob Storage implementation (placeholder - requires @azure/storage-blob)
+  // Azure Blob Storage implementation
   private async uploadAzure(buffer: Buffer, filename: string, mimeType: string): Promise<BlobUploadResult> {
-    // TODO: Implement Azure upload
-    throw new Error('Azure upload not implemented. Install @azure/storage-blob and configure.');
+    if (!this.blobServiceClient || !this.azureContainer) {
+      throw new Error('Azure Blob Storage not configured. Check AZURE_STORAGE_ACCOUNT and AZURE_STORAGE_KEY.');
+    }
+
+    const timestamp = Date.now();
+    const sanitizedFilename = `${timestamp}-${filename.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+    const containerClient = this.blobServiceClient.getContainerClient(this.azureContainer);
+    
+    // Ensure container exists
+    await containerClient.createIfNotExists({ access: 'blob' });
+    
+    const blockBlobClient = containerClient.getBlockBlobClient(sanitizedFilename);
+    await blockBlobClient.upload(buffer, buffer.length, {
+      blobHTTPHeaders: { blobContentType: mimeType }
+    });
+
+    return {
+      url: blockBlobClient.url,
+      filename: sanitizedFilename,
+      mimeType,
+      size: buffer.length,
+    };
   }
 
   private async downloadAzure(url: string): Promise<Buffer> {
-    // TODO: Implement Azure download
-    throw new Error('Azure download not implemented.');
+    if (!this.blobServiceClient || !this.azureContainer) {
+      throw new Error('Azure Blob Storage not configured.');
+    }
+
+    // Extract blob name from URL
+    // URL format: https://account.blob.core.windows.net/container/blobname
+    const urlObj = new URL(url);
+    const pathParts = urlObj.pathname.split('/').filter(p => p);
+    // Skip container name (first part) and get blob name
+    const blobName = pathParts.slice(1).join('/');
+    
+    if (!blobName) {
+      throw new Error('Invalid blob URL.');
+    }
+
+    const containerClient = this.blobServiceClient.getContainerClient(this.azureContainer);
+    const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+    
+    const downloadResponse = await blockBlobClient.download(0);
+    if (!downloadResponse.readableStreamBody) {
+      throw new Error('Failed to download blob.');
+    }
+
+    const chunks: Buffer[] = [];
+    for await (const chunk of downloadResponse.readableStreamBody) {
+      chunks.push(Buffer.from(chunk));
+    }
+    
+    return Buffer.concat(chunks);
   }
 
   private async deleteAzure(url: string): Promise<void> {
-    // TODO: Implement Azure delete
-    throw new Error('Azure delete not implemented.');
+    if (!this.blobServiceClient || !this.azureContainer) {
+      throw new Error('Azure Blob Storage not configured.');
+    }
+
+    // Extract blob name from URL
+    // URL format: https://account.blob.core.windows.net/container/blobname
+    const urlObj = new URL(url);
+    const pathParts = urlObj.pathname.split('/').filter(p => p);
+    // Skip container name (first part) and get blob name
+    const blobName = pathParts.slice(1).join('/');
+    
+    if (!blobName) {
+      throw new Error('Invalid blob URL.');
+    }
+
+    const containerClient = this.blobServiceClient.getContainerClient(this.azureContainer);
+    const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+    
+    await blockBlobClient.deleteIfExists();
   }
 
   // Cloudinary implementation (placeholder - requires cloudinary)

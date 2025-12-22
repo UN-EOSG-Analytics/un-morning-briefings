@@ -1,0 +1,1158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Morning Meeting - Entry List | EOSG Political Unit</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%);
+      min-height: 100vh;
+      padding: 1.5rem;
+      color: #334155;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    .page-header {
+      background: white;
+      border-radius: 1rem;
+      border: 1px solid #e2e8f0;
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .header-icon {
+      background: #2563eb;
+      padding: 0.5rem;
+      border-radius: 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .header-icon svg {
+      width: 24px;
+      height: 24px;
+      stroke: white;
+    }
+
+    .header-text h1 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #1e293b;
+    }
+
+    .header-text p {
+      font-size: 0.875rem;
+      color: #64748b;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.625rem 1rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      border-radius: 0.5rem;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      text-decoration: none;
+    }
+
+    .btn svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .btn-primary {
+      background: #2563eb;
+      color: white;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+
+    .btn-primary:hover {
+      background: #1d4ed8;
+    }
+
+    .btn-secondary {
+      background: #fafbfc;
+      border-color: #9ca3af;
+      color: #374151;
+    }
+
+    .btn-secondary:hover {
+      background: #f1f5f9;
+      border-color: #6b7280;
+    }
+
+    .btn-icon {
+      padding: 0.5rem;
+      background: transparent;
+      border: none;
+    }
+
+    .btn-icon:hover {
+      background: #f1f5f9;
+    }
+
+    .btn-icon.edit:hover {
+      background: #dbeafe;
+      color: #2563eb;
+    }
+
+    .btn-icon.delete:hover {
+      background: #fee2e2;
+      color: #dc2626;
+    }
+
+    /* Filters Bar */
+    .filters-bar {
+      background: white;
+      border-radius: 1rem;
+      border: 1px solid #e2e8f0;
+      padding: 1rem 1.5rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    .filters-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      align-items: center;
+    }
+
+    .search-box {
+      position: relative;
+      flex: 1;
+      min-width: 250px;
+    }
+
+    .search-box input {
+      width: 100%;
+      padding: 0.625rem 1rem 0.625rem 2.5rem;
+      border: 1px solid #9ca3af;
+      border-radius: 0.5rem;
+      font-size: 0.875rem;
+      background: #fafbfc;
+      transition: all 0.15s ease;
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.04);
+    }
+
+    .search-box input:hover {
+      border-color: #6b7280;
+      background: #f8f9fa;
+    }
+
+    .search-box input:focus {
+      outline: none;
+      border-color: #3b82f6;
+      background: white;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    }
+
+    .search-box svg {
+      position: absolute;
+      left: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 18px;
+      height: 18px;
+      color: #94a3b8;
+    }
+
+    .filter-select {
+      padding: 0.625rem 2.25rem 0.625rem 0.75rem;
+      border: 1px solid #9ca3af;
+      border-radius: 0.5rem;
+      font-size: 0.875rem;
+      background: #fafbfc;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 0.5rem center;
+      cursor: pointer;
+      min-width: 140px;
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.04);
+    }
+
+    .filter-select:hover {
+      border-color: #6b7280;
+      background-color: #f8f9fa;
+    }
+
+    .filter-select:focus {
+      outline: none;
+      border-color: #3b82f6;
+      background-color: white;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    }
+
+    .results-count {
+      font-size: 0.875rem;
+      color: #64748b;
+      margin-left: auto;
+    }
+
+    /* Table Container */
+    .table-container {
+      background: white;
+      border-radius: 1rem;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+
+    .table-wrapper {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+    }
+
+    thead {
+      background: #f8fafc;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    th {
+      text-align: left;
+      padding: 0.875rem 1rem;
+      font-weight: 600;
+      color: #475569;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      white-space: nowrap;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.15s;
+    }
+
+    th:hover {
+      background: #f1f5f9;
+    }
+
+    th .sort-icon {
+      display: inline-block;
+      margin-left: 0.25rem;
+      opacity: 0.4;
+    }
+
+    th.sorted .sort-icon {
+      opacity: 1;
+    }
+
+    tbody tr {
+      border-bottom: 1px solid #f1f5f9;
+      transition: background 0.15s;
+    }
+
+    tbody tr:hover {
+      background: #f8fafc;
+    }
+
+    tbody tr:last-child {
+      border-bottom: none;
+    }
+
+    td {
+      padding: 0.875rem 1rem;
+      vertical-align: top;
+    }
+
+    .cell-date {
+      white-space: nowrap;
+      color: #64748b;
+      font-size: 0.8125rem;
+    }
+
+    .cell-region {
+      white-space: nowrap;
+    }
+
+    .region-badge {
+      display: inline-block;
+      padding: 0.25rem 0.5rem;
+      background: #f1f5f9;
+      color: #475569;
+      border-radius: 0.25rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+
+    .region-badge.africa { background: #fef3c7; color: #92400e; }
+    .region-badge.americas { background: #dbeafe; color: #1e40af; }
+    .region-badge.asia { background: #dcfce7; color: #166534; }
+    .region-badge.europe { background: #ede9fe; color: #5b21b6; }
+    .region-badge.middle-east { background: #ffe4e6; color: #9f1239; }
+
+    .cell-countries {
+      max-width: 180px;
+      font-size: 0.8125rem;
+      color: #64748b;
+    }
+
+    .cell-headline {
+      max-width: 400px;
+      line-height: 1.4;
+    }
+
+    .headline-text {
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .cell-priority {
+      white-space: nowrap;
+    }
+
+    .priority-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.25rem 0.625rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+
+    .priority-badge.critical { background: #fef2f2; color: #991b1b; }
+    .priority-badge.high { background: #fff7ed; color: #9a3412; }
+    .priority-badge.medium { background: #fefce8; color: #854d0e; }
+    .priority-badge.low { background: #f0fdf4; color: #166534; }
+    .priority-badge.monitoring { background: #eff6ff; color: #1e40af; }
+
+    .priority-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+    }
+
+    .priority-dot.critical { background: #dc2626; }
+    .priority-dot.high { background: #ea580c; }
+    .priority-dot.medium { background: #ca8a04; }
+    .priority-dot.low { background: #16a34a; }
+    .priority-dot.monitoring { background: #2563eb; }
+
+    .cell-category {
+      font-size: 0.8125rem;
+      color: #64748b;
+      white-space: nowrap;
+    }
+
+    .cell-actions {
+      white-space: nowrap;
+      text-align: right;
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 0.25rem;
+      justify-content: flex-end;
+    }
+
+    /* Pagination */
+    .table-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 1.5rem;
+      border-top: 1px solid #e2e8f0;
+      background: #f8fafc;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .pagination {
+      display: flex;
+      gap: 0.25rem;
+    }
+
+    .page-btn {
+      padding: 0.5rem 0.75rem;
+      border: 1px solid #d1d5db;
+      background: #fafbfc;
+      border-radius: 0.375rem;
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .page-btn:hover {
+      background: #f1f5f9;
+      border-color: #9ca3af;
+    }
+
+    .page-btn.active {
+      background: #2563eb;
+      border-color: #2563eb;
+      color: white;
+    }
+
+    .page-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .page-info {
+      font-size: 0.875rem;
+      color: #64748b;
+    }
+
+    /* Modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(15, 23, 42, 0.6);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    .modal-overlay.visible {
+      display: flex;
+    }
+
+    .modal {
+      background: white;
+      border-radius: 1rem;
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+      max-width: 600px;
+      width: 100%;
+      max-height: 90vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .modal-header h2 {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: #1e293b;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      padding: 0.5rem;
+      cursor: pointer;
+      color: #64748b;
+      border-radius: 0.375rem;
+      transition: all 0.15s;
+    }
+
+    .modal-close:hover {
+      background: #f1f5f9;
+      color: #1e293b;
+    }
+
+    .modal-body {
+      padding: 1.5rem;
+      overflow-y: auto;
+    }
+
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.75rem;
+      padding: 1rem 1.5rem;
+      border-top: 1px solid #e2e8f0;
+      background: #f8fafc;
+    }
+
+    /* Form fields in modal */
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    .form-group:last-child {
+      margin-bottom: 0;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: #475569;
+      margin-bottom: 0.375rem;
+    }
+
+    .form-input,
+    .form-select,
+    .form-textarea {
+      width: 100%;
+      padding: 0.625rem 0.875rem;
+      border: 1px solid #9ca3af;
+      border-radius: 0.5rem;
+      font-size: 0.875rem;
+      background: #fafbfc;
+      transition: all 0.15s;
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.04);
+    }
+
+    .form-input:hover,
+    .form-select:hover,
+    .form-textarea:hover {
+      border-color: #6b7280;
+      background: #f8f9fa;
+    }
+
+    .form-input:focus,
+    .form-select:focus,
+    .form-textarea:focus {
+      outline: none;
+      border-color: #3b82f6;
+      background: white;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    }
+
+    .form-textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    /* Delete confirmation */
+    .delete-confirm {
+      text-align: center;
+      padding: 1rem 0;
+    }
+
+    .delete-confirm svg {
+      width: 48px;
+      height: 48px;
+      color: #dc2626;
+      margin-bottom: 1rem;
+    }
+
+    .delete-confirm h3 {
+      font-size: 1.125rem;
+      color: #1e293b;
+      margin-bottom: 0.5rem;
+    }
+
+    .delete-confirm p {
+      color: #64748b;
+      font-size: 0.875rem;
+    }
+
+    .btn-danger {
+      background: #dc2626;
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background: #b91c1c;
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      padding: 1rem 1.5rem;
+      background: #1e293b;
+      color: white;
+      border-radius: 0.5rem;
+      box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+      display: none;
+      align-items: center;
+      gap: 0.75rem;
+      z-index: 1100;
+      animation: slideIn 0.3s ease;
+    }
+
+    .toast.visible {
+      display: flex;
+    }
+
+    .toast.success { background: #059669; }
+    .toast.warning { background: #d97706; }
+
+    .toast svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    @keyframes slideIn {
+      from { transform: translateY(1rem); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .filters-row {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      
+      .search-box {
+        min-width: 100%;
+      }
+      
+      .results-count {
+        margin-left: 0;
+      }
+
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: #64748b;
+    }
+
+    .empty-state svg {
+      width: 48px;
+      height: 48px;
+      margin-bottom: 1rem;
+      opacity: 0.5;
+    }
+
+    .empty-state h3 {
+      font-size: 1.125rem;
+      color: #475569;
+      margin-bottom: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Page Header -->
+    <div class="page-header">
+      <div class="header-left">
+        <div class="header-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        </div>
+        <div class="header-text">
+          <h1>Morning Meeting</h1>
+          <p>EOSG Political Unit • Data Entry Management System</p>
+        </div>
+      </div>
+      <a href="morning-meeting-form.html" class="btn btn-primary">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        New Entry
+      </a>
+    </div>
+
+    <!-- Filters Bar -->
+    <div class="filters-bar">
+      <div class="filters-row">
+        <div class="search-box">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="searchInput" placeholder="Search headlines, countries, or keywords...">
+        </div>
+        <select class="filter-select" id="regionFilter">
+          <option value="">All Regions</option>
+          <option value="Africa">Africa</option>
+          <option value="The Americas">The Americas</option>
+          <option value="Asia & the Pacific">Asia & the Pacific</option>
+          <option value="Europe">Europe</option>
+          <option value="Middle East">Middle East</option>
+        </select>
+        <select class="filter-select" id="priorityFilter">
+          <option value="">All Priorities</option>
+          <option value="critical">Critical</option>
+          <option value="high">High</option>
+          <option value="medium">Medium</option>
+          <option value="low">Low</option>
+          <option value="monitoring">Monitoring</option>
+        </select>
+        <select class="filter-select" id="categoryFilter">
+          <option value="">All Categories</option>
+          <option value="Armed Conflict">Armed Conflict</option>
+          <option value="Political Transition">Political Transition</option>
+          <option value="Diplomatic Development">Diplomatic Development</option>
+          <option value="Security Council">Security Council</option>
+          <option value="Peacekeeping Operations">Peacekeeping Operations</option>
+          <option value="Human Rights">Human Rights</option>
+          <option value="Humanitarian Crisis">Humanitarian Crisis</option>
+          <option value="Elections">Elections</option>
+          <option value="Economic / Sanctions">Economic / Sanctions</option>
+        </select>
+        <span class="results-count"><span id="resultsCount">36</span> entries</span>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="table-container">
+      <div class="table-wrapper">
+        <table id="entriesTable">
+          <thead>
+            <tr>
+              <th class="sorted" data-sort="date">Date <span class="sort-icon">↓</span></th>
+              <th data-sort="region">Region <span class="sort-icon">↕</span></th>
+              <th data-sort="countries">Countries <span class="sort-icon">↕</span></th>
+              <th data-sort="headline">Headline <span class="sort-icon">↕</span></th>
+              <th data-sort="priority">Priority <span class="sort-icon">↕</span></th>
+              <th data-sort="category">Category <span class="sort-icon">↕</span></th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="entriesBody">
+            <!-- Rows populated by JavaScript -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <div class="table-footer">
+        <div class="page-info">
+          Showing <strong>1-20</strong> of <strong id="totalEntries">36</strong> entries
+        </div>
+        <div class="pagination">
+          <button class="page-btn" disabled>← Prev</button>
+          <button class="page-btn active">1</button>
+          <button class="page-btn">2</button>
+          <button class="page-btn">Next →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Modal -->
+  <div class="modal-overlay" id="editModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>Edit Entry</h2>
+        <button class="modal-close" onclick="closeModal('editModal')">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Region</label>
+            <select class="form-select" id="editRegion">
+              <option value="Africa">Africa</option>
+              <option value="The Americas">The Americas</option>
+              <option value="Asia & the Pacific">Asia & the Pacific</option>
+              <option value="Europe">Europe</option>
+              <option value="Middle East">Middle East</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Country/Countries</label>
+            <input type="text" class="form-input" id="editCountries">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Headline</label>
+          <input type="text" class="form-input" id="editHeadline">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Priority</label>
+            <select class="form-select" id="editPriority">
+              <option value="critical">Critical</option>
+              <option value="high">High</option>
+              <option value="medium">Medium</option>
+              <option value="low">Low</option>
+              <option value="monitoring">Monitoring</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Category</label>
+            <select class="form-select" id="editCategory">
+              <option value="Armed Conflict">Armed Conflict</option>
+              <option value="Political Transition">Political Transition</option>
+              <option value="Diplomatic Development">Diplomatic Development</option>
+              <option value="Security Council">Security Council</option>
+              <option value="Peacekeeping Operations">Peacekeeping Operations</option>
+              <option value="Human Rights">Human Rights</option>
+              <option value="Humanitarian Crisis">Humanitarian Crisis</option>
+              <option value="Elections">Elections</option>
+              <option value="Economic / Sanctions">Economic / Sanctions</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Entry Content</label>
+          <textarea class="form-textarea" id="editContent" rows="4"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('editModal')">Cancel</button>
+        <button class="btn btn-primary" onclick="saveEdit()">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Modal -->
+  <div class="modal-overlay" id="deleteModal">
+    <div class="modal" style="max-width: 420px;">
+      <div class="modal-header">
+        <h2>Confirm Deletion</h2>
+        <button class="modal-close" onclick="closeModal('deleteModal')">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="delete-confirm">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+          <h3>Delete this entry?</h3>
+          <p id="deleteHeadline">This action cannot be undone.</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('deleteModal')">Cancel</button>
+        <button class="btn btn-danger" onclick="confirmDelete()">Delete Entry</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- View Modal -->
+  <div class="modal-overlay" id="viewModal">
+    <div class="modal" style="max-width: 700px;">
+      <div class="modal-header">
+        <h2>Entry Details</h2>
+        <button class="modal-close" onclick="closeModal('viewModal')">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body" id="viewContent">
+        <!-- Populated dynamically -->
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('viewModal')">Close</button>
+        <button class="btn btn-primary" onclick="editFromView()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          Edit
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast">
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+    <span id="toastMessage">Success!</span>
+  </div>
+
+  <script>
+    // Sample data from provided table
+    const entries = [
+      { id: 1, date: '2025-12-12', region: 'Africa', countries: 'Central Africa (regional); Cameroon; Gabon; CAR; Chad; DRC; Equatorial Guinea', headline: 'UNSC discusses Central Africa and UNOCA activities; National positions on Cameroon elections/violence and UNOCA mandate; EG protests SG report para; SRSG Abarry flags post‑election tensions in Cameroon and UNOCA liquidity', priority: 'high', category: 'Security Council' },
+      { id: 2, date: '2025-12-12', region: 'Africa', countries: 'DRC; Burundi; Rwanda', headline: 'AFC/M23 statements on Burundian forces; border dynamics and Banyamulenge attacks; Kigali–Gitega tensions; UNHCR notes new arrivals; UNSC to meet on DRC & MONUSCO mandate', priority: 'critical', category: 'Armed Conflict' },
+      { id: 3, date: '2025-12-12', region: 'Africa', countries: 'DRC (MONUSCO); Multiple (Council)', headline: 'Mandate renewal track: China/Russia float technical rollover; US backs 12‑month renewal; REV1 text adds ceasefire monitoring/CMVM reporting and SG assessment request', priority: 'high', category: 'Peacekeeping Operations' },
+      { id: 4, date: '2025-12-12', region: 'Africa', countries: 'Libya', headline: 'UNSMIL "structured dialogue" raises feasibility concerns, esp. on security track; invites issued; eastern authorities resist; Dbeibah backs process', priority: 'medium', category: 'Political Transition' },
+      { id: 5, date: '2025-12-12', region: 'Africa', countries: 'Mali', headline: 'JNIM resumes fuel‑tanker attacks on Bamako–Côte d\'Ivoire corridor after reported truce ends; junta mounts COIN ops and air support', priority: 'high', category: 'Armed Conflict' },
+      { id: 6, date: '2025-12-12', region: 'Africa', countries: 'Western Sahara/Morocco; UAE; USA (DFC)', headline: 'Abu Dhabi seeks JV model to de‑risk Western Sahara projects; wind farms talks with Masdar/Amea/Taqa; US DFC signaling and prospective US consulate in Dakhla', priority: 'medium', category: 'Diplomatic Development' },
+      { id: 7, date: '2025-12-12', region: 'Africa', countries: 'Sudan', headline: 'SG condemns deadly strikes in Kalogi & WFP convoy attack; escalating drone strikes in Darfur; RSF seizes Heglig oil hub; clashes in North Kordofan', priority: 'critical', category: 'Armed Conflict' },
+      { id: 8, date: '2025-12-12', region: 'Africa', countries: 'Sudan; South Sudan', headline: 'Regional and access tracks: El Fasher humanitarian access terms; inter‑agency mission planned to Kadugli; Adré crossing extension talks amid arms‑smuggling allegations', priority: 'high', category: 'Humanitarian Crisis' },
+      { id: 9, date: '2025-12-12', region: 'Africa', countries: 'Sudan; USA; UK; EU', headline: 'Sanctions & accountability: US targets RSF support network; ICC sentences Ali Kushayb; UK/EU/US 2025 sanctions snapshot; WFP warns ration cuts due to funding cliff', priority: 'high', category: 'Economic / Sanctions' },
+      { id: 10, date: '2025-12-12', region: 'Africa', countries: 'South Sudan (UNMISS); regional', headline: 'USG Lacroix briefs on UNMISS contingency plan; host‑country obstructions; Council members\' positions and liquidity implications for peacekeeping', priority: 'high', category: 'Peacekeeping Operations' },
+      { id: 11, date: '2025-12-12', region: 'The Americas', countries: 'Venezuela; Russia; USA; Belarus', headline: 'Putin signals solidarity with Maduro; US unveils sweeping new Venezuela sanctions incl. Maduro nephews and oil shippers; Nobel laureate Machado backs US tanker seizure; UN mission says GNB crimes amount to crimes against humanity', priority: 'high', category: 'Human Rights' },
+      { id: 12, date: '2025-12-12', region: 'The Americas', countries: 'Haiti', headline: 'Donor/security meeting boosts personnel pledges for Gang Suppression Force; funding still vague; violence and displacement worsen; elections hinge on security', priority: 'critical', category: 'Armed Conflict' },
+      { id: 13, date: '2025-12-12', region: 'The Americas', countries: 'Chile', headline: 'Final Jara–Kast debate sharpens divides on security, migration, economy; polls tilt toward Kast ahead of 14 Dec runoff', priority: 'medium', category: 'Elections' },
+      { id: 14, date: '2025-12-12', region: 'The Americas', countries: 'USA; Uganda; Kenya; Rwanda; Ghana', headline: 'US "America First" aid model showcased via Zipline grant and co‑investment rules; friction over partner arrears and cost‑effectiveness claims', priority: 'low', category: 'Diplomatic Development' },
+      { id: 15, date: '2025-12-12', region: 'The Americas', countries: 'USA (Domestic politics)', headline: 'Senate blocks ACA subsidy extension; House advances Pentagon bill with transparency riders; pay raise for troops; AUMFs repealed; Ukraine/Baltics aid maintained', priority: 'monitoring', category: 'Political Transition' },
+      { id: 16, date: '2025-12-12', region: 'Asia & the Pacific', countries: 'Pakistan', headline: 'Ex‑ISI chief Faiz Hameed gets 14‑year sentence—seen as Munir\'s consolidation of power', priority: 'medium', category: 'Political Transition' },
+      { id: 17, date: '2025-12-12', region: 'Asia & the Pacific', countries: 'Thailand; Cambodia; USA', headline: 'Thai–Cambodian border fighting enters 5th day; casualties/displacement mount; Thai PM to speak with US President; disinformation claims traded', priority: 'critical', category: 'Armed Conflict' },
+      { id: 18, date: '2025-12-12', region: 'Asia & the Pacific', countries: 'Thailand', headline: 'PM Anutin dissolves parliament—early election within 45–60 days amid economic strain and border conflict', priority: 'high', category: 'Political Transition' },
+      { id: 19, date: '2025-12-12', region: 'Europe', countries: 'Cyprus (both communities); EU; UN', headline: 'Progress on CMP and confidence measures; halloumi PDO exports to EU; crossing‑point facilitation; prep for broader informal meeting', priority: 'low', category: 'Diplomatic Development' },
+      { id: 20, date: '2025-12-12', region: 'Europe', countries: 'Turkmenistan', headline: '30th anniversary of UN "permanent neutrality": symbolism, isolationist practice, and limited benefits (amnesties)', priority: 'monitoring', category: 'Diplomatic Development' },
+      { id: 21, date: '2025-12-12', region: 'Europe', countries: 'Ukraine; Russia; USA; EU; NATO', headline: 'Revised 20‑Point plan outlines territorial freezes and security "assurances"; Lavrov rejects core planks; EU moves to permanently freeze ~€210B Russian assets', priority: 'critical', category: 'Armed Conflict' },
+      { id: 22, date: '2025-12-12', region: 'Europe', countries: 'Ukraine; Russia (IHL)', headline: 'Legal/HR tracks: critique that blanket amnesty would violate Geneva obligations; HRW documents systematic torture of Ukrainian POWs', priority: 'high', category: 'Human Rights' },
+      { id: 23, date: '2025-12-12', region: 'Middle East', countries: 'Israel/OPT; USA; UN', headline: 'US weighing unprecedented FTO designation for UNRWA; legal/diplomatic ramifications and immunity regime considerations', priority: 'critical', category: 'Diplomatic Development' },
+      { id: 24, date: '2025-12-12', region: 'Middle East', countries: 'Gaza; Israel; USA; Egypt; Qatar; Türkiye', headline: 'Gaza ceasefire plan slipping into 2026; ISF/Peace Council sequencing delays; debates over disarmament, force composition, and Turkish participation', priority: 'critical', category: 'Armed Conflict' },
+      { id: 25, date: '2025-12-12', region: 'Middle East', countries: 'West Bank; Egypt; Israel', headline: 'Egypt warns of settler violence escalation; urges adherence to UNSCR 2803 and protection of UNRWA mandate', priority: 'high', category: 'Human Rights' },
+      { id: 26, date: '2025-12-12', region: 'Middle East', countries: 'Israel (domestic)', headline: 'Justice Ministry seen likely to oppose Netanyahu pardon bid during ongoing trial', priority: 'medium', category: 'Political Transition' },
+      { id: 27, date: '2025-12-12', region: 'Middle East', countries: 'Israel; Syria; Türkiye; USA', headline: 'US envoy Barrack floats Israel–Syria security architecture; argues verification‑heavy arrangements; links to regional normalization', priority: 'high', category: 'Diplomatic Development' },
+      { id: 28, date: '2025-12-12', region: 'Middle East', countries: 'Regional (Iran‑linked networks)', headline: 'Analysis: Iran\'s "axis of resistance" militarily weakened, but Shiite communal networks endure; inclusion needed to avoid renewed conflict', priority: 'medium', category: 'Armed Conflict' },
+      { id: 29, date: '2025-12-12', region: 'Middle East', countries: 'Lebanon; Iran; Israel; USA', headline: 'Iran FM to visit Beirut; reports Israel preparing contingency for large‑scale strike if Hezbollah not disarmed; Berri outlines red lines; election timing uncertainty', priority: 'critical', category: 'Armed Conflict' },
+      { id: 30, date: '2025-12-12', region: 'Middle East', countries: 'Yemen (South); STC; PLC', headline: 'STC territorial gains in Hadramawt/Al‑Mahra; parties reject unilateral moves; fragile local arrangements; independence not feasible near‑term', priority: 'medium', category: 'Armed Conflict' },
+      { id: 31, date: '2025-12-12', region: 'Middle East', countries: 'Syria; USA; Congress; SDF', headline: 'Caesar Act repeal folded into NDAA; CENTCOM deepens anti‑ISIS cooperation with Damascus; integration questions with SDF persist', priority: 'high', category: 'Diplomatic Development' },
+      { id: 32, date: '2025-12-12', region: 'Middle East', countries: 'Turkey; Syria', headline: 'Ankara vows to prevent Syria\'s relapse into chaos; frames Syria\'s stability as core to Turkey\'s security', priority: 'medium', category: 'Diplomatic Development' },
+      { id: 33, date: '2025-12-12', region: 'Middle East', countries: 'Iraq; USA', headline: 'NDAA conditions 50% of OSC‑I funds on DDR of Iran‑aligned militias; limits on Syria drawdown; CF huddles on next PM; US messages against militia influence', priority: 'high', category: 'Armed Conflict' },
+      { id: 34, date: '2025-12-12', region: 'Middle East', countries: 'Iraq → USA (energy)', headline: 'Iraq crude exports to US jump to ~7.9M barrels in Nov—third‑largest supplier', priority: 'low', category: 'Economic / Sanctions' },
+      { id: 35, date: '2025-12-12', region: 'Middle East', countries: 'Iran; Russia', headline: 'Iran to launch three satellites on Russian Soyuz (Dec 28); expanding space program with dual‑use concerns', priority: 'medium', category: 'Diplomatic Development' },
+      { id: 36, date: '2025-12-12', region: 'Middle East', countries: 'Iran; Israel; USA', headline: 'Israel reassesses damage to Iran\'s missile program as less severe than first thought; calls for coordinated red lines', priority: 'high', category: 'Armed Conflict' },
+      { id: 37, date: '2025-12-12', region: 'Middle East', countries: 'Iran; Kazakhstan', headline: 'Tehran–Astana set roadmap to raise trade to $3B; banking channels cited as bottleneck', priority: 'low', category: 'Diplomatic Development' },
+      { id: 38, date: '2025-12-12', region: 'Middle East', countries: 'Iran; USA; UN', headline: 'Tehran appeals to UN over tightened US restrictions on Iranian diplomats in New York', priority: 'medium', category: 'Diplomatic Development' },
+      { id: 39, date: '2025-12-12', region: 'Middle East', countries: 'Saudi Arabia; Qatar', headline: 'Riyadh–Doha strategic coordination surges; announcement of a 785‑km high‑speed rail link and wide sectoral agreements', priority: 'medium', category: 'Diplomatic Development' }
+    ];
+
+    let currentEditId = null;
+    let currentDeleteId = null;
+    let filteredEntries = [...entries];
+
+    function getRegionClass(region) {
+      const classes = {
+        'Africa': 'africa',
+        'The Americas': 'americas',
+        'Asia & the Pacific': 'asia',
+        'Europe': 'europe',
+        'Middle East': 'middle-east'
+      };
+      return classes[region] || '';
+    }
+
+    function formatDate(dateStr) {
+      const date = new Date(dateStr);
+      return date.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+    }
+
+    function truncateText(text, maxLength) {
+      return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+    }
+
+    function renderTable(data) {
+      const tbody = document.getElementById('entriesBody');
+      tbody.innerHTML = '';
+
+      if (data.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="7">
+              <div class="empty-state">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <h3>No entries found</h3>
+                <p>Try adjusting your search or filters</p>
+              </div>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      data.forEach(entry => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td class="cell-date">${formatDate(entry.date)}</td>
+          <td class="cell-region">
+            <span class="region-badge ${getRegionClass(entry.region)}">${entry.region}</span>
+          </td>
+          <td class="cell-countries">${truncateText(entry.countries, 50)}</td>
+          <td class="cell-headline">
+            <div class="headline-text" title="${entry.headline}">${entry.headline}</div>
+          </td>
+          <td class="cell-priority">
+            <span class="priority-badge ${entry.priority}">
+              <span class="priority-dot ${entry.priority}"></span>
+              ${entry.priority.charAt(0).toUpperCase() + entry.priority.slice(1)}
+            </span>
+          </td>
+          <td class="cell-category">${entry.category}</td>
+          <td class="cell-actions">
+            <div class="action-buttons">
+              <button class="btn btn-icon" title="View" onclick="viewEntry(${entry.id})">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+              <button class="btn btn-icon edit" title="Edit" onclick="editEntry(${entry.id})">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              </button>
+              <button class="btn btn-icon delete" title="Delete" onclick="deleteEntry(${entry.id})">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+              </button>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(row);
+      });
+
+      document.getElementById('resultsCount').textContent = data.length;
+      document.getElementById('totalEntries').textContent = data.length;
+    }
+
+    function filterEntries() {
+      const search = document.getElementById('searchInput').value.toLowerCase();
+      const region = document.getElementById('regionFilter').value;
+      const priority = document.getElementById('priorityFilter').value;
+      const category = document.getElementById('categoryFilter').value;
+
+      filteredEntries = entries.filter(entry => {
+        const matchesSearch = !search || 
+          entry.headline.toLowerCase().includes(search) ||
+          entry.countries.toLowerCase().includes(search);
+        const matchesRegion = !region || entry.region === region;
+        const matchesPriority = !priority || entry.priority === priority;
+        const matchesCategory = !category || entry.category === category;
+
+        return matchesSearch && matchesRegion && matchesPriority && matchesCategory;
+      });
+
+      renderTable(filteredEntries);
+    }
+
+    function viewEntry(id) {
+      const entry = entries.find(e => e.id === id);
+      if (!entry) return;
+
+      currentEditId = id;
+      
+      document.getElementById('viewContent').innerHTML = `
+        <div style="margin-bottom: 1.5rem;">
+          <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
+            <span class="region-badge ${getRegionClass(entry.region)}">${entry.region}</span>
+            <span class="priority-badge ${entry.priority}">
+              <span class="priority-dot ${entry.priority}"></span>
+              ${entry.priority.charAt(0).toUpperCase() + entry.priority.slice(1)}
+            </span>
+          </div>
+          <h3 style="font-size: 1.125rem; color: #1e293b; line-height: 1.4; margin-bottom: 0.75rem;">${entry.headline}</h3>
+          <p style="font-size: 0.875rem; color: #64748b;">${formatDate(entry.date)} • ${entry.category}</p>
+        </div>
+        <div style="margin-bottom: 1rem;">
+          <label style="font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">Countries</label>
+          <p style="margin-top: 0.25rem; color: #334155;">${entry.countries}</p>
+        </div>
+        <div>
+          <label style="font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">Entry Content</label>
+          <p style="margin-top: 0.25rem; color: #334155; line-height: 1.6;">${entry.headline}</p>
+        </div>
+      `;
+
+      document.getElementById('viewModal').classList.add('visible');
+    }
+
+    function editFromView() {
+      closeModal('viewModal');
+      editEntry(currentEditId);
+    }
+
+    function editEntry(id) {
+      const entry = entries.find(e => e.id === id);
+      if (!entry) return;
+
+      currentEditId = id;
+      document.getElementById('editRegion').value = entry.region;
+      document.getElementById('editCountries').value = entry.countries;
+      document.getElementById('editHeadline').value = entry.headline;
+      document.getElementById('editPriority').value = entry.priority;
+      document.getElementById('editCategory').value = entry.category;
+      document.getElementById('editContent').value = entry.headline;
+
+      document.getElementById('editModal').classList.add('visible');
+    }
+
+    function saveEdit() {
+      const entry = entries.find(e => e.id === currentEditId);
+      if (!entry) return;
+
+      entry.region = document.getElementById('editRegion').value;
+      entry.countries = document.getElementById('editCountries').value;
+      entry.headline = document.getElementById('editHeadline').value;
+      entry.priority = document.getElementById('editPriority').value;
+      entry.category = document.getElementById('editCategory').value;
+
+      closeModal('editModal');
+      filterEntries();
+      showToast('Entry updated successfully!', 'success');
+    }
+
+    function deleteEntry(id) {
+      const entry = entries.find(e => e.id === id);
+      if (!entry) return;
+
+      currentDeleteId = id;
+      document.getElementById('deleteHeadline').textContent = `"${truncateText(entry.headline, 80)}"`;
+      document.getElementById('deleteModal').classList.add('visible');
+    }
+
+    function confirmDelete() {
+      const index = entries.findIndex(e => e.id === currentDeleteId);
+      if (index > -1) {
+        entries.splice(index, 1);
+      }
+
+      closeModal('deleteModal');
+      filterEntries();
+      showToast('Entry deleted successfully!', 'warning');
+    }
+
+    function closeModal(modalId) {
+      document.getElementById(modalId).classList.remove('visible');
+    }
+
+    function showToast(message, type = 'success') {
+      const toast = document.getElementById('toast');
+      const toastMessage = document.getElementById('toastMessage');
+      toastMessage.textContent = message;
+      toast.className = 'toast visible ' + type;
+      setTimeout(() => toast.classList.remove('visible'), 3000);
+    }
+
+    // Event listeners
+    document.getElementById('searchInput').addEventListener('input', filterEntries);
+    document.getElementById('regionFilter').addEventListener('change', filterEntries);
+    document.getElementById('priorityFilter').addEventListener('change', filterEntries);
+    document.getElementById('categoryFilter').addEventListener('change', filterEntries);
+
+    // Close modals on overlay click
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) {
+          overlay.classList.remove('visible');
+        }
+      });
+    });
+
+    // Close modals on Escape key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        document.querySelectorAll('.modal-overlay.visible').forEach(modal => {
+          modal.classList.remove('visible');
+        });
+      }
+    });
+
+    // Initial render
+    renderTable(entries);
+  </script>
+</body>
+</html>

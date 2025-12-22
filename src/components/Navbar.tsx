@@ -2,9 +2,10 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, Home, PlusCircle, List } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import NavButton from './NavButton';
 
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
 
@@ -30,71 +31,26 @@ export function Navbar() {
         </div>
 
         {/* Desktop Menu */}
-        <div className="hidden items-center gap-6 md:flex">
-          <Link
-            href="/"
-            className="text-sm font-medium text-foreground hover:text-un-blue transition-colors"
-          >
-            Home
-          </Link>
-          <Link
-            href="/form"
-            className="text-sm font-medium text-foreground hover:text-un-blue transition-colors"
-          >
-            New Entry
-          </Link>
-          <Link
-            href="/list"
-            className="text-sm font-medium text-foreground hover:text-un-blue transition-colors"
-          >
-            View Entries
-          </Link>
+        <div className="hidden items-center gap-4 md:flex">
+          <NavButton href="/" className="text-foreground hover:text-un-blue hover:bg-slate-50">
+            <Home className="h-4 w-4 text-slate-600" />
+            <span>Home</span>
+          </NavButton>
+
+          <NavButton href="/form" className="bg-un-blue text-white hover:bg-un-blue/95">
+            <PlusCircle className="h-4 w-4 text-white" />
+            <span>New Entry</span>
+          </NavButton>
+
+          <NavButton href="/list" className="text-foreground hover:text-un-blue hover:bg-slate-50">
+            <List className="h-4 w-4 text-slate-600" />
+            <span>View Entries</span>
+          </NavButton>
         </div>
 
-        {/* Mobile Menu Button */}
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="md:hidden h-8 w-8 p-0"
-          onClick={() => setIsOpen(!isOpen)}
-        >
-          {isOpen ? (
-            <X className="h-5 w-5" />
-          ) : (
-            <Menu className="h-5 w-5" />
-          )}
-        </Button>
       </div>
 
-      {/* Mobile Menu */}
-      {isOpen && (
-        <div className="border-t border-slate-200 bg-white md:hidden">
-          <div className="space-y-1 px-4 py-2 sm:px-6">
-            <Link
-              href="/"
-              onClick={() => setIsOpen(false)}
-              className="block px-3 py-2 text-sm font-medium text-foreground hover:text-un-blue hover:bg-slate-50 rounded transition-colors"
-            >
-              Home
-            </Link>
-            <Link
-              href="/form"
-              onClick={() => setIsOpen(false)}
-              className="block px-3 py-2 text-sm font-medium text-foreground hover:text-un-blue hover:bg-slate-50 rounded transition-colors"
-            >
-              New Entry
-            </Link>
-            <Link
-              href="/list"
-              onClick={() => setIsOpen(false)}
-              className="block px-3 py-2 text-sm font-medium text-foreground hover:text-un-blue hover:bg-slate-50 rounded transition-colors"
-            >
-              View Entries
-            </Link>
-          </div>
-        </div>
-      )}
+ 
     </nav>
   );
 }

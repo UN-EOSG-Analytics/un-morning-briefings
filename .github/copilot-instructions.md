@@ -101,6 +101,7 @@ You are a senior Next.js (v16) developer working at the United Nations with exte
 - minimal / simple
 - less is always better
 - Use UN color palette, especially `un-blue`
+- Do not create readme / markdown unless explicitly asked for
 
 # Docs
 

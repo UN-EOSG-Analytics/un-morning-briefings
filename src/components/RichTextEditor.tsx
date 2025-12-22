@@ -4,6 +4,7 @@ import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Link from '@tiptap/extension-link';
 import TextAlign from '@tiptap/extension-text-align';
+import Image from '@tiptap/extension-image';
 import {
   Bold,
   Italic,
@@ -23,9 +24,11 @@ import {
   AlignRight,
   Minus,
   Info,
+  ImagePlus,
+  Code,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useState } from 'react';
+import { useRef } from 'react';
 
 interface RichTextEditorProps {
   content: string;
@@ -42,7 +45,7 @@ export function RichTextEditor({
   error = false,
   minHeight = 'min-h-[200px]',
 }: RichTextEditorProps) {
-  const [linkUrl, setLinkUrl] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const editor = useEditor({
     extensions: [
@@ -58,11 +61,18 @@ export function RichTextEditor({
       TextAlign.configure({
         types: ['heading', 'paragraph'],
       }),
+      Image.configure({
+        inline: true,
+        allowBase64: true,
+        HTMLAttributes: {
+          class: 'max-w-full h-auto rounded',
+        },
+      }),
     ],
     content,
     immediatelyRender: false,
     onUpdate: ({ editor }) => {
-      onChange(editor.getText());
+      onChange(editor.getHTML());
     },
     editorProps: {
       attributes: {
@@ -77,6 +87,40 @@ export function RichTextEditor({
 
   const getCharacterCount = () => {
     return editor.getText().length;
+  };
+
+  const handleImageUpload = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Check file type
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file');
+      return;
+    }
+
+    // Check file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Image size should be less than 5MB');
+      return;
+    }
+
+    // Read file as base64
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const url = event.target?.result as string;
+      if (url) {
+        editor.chain().focus().setImage({ src: url }).run();
+      }
+    };
+    reader.readAsDataURL(file);
+
+    // Reset input
+    e.target.value = '';
   };
 
   return (
@@ -120,6 +164,17 @@ export function RichTextEditor({
             title="Strikethrough"
           >
             <Strikethrough className="h-4 w-4" />
+          </Button>
+
+          <Button
+            type="button"
+            size="sm"
+            variant={editor.isActive('code') ? 'default' : 'outline'}
+            onClick={() => editor.chain().focus().toggleCode().run()}
+            className="h-8 w-8 p-0"
+            title="Inline Code"
+          >
+            <Code className="h-4 w-4" />
           </Button>
 
           <div className="h-6 w-px bg-slate-300" />
@@ -247,23 +302,40 @@ export function RichTextEditor({
           <div className="h-6 w-px bg-slate-300" />
 
           {/* Link */}
-          <div className="flex items-center gap-1">
-            <Button
-              type="button"
-              size="sm"
-              variant={editor.isActive('link') ? 'default' : 'outline'}
-              onClick={() => {
-                const url = window.prompt('URL:');
-                if (url) {
-                  editor.chain().focus().toggleLink({ href: url }).run();
-                }
-              }}
-              className="h-8 w-8 p-0"
-              title="Add Link"
-            >
-              <LinkIcon className="h-4 w-4" />
-            </Button>
-          </div>
+          <Button
+            type="button"
+            size="sm"
+            variant={editor.isActive('link') ? 'default' : 'outline'}
+            onClick={() => {
+              const url = window.prompt('URL:');
+              if (url) {
+                editor.chain().focus().toggleLink({ href: url }).run();
+              }
+            }}
+            className="h-8 w-8 p-0"
+            title="Add Link"
+          >
+            <LinkIcon className="h-4 w-4" />
+          </Button>
+
+          {/* Image Upload */}
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={handleImageUpload}
+            className="h-8 w-8 p-0"
+            title="Upload Image"
+          >
+            <ImagePlus className="h-4 w-4" />
+          </Button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleFileChange}
+            className="hidden"
+          />
 
           <div className="h-6 w-px bg-slate-300" />
 

@@ -27,6 +27,9 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
+    "docx": "^9.5.1",
+    "file-saver": "^2.0.5",
+    "html-to-text": "^9.0.5",
     "lucide-react": "^0.555.0",
     "next": "^16.0.6",
     "primereact": "^10.9.7",
@@ -36,6 +39,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/file-saver": "^2.0.7",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

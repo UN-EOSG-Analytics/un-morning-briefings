@@ -38,7 +38,13 @@ export function Navbar() {
             href="/form"
             className="text-sm font-medium text-foreground hover:text-un-blue transition-colors"
           >
-            Morning Meeting
+            New Entry
+          </Link>
+          <Link
+            href="/list"
+            className="text-sm font-medium text-foreground hover:text-un-blue transition-colors"
+          >
+            View Entries
           </Link>
         </div>
 
@@ -74,7 +80,14 @@ export function Navbar() {
               onClick={() => setIsOpen(false)}
               className="block px-3 py-2 text-sm font-medium text-foreground hover:text-un-blue hover:bg-slate-50 rounded transition-colors"
             >
-              Morning Meeting
+              New Entry
+            </Link>
+            <Link
+              href="/list"
+              onClick={() => setIsOpen(false)}
+              className="block px-3 py-2 text-sm font-medium text-foreground hover:text-un-blue hover:bg-slate-50 rounded transition-colors"
+            >
+              View Entries
             </Link>
           </div>
         </div>

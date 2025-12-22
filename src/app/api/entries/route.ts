@@ -87,7 +87,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { entry, images, ...data } = body;
+    const { entry: entryContent, images, ...data } = body;
 
     // Upload images to blob storage
     const uploadedImages = [];
@@ -124,7 +124,7 @@ export async function POST(request: NextRequest) {
         data.country,
         data.headline,
         new Date(data.date),
-        entry,
+        entryContent,
         data.sourceUrl || null,
         data.puNote || null,
         data.author || null,
@@ -196,12 +196,12 @@ export async function POST(request: NextRequest) {
       [id]
     );
 
-    const entry = result.rows[0];
+    const createdEntry = result.rows[0];
     
     // Convert blob URLs to data URLs for private blob storage
-    if (entry.images && entry.images.length > 0) {
-      let html = entry.entry;
-      for (const img of entry.images) {
+    if (createdEntry.images && createdEntry.images.length > 0) {
+      let html = createdEntry.entry;
+      for (const img of createdEntry.images) {
         try {
           const ref = `image-ref://img-${img.position}`;
           if (html.includes(ref)) {
@@ -215,10 +215,10 @@ export async function POST(request: NextRequest) {
           console.error(`Error downloading image from blob storage:`, error);
         }
       }
-      entry.entry = html;
+      createdEntry.entry = html;
     }
 
-    return NextResponse.json(entry, { status: 201 });
+    return NextResponse.json(createdEntry, { status: 201 });
   } catch (error) {
     console.error('Error creating entry:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';

@@ -159,8 +159,8 @@ class BlobStorageService {
     const sanitizedFilename = `${timestamp}-${filename.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
     const containerClient = this.blobServiceClient.getContainerClient(this.azureContainer);
     
-    // Ensure container exists
-    await containerClient.createIfNotExists({ access: 'blob' });
+    // Ensure container exists (private access)
+    await containerClient.createIfNotExists();
     
     const blockBlobClient = containerClient.getBlockBlobClient(sanitizedFilename);
     await blockBlobClient.upload(buffer, buffer.length, {

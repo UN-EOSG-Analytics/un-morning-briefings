@@ -3,8 +3,9 @@ import { query } from '@/lib/db';
 import { blobStorage } from '@/lib/blob-storage';
 
 // GET single entry
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const result = await query(
       `SELECT 
         e.id,
@@ -41,14 +42,36 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       LEFT JOIN images i ON e.id = i.entry_id
       WHERE e.id = $1
       GROUP BY e.id`,
-      [params.id]
+      [id]
     );
 
     if (result.rows.length === 0) {
       return NextResponse.json({ error: 'Entry not found' }, { status: 404 });
     }
 
-    return NextResponse.json(result.rows[0]);
+    const entry = result.rows[0];
+    
+    // Convert blob URLs to data URLs for private blob storage
+    if (entry.images && entry.images.length > 0) {
+      let html = entry.entry;
+      for (const img of entry.images) {
+        try {
+          const ref = `image-ref://img-${img.position}`;
+          if (html.includes(ref)) {
+            // Download image from blob storage
+            const buffer = await blobStorage.download(img.blobUrl);
+            const base64Data = buffer.toString('base64');
+            const dataUrl = `data:${img.mimeType};base64,${base64Data}`;
+            html = html.replace(ref, dataUrl);
+          }
+        } catch (error) {
+          console.error(`Error downloading image from blob storage:`, error);
+        }
+      }
+      entry.entry = html;
+    }
+
+    return NextResponse.json(entry);
   } catch (error) {
     console.error('Error fetching entry:', error);
     return NextResponse.json({ error: 'Failed to fetch entry' }, { status: 500 });
@@ -56,16 +79,17 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 }
 
 // PUT update entry
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const body = await request.json();
-    const { entry, images, ...data } = body;
+    const { entry: entryContent, images, ...data } = body;
 
     // Delete existing images from blob storage and database if new ones are provided
     if (images) {
       const existingImagesResult = await query(
         `SELECT id, blob_url FROM images WHERE entry_id = $1`,
-        [params.id]
+        [id]
       );
 
       // Delete from blob storage
@@ -78,7 +102,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       }
 
       // Delete from database
-      await query(`DELETE FROM images WHERE entry_id = $1`, [params.id]);
+      await query(`DELETE FROM images WHERE entry_id = $1`, [id]);
     }
 
     // Upload new images to blob storage
@@ -127,9 +151,9 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       updateFields.push(`date = $${paramCount++}`);
       updateValues.push(new Date(data.date));
     }
-    if (entry !== undefined) {
+    if (entryContent !== undefined) {
       updateFields.push(`entry = $${paramCount++}`);
-      updateValues.push(entry);
+      updateValues.push(entryContent);
     }
     if (data.sourceUrl !== undefined) {
       updateFields.push(`source_url = $${paramCount++}`);
@@ -150,7 +174,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 
     updateFields.push(`updated_at = $${paramCount++}`);
     updateValues.push(new Date());
-    updateValues.push(params.id);
+    updateValues.push(id);
 
     if (updateFields.length > 1) {
       await query(
@@ -168,7 +192,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
           ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
           [
             crypto.randomUUID(),
-            params.id,
+            id,
             img.filename,
             img.mimeType,
             img.blobUrl,
@@ -218,10 +242,32 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       LEFT JOIN images i ON e.id = i.entry_id
       WHERE e.id = $1
       GROUP BY e.id`,
-      [params.id]
+      [id]
     );
 
-    return NextResponse.json(result.rows[0]);
+    const entry = result.rows[0];
+    
+    // Convert blob URLs to data URLs for private blob storage
+    if (entry.images && entry.images.length > 0) {
+      let html = entry.entry;
+      for (const img of entry.images) {
+        try {
+          const ref = `image-ref://img-${img.position}`;
+          if (html.includes(ref)) {
+            // Download image from blob storage
+            const buffer = await blobStorage.download(img.blobUrl);
+            const base64Data = buffer.toString('base64');
+            const dataUrl = `data:${img.mimeType};base64,${base64Data}`;
+            html = html.replace(ref, dataUrl);
+          }
+        } catch (error) {
+          console.error(`Error downloading image from blob storage:`, error);
+        }
+      }
+      entry.entry = html;
+    }
+
+    return NextResponse.json(entry);
   } catch (error) {
     console.error('Error updating entry:', error);
     return NextResponse.json({ error: 'Failed to update entry' }, { status: 500 });
@@ -229,12 +275,13 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 }
 
 // DELETE entry
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     // Delete images from blob storage first
     const existingImagesResult = await query(
       `SELECT id, blob_url FROM images WHERE entry_id = $1`,
-      [params.id]
+      [id]
     );
 
     for (const img of existingImagesResult.rows) {
@@ -246,7 +293,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     }
 
     // Delete entry (will cascade delete images from database)
-    await query(`DELETE FROM entries WHERE id = $1`, [params.id]);
+    await query(`DELETE FROM entries WHERE id = $1`, [id]);
 
     return NextResponse.json({ success: true });
   } catch (error) {

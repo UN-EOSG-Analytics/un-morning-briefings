@@ -53,6 +53,29 @@ export async function GET(request: NextRequest) {
     sql += ` GROUP BY e.id ORDER BY e.created_at DESC`;
 
     const result = await query(sql, params);
+    
+    // Convert blob URLs to data URLs for private blob storage
+    for (const entry of result.rows) {
+      if (entry.images && entry.images.length > 0) {
+        let html = entry.entry;
+        for (const img of entry.images) {
+          try {
+            const ref = `image-ref://img-${img.position}`;
+            if (html.includes(ref)) {
+              // Download image from blob storage
+              const buffer = await blobStorage.download(img.blobUrl);
+              const base64Data = buffer.toString('base64');
+              const dataUrl = `data:${img.mimeType};base64,${base64Data}`;
+              html = html.replace(ref, dataUrl);
+            }
+          } catch (error) {
+            console.error(`Error downloading image from blob storage:`, error);
+          }
+        }
+        entry.entry = html;
+      }
+    }
+    
     return NextResponse.json(result.rows);
   } catch (error) {
     console.error('Error fetching entries:', error);
@@ -173,7 +196,29 @@ export async function POST(request: NextRequest) {
       [id]
     );
 
-    return NextResponse.json(result.rows[0], { status: 201 });
+    const entry = result.rows[0];
+    
+    // Convert blob URLs to data URLs for private blob storage
+    if (entry.images && entry.images.length > 0) {
+      let html = entry.entry;
+      for (const img of entry.images) {
+        try {
+          const ref = `image-ref://img-${img.position}`;
+          if (html.includes(ref)) {
+            // Download image from blob storage
+            const buffer = await blobStorage.download(img.blobUrl);
+            const base64Data = buffer.toString('base64');
+            const dataUrl = `data:${img.mimeType};base64,${base64Data}`;
+            html = html.replace(ref, dataUrl);
+          }
+        } catch (error) {
+          console.error(`Error downloading image from blob storage:`, error);
+        }
+      }
+      entry.entry = html;
+    }
+
+    return NextResponse.json(entry, { status: 201 });
   } catch (error) {
     console.error('Error creating entry:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';

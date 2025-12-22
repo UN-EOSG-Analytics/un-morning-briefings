@@ -214,7 +214,7 @@ export function MorningMeetingForm({
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-8 px-4">
-      <div className="mx-auto w-full max-w-5xl">
+      <div className="mx-auto w-full max-w-6xl">
         {/* Header */}
         <Card className="mb-0 rounded-b-none border-b-0">
           <CardHeader>

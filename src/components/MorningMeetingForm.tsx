@@ -34,11 +34,13 @@ import {
 interface MorningMeetingFormProps {
   onSubmit?: (data: MorningMeetingEntry) => Promise<void>;
   initialData?: Partial<MorningMeetingEntry>;
+  isEditing?: boolean;
 }
 
 export function MorningMeetingForm({
   onSubmit,
   initialData,
+  isEditing = false,
 }: MorningMeetingFormProps) {
   const [formData, setFormData] = useState<MorningMeetingEntry>({
     category: initialData?.category || '',
@@ -595,7 +597,7 @@ export function MorningMeetingForm({
               className="gap-2"
             >
               <Send className="h-4 w-4" />
-              {isSubmitting ? 'Submitting...' : 'Submit Entry'}
+              {isSubmitting ? (isEditing ? 'Updating...' : 'Submitting...') : (isEditing ? 'Update Entry' : 'Submit Entry')}
             </Button>
           </div>
         </div>

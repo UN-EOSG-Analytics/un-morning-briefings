@@ -1,4 +1,4 @@
-import { Document, Paragraph, TextRun, ImageRun } from 'docx';
+import { Document, Paragraph, TextRun } from 'docx';
 
 /**
  * Convert TipTap HTML content to docx Paragraph elements
@@ -16,65 +16,16 @@ export function parseHtmlContent(html: string): Paragraph[] {
     const tagName = elem.tagName.toLowerCase();
 
     if (tagName === 'img') {
-      // Handle image elements
+      // Handle image elements - show as link/reference for now
       const src = elem.getAttribute('src') || '';
       const alt = elem.getAttribute('alt') || 'Image';
 
-      if (src.startsWith('data:image')) {
-        // Base64 image
-        try {
-          const base64Data = src.split(',')[1];
-          const mimeMatch = src.match(/data:([^;]+)/)?.[1] || 'image/png';
-          // Map MIME types to docx format types
-          let docxType: 'jpg' | 'png' | 'gif' | 'bmp' | 'svg' = 'png';
-          if (mimeMatch.includes('jpeg') || mimeMatch.includes('jpg')) {
-            docxType = 'jpg';
-          } else if (mimeMatch.includes('gif')) {
-            docxType = 'gif';
-          } else if (mimeMatch.includes('bmp')) {
-            docxType = 'bmp';
-          } else if (mimeMatch.includes('svg')) {
-            docxType = 'svg';
-          }
-
-          paragraphs.push(
-            new Paragraph({
-              children: [
-                new ImageRun({
-                  data: base64Data,
-                  type: docxType,
-                  transformation: {
-                    width: 400,
-                    height: 300,
-                  },
-                  fallback: {
-                    children: [
-                      new TextRun({ text: alt || '[Image]', font: 'Roboto' }),
-                    ],
-                  },
-                }),
-              ],
-              spacing: { after: 100, before: 100 },
-            })
-          );
-        } catch (e) {
-          // Fallback if image parsing fails
-          paragraphs.push(
-            new Paragraph({
-              children: [new TextRun({ text: `[Image: ${alt}]`, italics: true, font: 'Roboto' })],
-              spacing: { after: 100 },
-            })
-          );
-        }
-      } else {
-        // External image URL - show as link
-        paragraphs.push(
-          new Paragraph({
-            children: [new TextRun({ text: `[Image: ${src}]`, color: '0000FF', underline: {}, font: 'Roboto' })],
-            spacing: { after: 100 },
-          })
-        );
-      }
+      paragraphs.push(
+        new Paragraph({
+          children: [new TextRun({ text: `[Image: ${alt}]`, color: '0000FF', underline: {}, font: 'Roboto' })],
+          spacing: { after: 100 },
+        })
+      );
     } else if (tagName === 'p') {
       const runs = extractRuns(elem);
       paragraphs.push(

@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/select';
 import { getAllEntries, deleteEntry } from '@/lib/storage';
 import { REGIONS, CATEGORIES, PRIORITIES, MorningMeetingEntry } from '@/types/morning-meeting';
-import { Search, FileText, Trash2, Eye, Download, FileDown } from 'lucide-react';
+import { Search, FileText, Trash2, Eye, Download, FileDown, Edit } from 'lucide-react';
 import Link from 'next/link';
 import { ExportDailyBriefingDialog } from './ExportDailyBriefingDialog';
 import { ViewEntryDialog } from './ViewEntryDialog';
@@ -301,6 +301,15 @@ export function MorningMeetingList() {
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
+                        <Link href={`/form?edit=${entry.id}`}>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0 text-slate-600 hover:bg-slate-100"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        </Link>
                         <Button
                           variant="ghost"
                           size="sm"

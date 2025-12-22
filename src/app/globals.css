@@ -262,6 +262,56 @@ body::-webkit-scrollbar {
   border-radius: 0.5rem;
   margin: 0.5rem 0;
   cursor: pointer;
+  display: block;
+  transition: outline 200ms ease;
+}
+
+/* Apply width from data-width attribute */
+.ProseMirror img[data-width] {
+  width: var(--image-width);
+}
+
+.ProseMirror img[data-width='250px'] {
+  width: 250px;
+}
+
+.ProseMirror img[data-width='400px'] {
+  width: 400px;
+}
+
+.ProseMirror img[data-width='600px'] {
+  width: 600px;
+}
+
+.ProseMirror img[data-width='100%'] {
+  width: 100%;
+}
+
+/* Style for selected images */
+.ProseMirror img.ProseMirror-selectednode {
+  outline: 2px solid #009edb;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 3px rgba(0, 158, 219, 0.1);
+}
+
+.ProseMirror .editor-image {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 0.5rem 0;
+  border-radius: 0.5rem;
+  transition: outline 200ms ease;
+}
+
+.ProseMirror .editor-image:hover {
+  outline: 1px dashed #009edb;
+  outline-offset: 1px;
+}
+
+.ProseMirror .editor-image.ProseMirror-selectednode {
+  outline: 2px solid #009edb;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 3px rgba(0, 158, 219, 0.1);
 }
 
 .ProseMirror a {

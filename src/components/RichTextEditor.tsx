@@ -62,10 +62,30 @@ export function RichTextEditor({
         types: ['heading', 'paragraph'],
       }),
       Image.configure({
-        inline: true,
+        inline: false,
         allowBase64: true,
         HTMLAttributes: {
-          class: 'max-w-full h-auto rounded',
+          class: 'editor-image rounded cursor-pointer',
+          draggable: true,
+          contenteditable: false,
+        },
+      }).extend({
+        addAttributes() {
+          return {
+            ...this.parent?.(),
+            width: {
+              default: null,
+              parseHTML: (element) => element.getAttribute('data-width'),
+              renderHTML: (attributes) => {
+                if (attributes.width) {
+                  return {
+                    'data-width': attributes.width,
+                  };
+                }
+                return {};
+              },
+            },
+          };
         },
       }),
     ],
@@ -336,6 +356,54 @@ export function RichTextEditor({
             onChange={handleFileChange}
             className="hidden"
           />
+
+          {/* Image Sizing */}
+          <select
+            onChange={(e) => {
+              const size = e.target.value;
+              if (size === 'default') {
+                e.target.value = 'default';
+                return;
+              }
+              
+              let width: string | undefined;
+              
+              switch (size) {
+                case 'small':
+                  width = '250px';
+                  break;
+                case 'medium':
+                  width = '400px';
+                  break;
+                case 'large':
+                  width = '600px';
+                  break;
+                case 'full':
+                  width = '100%';
+                  break;
+              }
+
+              if (width) {
+                editor
+                  .chain()
+                  .focus()
+                  .updateAttributes('image', { width })
+                  .run();
+              }
+              e.target.value = 'default';
+            }}
+            className="h-8 rounded border border-slate-300 bg-white px-2 py-1 text-xs"
+            title="Image Size (select an image first)"
+            defaultValue="default"
+          >
+            <option value="default" disabled>
+              Image Size
+            </option>
+            <option value="small">Small (250px)</option>
+            <option value="medium">Medium (400px)</option>
+            <option value="large">Large (600px)</option>
+            <option value="full">Full Width</option>
+          </select>
 
           <div className="h-6 w-px bg-slate-300" />
 

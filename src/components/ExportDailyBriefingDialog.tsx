@@ -51,18 +51,33 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
         return;
       }
 
-      // Restore images in HTML for each entry
+      // Restore images in HTML for each entry by downloading from blob storage
       for (const entry of entriesForDate) {
         if (entry.images && entry.images.length > 0) {
           let html = entry.entry;
-          entry.images.forEach((img: any) => {
-            const ref = `image-ref://img-${img.position}`;
-            const base64Data = typeof img.data === 'string' 
-              ? img.data 
-              : Buffer.from(img.data).toString('base64');
-            const dataUrl = `data:${img.mimeType};base64,${base64Data}`;
-            html = html.replace(ref, dataUrl);
-          });
+          
+          // Download each image from blob storage
+          for (const img of entry.images) {
+            try {
+              const ref = `image-ref://img-${img.position}`;
+              
+              // Download image from blob URL
+              const response = await fetch(img.blobUrl);
+              if (!response.ok) {
+                console.error(`Failed to fetch image from ${img.blobUrl}`);
+                continue;
+              }
+              
+              const arrayBuffer = await response.arrayBuffer();
+              const base64Data = Buffer.from(arrayBuffer).toString('base64');
+              const dataUrl = `data:${img.mimeType};base64,${base64Data}`;
+              
+              html = html.replace(ref, dataUrl);
+            } catch (error) {
+              console.error(`Error downloading image from blob storage:`, error);
+            }
+          }
+          
           entry.entry = html;
         }
       }

@@ -6,7 +6,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 model Entry {
@@ -37,7 +36,7 @@ model Image {
   entryId     String
   filename    String
   mimeType    String
-  data        Bytes    @db.ByteA
+  blobUrl     String   // URL to blob storage
   width       Int?
   height      Int?
   position    Int?

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { blobStorage } from '@/lib/blob-storage';
 
 // GET single entry
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
@@ -28,11 +29,42 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     const body = await request.json();
     const { entry, images, ...data } = body;
 
-    // Delete existing images if new ones are provided
+    // Delete existing images from blob storage and database if new ones are provided
     if (images) {
+      const existingImages = await prisma.image.findMany({
+        where: { entryId: params.id },
+      });
+
+      // Delete from blob storage
+      for (const img of existingImages) {
+        try {
+          await blobStorage.delete(img.blobUrl);
+        } catch (error) {
+          console.error('Error deleting blob:', error);
+        }
+      }
+
+      // Delete from database
       await prisma.image.deleteMany({
         where: { entryId: params.id },
       });
+    }
+
+    // Upload new images to blob storage
+    const uploadedImages = [];
+    if (images && images.length > 0) {
+      for (const img of images) {
+        const buffer = Buffer.from(img.data, 'base64');
+        const result = await blobStorage.upload(buffer, img.filename, img.mimeType);
+        uploadedImages.push({
+          filename: result.filename,
+          mimeType: result.mimeType,
+          blobUrl: result.url,
+          width: img.width,
+          height: img.height,
+          position: img.position,
+        });
+      }
     }
 
     const updatedEntry = await prisma.entry.update({
@@ -41,16 +73,9 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
         ...data,
         date: data.date ? new Date(data.date) : undefined,
         entry,
-        images: images
+        images: uploadedImages.length > 0
           ? {
-              create: images.map((img: any) => ({
-                filename: img.filename,
-                mimeType: img.mimeType,
-                data: Buffer.from(img.data, 'base64'),
-                width: img.width,
-                height: img.height,
-                position: img.position,
-              })),
+              create: uploadedImages,
             }
           : undefined,
       },
@@ -69,6 +94,20 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 // DELETE entry
 export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   try {
+    // Delete images from blob storage first
+    const existingImages = await prisma.image.findMany({
+      where: { entryId: params.id },
+    });
+
+    for (const img of existingImages) {
+      try {
+        await blobStorage.delete(img.blobUrl);
+      } catch (error) {
+        console.error('Error deleting blob:', error);
+      }
+    }
+
+    // Delete entry (will cascade delete images from database)
     await prisma.entry.delete({
       where: { id: params.id },
     });

@@ -116,6 +116,7 @@ export function MorningMeetingList() {
   };
 
   return (
+    
     <div className="space-y-4 mx-auto w-full max-w-6xl">
       {/* Header */}
       <Card className="border-slate-200">

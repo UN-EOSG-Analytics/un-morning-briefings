@@ -11,10 +11,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { getAllEntries, deleteEntry } from '@/lib/storage';
-import { REGIONS, CATEGORIES, PRIORITIES } from '@/types/morning-meeting';
+import { REGIONS, CATEGORIES, PRIORITIES, MorningMeetingEntry } from '@/types/morning-meeting';
 import { Search, FileText, Trash2, Eye, Download, FileDown } from 'lucide-react';
 import Link from 'next/link';
 import { ExportDailyBriefingDialog } from './ExportDailyBriefingDialog';
+import { ViewEntryDialog } from './ViewEntryDialog';
 
 export function MorningMeetingList() {
   const [entries, setEntries] = useState<any[]>([]);
@@ -25,6 +26,8 @@ export function MorningMeetingList() {
   const [sortField, setSortField] = useState<string>('date');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [showExportDialog, setShowExportDialog] = useState(false);
+  const [selectedEntry, setSelectedEntry] = useState<MorningMeetingEntry | null>(null);
+  const [showViewDialog, setShowViewDialog] = useState(false);
 
   useEffect(() => {
     loadEntries();
@@ -291,7 +294,10 @@ export function MorningMeetingList() {
                           variant="ghost"
                           size="sm"
                           className="h-8 w-8 p-0"
-                          onClick={() => window.alert(`View details:\n\n${JSON.stringify(entry, null, 2)}`)}
+                          onClick={() => {
+                            setSelectedEntry(entry);
+                            setShowViewDialog(true);
+                          }}
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
@@ -317,6 +323,13 @@ export function MorningMeetingList() {
       <ExportDailyBriefingDialog
         open={showExportDialog}
         onOpenChange={setShowExportDialog}
+      />
+
+      {/* View Entry Dialog */}
+      <ViewEntryDialog
+        open={showViewDialog}
+        onOpenChange={setShowViewDialog}
+        entry={selectedEntry}
       />
     </div>
   );

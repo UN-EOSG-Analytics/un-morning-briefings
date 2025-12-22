@@ -47,6 +47,11 @@ export function parseHtmlContent(html: string): Paragraph[] {
                     width: 400,
                     height: 300,
                   },
+                  fallback: {
+                    children: [
+                      new TextRun({ text: alt || '[Image]', font: 'Roboto' }),
+                    ],
+                  },
                 }),
               ],
               spacing: { after: 100, before: 100 },

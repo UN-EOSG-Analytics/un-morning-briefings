@@ -52,7 +52,6 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
       const children: any[] = [
         // Title
         new Paragraph({
-          text: 'Daily Morning Meeting Briefing',
           heading: HeadingLevel.HEADING_1,
           alignment: AlignmentType.CENTER,
           spacing: { after: 200 },
@@ -67,12 +66,6 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
         }),
         // Date
         new Paragraph({
-          text: new Date(selectedDate).toLocaleDateString('en-US', {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-          }),
           alignment: AlignmentType.CENTER,
           spacing: { after: 400 },
           children: [
@@ -166,7 +159,7 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
           })
         );
 
-        // Content - parse HTML properly
+        // Content - parse TipTap JSON
         if (entry.entry) {
           try {
             const contentElements = parseHtmlContent(entry.entry);

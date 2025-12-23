@@ -8,15 +8,22 @@ function extractImagesFromHtml(html: string): { images: any[]; updatedHtml: stri
   let position = 0;
 
   if (typeof window === 'undefined') {
+    console.log('extractImagesFromHtml: Running on server side, returning unchanged HTML');
     return { images: [], updatedHtml: html };
   }
+
+  console.log('extractImagesFromHtml: Starting extraction from HTML:', html.substring(0, 200));
 
   const parser = new DOMParser();
   const doc = parser.parseFromString(html, 'text/html');
   const imgElements = doc.querySelectorAll('img');
 
+  console.log('extractImagesFromHtml: Found', imgElements.length, 'image elements');
+
   imgElements.forEach((img) => {
     const src = img.getAttribute('src');
+    console.log('extractImagesFromHtml: Processing image with src:', src?.substring(0, 50));
+    
     if (src && src.startsWith('data:')) {
       const matches = src.match(/^data:([^;]+);base64,(.+)$/);
       if (matches) {
@@ -24,6 +31,8 @@ function extractImagesFromHtml(html: string): { images: any[]; updatedHtml: stri
         const data = matches[2];
         const width = parseInt(img.getAttribute('data-width') || '400');
         const height = parseInt(img.getAttribute('data-height') || '300');
+        
+        console.log('extractImagesFromHtml: Extracted image with dimensions:', width, 'x', height);
         
         const imageId = `img-${position}`;
         images.push({
@@ -42,6 +51,8 @@ function extractImagesFromHtml(html: string): { images: any[]; updatedHtml: stri
     }
   });
 
+  console.log('extractImagesFromHtml: Total images extracted:', images.length);
+
   return {
     images,
     updatedHtml: doc.body.innerHTML,
@@ -50,25 +61,37 @@ function extractImagesFromHtml(html: string): { images: any[]; updatedHtml: stri
 
 export async function saveEntry(entry: MorningMeetingEntry): Promise<any> {
   try {
+    console.log('saveEntry: Starting with entry.entry length:', entry.entry.length);
     const { images, updatedHtml } = extractImagesFromHtml(entry.entry);
+    
+    console.log('saveEntry: Extracted', images.length, 'images');
+    console.log('saveEntry: Updated HTML length:', updatedHtml.length);
+
+    const payload = {
+      ...entry,
+      entry: updatedHtml,
+      images,
+    };
+    
+    console.log('saveEntry: Sending payload with', images.length, 'images to API');
 
     const response = await fetch('/api/entries', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        ...entry,
-        entry: updatedHtml,
-        images,
-      }),
+      body: JSON.stringify(payload),
     });
 
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error('saveEntry: API error:', response.status, errorText);
       throw new Error('Failed to save entry');
     }
 
-    return await response.json();
+    const result = await response.json();
+    console.log('saveEntry: Success, received entry ID:', result.id);
+    return result;
   } catch (error) {
     console.error('Error saving entry:', error);
     throw error;

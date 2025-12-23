@@ -57,16 +57,22 @@ export async function GET(request: NextRequest) {
     // Convert blob URLs to data URLs for private blob storage
     for (const entry of result.rows) {
       if (entry.images && entry.images.length > 0) {
+        console.log(`GET /api/entries: Processing ${entry.images.length} images for entry ${entry.id}`);
         let html = entry.entry;
         for (const img of entry.images) {
           try {
             const ref = `image-ref://img-${img.position}`;
+            console.log(`GET /api/entries: Looking for reference ${ref} in HTML`);
             if (html.includes(ref)) {
+              console.log(`GET /api/entries: Found reference, downloading from ${img.blobUrl}`);
               // Download image from blob storage
               const buffer = await blobStorage.download(img.blobUrl);
               const base64Data = buffer.toString('base64');
               const dataUrl = `data:${img.mimeType};base64,${base64Data}`;
               html = html.replace(ref, dataUrl);
+              console.log(`GET /api/entries: Replaced reference with data URL`);
+            } else {
+              console.log(`GET /api/entries: Reference ${ref} not found in HTML`);
             }
           } catch (error) {
             console.error(`Error downloading image ${img.id} from blob storage:`, error);
@@ -92,13 +98,19 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { entry: entryContent, images, ...data } = body;
 
+    console.log('POST /api/entries: Received request with', images?.length || 0, 'images');
+    console.log('POST /api/entries: Entry content length:', entryContent?.length);
+
     // Upload images to blob storage
     const uploadedImages = [];
     if (images && images.length > 0) {
+      console.log('POST /api/entries: Starting image upload to blob storage');
       for (const img of images) {
         try {
+          console.log(`POST /api/entries: Uploading image ${img.filename} (${img.mimeType}), position: ${img.position}`);
           const buffer = Buffer.from(img.data, 'base64');
           const result = await blobStorage.upload(buffer, img.filename, img.mimeType);
+          console.log(`POST /api/entries: Successfully uploaded to ${result.url}`);
           uploadedImages.push({
             filename: result.filename,
             mimeType: result.mimeType,
@@ -112,6 +124,7 @@ export async function POST(request: NextRequest) {
           // Continue with other images, skip this one
         }
       }
+      console.log('POST /api/entries: Uploaded', uploadedImages.length, 'images successfully');
     }
 
     // Generate ID

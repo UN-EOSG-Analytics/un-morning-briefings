@@ -17,7 +17,7 @@ export function ViewEntryDialog({ open, onOpenChange, entry }: ViewEntryDialogPr
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="!max-w-none w-[95vw] max-h-[90vh] flex flex-col">
+      <DialogContent className="!max-w-none w-[50vw] max-h-[90vh] flex flex-col">
         <DialogHeader className="border-b border-slate-200 pb-4">
           <DialogTitle className="text-2xl font-bold text-slate-900">
             {entry.headline}
@@ -32,7 +32,7 @@ export function ViewEntryDialog({ open, onOpenChange, entry }: ViewEntryDialogPr
             }
           `}</style>
           {/* Entry metadata */}
-          <div className="grid grid-cols-2 gap-6 mb-6">
+          <div className="grid grid-cols-3 gap-6 mb-6">
             <Card className="border-slate-200 p-4">
               <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
                 Date

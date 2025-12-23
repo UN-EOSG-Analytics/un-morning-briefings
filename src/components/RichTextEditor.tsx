@@ -73,13 +73,25 @@ export function RichTextEditor({
         addAttributes() {
           return {
             ...this.parent?.(),
-            width: {
+            'data-width': {
               default: null,
               parseHTML: (element) => element.getAttribute('data-width'),
               renderHTML: (attributes) => {
-                if (attributes.width) {
+                if (attributes['data-width']) {
                   return {
-                    'data-width': attributes.width,
+                    'data-width': attributes['data-width'],
+                  };
+                }
+                return {};
+              },
+            },
+            'data-height': {
+              default: null,
+              parseHTML: (element) => element.getAttribute('data-height'),
+              renderHTML: (attributes) => {
+                if (attributes['data-height']) {
+                  return {
+                    'data-height': attributes['data-height'],
                   };
                 }
                 return {};
@@ -129,12 +141,27 @@ export function RichTextEditor({
       return;
     }
 
-    // Read file as base64
+    // Read file as base64 and get image dimensions
     const reader = new FileReader();
     reader.onload = (event) => {
       const url = event.target?.result as string;
       if (url) {
-        editor.chain().focus().setImage({ src: url }).run();
+        // Create image element to get dimensions
+        const img = new window.Image();
+        img.onload = () => {
+          console.log('Image loaded with dimensions:', img.width, img.height);
+          editor.chain().focus().setImage({ 
+            src: url,
+            'data-width': img.width.toString(),
+            'data-height': img.height.toString()
+          }).run();
+        };
+        img.onerror = () => {
+          console.error('Failed to load image for dimensions');
+          // Fallback: insert without dimensions
+          editor.chain().focus().setImage({ src: url }).run();
+        };
+        img.src = url;
       }
     };
     reader.readAsDataURL(file);

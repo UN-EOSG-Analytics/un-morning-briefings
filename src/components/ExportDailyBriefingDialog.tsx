@@ -56,25 +56,35 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
         if (entry.images && entry.images.length > 0) {
           let html = entry.entry;
           
-          // Download each image from blob storage
+          // Download each image from blob storage via API
           for (const img of entry.images) {
             try {
               const ref = `image-ref://img-${img.position}`;
               
-              // Download image from blob URL
-              const response = await fetch(img.blobUrl);
+              // Download image from blob storage via API endpoint
+              const response = await fetch(`/api/images/${img.id}`);
               if (!response.ok) {
-                console.error(`Failed to fetch image from ${img.blobUrl}`);
+                console.error(`Failed to fetch image ${img.id} from API`);
+                // Remove broken image reference
+                html = html.replace(ref, '');
                 continue;
               }
               
               const arrayBuffer = await response.arrayBuffer();
-              const base64Data = Buffer.from(arrayBuffer).toString('base64');
+              const base64Data = btoa(
+                new Uint8Array(arrayBuffer).reduce(
+                  (data, byte) => data + String.fromCharCode(byte),
+                  ''
+                )
+              );
               const dataUrl = `data:${img.mimeType};base64,${base64Data}`;
               
               html = html.replace(ref, dataUrl);
             } catch (error) {
-              console.error(`Error downloading image from blob storage:`, error);
+              console.error(`Error downloading image ${img.id} from blob storage:`, error);
+              // Remove broken image reference
+              const ref = `image-ref://img-${img.position}`;
+              html = html.replace(ref, '');
             }
           }
           

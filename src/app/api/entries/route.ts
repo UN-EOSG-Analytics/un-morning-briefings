@@ -69,7 +69,10 @@ export async function GET(request: NextRequest) {
               html = html.replace(ref, dataUrl);
             }
           } catch (error) {
-            console.error(`Error downloading image from blob storage:`, error);
+            console.error(`Error downloading image ${img.id} from blob storage:`, error);
+            // Replace with placeholder or remove the reference
+            const ref = `image-ref://img-${img.position}`;
+            html = html.replace(ref, '');
           }
         }
         entry.entry = html;
@@ -93,16 +96,21 @@ export async function POST(request: NextRequest) {
     const uploadedImages = [];
     if (images && images.length > 0) {
       for (const img of images) {
-        const buffer = Buffer.from(img.data, 'base64');
-        const result = await blobStorage.upload(buffer, img.filename, img.mimeType);
-        uploadedImages.push({
-          filename: result.filename,
-          mimeType: result.mimeType,
-          blobUrl: result.url,
-          width: img.width,
-          height: img.height,
-          position: img.position,
-        });
+        try {
+          const buffer = Buffer.from(img.data, 'base64');
+          const result = await blobStorage.upload(buffer, img.filename, img.mimeType);
+          uploadedImages.push({
+            filename: result.filename,
+            mimeType: result.mimeType,
+            blobUrl: result.url,
+            width: img.width,
+            height: img.height,
+            position: img.position,
+          });
+        } catch (error) {
+          console.error(`Error uploading image ${img.filename}:`, error);
+          // Continue with other images, skip this one
+        }
       }
     }
 
@@ -212,7 +220,10 @@ export async function POST(request: NextRequest) {
             html = html.replace(ref, dataUrl);
           }
         } catch (error) {
-          console.error(`Error downloading image from blob storage:`, error);
+          console.error(`Error downloading image ${img.id} from blob storage:`, error);
+          // Replace with placeholder or remove the reference
+          const ref = `image-ref://img-${img.position}`;
+          html = html.replace(ref, '');
         }
       }
       createdEntry.entry = html;

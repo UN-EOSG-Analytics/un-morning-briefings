@@ -144,17 +144,9 @@ export async function getEntryById(id: string): Promise<any> {
 
     const entry = await response.json();
     
-    // Restore images in HTML
-    if (entry.images && entry.images.length > 0) {
-      let html = entry.entry;
-      entry.images.forEach((img: any) => {
-        const ref = `image-ref://img-${img.position}`;
-        const dataUrl = `data:${img.mimeType};base64,${img.data.toString('base64')}`;
-        html = html.replace(ref, dataUrl);
-      });
-      entry.entry = html;
-    }
-
+    // Note: The API already converts image-ref:// to data URLs
+    // So entry.entry should already contain the proper image data
+    
     return entry;
   } catch (error) {
     console.error('Error fetching entry:', error);

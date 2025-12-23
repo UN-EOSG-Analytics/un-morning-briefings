@@ -42,6 +42,13 @@ export function MorningMeetingForm({
   initialData,
   isEditing = false,
 }: MorningMeetingFormProps) {
+  // Clean initial entry content by removing any image-ref:// references
+  const cleanEntry = (entry: string) => {
+    if (!entry) return '';
+    // Remove any image-ref:// img tags that weren't converted properly
+    return entry.replace(/<img[^>]*src=["']image-ref:\/\/[^"']*["'][^>]*>/gi, '');
+  };
+
   const [formData, setFormData] = useState<MorningMeetingEntry>({
     category: initialData?.category || '',
     priority: initialData?.priority || 'situational-awareness',
@@ -49,7 +56,7 @@ export function MorningMeetingForm({
     country: initialData?.country || '',
     headline: initialData?.headline || '',
     date: initialData?.date || new Date().toISOString().split('T')[0],
-    entry: initialData?.entry || '',
+    entry: cleanEntry(initialData?.entry || ''),
     sourceUrl: initialData?.sourceUrl || '',
     puNote: initialData?.puNote || '',
     author: initialData?.author || 'Current User',

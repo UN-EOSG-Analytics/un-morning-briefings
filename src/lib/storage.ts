@@ -24,6 +24,8 @@ function extractImagesFromHtml(html: string): { images: any[]; updatedHtml: stri
     const src = img.getAttribute('src');
     console.log('extractImagesFromHtml: Processing image with src:', src?.substring(0, 50));
     
+    // Only extract images with data: URLs (fresh uploads)
+    // Skip image-ref:// URLs (already saved images)
     if (src && src.startsWith('data:')) {
       const matches = src.match(/^data:([^;]+);base64,(.+)$/);
       if (matches) {
@@ -48,6 +50,9 @@ function extractImagesFromHtml(html: string): { images: any[]; updatedHtml: stri
         img.setAttribute('src', `image-ref://${imageId}`);
         position++;
       }
+    } else if (src && src.startsWith('image-ref://')) {
+      console.log('extractImagesFromHtml: Skipping already-saved image reference:', src);
+      // Keep the reference as-is, don't try to extract it
     }
   });
 
@@ -100,13 +105,59 @@ export async function saveEntry(entry: MorningMeetingEntry): Promise<any> {
 
 export async function getAllEntries(): Promise<any[]> {
   try {
+    console.log('getAllEntries: Fetching from API');
     const response = await fetch('/api/entries');
     
     if (!response.ok) {
       throw new Error('Failed to fetch entries');
     }
 
-    return await response.json();
+    const entries = await response.json();
+    console.log('getAllEntries: Received', entries.length, 'entries');
+    
+    // Client-side fallback: Convert image-ref:// to data URLs using images array
+    for (const entry of entries) {
+      if (entry.images && entry.images.length > 0 && entry.entry) {
+        let html = entry.entry;
+        console.log('getAllEntries: Converting', entry.images.length, 'image references for entry', entry.id);
+        
+        for (const img of entry.images) {
+          try {
+            const ref = `image-ref://img-${img.position}`;
+            if (html.includes(ref)) {
+              console.log('getAllEntries: Found reference', ref, 'fetching from /api/images/' + img.id);
+              // Fetch image from API
+              const imgResponse = await fetch(`/api/images/${img.id}`);
+              if (imgResponse.ok) {
+                const blob = await imgResponse.blob();
+                const reader = new FileReader();
+                await new Promise((resolve, reject) => {
+                  reader.onloadend = () => {
+                    const dataUrl = reader.result as string;
+                    html = html.replace(ref, dataUrl);
+                    console.log('getAllEntries: Successfully replaced reference with data URL');
+                    resolve(null);
+                  };
+                  reader.onerror = reject;
+                  reader.readAsDataURL(blob);
+                });
+              } else {
+                console.error('getAllEntries: Failed to fetch image', img.id);
+                html = html.replace(ref, '');
+              }
+            }
+          } catch (error) {
+            console.error('getAllEntries: Error converting image reference:', error);
+          }
+        }
+        entry.entry = html;
+      }
+    }
+    
+    if (entries.length > 0) {
+      console.log('getAllEntries: After conversion, first entry HTML preview:', entries[0].entry?.substring(0, 200));
+    }
+    return entries;
   } catch (error) {
     console.error('Error fetching entries:', error);
     return [];

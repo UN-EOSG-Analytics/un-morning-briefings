@@ -15,6 +15,11 @@ interface ViewEntryDialogProps {
 export function ViewEntryDialog({ open, onOpenChange, entry }: ViewEntryDialogProps) {
   if (!entry) return null;
 
+  // Debug: Log entry content
+  console.log('ViewEntryDialog: Rendering entry with HTML length:', entry.entry?.length);
+  console.log('ViewEntryDialog: HTML preview:', entry.entry?.substring(0, 500));
+  console.log('ViewEntryDialog: Images array:', entry.images);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="!max-w-none w-[50vw] max-h-[90vh] flex flex-col">
@@ -100,13 +105,21 @@ export function ViewEntryDialog({ open, onOpenChange, entry }: ViewEntryDialogPr
             </div>
             <div className="prose prose-sm max-w-none break-words overflow-wrap-anywhere">
               <div
-                className="text-slate-700 space-y-4 break-words whitespace-pre-wrap"
+                className="text-slate-700 space-y-4 break-words whitespace-pre-wrap entry-content"
                 style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}
                 dangerouslySetInnerHTML={{
                   __html: entry.entry,
                 }}
               />
             </div>
+            <style jsx>{`
+              .entry-content :global(img) {
+                max-width: 100%;
+                height: auto;
+                display: block;
+                margin: 1rem 0;
+              }
+            `}</style>
           </Card>
 
           {/* PU notes */}

@@ -9,6 +9,7 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
+    console.log('GET /api/images/[id]: Request for image ID:', id);
 
     if (!id) {
       return NextResponse.json({ error: 'No image ID provided' }, { status: 400 });
@@ -20,14 +21,24 @@ export async function GET(
       [id]
     );
 
+    console.log('GET /api/images/[id]: Database query returned', result.rows.length, 'rows');
+
     if (result.rows.length === 0) {
       return NextResponse.json({ error: 'Image not found' }, { status: 404 });
     }
 
     const image = result.rows[0];
+    console.log('GET /api/images/[id]: Found image:', {
+      id: image.id,
+      blobUrl: image.blob_url,
+      mimeType: image.mime_type,
+      filename: image.filename,
+    });
 
     // Download image from blob storage
+    console.log('GET /api/images/[id]: Downloading from blob storage...');
     const buffer = await blobStorage.download(image.blob_url);
+    console.log('GET /api/images/[id]: Successfully downloaded, size:', buffer.length);
 
     // Return image with proper content type
     return new NextResponse(buffer, {
@@ -38,7 +49,10 @@ export async function GET(
       },
     });
   } catch (error) {
-    console.error('Error fetching image:', error);
-    return NextResponse.json({ error: 'Failed to fetch image' }, { status: 500 });
+    console.error('GET /api/images/[id]: Error fetching image:', error);
+    return NextResponse.json({ 
+      error: 'Failed to fetch image',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 });
   }
 }

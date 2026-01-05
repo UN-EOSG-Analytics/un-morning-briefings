@@ -34,12 +34,14 @@ import { usePopup } from '@/lib/popup-context';
 
 interface MorningMeetingFormProps {
   onSubmit?: (data: MorningMeetingEntry) => Promise<void>;
+  onCancel?: () => void;
   initialData?: Partial<MorningMeetingEntry>;
   isEditing?: boolean;
 }
 
 export function MorningMeetingForm({
   onSubmit,
+  onCancel,
   initialData,
   isEditing = false,
 }: MorningMeetingFormProps) {
@@ -216,7 +218,11 @@ export function MorningMeetingForm({
     );
     
     if (confirmed) {
-      window.history.back();
+      if (onCancel) {
+        onCancel();
+      } else {
+        window.history.back();
+      }
     }
   };
 

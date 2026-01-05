@@ -60,6 +60,10 @@ function FormContent() {
     }
   };
 
+  const handleCancel = () => {
+    router.push('/list');
+  };
+
   if (isLoading) {
     return <main className="flex items-center justify-center py-12">Loading...</main>;
   }
@@ -67,7 +71,8 @@ function FormContent() {
   return (
     <main>
       <MorningMeetingForm 
-        onSubmit={handleSubmit} 
+        onSubmit={handleSubmit}
+        onCancel={handleCancel}
         initialData={initialData} 
         isEditing={!!searchParams?.get('edit')} 
       />

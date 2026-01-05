@@ -63,6 +63,8 @@ export function PopupProvider({ children }: { children: React.ReactNode }) {
   const confirm = useCallback(
     (title: string, message: string): Promise<boolean> => {
       return new Promise((resolve) => {
+        let id: string;
+
         const handleConfirm: PopupAction = {
           label: 'Confirm',
           onClick: () => {
@@ -80,7 +82,7 @@ export function PopupProvider({ children }: { children: React.ReactNode }) {
           },
         };
 
-        const id = showPopup({
+        id = showPopup({
           type: 'confirm',
           title,
           message,

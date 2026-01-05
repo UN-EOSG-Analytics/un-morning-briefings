@@ -7,6 +7,8 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const date = searchParams.get('date');
+    const status = searchParams.get('status');
+    const author = searchParams.get('author');
 
     let sql = `
       SELECT 
@@ -45,9 +47,25 @@ export async function GET(request: NextRequest) {
     `;
 
     const params: any[] = [];
+    const conditions: string[] = [];
+
     if (date) {
-      sql += ` WHERE DATE(e.date) = $1`;
+      conditions.push(`DATE(e.date) = $${params.length + 1}`);
       params.push(date);
+    }
+
+    if (status) {
+      conditions.push(`e.status = $${params.length + 1}`);
+      params.push(status);
+    }
+
+    if (author) {
+      conditions.push(`e.author = $${params.length + 1}`);
+      params.push(author);
+    }
+
+    if (conditions.length > 0) {
+      sql += ` WHERE ${conditions.join(' AND ')}`;
     }
 
     sql += ` GROUP BY e.id ORDER BY e.created_at DESC`;

@@ -44,19 +44,42 @@ function FormContent() {
   const handleSubmit = async (data: MorningMeetingEntry) => {
     try {
       const editId = searchParams?.get('edit');
+      const entryData = { ...data, status: 'submitted' as const };
+      
       if (editId) {
         // Update existing entry
-        await updateEntry(editId, data);
+        await updateEntry(editId, entryData);
         showSuccess('Success', 'Entry updated successfully!');
       } else {
         // Create new entry
-        await saveEntry(data);
+        await saveEntry(entryData);
         showSuccess('Success', 'Entry submitted successfully!');
       }
       router.push('/list');
     } catch (error) {
       console.error('Error submitting form:', error);
       showError('Failed to Submit', 'Unable to submit entry. Please try again.');
+    }
+  };
+
+  const handleSaveDraft = async (data: MorningMeetingEntry) => {
+    try {
+      const editId = searchParams?.get('edit');
+      const draftData = { ...data, status: 'draft' as const };
+      
+      if (editId) {
+        // Update existing draft
+        await updateEntry(editId, draftData);
+        showSuccess('Draft Saved', 'Your draft has been updated successfully!');
+      } else {
+        // Save as new draft
+        await saveEntry(draftData);
+        showSuccess('Draft Saved', 'Your draft has been saved successfully!');
+      }
+      router.push('/drafts');
+    } catch (error) {
+      console.error('Error saving draft:', error);
+      showError('Failed to Save', 'Unable to save draft. Please try again.');
     }
   };
 
@@ -72,6 +95,7 @@ function FormContent() {
     <main>
       <MorningMeetingForm 
         onSubmit={handleSubmit}
+        onSaveDraft={handleSaveDraft}
         onCancel={handleCancel}
         initialData={initialData} 
         isEditing={!!searchParams?.get('edit')} 

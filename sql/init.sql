@@ -14,14 +14,17 @@ CREATE TABLE
         entry TEXT NOT NULL,
         source_url TEXT,
         pu_note TEXT,
-        author TEXT,
-        status TEXT,
+        author TEXT NOT NULL DEFAULT 'Anonymous',
+        status TEXT NOT NULL DEFAULT 'submitted',
         created_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP(3) NOT NULL
     );
 
 -- Create indices for entries table
--- TODO
+CREATE INDEX IF NOT EXISTS idx_entries_status ON pu_morning_briefings.entries (status);
+CREATE INDEX IF NOT EXISTS idx_entries_author ON pu_morning_briefings.entries (author);
+CREATE INDEX IF NOT EXISTS idx_entries_date ON pu_morning_briefings.entries (date);
+CREATE INDEX IF NOT EXISTS idx_entries_status_author ON pu_morning_briefings.entries (status, author);
 -- Create images table
 CREATE TABLE
     pu_morning_briefings.images (

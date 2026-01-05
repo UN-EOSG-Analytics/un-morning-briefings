@@ -227,3 +227,114 @@ export async function getEntryById(id: string): Promise<any> {
     throw error;
   }
 }
+
+export async function getDraftEntries(author: string): Promise<any[]> {
+  try {
+    console.log('getDraftEntries: Fetching drafts for author:', author);
+    const response = await fetch(`/api/entries?status=draft&author=${encodeURIComponent(author)}`);
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch draft entries');
+    }
+
+    const entries = await response.json();
+    console.log('getDraftEntries: Received', entries.length, 'draft entries');
+    
+    // Client-side fallback: Convert image-ref:// to data URLs using images array
+    for (const entry of entries) {
+      if (entry.images && entry.images.length > 0 && entry.entry) {
+        let html = entry.entry;
+        console.log('getDraftEntries: Converting', entry.images.length, 'image references for entry', entry.id);
+        
+        for (const img of entry.images) {
+          try {
+            const ref = `image-ref://img-${img.position}`;
+            if (html.includes(ref)) {
+              console.log('getDraftEntries: Found reference', ref, 'fetching from /api/images/' + img.id);
+              const imgResponse = await fetch(`/api/images/${img.id}`);
+              if (imgResponse.ok) {
+                const blob = await imgResponse.blob();
+                const reader = new FileReader();
+                await new Promise((resolve, reject) => {
+                  reader.onloadend = () => {
+                    const dataUrl = reader.result as string;
+                    html = html.replace(ref, dataUrl);
+                    console.log('getDraftEntries: Successfully replaced reference with data URL');
+                    resolve(null);
+                  };
+                  reader.onerror = reject;
+                  reader.readAsDataURL(blob);
+                });
+              } else {
+                console.error('getDraftEntries: Failed to fetch image', img.id);
+                html = html.replace(ref, '');
+              }
+            }
+          } catch (error) {
+            console.error('getDraftEntries: Error converting image reference:', error);
+          }
+        }
+        entry.entry = html;
+      }
+    }
+    
+    return entries;
+  } catch (error) {
+    console.error('Error fetching draft entries:', error);
+    return [];
+  }
+}
+
+export async function getSubmittedEntries(): Promise<any[]> {
+  try {
+    console.log('getSubmittedEntries: Fetching submitted entries');
+    const response = await fetch('/api/entries?status=submitted');
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch submitted entries');
+    }
+
+    const entries = await response.json();
+    console.log('getSubmittedEntries: Received', entries.length, 'submitted entries');
+    
+    // Client-side fallback: Convert image-ref:// to data URLs using images array
+    for (const entry of entries) {
+      if (entry.images && entry.images.length > 0 && entry.entry) {
+        let html = entry.entry;
+        console.log('getSubmittedEntries: Converting', entry.images.length, 'image references for entry', entry.id);
+        
+        for (const img of entry.images) {
+          try {
+            const ref = `image-ref://img-${img.position}`;
+            if (html.includes(ref)) {
+              const imgResponse = await fetch(`/api/images/${img.id}`);
+              if (imgResponse.ok) {
+                const blob = await imgResponse.blob();
+                const reader = new FileReader();
+                await new Promise((resolve, reject) => {
+                  reader.onloadend = () => {
+                    const dataUrl = reader.result as string;
+                    html = html.replace(ref, dataUrl);
+                    resolve(null);
+                  };
+                  reader.onerror = reject;
+                  reader.readAsDataURL(blob);
+                });
+              } else {
+                html = html.replace(ref, '');
+              }
+            }
+          } catch (error) {
+            console.error('getSubmittedEntries: Error converting image reference:', error);
+          }
+        }
+        entry.entry = html;
+      }
+    }
+    
+    return entries;
+  } catch (error) {
+    console.error('Error fetching submitted entries:', error);
+    return [];
+  }
+}

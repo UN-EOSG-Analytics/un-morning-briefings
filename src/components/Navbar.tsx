@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { Menu, X, Home, PlusCircle, List } from 'lucide-react';
+import { Menu, X, Home, PlusCircle, List, FileEdit } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import NavButton from './NavButton';
@@ -40,6 +40,11 @@ export function Navbar() {
           <NavButton href="/list" className="text-foreground hover:text-un-blue hover:bg-slate-50">
             <List className="h-4 w-4 text-slate-600" />
             <span>View Entries</span>
+          </NavButton>
+
+          <NavButton href="/drafts" className="text-foreground hover:text-un-blue hover:bg-slate-50">
+            <FileEdit className="h-4 w-4 text-slate-600" />
+            <span>My Drafts</span>
           </NavButton>
 
           <NavButton href="/form" className="bg-un-blue text-white hover:bg-un-blue/95">

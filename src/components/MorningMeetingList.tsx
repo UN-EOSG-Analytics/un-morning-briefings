@@ -10,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { getAllEntries, deleteEntry } from '@/lib/storage';
+import { getAllEntries, deleteEntry, getSubmittedEntries } from '@/lib/storage';
 import { REGIONS, CATEGORIES, PRIORITIES, MorningMeetingEntry } from '@/types/morning-meeting';
 import { Search, FileText, Trash2, Eye, Download, FileDown, Edit } from 'lucide-react';
 import Link from 'next/link';
@@ -36,7 +36,7 @@ export function MorningMeetingList() {
   }, []);
 
   const loadEntries = async () => {
-    const data = await getAllEntries();
+    const data = await getSubmittedEntries();
     setEntries(data);
   };
 

@@ -34,6 +34,7 @@ import { usePopup } from '@/lib/popup-context';
 
 interface MorningMeetingFormProps {
   onSubmit?: (data: MorningMeetingEntry) => Promise<void>;
+  onSaveDraft?: (data: MorningMeetingEntry) => Promise<void>;
   onCancel?: () => void;
   initialData?: Partial<MorningMeetingEntry>;
   isEditing?: boolean;
@@ -41,6 +42,7 @@ interface MorningMeetingFormProps {
 
 export function MorningMeetingForm({
   onSubmit,
+  onSaveDraft,
   onCancel,
   initialData,
   isEditing = false,
@@ -181,9 +183,22 @@ export function MorningMeetingForm({
     }
   };
 
-  const handleSaveDraft = () => {
-    setDraftSaved(true);
-    setTimeout(() => setDraftSaved(false), 3000);
+  const handleSaveDraft = async () => {
+    if (onSaveDraft) {
+      try {
+        setIsSubmitting(true);
+        await onSaveDraft(formData);
+        setDraftSaved(true);
+        setTimeout(() => setDraftSaved(false), 3000);
+      } catch (error) {
+        console.error('Error saving draft:', error);
+      } finally {
+        setIsSubmitting(false);
+      }
+    } else {
+      setDraftSaved(true);
+      setTimeout(() => setDraftSaved(false), 3000);
+    }
   };
 
   const handleReset = async () => {

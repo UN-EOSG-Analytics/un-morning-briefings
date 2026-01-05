@@ -244,13 +244,13 @@ export function MorningMeetingList() {
       </Card>
 
       {/* Table */}
-      <Card className="border-slate-200">
+      <Card className="border-slate-200 p-0">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="border-b border-slate-200 bg-slate-50">
               <tr>
                 <th
-                  className="cursor-pointer px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-700 hover:bg-slate-100"
+                  className="rounded-tl-xl cursor-pointer px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-700 hover:bg-slate-100"
                   onClick={() => handleSort('date')}
                 >
                   Date {sortField === 'date' && (sortDirection === 'asc' ? '↑' : '↓')}
@@ -276,7 +276,7 @@ export function MorningMeetingList() {
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-700">
                   Approved
                 </th>
-                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-700">
+                <th className="rounded-tr-xl px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-700">
                   Actions
                 </th>
               </tr>

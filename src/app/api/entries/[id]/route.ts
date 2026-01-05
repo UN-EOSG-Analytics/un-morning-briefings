@@ -286,9 +286,10 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
+
     // Delete images from blob storage first
     const existingImagesResult = await query(
-      `SELECT id, blob_url FROM images WHERE entry_id = $1`,
+      `SELECT id, blob_url FROM pu_morning_briefings.images WHERE entry_id = $1`,
       [id]
     );
 
@@ -301,11 +302,19 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     }
 
     // Delete entry (will cascade delete images from database)
-    await query(`DELETE FROM entries WHERE id = $1`, [id]);
+    const deleteResult = await query(`DELETE FROM pu_morning_briefings.entries WHERE id = $1 RETURNING id`, [id]);
+    
+    if (deleteResult.rowCount === 0) {
+      return NextResponse.json({ error: 'Entry not found' }, { status: 404 });
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error deleting entry:', error);
-    return NextResponse.json({ error: 'Failed to delete entry' }, { status: 500 });
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    return NextResponse.json({ 
+      error: 'Failed to delete entry',
+      details: errorMessage 
+    }, { status: 500 });
   }
 }

@@ -165,18 +165,16 @@ export async function getAllEntries(): Promise<any[]> {
 }
 
 export async function deleteEntry(id: string): Promise<void> {
-  try {
-    const response = await fetch(`/api/entries/${id}`, {
-      method: 'DELETE',
-    });
+  const response = await fetch(`/api/entries/${id}`, {
+    method: 'DELETE',
+  });
 
-    if (!response.ok) {
-      throw new Error('Failed to delete entry');
-    }
-  } catch (error) {
-    console.error('Error deleting entry:', error);
-    throw error;
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Failed to delete entry: ${errorText}`);
   }
+
+  await response.json();
 }
 
 export async function updateEntry(id: string, updatedEntry: Partial<MorningMeetingEntry>): Promise<any> {

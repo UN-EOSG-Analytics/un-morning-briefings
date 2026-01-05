@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { FileText, List, ArrowRight, FileEdit } from 'lucide-react';
+import { FileText, List, ArrowRight, FileEdit, PlusCircle } from 'lucide-react';
 
 export default function HomePage() {
   return (
@@ -23,7 +23,7 @@ export default function HomePage() {
           <Card className="border-slate-200 p-8 hover:border-un-blue transition-colors">
             <div className="flex flex-col items-left text-left space-y-4">
               <div className="flex h-16 w-16 items-center justify-center rounded-full bg-un-blue">
-                <FileText className="h-8 w-8 text-white" />
+                <PlusCircle className="h-8 w-8 text-white" />
               </div>
               <h2 className="text-2xl font-semibold text-foreground">Create New Entry</h2>
               <p className="text-slate-600">

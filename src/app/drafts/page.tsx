@@ -48,9 +48,14 @@ export default function DraftsPage() {
     );
     
     if (confirmed) {
-      await deleteEntry(id);
-      showSuccess('Deleted', 'Draft deleted successfully');
-      loadEntries();
+      try {
+        await deleteEntry(id);
+        showSuccess('Deleted', 'Draft deleted successfully');
+        await loadEntries();
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Failed to delete draft';
+        showInfo('Error', errorMessage);
+      }
     }
   };
 

@@ -47,9 +47,14 @@ export function MorningMeetingList() {
     );
     
     if (confirmed) {
-      await deleteEntry(id);
-      showSuccess('Deleted', 'Entry deleted successfully');
-      loadEntries();
+      try {
+        await deleteEntry(id);
+        showSuccess('Deleted', 'Entry deleted successfully');
+        await loadEntries();
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Failed to delete entry';
+        showInfo('Error', errorMessage);
+      }
     }
   };
 

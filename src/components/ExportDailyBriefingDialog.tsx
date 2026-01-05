@@ -81,18 +81,16 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
 
       // Restore images in HTML for each entry by downloading from blob storage
       for (const entry of entriesForDate) {
+        let html = entry.entry;
+        
+        console.log('Processing entry:', entry.id, 'with', entry.images?.length || 0, 'tracked images');
+        console.log('HTML before image processing:', html.substring(0, 500));
+        
+        // First, try to replace image-ref:// references with data URLs from blob storage
         if (entry.images && entry.images.length > 0) {
-          let html = entry.entry;
-          
-          console.log('Processing entry:', entry.id, 'with', entry.images.length, 'images');
-          console.log('HTML before image replacement:', html.substring(0, 500));
-          
-          // Download each image from blob storage via API
           for (const img of entry.images) {
             try {
               const ref = `image-ref://img-${img.position}`;
-              
-              console.log('Looking for reference:', ref);
               
               if (!html.includes(ref)) {
                 console.warn(`Reference ${ref} not found in HTML`);
@@ -102,8 +100,7 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
               // Download image from blob storage via API endpoint
               const response = await fetch(`/api/images/${img.id}`);
               if (!response.ok) {
-                console.error(`Failed to fetch image ${img.id} from API`);
-                // Remove broken image reference
+                console.error(`Failed to fetch image ${img.id} from API, status:`, response.status);
                 html = html.replace(new RegExp(`<img[^>]*src=["']${ref}["'][^>]*>`, 'gi'), '');
                 continue;
               }
@@ -117,23 +114,26 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
               );
               const dataUrl = `data:${img.mimeType};base64,${base64Data}`;
               
-              console.log('Created data URL, length:', dataUrl.length);
+              console.log('Created data URL, length:', dataUrl.length, 'mimeType:', img.mimeType);
               
               // Replace the src attribute in img tags - handles both single and double quotes
-              html = html.replace(new RegExp(`src=["']${ref}["']`, 'gi'), `src="${dataUrl}"`);
+              const searchPattern = new RegExp(`src=["']${ref.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}["']`, 'gi');
+              const beforeLength = html.length;
+              html = html.replace(searchPattern, `src="${dataUrl}"`);
+              const afterLength = html.length;
               
-              console.log('HTML after replacement contains data:image?', html.includes('data:image'));
+              console.log('Replacement made:', beforeLength !== afterLength, 'html now contains data:image?', html.includes('data:image'));
             } catch (error) {
               console.error(`Error downloading image ${img.id} from blob storage:`, error);
-              // Remove broken image reference
               const ref = `image-ref://img-${img.position}`;
               html = html.replace(new RegExp(`<img[^>]*src=["']${ref}["'][^>]*>`, 'gi'), '');
             }
           }
-          
-          console.log('Final HTML contains img tags?', html.includes('<img'));
-          entry.entry = html;
         }
+        
+        console.log('Final HTML contains img tags?', html.includes('<img'));
+        console.log('Final HTML preview:', html.substring(0, 500));
+        entry.entry = html;
       }
 
       // Sort by priority (SG Attention first)

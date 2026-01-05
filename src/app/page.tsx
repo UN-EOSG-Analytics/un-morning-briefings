@@ -11,7 +11,7 @@ export default function HomePage() {
   const [showExportDialog, setShowExportDialog] = useState(false);
 
   return (
-    <main className="min-h-screen bg-background">
+    <main className="min-h-[80svh] bg-background flex flex-col">
       <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
         <div className="text-left mb-12">
           <h1 className="text-4xl font-bold text-foreground mb-1">
@@ -34,7 +34,7 @@ export default function HomePage() {
                 Submit a new morning meeting briefing entry with key updates and information
               </p>
               <Link href="/form" className="w-full">
-                <Button className="w-full bg-un-blue" size="lg">
+                <Button className="w-full bg-un-blue hover:bg-un-blue/90" size="lg">
                   Create
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
@@ -81,7 +81,7 @@ export default function HomePage() {
         </div>
 
         {/* Export Button */}
-        <div className="mt-8 flex justify-center">
+        <div className="mt-10 flex justify-center w-full">
           <Button
             onClick={() => setShowExportDialog(true)}
             className="bg-un-blue hover:bg-un-blue/90"

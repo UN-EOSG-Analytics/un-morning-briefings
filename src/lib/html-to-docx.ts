@@ -16,13 +16,14 @@ function base64ToBuffer(dataUrl: string): Buffer {
 function parseHtmlContentServer(html: string): Paragraph[] {
   const paragraphs: Paragraph[] = [];
   
-  // Extract all img tags with data URLs
-  const imgRegex = /<img[^>]*src="(data:image[^"]+)"[^>]*alt="([^"]*)"/gi;
+  // Extract images with data URLs
+  const dataImgRegex = /<img\s+[^>]*?src\s*=\s*["']?(data:image[^"'\s>]+)["']?[^>]*?>/gi;
   let match;
   
-  while ((match = imgRegex.exec(html)) !== null) {
+  console.log('Server parser: Looking for data URL images');
+  while ((match = dataImgRegex.exec(html)) !== null) {
     const dataUrl = match[1];
-    const alt = match[2] || 'Image';
+    console.log('Server parser: Found data URL image, length:', dataUrl.length);
     
     try {
       const buffer = base64ToBuffer(dataUrl);
@@ -40,28 +41,30 @@ function parseHtmlContentServer(html: string): Paragraph[] {
           spacing: { after: 100 },
         })
       );
+      console.log('Server parser: Successfully embedded data URL image');
     } catch (error) {
-      console.error('Error processing image:', error);
+      console.error('Server parser: Error processing data URL image:', error);
       paragraphs.push(
         new Paragraph({
-          children: [new TextRun({ text: `[Image: ${alt}]`, color: '0563C1', underline: {}, font: 'Roboto' })],
+          children: [new TextRun({ text: '[Image]', color: '0563C1', underline: {}, font: 'Roboto' })],
           spacing: { after: 100 },
         })
       );
     }
   }
   
-  // Extract text content (basic fallback)
-  const text = html.replace(/<[^>]*>/g, '');
-  if (text.trim()) {
+  // Extract text content, removing all HTML tags (this captures text between images)
+  const textOnly = html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+  if (textOnly) {
     paragraphs.push(
       new Paragraph({
-        children: [new TextRun({ text: text.trim(), font: 'Roboto' })],
+        children: [new TextRun({ text: textOnly, font: 'Roboto' })],
         spacing: { after: 100 },
       })
     );
   }
   
+  console.log('Server parser: Finished, returned', paragraphs.length, 'paragraphs');
   return paragraphs;
 }
 

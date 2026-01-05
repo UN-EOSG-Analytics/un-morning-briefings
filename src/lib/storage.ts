@@ -53,6 +53,12 @@ function extractImagesFromHtml(html: string): { images: any[]; updatedHtml: stri
     } else if (src && src.startsWith('image-ref://')) {
       console.log('extractImagesFromHtml: Skipping already-saved image reference:', src);
       // Keep the reference as-is, don't try to extract it
+    } else if (src && (src.startsWith('http://') || src.startsWith('https://'))) {
+      console.log('extractImagesFromHtml: Found external URL image:', src.substring(0, 50));
+      console.log('extractImagesFromHtml: External URLs are not downloaded - they will be embedded as-is in exports');
+      // External URLs are left as-is in the HTML
+      // They won't be uploaded to blob storage
+      // During export, they'll be handled by the export logic
     }
   });
 

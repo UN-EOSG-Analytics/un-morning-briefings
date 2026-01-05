@@ -84,12 +84,20 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
         let html = entry.entry;
         
         console.log('Processing entry:', entry.id, 'with', entry.images?.length || 0, 'tracked images');
-        console.log('HTML before image processing:', html.substring(0, 500));
         
-        // First, try to replace image-ref:// references with data URLs from blob storage
+        // Only process if there are tracked images (uploaded via the editor)
+        // External URLs will remain as-is in the HTML
         if (entry.images && entry.images.length > 0) {
+          console.log('HTML before image processing:', html.substring(0, 500));
+          
           for (const img of entry.images) {
             try {
+              // Skip if position is null (shouldn't happen with properly uploaded images)
+              if (img.position === null || img.position === undefined) {
+                console.warn(`Image ${img.id} has null position, skipping`);
+                continue;
+              }
+              
               const ref = `image-ref://img-${img.position}`;
               
               if (!html.includes(ref)) {
@@ -114,7 +122,7 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
               );
               const dataUrl = `data:${img.mimeType};base64,${base64Data}`;
               
-              console.log('Created data URL, length:', dataUrl.length, 'mimeType:', img.mimeType);
+              console.log('Created data URL for image', img.position, 'length:', dataUrl.length, 'mimeType:', img.mimeType);
               
               // Replace the src attribute in img tags - handles both single and double quotes
               const searchPattern = new RegExp(`src=["']${ref.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}["']`, 'gi');
@@ -122,17 +130,71 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
               html = html.replace(searchPattern, `src="${dataUrl}"`);
               const afterLength = html.length;
               
-              console.log('Replacement made:', beforeLength !== afterLength, 'html now contains data:image?', html.includes('data:image'));
+              console.log('Replacement made:', beforeLength !== afterLength);
             } catch (error) {
               console.error(`Error downloading image ${img.id} from blob storage:`, error);
               const ref = `image-ref://img-${img.position}`;
               html = html.replace(new RegExp(`<img[^>]*src=["']${ref}["'][^>]*>`, 'gi'), '');
             }
           }
+          
+          console.log('Final HTML for entry', entry.id, 'contains data:image URLs?', html.includes('data:image'));
+        } else {
+          console.log('Entry has no tracked images, checking for external URLs');
         }
         
-        console.log('Final HTML contains img tags?', html.includes('<img'));
-        console.log('Final HTML preview:', html.substring(0, 500));
+        // Download and convert external image URLs to data URLs
+        const externalImgRegex = /<img[^>]*src=["']?(https?:\/\/[^"'\s>]+)["']?([^>]*)>/gi;
+        let match;
+        const replacements: Array<{from: string, to: string}> = [];
+        
+        while ((match = externalImgRegex.exec(html)) !== null) {
+          const fullTag = match[0];
+          const imageUrl = match[1];
+          const restOfTag = match[2];
+          
+          console.log('Found external image URL:', imageUrl);
+          
+          try {
+            // Download the external image
+            const response = await fetch(imageUrl, { mode: 'cors' });
+            if (!response.ok) {
+              console.warn('Failed to download external image:', response.status);
+              continue;
+            }
+            
+            const blob = await response.blob();
+            
+            // Convert to base64 data URL
+            const arrayBuffer = await blob.arrayBuffer();
+            const base64Data = btoa(
+              new Uint8Array(arrayBuffer).reduce(
+                (data, byte) => data + String.fromCharCode(byte),
+                ''
+              )
+            );
+            
+            // Determine mime type from blob or response
+            const mimeType = blob.type || response.headers.get('content-type') || 'image/png';
+            const dataUrl = `data:${mimeType};base64,${base64Data}`;
+            
+            console.log('Converted external image to data URL, length:', dataUrl.length);
+            
+            // Prepare replacement
+            const newTag = `<img src="${dataUrl}"${restOfTag}>`;
+            replacements.push({ from: fullTag, to: newTag });
+          } catch (error) {
+            console.error('Error downloading external image:', imageUrl, error);
+            // Leave the URL as-is if download fails
+          }
+        }
+        
+        // Apply all replacements
+        for (const { from, to } of replacements) {
+          html = html.replace(from, to);
+        }
+        
+        console.log('Final HTML contains', replacements.length, 'converted external images');
         entry.entry = html;
       }
 

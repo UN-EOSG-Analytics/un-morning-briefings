@@ -190,14 +190,14 @@ function parseHtmlContentClient(html: string): Paragraph[] {
       const width = dataWidth ? parseInt(dataWidth) : 400;
       const height = dataHeight ? parseInt(dataHeight) : 300;
 
-      console.log('Processing img tag:', { src: src?.substring(0, 50), alt, width, height });
+      console.log('Client parser: Processing img tag:', { src: src?.substring(0, 50), alt, width, height });
 
       if (src) {
         try {
           if (src.startsWith('data:image')) {
             // Convert base64 image to buffer and embed
             const buffer = base64ToBuffer(src);
-            console.log('Embedding image, buffer size:', buffer.length);
+            console.log('Client parser: Embedding data URL image, buffer size:', buffer.length);
             paragraphs.push(
               new Paragraph({
                 children: [
@@ -213,8 +213,8 @@ function parseHtmlContentClient(html: string): Paragraph[] {
               })
             );
           } else {
-            // For external URLs or broken references, show as link text
-            console.warn('Image src is not a data URL:', src.substring(0, 50));
+            // For any other URL type (external URLs should have been converted to data URLs by export)
+            console.warn('Client parser: Image src is not a data URL:', src.substring(0, 50));
             paragraphs.push(
               new Paragraph({
                 children: [new TextRun({ text: `[Image: ${alt}]`, color: '0563C1', underline: {}, font: 'Roboto' })],
@@ -223,7 +223,7 @@ function parseHtmlContentClient(html: string): Paragraph[] {
             );
           }
         } catch (error) {
-          console.error('Error processing image:', error);
+          console.error('Client parser: Error processing image:', error);
           paragraphs.push(
             new Paragraph({
               children: [new TextRun({ text: `[Image: ${alt}]`, color: '0563C1', underline: {}, font: 'Roboto' })],

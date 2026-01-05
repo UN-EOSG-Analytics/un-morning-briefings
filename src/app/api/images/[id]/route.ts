@@ -17,7 +17,7 @@ export async function GET(
 
     // Fetch image metadata from database
     const result = await query(
-      `SELECT id, blob_url, mime_type, filename FROM images WHERE id = $1`,
+      `SELECT id, blob_url, mime_type, filename FROM pu_morning_briefings.images WHERE id = $1`,
       [id]
     );
 

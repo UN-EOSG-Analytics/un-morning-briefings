@@ -253,10 +253,10 @@ export function MorningMeetingForm({
   });
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-8 px-4">
+    <div className="min-h-screen bg-white py-8 px-4">
       <div className="mx-auto w-full max-w-6xl">
         {/* Header */}
-        <Card className="mb-0 rounded-b-none border-b-0">
+        <Card className="mb-0 rounded-b-none border-b-0 py-6">
           <CardHeader>
             <div className="flex items-center gap-3">
               <div className="flex items-center justify-center rounded bg-un-blue p-2">
@@ -584,7 +584,7 @@ export function MorningMeetingForm({
                     readOnly
                     className="w-full rounded border border-slate-300 bg-slate-100 px-3 py-2 text-sm text-slate-600"
                   />
-                  <div className="flex items-center gap-1 text-xs text-slate-500">
+                  <div className="flex items-center gap-1 text-xs text-slate-500 mb-3 mt-1">
                     <Info className="h-3.5 w-3.5" />
                     Automatically populated from your account
                   </div>
@@ -595,7 +595,7 @@ export function MorningMeetingForm({
         </Card>
 
         {/* Action Buttons */}
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-b bg-slate-50 px-6 py-4 text-sm">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-b bg-none px-6 py-4 text-sm">
           <div className="flex flex-wrap gap-2">
             <Button
               type="button"
@@ -642,10 +642,7 @@ export function MorningMeetingForm({
           </div>
         </div>
 
-        {/* Footer */}
-        <p className="mt-4 text-center text-xs text-slate-400">
-          Morning Meeting System v2.1 • EOSG Political Unit
-        </p>
+      
       </div>
     </div>
   );

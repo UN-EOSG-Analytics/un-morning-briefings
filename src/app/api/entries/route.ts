@@ -84,7 +84,9 @@ export async function GET(request: NextRequest) {
         let html = entry.entry;
         for (const img of entry.images) {
           try {
-            const ref = `image-ref://img-${img.position}`;
+            // Handle both position values and null positions (fallback to index)
+            const position = img.position !== null && img.position !== undefined ? img.position : entry.images.indexOf(img);
+            const ref = `image-ref://img-${position}`;
             console.log(`GET /api/entries: Looking for reference ${ref} in HTML`);
             if (html.includes(ref)) {
               console.log(`GET /api/entries: Found reference, downloading from ${img.blobUrl}`);
@@ -100,7 +102,8 @@ export async function GET(request: NextRequest) {
           } catch (error) {
             console.error(`Error downloading image ${img.id} from blob storage:`, error);
             // Replace with placeholder or remove the reference
-            const ref = `image-ref://img-${img.position}`;
+            const position = img.position !== null && img.position !== undefined ? img.position : entry.images.indexOf(img);
+            const ref = `image-ref://img-${position}`;
             html = html.replace(ref, '');
           }
         }
@@ -197,7 +200,7 @@ export async function POST(request: NextRequest) {
             img.blobUrl,
             img.width || null,
             img.height || null,
-            img.position || null,
+            img.position !== undefined && img.position !== null ? img.position : null,
             now,
           ]
         );

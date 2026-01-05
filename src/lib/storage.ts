@@ -129,28 +129,40 @@ export async function getAllEntries(): Promise<any[]> {
         
         for (const img of entry.images) {
           try {
-            const ref = `image-ref://img-${img.position}`;
+            // Handle both position values and null positions (fallback to index)
+            const position = img.position !== null && img.position !== undefined ? img.position : entry.images.indexOf(img);
+            const ref = `image-ref://img-${position}`;
             if (html.includes(ref)) {
-              console.log('getAllEntries: Found reference', ref, 'fetching from /api/images/' + img.id);
+              console.log('getAllEntries: Found reference', ref, 'with position', position, 'fetching image ID', img.id);
               // Fetch image from API
               const imgResponse = await fetch(`/api/images/${img.id}`);
+              console.log('getAllEntries: Image API response status:', imgResponse.status);
               if (imgResponse.ok) {
                 const blob = await imgResponse.blob();
-                const reader = new FileReader();
-                await new Promise((resolve, reject) => {
-                  reader.onloadend = () => {
-                    const dataUrl = reader.result as string;
-                    html = html.replace(ref, dataUrl);
-                    console.log('getAllEntries: Successfully replaced reference with data URL');
-                    resolve(null);
+                console.log('getAllEntries: Received blob with size:', blob.size, 'type:', blob.type);
+                const dataUrl = await new Promise<string>((resolve, reject) => {
+                  const reader = new FileReader();
+                  reader.onload = () => {
+                    const result = reader.result as string;
+                    console.log('getAllEntries: FileReader onload - dataUrl length:', result.length);
+                    resolve(result);
                   };
-                  reader.onerror = reject;
+                  reader.onerror = (error) => {
+                    console.error('getAllEntries: FileReader error:', error);
+                    reject(error);
+                  };
                   reader.readAsDataURL(blob);
                 });
+                const oldHtmlLength = html.length;
+                html = html.replace(ref, dataUrl);
+                const newHtmlLength = html.length;
+                console.log('getAllEntries: Replaced', ref, '- HTML length changed from', oldHtmlLength, 'to', newHtmlLength);
               } else {
-                console.error('getAllEntries: Failed to fetch image', img.id);
+                console.error('getAllEntries: Failed to fetch image', img.id, 'status:', imgResponse.status);
                 html = html.replace(ref, '');
               }
+            } else {
+              console.log('getAllEntries: Reference not found in HTML:', ref);
             }
           } catch (error) {
             console.error('getAllEntries: Error converting image reference:', error);
@@ -254,27 +266,39 @@ export async function getDraftEntries(author: string): Promise<any[]> {
         
         for (const img of entry.images) {
           try {
-            const ref = `image-ref://img-${img.position}`;
+            // Handle both position values and null positions (fallback to index)
+            const position = img.position !== null && img.position !== undefined ? img.position : entry.images.indexOf(img);
+            const ref = `image-ref://img-${position}`;
             if (html.includes(ref)) {
-              console.log('getDraftEntries: Found reference', ref, 'fetching from /api/images/' + img.id);
+              console.log('getDraftEntries: Found reference', ref, 'with position', position, 'fetching image ID', img.id);
               const imgResponse = await fetch(`/api/images/${img.id}`);
+              console.log('getDraftEntries: Image API response status:', imgResponse.status);
               if (imgResponse.ok) {
                 const blob = await imgResponse.blob();
-                const reader = new FileReader();
-                await new Promise((resolve, reject) => {
-                  reader.onloadend = () => {
-                    const dataUrl = reader.result as string;
-                    html = html.replace(ref, dataUrl);
-                    console.log('getDraftEntries: Successfully replaced reference with data URL');
-                    resolve(null);
+                console.log('getDraftEntries: Received blob with size:', blob.size, 'type:', blob.type);
+                const dataUrl = await new Promise<string>((resolve, reject) => {
+                  const reader = new FileReader();
+                  reader.onload = () => {
+                    const result = reader.result as string;
+                    console.log('getDraftEntries: FileReader onload - dataUrl length:', result.length);
+                    resolve(result);
                   };
-                  reader.onerror = reject;
+                  reader.onerror = (error) => {
+                    console.error('getDraftEntries: FileReader error:', error);
+                    reject(error);
+                  };
                   reader.readAsDataURL(blob);
                 });
+                const oldHtmlLength = html.length;
+                html = html.replace(ref, dataUrl);
+                const newHtmlLength = html.length;
+                console.log('getDraftEntries: Replaced', ref, '- HTML length changed from', oldHtmlLength, 'to', newHtmlLength);
               } else {
-                console.error('getDraftEntries: Failed to fetch image', img.id);
+                console.error('getDraftEntries: Failed to fetch image', img.id, 'status:', imgResponse.status);
                 html = html.replace(ref, '');
               }
+            } else {
+              console.log('getDraftEntries: Reference not found in HTML:', ref);
             }
           } catch (error) {
             console.error('getDraftEntries: Error converting image reference:', error);
@@ -313,24 +337,39 @@ export async function getSubmittedEntries(): Promise<any[]> {
         
         for (const img of entry.images) {
           try {
-            const ref = `image-ref://img-${img.position}`;
+            // Handle both position values and null positions (fallback to index)
+            const position = img.position !== null && img.position !== undefined ? img.position : entry.images.indexOf(img);
+            const ref = `image-ref://img-${position}`;
             if (html.includes(ref)) {
+              console.log('getSubmittedEntries: Found reference', ref, 'with position', position, 'fetching image ID', img.id);
               const imgResponse = await fetch(`/api/images/${img.id}`);
+              console.log('getSubmittedEntries: Image API response status:', imgResponse.status);
               if (imgResponse.ok) {
                 const blob = await imgResponse.blob();
-                const reader = new FileReader();
-                await new Promise((resolve, reject) => {
-                  reader.onloadend = () => {
-                    const dataUrl = reader.result as string;
-                    html = html.replace(ref, dataUrl);
-                    resolve(null);
+                console.log('getSubmittedEntries: Received blob with size:', blob.size, 'type:', blob.type);
+                const dataUrl = await new Promise<string>((resolve, reject) => {
+                  const reader = new FileReader();
+                  reader.onload = () => {
+                    const result = reader.result as string;
+                    console.log('getSubmittedEntries: FileReader onload - dataUrl length:', result.length);
+                    resolve(result);
                   };
-                  reader.onerror = reject;
+                  reader.onerror = (error) => {
+                    console.error('getSubmittedEntries: FileReader error:', error);
+                    reject(error);
+                  };
                   reader.readAsDataURL(blob);
                 });
+                const oldHtmlLength = html.length;
+                html = html.replace(ref, dataUrl);
+                const newHtmlLength = html.length;
+                console.log('getSubmittedEntries: Replaced', ref, '- HTML length changed from', oldHtmlLength, 'to', newHtmlLength);
               } else {
+                console.error('getSubmittedEntries: Failed to fetch image', img.id, 'status:', imgResponse.status);
                 html = html.replace(ref, '');
               }
+            } else {
+              console.log('getSubmittedEntries: Reference not found in HTML:', ref);
             }
           } catch (error) {
             console.error('getSubmittedEntries: Error converting image reference:', error);

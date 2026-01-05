@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/select';
 import { getDraftEntries, deleteEntry } from '@/lib/storage';
 import { REGIONS, CATEGORIES, PRIORITIES, MorningMeetingEntry } from '@/types/morning-meeting';
-import { Search, FileText, Trash2, Eye, Edit } from 'lucide-react';
+import { Search, FileText, Trash2, Eye, Edit, FileEdit } from 'lucide-react';
 import Link from 'next/link';
 import { ViewEntryDialog } from '@/components/ViewEntryDialog';
 import { usePopup } from '@/lib/popup-context';
@@ -122,7 +122,7 @@ export default function DraftsPage() {
         <div className="flex items-center justify-between p-6">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded bg-un-blue">
-              <FileText className="h-5 w-5 text-white" />
+              <FileEdit className="h-5 w-5 text-white" />
             </div>
             <div>
               <h1 className="text-2xl font-semibold text-foreground">My Drafts</h1>

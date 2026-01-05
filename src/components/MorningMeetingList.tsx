@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/select';
 import { getAllEntries, deleteEntry, getSubmittedEntries } from '@/lib/storage';
 import { REGIONS, CATEGORIES, PRIORITIES, MorningMeetingEntry } from '@/types/morning-meeting';
-import { Search, FileText, Trash2, Eye, Download, FileDown, Edit } from 'lucide-react';
+import { Search, FileText, Trash2, Eye, Download, FileDown, Edit, List } from 'lucide-react';
 import Link from 'next/link';
 import { ExportDailyBriefingDialog } from './ExportDailyBriefingDialog';
 import { ViewEntryDialog } from './ViewEntryDialog';
@@ -130,8 +130,8 @@ export function MorningMeetingList() {
       <Card className="border-slate-200">
         <div className="flex items-center justify-between p-6">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded bg-un-blue">
-              <FileText className="h-5 w-5 text-white" />
+            <div className="flex h-10 w-10 items-center justify-center rounded bg-slate-700">
+             <List className="h-5 w-5 text-white" />
             </div>
             <div>
               <h1 className="text-2xl font-semibold text-foreground">Morning Meeting Entries</h1>

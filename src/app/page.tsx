@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { FileText, List, ArrowRight } from 'lucide-react';
+import { FileText, List, ArrowRight, FileEdit } from 'lucide-react';
 
 export default function HomePage() {
   return (
@@ -49,7 +49,7 @@ export default function HomePage() {
                 Browse, filter, and manage all submitted morning meeting briefing entries
               </p>
               <Link href="/list" className="w-full">
-                <Button variant="outline" className="w-full" size="lg">
+                <Button className="w-full bg-slate-700" size="lg">
                   View All
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
@@ -59,8 +59,8 @@ export default function HomePage() {
           {/* View Entries Card */}
           <Card className="border-slate-200 p-8 hover:border-un-blue transition-colors">
             <div className="flex flex-col items-left text-left space-y-4">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-slate-700">
-                <List className="h-8 w-8 text-white" />
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-accent">
+                <FileEdit className="h-8 w-8 text-black" />
               </div>
               <h2 className="text-2xl font-semibold text-foreground">View Drafts</h2>
               <p className="text-slate-600">

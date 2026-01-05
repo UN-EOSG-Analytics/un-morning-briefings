@@ -214,18 +214,15 @@ export default function DraftsPage() {
                 </th>
                 <th
                   className="cursor-pointer px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-700 hover:bg-slate-100"
-                  onClick={() => handleSort('region')}
-                >
-                  Region {sortField === 'region' && (sortDirection === 'asc' ? '↑' : '↓')}
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-700">
-                  Country
-                </th>
-                <th
-                  className="cursor-pointer px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-700 hover:bg-slate-100"
                   onClick={() => handleSort('headline')}
                 >
                   Headline {sortField === 'headline' && (sortDirection === 'asc' ? '↑' : '↓')}
+                </th>
+                <th
+                  className="cursor-pointer px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-700 hover:bg-slate-100"
+                  onClick={() => handleSort('region')}
+                >
+                  Region {sortField === 'region' && (sortDirection === 'asc' ? '↑' : '↓')}
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-700">
                   Priority
@@ -241,7 +238,7 @@ export default function DraftsPage() {
             <tbody>
               {sortedEntries.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-12 text-center text-slate-500">
+                  <td colSpan={6} className="px-4 py-12 text-center text-slate-500">
                     No drafts found. <Link href="/form" className="text-un-blue hover:underline">Create your first draft</Link>
                   </td>
                 </tr>
@@ -255,16 +252,13 @@ export default function DraftsPage() {
                         year: 'numeric',
                       })}
                     </td>
+                    <td className="max-w-md px-4 py-3 text-sm">
+                      <div className="line-clamp-2">{entry.headline}</div>
+                    </td>
                     <td className="whitespace-nowrap px-4 py-3">
                       <span className={`inline-block rounded px-2 py-1 text-xs font-medium ${getRegionBadgeClass(entry.region)}`}>
                         {entry.region}
                       </span>
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-600">
-                      {entry.country}
-                    </td>
-                    <td className="max-w-md px-4 py-3 text-sm">
-                      <div className="line-clamp-2">{entry.headline}</div>
                     </td>
                     <td className="whitespace-nowrap px-4 py-3">
                       <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${getPriorityBadgeClass(entry.priority)}`}>

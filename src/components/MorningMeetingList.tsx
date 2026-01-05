@@ -16,6 +16,7 @@ import { Search, FileText, Trash2, Eye, Download, FileDown, Edit, List, CheckCir
 import Link from 'next/link';
 import { ExportDailyBriefingDialog } from './ExportDailyBriefingDialog';
 import { ViewEntryDialog } from './ViewEntryDialog';
+import { FilterBar } from './FilterBar';
 import { usePopup } from '@/lib/popup-context';
 
 export function MorningMeetingList() {
@@ -176,72 +177,18 @@ export function MorningMeetingList() {
       </Card>
 
       {/* Filters */}
-      <Card className="border-slate-200">
-        <div className="p-4">
-          <div className="flex flex-wrap items-center gap-3">
-            {/* Search */}
-            <div className="relative flex-1 min-w-[250px]">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Search entries..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="h-9 w-full rounded border border-slate-300 bg-white pl-9 pr-3 text-sm focus:border-un-blue focus:outline-none focus:ring-2 focus:ring-un-blue/20"
-              />
-            </div>
-
-            {/* Region Filter */}
-            <Select value={filterRegion} onValueChange={setFilterRegion}>
-              <SelectTrigger className="w-[180px] h-9">
-                <SelectValue placeholder="All Regions" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Regions</SelectItem>
-                {REGIONS.map((region) => (
-                  <SelectItem key={region} value={region}>
-                    {region}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            {/* Category Filter */}
-            <Select value={filterCategory} onValueChange={setFilterCategory}>
-              <SelectTrigger className="w-[180px] h-9">
-                <SelectValue placeholder="All Categories" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
-                {CATEGORIES.map((category) => (
-                  <SelectItem key={category} value={category}>
-                    {category}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            {/* Priority Filter */}
-            <Select value={filterPriority} onValueChange={setFilterPriority}>
-              <SelectTrigger className="w-[180px] h-9">
-                <SelectValue placeholder="All Priorities" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Priorities</SelectItem>
-                {PRIORITIES.map((priority) => (
-                  <SelectItem key={priority.value} value={priority.value}>
-                    {priority.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <div className="ml-auto text-sm text-slate-600">
-              {sortedEntries.length} {sortedEntries.length === 1 ? 'entry' : 'entries'}
-            </div>
-          </div>
-        </div>
-      </Card>
+      <FilterBar
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        filterRegion={filterRegion}
+        onRegionChange={setFilterRegion}
+        filterCategory={filterCategory}
+        onCategoryChange={setFilterCategory}
+        filterPriority={filterPriority}
+        onPriorityChange={setFilterPriority}
+        resultCount={sortedEntries.length}
+        resultLabel={sortedEntries.length === 1 ? 'entry' : 'entries'}
+      />
 
       {/* Table */}
       <Card className="border-slate-200 p-0">

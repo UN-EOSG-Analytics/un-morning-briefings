@@ -2,6 +2,8 @@ import { GoogleAnalytics } from "@next/third-parties/google";
 import type { Metadata, Viewport } from "next";
 import { Roboto } from "next/font/google";
 import { Navbar } from "@/components/Navbar";
+import { PopupProvider } from "@/lib/popup-context";
+import { PopupContainer } from "@/components/Popup";
 import "./globals.css";
 
 // https://fonts.google.com/specimen/Roboto
@@ -36,10 +38,13 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${roboto.className} antialiased`}>
       <body>
-        <Navbar />
-        <div className="pt-16">
-          {children}
-        </div>
+        <PopupProvider>
+          <Navbar />
+          <div className="pt-16">
+            {children}
+          </div>
+          <PopupContainer />
+        </PopupProvider>
         <GoogleAnalytics gaId="G-XYZ" />
       </body>
     </html>

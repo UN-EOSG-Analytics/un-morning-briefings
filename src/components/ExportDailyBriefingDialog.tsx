@@ -15,6 +15,7 @@ import { Document, Paragraph, TextRun, HeadingLevel, AlignmentType, Packer } fro
 import { saveAs } from 'file-saver';
 import { FileText, Calendar } from 'lucide-react';
 import { parseHtmlContent } from '@/lib/html-to-docx';
+import { usePopup } from '@/lib/popup-context';
 
 interface ExportDialogProps {
   open: boolean;
@@ -31,6 +32,7 @@ const createSeparator = (
   });
 
 export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogProps) {
+  const { info: showInfo, success: showSuccess, error: showError } = usePopup();
   const [selectedDate, setSelectedDate] = useState<string>(
     new Date().toISOString().split('T')[0]
   );
@@ -46,7 +48,7 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
       });
 
       if (entriesForDate.length === 0) {
-        alert('No entries found for the selected date.');
+        showInfo('No Entries', 'No entries found for the selected date.');
         setIsExporting(false);
         return;
       }
@@ -306,11 +308,11 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
         `Morning-Briefing-${selectedDate}.docx`
       );
 
-      alert('Daily briefing exported successfully!');
+      showSuccess('Export Successful', 'Daily briefing exported successfully!');
       onOpenChange(false);
     } catch (error) {
       console.error('Error exporting briefing:', error);
-      alert('Failed to export daily briefing. Please try again.');
+      showError('Export Failed', 'Failed to export daily briefing. Please try again.');
     } finally {
       setIsExporting(false);
     }

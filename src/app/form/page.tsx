@@ -5,9 +5,11 @@ import { MorningMeetingEntry } from '@/types/morning-meeting';
 import { saveEntry, getAllEntries, updateEntry } from '@/lib/storage';
 import { useRouter } from 'next/navigation';
 import { Suspense, useState, useEffect } from 'react';
+import { usePopup } from '@/lib/popup-context';
 
 function FormContent() {
   const router = useRouter();
+  const { error: showError, success: showSuccess } = usePopup();
   const [searchParams, setSearchParams] = useState<URLSearchParams | null>(null);
   const [initialData, setInitialData] = useState<MorningMeetingEntry | undefined>();
   const [isLoading, setIsLoading] = useState(true);
@@ -28,7 +30,7 @@ function FormContent() {
           }
         } catch (error) {
           console.error('Error loading entry:', error);
-          alert('Failed to load entry for editing');
+          showError('Failed to Load', 'Unable to load entry for editing');
         } finally {
           setIsLoading(false);
         }
@@ -37,7 +39,7 @@ function FormContent() {
     } else {
       setIsLoading(false);
     }
-  }, []);
+  }, [showError]);
 
   const handleSubmit = async (data: MorningMeetingEntry) => {
     try {
@@ -45,16 +47,16 @@ function FormContent() {
       if (editId) {
         // Update existing entry
         await updateEntry(editId, data);
-        alert('Entry updated successfully!');
+        showSuccess('Success', 'Entry updated successfully!');
       } else {
         // Create new entry
         await saveEntry(data);
-        alert('Entry submitted successfully!');
+        showSuccess('Success', 'Entry submitted successfully!');
       }
       router.push('/list');
     } catch (error) {
       console.error('Error submitting form:', error);
-      alert('Failed to submit entry. Please try again.');
+      showError('Failed to Submit', 'Unable to submit entry. Please try again.');
     }
   };
 

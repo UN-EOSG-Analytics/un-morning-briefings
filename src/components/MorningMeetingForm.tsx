@@ -30,6 +30,7 @@ import {
   Save,
   Info,
 } from 'lucide-react';
+import { usePopup } from '@/lib/popup-context';
 
 interface MorningMeetingFormProps {
   onSubmit?: (data: MorningMeetingEntry) => Promise<void>;
@@ -42,6 +43,8 @@ export function MorningMeetingForm({
   initialData,
   isEditing = false,
 }: MorningMeetingFormProps) {
+  const { confirm: showConfirm } = usePopup();
+  
   // Clean initial entry content by removing any image-ref:// references
   const cleanEntry = (entry: string) => {
     if (!entry) return '';
@@ -181,8 +184,13 @@ export function MorningMeetingForm({
     setTimeout(() => setDraftSaved(false), 3000);
   };
 
-  const handleReset = () => {
-    if (confirm('Are you sure you want to reset the form? All entered data will be lost.')) {
+  const handleReset = async () => {
+    const confirmed = await showConfirm(
+      'Reset Form',
+      'Are you sure you want to reset the form? All entered data will be lost.'
+    );
+    
+    if (confirmed) {
       setFormData({
         category: '',
         priority: 'situational-awareness',
@@ -201,9 +209,13 @@ export function MorningMeetingForm({
     }
   };
 
-  const handleCancel = () => {
-    if (confirm('Are you sure you want to cancel? Any unsaved changes will be lost.')) {
-      // Handle cancel - could redirect or close form
+  const handleCancel = async () => {
+    const confirmed = await showConfirm(
+      'Cancel',
+      'Are you sure you want to cancel? Any unsaved changes will be lost.'
+    );
+    
+    if (confirmed) {
       window.history.back();
     }
   };

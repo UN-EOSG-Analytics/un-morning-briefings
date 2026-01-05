@@ -16,8 +16,10 @@ import { Search, FileText, Trash2, Eye, Download, FileDown, Edit } from 'lucide-
 import Link from 'next/link';
 import { ExportDailyBriefingDialog } from './ExportDailyBriefingDialog';
 import { ViewEntryDialog } from './ViewEntryDialog';
+import { usePopup } from '@/lib/popup-context';
 
 export function MorningMeetingList() {
+  const { confirm: showConfirm, success: showSuccess } = usePopup();
   const [entries, setEntries] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRegion, setFilterRegion] = useState<string>('all');
@@ -39,8 +41,14 @@ export function MorningMeetingList() {
   };
 
   const handleDelete = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this entry?')) {
+    const confirmed = await showConfirm(
+      'Delete Entry',
+      'Are you sure you want to delete this entry? This action cannot be undone.'
+    );
+    
+    if (confirmed) {
       await deleteEntry(id);
+      showSuccess('Deleted', 'Entry deleted successfully');
       loadEntries();
     }
   };

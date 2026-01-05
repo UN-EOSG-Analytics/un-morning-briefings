@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useRef } from 'react';
+import { usePopup } from '@/lib/popup-context';
 
 interface RichTextEditorProps {
   content: string;
@@ -46,6 +47,7 @@ export function RichTextEditor({
   minHeight = 'min-h-[200px]',
 }: RichTextEditorProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { warning: showWarning } = usePopup();
 
   const editor = useEditor({
     extensions: [
@@ -131,13 +133,13 @@ export function RichTextEditor({
 
     // Check file type
     if (!file.type.startsWith('image/')) {
-      alert('Please select an image file');
+      showWarning('Invalid File', 'Please select an image file');
       return;
     }
 
     // Check file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      alert('Image size should be less than 5MB');
+      showWarning('File Too Large', 'Image size should be less than 5MB');
       return;
     }
 

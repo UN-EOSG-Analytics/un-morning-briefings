@@ -99,17 +99,6 @@ export function RichTextEditor({
             },
           };
         },
-        parseHTML() {
-          return [
-            {
-              tag: 'img[src^="image-ref://"]',
-              getAttrs: () => null, // Skip images with image-ref:// scheme
-            },
-            {
-              tag: 'img[src]',
-            },
-          ];
-        },
       }),
     ],
     content,

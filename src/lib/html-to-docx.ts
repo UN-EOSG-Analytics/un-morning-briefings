@@ -6,8 +6,63 @@ import { Paragraph, TextRun, HeadingLevel, AlignmentType, ImageRun } from 'docx'
  * Convert base64 data URL to Buffer
  */
 function base64ToBuffer(dataUrl: string): Buffer {
-  const base64String = dataUrl.replace(/^data:image\/\w+;base64,/, '');
+  const base64String = dataUrl.replace(/^data:image\/[^;]+;base64,/, '');
   return Buffer.from(base64String, 'base64');
+}
+
+/**
+ * Server-side HTML parsing for images and basic tags
+ */
+function parseHtmlContentServer(html: string): Paragraph[] {
+  const paragraphs: Paragraph[] = [];
+  
+  // Extract all img tags with data URLs
+  const imgRegex = /<img[^>]*src="(data:image[^"]+)"[^>]*alt="([^"]*)"/gi;
+  let match;
+  
+  while ((match = imgRegex.exec(html)) !== null) {
+    const dataUrl = match[1];
+    const alt = match[2] || 'Image';
+    
+    try {
+      const buffer = base64ToBuffer(dataUrl);
+      paragraphs.push(
+        new Paragraph({
+          children: [
+            new ImageRun({
+              data: buffer,
+              transformation: {
+                width: 400,
+                height: 300,
+              },
+            }),
+          ],
+          spacing: { after: 100 },
+        })
+      );
+    } catch (error) {
+      console.error('Error processing image:', error);
+      paragraphs.push(
+        new Paragraph({
+          children: [new TextRun({ text: `[Image: ${alt}]`, color: '0563C1', underline: {}, font: 'Roboto' })],
+          spacing: { after: 100 },
+        })
+      );
+    }
+  }
+  
+  // Extract text content (basic fallback)
+  const text = html.replace(/<[^>]*>/g, '');
+  if (text.trim()) {
+    paragraphs.push(
+      new Paragraph({
+        children: [new TextRun({ text: text.trim(), font: 'Roboto' })],
+        spacing: { after: 100 },
+      })
+    );
+  }
+  
+  return paragraphs;
 }
 
 /**
@@ -20,15 +75,19 @@ export function parseHtmlContent(html: string): Paragraph[] {
     return paragraphs;
   }
 
-  // Parse HTML string
-  if (typeof window === 'undefined') {
-    // Server-side fallback
-    return [
-      new Paragraph({
-        children: [new TextRun({ text: html, font: 'Roboto' })],
-      }),
-    ];
+  // Use native DOMParser on client, regex parser on server
+  if (typeof window !== 'undefined') {
+    return parseHtmlContentClient(html);
+  } else {
+    return parseHtmlContentServer(html);
   }
+}
+
+/**
+ * Client-side HTML parsing using DOMParser
+ */
+function parseHtmlContentClient(html: string): Paragraph[] {
+  const paragraphs: Paragraph[] = [];
 
   const parser = new DOMParser();
   const doc = parser.parseFromString(html, 'text/html');

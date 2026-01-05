@@ -72,6 +72,13 @@ export function MorningMeetingList() {
     }
   };
 
+  const handleResetFilters = () => {
+    setSearchTerm('');
+    setFilterRegion('all');
+    setFilterCategory('all');
+    setFilterPriority('all');
+  };
+
   const filteredEntries = useMemo(() => {
     return entries.filter((entry) => {
       const matchesSearch =
@@ -186,6 +193,7 @@ export function MorningMeetingList() {
         onCategoryChange={setFilterCategory}
         filterPriority={filterPriority}
         onPriorityChange={setFilterPriority}
+        onReset={handleResetFilters}
         resultCount={sortedEntries.length}
         resultLabel={sortedEntries.length === 1 ? 'entry' : 'entries'}
       />

@@ -55,9 +55,16 @@ export default function DraftsPage() {
         await loadEntries();
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Failed to delete draft';
-        showInfo('Error', errorMessage);
+        showSuccess('Error', errorMessage);
       }
     }
+  };
+
+  const handleResetFilters = () => {
+    setSearchTerm('');
+    setFilterRegion('all');
+    setFilterCategory('all');
+    setFilterPriority('all');
   };
 
   const filteredEntries = useMemo(() => {
@@ -148,6 +155,7 @@ export default function DraftsPage() {
         onCategoryChange={setFilterCategory}
         filterPriority={filterPriority}
         onPriorityChange={setFilterPriority}
+        onReset={handleResetFilters}
         resultCount={sortedEntries.length}
         resultLabel={sortedEntries.length === 1 ? 'draft' : 'drafts'}
       />

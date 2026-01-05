@@ -1,6 +1,6 @@
 'use client';
 
-import { Search } from 'lucide-react';
+import { Search, RotateCcw } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -8,6 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { REGIONS, CATEGORIES, PRIORITIES } from '@/types/morning-meeting';
 
@@ -20,6 +21,7 @@ interface FilterBarProps {
   onCategoryChange: (value: string) => void;
   filterPriority: string;
   onPriorityChange: (value: string) => void;
+  onReset: () => void;
   resultCount: number;
   resultLabel: string;
 }
@@ -33,6 +35,7 @@ export function FilterBar({
   onCategoryChange,
   filterPriority,
   onPriorityChange,
+  onReset,
   resultCount,
   resultLabel,
 }: FilterBarProps) {
@@ -40,7 +43,7 @@ export function FilterBar({
     <Card className="border-slate-200 p-3">
       <div className="flex flex-wrap items-center gap-2">
         {/* Search */}
-        <div className="relative flex-1 min-w-[250px]">
+        <div className="relative flex-1 max-w-[350]">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
@@ -53,7 +56,7 @@ export function FilterBar({
 
         {/* Region Filter */}
         <Select value={filterRegion} onValueChange={onRegionChange}>
-          <SelectTrigger className="w-[160px] h-9 text-sm">
+          <SelectTrigger className="w-[180px] h-9 text-sm">
             <SelectValue placeholder="All Regions" />
           </SelectTrigger>
           <SelectContent>
@@ -68,7 +71,7 @@ export function FilterBar({
 
         {/* Category Filter */}
         <Select value={filterCategory} onValueChange={onCategoryChange}>
-          <SelectTrigger className="w-[160px] h-9 text-sm">
+          <SelectTrigger className="w-[180px] h-9 text-sm">
             <SelectValue placeholder="All Categories" />
           </SelectTrigger>
           <SelectContent>
@@ -83,7 +86,7 @@ export function FilterBar({
 
         {/* Priority Filter */}
         <Select value={filterPriority} onValueChange={onPriorityChange}>
-          <SelectTrigger className="w-[160px] h-9 text-sm">
+          <SelectTrigger className="w-[180px] h-9 text-sm">
             <SelectValue placeholder="All Priorities" />
           </SelectTrigger>
           <SelectContent>
@@ -95,6 +98,17 @@ export function FilterBar({
             ))}
           </SelectContent>
         </Select>
+
+        {/* Reset Button */}
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onReset}
+          className="h-9 gap-2"
+        >
+          <RotateCcw className="h-4 w-4" />
+          Reset
+        </Button>
 
         <div className="ml-auto text-xs text-slate-600">
           {resultCount} {resultLabel}

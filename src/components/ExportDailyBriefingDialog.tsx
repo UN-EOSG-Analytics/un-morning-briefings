@@ -104,7 +104,7 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
               if (!response.ok) {
                 console.error(`Failed to fetch image ${img.id} from API`);
                 // Remove broken image reference
-                html = html.replace(new RegExp(`<img[^>]*src="${ref}"[^>]*>`, 'gi'), '');
+                html = html.replace(new RegExp(`<img[^>]*src=["']${ref}["'][^>]*>`, 'gi'), '');
                 continue;
               }
               
@@ -119,15 +119,15 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
               
               console.log('Created data URL, length:', dataUrl.length);
               
-              // Replace the src attribute in img tags
-              html = html.replace(new RegExp(`src="${ref}"`, 'gi'), `src="${dataUrl}"`);
+              // Replace the src attribute in img tags - handles both single and double quotes
+              html = html.replace(new RegExp(`src=["']${ref}["']`, 'gi'), `src="${dataUrl}"`);
               
               console.log('HTML after replacement contains data:image?', html.includes('data:image'));
             } catch (error) {
               console.error(`Error downloading image ${img.id} from blob storage:`, error);
               // Remove broken image reference
               const ref = `image-ref://img-${img.position}`;
-              html = html.replace(new RegExp(`<img[^>]*src="${ref}"[^>]*>`, 'gi'), '');
+              html = html.replace(new RegExp(`<img[^>]*src=["']${ref}["'][^>]*>`, 'gi'), '');
             }
           }
           

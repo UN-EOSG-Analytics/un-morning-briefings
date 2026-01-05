@@ -137,10 +137,7 @@ function PopupItem({ popup }: PopupItemProps) {
                     key={index}
                     size="sm"
                     variant={action.variant === 'destructive' ? 'default' : 'outline'}
-                    onClick={async () => {
-                      await action.onClick();
-                      handleClose();
-                    }}
+                    onClick={() => action.onClick()}
                     className={action.variant === 'destructive' ? 'bg-red-600 hover:bg-red-700' : ''}
                   >
                     {action.label}

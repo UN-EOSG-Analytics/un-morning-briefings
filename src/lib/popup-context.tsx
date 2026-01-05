@@ -88,7 +88,6 @@ export function PopupProvider({ children }: { children: React.ReactNode }) {
           message,
           actions: [handleCancel, handleConfirm],
           autoClose: false,
-          onClose: () => resolve(false),
         });
       });
     },

@@ -3,9 +3,13 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { FileText, List, ArrowRight, FileEdit, PlusCircle } from 'lucide-react';
+import { FileText, List, ArrowRight, FileEdit, PlusCircle, Download } from 'lucide-react';
+import { useState } from 'react';
+import { ExportDailyBriefingDialog } from '@/components/ExportDailyBriefingDialog';
 
 export default function HomePage() {
+  const [showExportDialog, setShowExportDialog] = useState(false);
+
   return (
     <main className="min-h-screen bg-background">
       <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
@@ -75,6 +79,23 @@ export default function HomePage() {
             </div>
           </Card>
         </div>
+
+        {/* Export Button */}
+        <div className="mt-8 flex justify-center">
+          <Button
+            onClick={() => setShowExportDialog(true)}
+            className="bg-un-blue hover:bg-un-blue/90"
+            size="lg"
+          >
+            <Download className="mr-2 h-4 w-4" />
+            Export Today's Morning Briefing
+          </Button>
+        </div>
+
+        <ExportDailyBriefingDialog
+          open={showExportDialog}
+          onOpenChange={setShowExportDialog}
+        />
       </div>
     </main>
   );

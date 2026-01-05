@@ -2,6 +2,7 @@ import { GoogleAnalytics } from "@next/third-parties/google";
 import type { Metadata, Viewport } from "next";
 import { Roboto } from "next/font/google";
 import { Navbar } from "@/components/Navbar";
+import { Footer } from "@/components/Footer";
 import { PopupProvider } from "@/lib/popup-context";
 import { PopupContainer } from "@/components/Popup";
 import "./globals.css";
@@ -43,6 +44,7 @@ export default function RootLayout({
           <div className="pt-16">
             {children}
           </div>
+          <Footer />
           <PopupContainer />
         </PopupProvider>
         <GoogleAnalytics gaId="G-XYZ" />

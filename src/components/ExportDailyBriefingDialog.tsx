@@ -10,7 +10,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
-import { getAllEntries } from '@/lib/storage';
+import { getSubmittedEntries } from '@/lib/storage';
 import { Document, Paragraph, TextRun, HeadingLevel, AlignmentType, Packer } from 'docx';
 import { saveAs } from 'file-saver';
 import { FileText, Calendar, CheckCircle2 } from 'lucide-react';
@@ -45,8 +45,8 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
     const loadEntriesForDate = async () => {
       setIsLoadingEntries(true);
       try {
-        const allEntries = await getAllEntries();
-        const entriesForDate = allEntries.filter((entry) => {
+        const allEntries = await getSubmittedEntries();
+        const entriesForDate = allEntries.filter((entry: MorningMeetingEntry) => {
           const entryDate = new Date(entry.date).toISOString().split('T')[0];
           return entryDate === selectedDate && entry.approved;
         });
@@ -67,8 +67,8 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
   const handleExport = async () => {
     setIsExporting(true);
     try {
-      const allEntries = await getAllEntries();
-      const entriesForDate = allEntries.filter((entry) => {
+      const allEntries = await getSubmittedEntries();
+      const entriesForDate = allEntries.filter((entry: MorningMeetingEntry) => {
         const entryDate = new Date(entry.date).toISOString().split('T')[0];
         return entryDate === selectedDate && entry.approved;
       });

@@ -154,8 +154,7 @@ export function RichTextEditor({
           console.log('Image loaded with dimensions:', img.width, img.height);
           editor.chain().focus().setImage({ 
             src: url,
-            'data-width': img.width.toString(),
-            'data-height': img.height.toString()
+            alt: `${img.width}x${img.height}`,
           }).run();
         };
         img.onerror = () => {

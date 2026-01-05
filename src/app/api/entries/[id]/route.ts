@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { blobStorage } from '@/lib/blob-storage';
+import { convertImageReferencesServerSide } from '@/lib/image-conversion';
 
-// GET single entry
+/**
+ * GET /api/entries/[id]
+ * Fetch a single entry by ID with image conversion
+ */
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
@@ -53,22 +57,12 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     
     // Convert blob URLs to data URLs for private blob storage
     if (entry.images && entry.images.length > 0) {
-      let html = entry.entry;
-      for (const img of entry.images) {
-        try {
-          const ref = `image-ref://img-${img.position}`;
-          if (html.includes(ref)) {
-            // Download image from blob storage
-            const buffer = await blobStorage.download(img.blobUrl);
-            const base64Data = buffer.toString('base64');
-            const dataUrl = `data:${img.mimeType};base64,${base64Data}`;
-            html = html.replace(ref, dataUrl);
-          }
-        } catch (error) {
-          console.error(`Error downloading image from blob storage:`, error);
-        }
-      }
-      entry.entry = html;
+      entry.entry = await convertImageReferencesServerSide(
+        entry.entry,
+        entry.images,
+        blobStorage,
+        'GET /api/entries/[id]'
+      );
     }
 
     return NextResponse.json(entry);
@@ -78,7 +72,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   }
 }
 
-// PUT update entry
+/**
+ * PUT /api/entries/[id]
+ * Update an entry and handle image replacements
+ */
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
@@ -254,25 +251,12 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     
     // Convert blob URLs to data URLs for private blob storage
     if (entry.images && entry.images.length > 0) {
-      let html = entry.entry;
-      for (const img of entry.images) {
-        try {
-          const ref = `image-ref://img-${img.position}`;
-          if (html.includes(ref)) {
-            // Download image from blob storage
-            const buffer = await blobStorage.download(img.blobUrl);
-            const base64Data = buffer.toString('base64');
-            const dataUrl = `data:${img.mimeType};base64,${base64Data}`;
-            html = html.replace(ref, dataUrl);
-          }
-        } catch (error) {
-          console.error(`Error downloading image ${img.id} from blob storage:`, error);
-          // Replace with placeholder or remove the reference
-          const ref = `image-ref://img-${img.position}`;
-          html = html.replace(ref, '');
-        }
-      }
-      entry.entry = html;
+      entry.entry = await convertImageReferencesServerSide(
+        entry.entry,
+        entry.images,
+        blobStorage,
+        'PUT /api/entries/[id]'
+      );
     }
 
     return NextResponse.json(entry);
@@ -282,7 +266,10 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
   }
 }
 
-// DELETE entry
+/**
+ * DELETE /api/entries/[id]
+ * Delete an entry and its associated images
+ */
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;

@@ -41,7 +41,7 @@ export async function GET(
     console.log('GET /api/images/[id]: Successfully downloaded, size:', buffer.length);
 
     // Return image with proper content type
-    return new NextResponse(buffer, {
+    return new NextResponse(buffer as unknown as BodyInit, {
       headers: {
         'Content-Type': image.mime_type,
         'Content-Disposition': `inline; filename="${image.filename}"`,

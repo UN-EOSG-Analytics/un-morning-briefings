@@ -1,22 +1,16 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { getDraftEntries, deleteEntry } from '@/lib/storage';
-import { REGIONS, CATEGORIES, PRIORITIES, MorningMeetingEntry } from '@/types/morning-meeting';
-import { Search, FileText, Trash2, Eye, Edit, FileEdit } from 'lucide-react';
+import { MorningMeetingEntry, PRIORITIES } from '@/types/morning-meeting';
+import { FileText, Trash2, Eye, Edit, FileEdit } from 'lucide-react';
 import Link from 'next/link';
 import { ViewEntryDialog } from '@/components/ViewEntryDialog';
 import { FilterBar } from '@/components/FilterBar';
 import { usePopup } from '@/lib/popup-context';
+import { useEntriesFilter, getPriorityBadgeClass, getRegionBadgeClass } from '@/lib/useEntriesFilter';
 
 // TODO: Replace with actual user authentication
 const CURRENT_USER = 'Current User';
@@ -24,14 +18,25 @@ const CURRENT_USER = 'Current User';
 export default function DraftsPage() {
   const { confirm: showConfirm, success: showSuccess } = usePopup();
   const [entries, setEntries] = useState<any[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterRegion, setFilterRegion] = useState<string>('all');
-  const [filterCategory, setFilterCategory] = useState<string>('all');
-  const [filterPriority, setFilterPriority] = useState<string>('all');
-  const [sortField, setSortField] = useState<string>('date');
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [selectedEntry, setSelectedEntry] = useState<MorningMeetingEntry | null>(null);
   const [showViewDialog, setShowViewDialog] = useState(false);
+
+  // Use shared filter hook
+  const {
+    searchTerm,
+    filterRegion,
+    filterCategory,
+    filterPriority,
+    sortField,
+    sortDirection,
+    setSearchTerm,
+    setFilterRegion,
+    setFilterCategory,
+    setFilterPriority,
+    handleSort,
+    handleResetFilters,
+    sortedEntries,
+  } = useEntriesFilter(entries);
 
   useEffect(() => {
     loadEntries();
@@ -58,72 +63,6 @@ export default function DraftsPage() {
         showSuccess('Error', errorMessage);
       }
     }
-  };
-
-  const handleResetFilters = () => {
-    setSearchTerm('');
-    setFilterRegion('all');
-    setFilterCategory('all');
-    setFilterPriority('all');
-  };
-
-  const filteredEntries = useMemo(() => {
-    return entries.filter((entry) => {
-      const matchesSearch =
-        searchTerm === '' ||
-        entry.headline?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        entry.country?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        entry.entry?.toLowerCase().includes(searchTerm.toLowerCase());
-
-      const matchesRegion = filterRegion === 'all' || entry.region === filterRegion;
-      const matchesCategory = filterCategory === 'all' || entry.category === filterCategory;
-      const matchesPriority = filterPriority === 'all' || entry.priority === filterPriority;
-
-      return matchesSearch && matchesRegion && matchesCategory && matchesPriority;
-    });
-  }, [entries, searchTerm, filterRegion, filterCategory, filterPriority]);
-
-  const sortedEntries = useMemo(() => {
-    const sorted = [...filteredEntries];
-    sorted.sort((a, b) => {
-      let aVal = a[sortField];
-      let bVal = b[sortField];
-
-      if (sortField === 'date') {
-        aVal = new Date(aVal).getTime();
-        bVal = new Date(bVal).getTime();
-      }
-
-      if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
-      if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
-      return 0;
-    });
-    return sorted;
-  }, [filteredEntries, sortField, sortDirection]);
-
-  const handleSort = (field: string) => {
-    if (sortField === field) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortField(field);
-      setSortDirection('desc');
-    }
-  };
-
-  const getPriorityBadgeClass = (priority: string) => {
-    if (priority === 'sg-attention') return 'bg-red-100 text-red-800';
-    return 'bg-blue-100 text-blue-800';
-  };
-
-  const getRegionBadgeClass = (region: string) => {
-    const regionColors: Record<string, string> = {
-      'Africa': 'bg-yellow-100 text-yellow-800',
-      'Americas': 'bg-blue-100 text-blue-800',
-      'Asia and the Pacific': 'bg-green-100 text-green-800',
-      'Europe': 'bg-purple-100 text-purple-800',
-      'Middle East': 'bg-pink-100 text-pink-800',
-    };
-    return regionColors[region] || 'bg-gray-100 text-gray-800';
   };
 
   return (

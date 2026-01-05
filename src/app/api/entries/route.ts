@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { blobStorage } from '@/lib/blob-storage';
+import { convertImageReferencesServerSide } from '@/lib/image-conversion';
 
-// GET all entries
+/**
+ * GET /api/entries
+ * Fetch entries with optional filters for date, status, and author
+ * Automatically converts image-ref:// to data URLs before sending response
+ */
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -81,33 +86,12 @@ export async function GET(request: NextRequest) {
     for (const entry of result.rows) {
       if (entry.images && entry.images.length > 0) {
         console.log(`GET /api/entries: Processing ${entry.images.length} images for entry ${entry.id}`);
-        let html = entry.entry;
-        for (const img of entry.images) {
-          try {
-            // Handle both position values and null positions (fallback to index)
-            const position = img.position !== null && img.position !== undefined ? img.position : entry.images.indexOf(img);
-            const ref = `image-ref://img-${position}`;
-            console.log(`GET /api/entries: Looking for reference ${ref} in HTML`);
-            if (html.includes(ref)) {
-              console.log(`GET /api/entries: Found reference, downloading from ${img.blobUrl}`);
-              // Download image from blob storage
-              const buffer = await blobStorage.download(img.blobUrl);
-              const base64Data = buffer.toString('base64');
-              const dataUrl = `data:${img.mimeType};base64,${base64Data}`;
-              html = html.replace(ref, dataUrl);
-              console.log(`GET /api/entries: Replaced reference with data URL`);
-            } else {
-              console.log(`GET /api/entries: Reference ${ref} not found in HTML`);
-            }
-          } catch (error) {
-            console.error(`Error downloading image ${img.id} from blob storage:`, error);
-            // Replace with placeholder or remove the reference
-            const position = img.position !== null && img.position !== undefined ? img.position : entry.images.indexOf(img);
-            const ref = `image-ref://img-${position}`;
-            html = html.replace(ref, '');
-          }
-        }
-        entry.entry = html;
+        entry.entry = await convertImageReferencesServerSide(
+          entry.entry,
+          entry.images,
+          blobStorage,
+          'GET /api/entries'
+        );
       }
     }
     
@@ -121,7 +105,10 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST create new entry
+/**
+ * POST /api/entries
+ * Create a new entry with image uploads to blob storage
+ */
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -248,29 +235,12 @@ export async function POST(request: NextRequest) {
     );
 
     const createdEntry = result.rows[0];
-    
-    // Convert blob URLs to data URLs for private blob storage
-    if (createdEntry.images && createdEntry.images.length > 0) {
-      let html = createdEntry.entry;
-      for (const img of createdEntry.images) {
-        try {
-          const ref = `image-ref://img-${img.position}`;
-          if (html.includes(ref)) {
-            // Download image from blob storage
-            const buffer = await blobStorage.download(img.blobUrl);
-            const base64Data = buffer.toString('base64');
-            const dataUrl = `data:${img.mimeType};base64,${base64Data}`;
-            html = html.replace(ref, dataUrl);
-          }
-        } catch (error) {
-          console.error(`Error downloading image ${img.id} from blob storage:`, error);
-          // Replace with placeholder or remove the reference
-          const ref = `image-ref://img-${img.position}`;
-          html = html.replace(ref, '');
-        }
-      }
-      createdEntry.entry = html;
-    }
+    createdEntry.entry = await convertImageReferencesServerSide(
+        createdEntry.entry,
+        createdEntry.images,
+        blobStorage,
+        'POST /api/entries'
+      );
 
     return NextResponse.json(createdEntry, { status: 201 });
   } catch (error) {
@@ -284,7 +254,11 @@ export async function POST(request: NextRequest) {
     }, { status: 500 });
   }
 }
-// PATCH update entry (e.g., approval status)
+
+/**
+ * PATCH /api/entries
+ * Update entry approval status
+ */
 export async function PATCH(request: NextRequest) {
   try {
     const body = await request.json();
@@ -294,7 +268,7 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Entry ID is required' }, { status: 400 });
     }
 
-    const now = new Date();
+    const now = new Date().toISOString();
 
     // Update entry approved status
     await query(

@@ -1,7 +1,15 @@
 import { MorningMeetingEntry } from '@/types/morning-meeting';
+import { convertEntriesImageReferences } from '@/lib/image-conversion';
 
 /**
- * Extract images from HTML content
+ * Extract images from HTML content and prepare them for upload to blob storage
+ * - Finds all data: URL images (fresh uploads)
+ * - Replaces them with image-ref:// references
+ * - Skips already-saved image-ref:// URLs
+ * - Skips external http/https URLs (handled during export)
+ * 
+ * @param html - HTML content containing images
+ * @returns Object with extracted image data and updated HTML
  */
 function extractImagesFromHtml(html: string): { images: any[]; updatedHtml: string } {
   const images: any[] = [];
@@ -70,6 +78,13 @@ function extractImagesFromHtml(html: string): { images: any[]; updatedHtml: stri
   };
 }
 
+/**
+ * Save a new morning meeting entry to the database
+ * Extracts and uploads images to blob storage
+ * 
+ * @param entry - The entry data to save
+ * @returns Promise that resolves to the created entry with ID
+ */
 export async function saveEntry(entry: MorningMeetingEntry): Promise<any> {
   try {
     console.log('saveEntry: Starting with entry.entry length:', entry.entry.length);
@@ -109,6 +124,12 @@ export async function saveEntry(entry: MorningMeetingEntry): Promise<any> {
   }
 }
 
+/**
+ * Fetch all entries from the API
+ * Automatically converts image-ref:// references to data URLs for display
+ * 
+ * @returns Promise that resolves to array of entries
+ */
 export async function getAllEntries(): Promise<any[]> {
   try {
     console.log('getAllEntries: Fetching from API');
@@ -122,66 +143,19 @@ export async function getAllEntries(): Promise<any[]> {
     console.log('getAllEntries: Received', entries.length, 'entries');
     
     // Client-side fallback: Convert image-ref:// to data URLs using images array
-    for (const entry of entries) {
-      if (entry.images && entry.images.length > 0 && entry.entry) {
-        let html = entry.entry;
-        console.log('getAllEntries: Converting', entry.images.length, 'image references for entry', entry.id);
-        
-        for (const img of entry.images) {
-          try {
-            // Handle both position values and null positions (fallback to index)
-            const position = img.position !== null && img.position !== undefined ? img.position : entry.images.indexOf(img);
-            const ref = `image-ref://img-${position}`;
-            if (html.includes(ref)) {
-              console.log('getAllEntries: Found reference', ref, 'with position', position, 'fetching image ID', img.id);
-              // Fetch image from API
-              const imgResponse = await fetch(`/api/images/${img.id}`);
-              console.log('getAllEntries: Image API response status:', imgResponse.status);
-              if (imgResponse.ok) {
-                const blob = await imgResponse.blob();
-                console.log('getAllEntries: Received blob with size:', blob.size, 'type:', blob.type);
-                const dataUrl = await new Promise<string>((resolve, reject) => {
-                  const reader = new FileReader();
-                  reader.onload = () => {
-                    const result = reader.result as string;
-                    console.log('getAllEntries: FileReader onload - dataUrl length:', result.length);
-                    resolve(result);
-                  };
-                  reader.onerror = (error) => {
-                    console.error('getAllEntries: FileReader error:', error);
-                    reject(error);
-                  };
-                  reader.readAsDataURL(blob);
-                });
-                const oldHtmlLength = html.length;
-                html = html.replace(ref, dataUrl);
-                const newHtmlLength = html.length;
-                console.log('getAllEntries: Replaced', ref, '- HTML length changed from', oldHtmlLength, 'to', newHtmlLength);
-              } else {
-                console.error('getAllEntries: Failed to fetch image', img.id, 'status:', imgResponse.status);
-                html = html.replace(ref, '');
-              }
-            } else {
-              console.log('getAllEntries: Reference not found in HTML:', ref);
-            }
-          } catch (error) {
-            console.error('getAllEntries: Error converting image reference:', error);
-          }
-        }
-        entry.entry = html;
-      }
-    }
-    
-    if (entries.length > 0) {
-      console.log('getAllEntries: After conversion, first entry HTML preview:', entries[0].entry?.substring(0, 200));
-    }
-    return entries;
+    return await convertEntriesImageReferences(entries, 'getAllEntries');
   } catch (error) {
     console.error('Error fetching entries:', error);
     return [];
   }
 }
 
+/**
+ * Delete an entry by ID
+ * 
+ * @param id - Entry ID to delete
+ * @returns Promise that resolves when deletion is complete
+ */
 export async function deleteEntry(id: string): Promise<void> {
   const response = await fetch(`/api/entries/${id}`, {
     method: 'DELETE',
@@ -229,11 +203,20 @@ export async function getEntryById(id: string): Promise<any> {
     const response = await fetch(`/api/entries/${id}`);
     
     if (!response.ok) {
+/**
+ * Update an existing entry
+ * Extracts and uploads any new images to blob storage
+ * 
+ * @param id - Entry ID to update
+ * @param updatedEntry - Partial entry data to update
+ * @returns Promise that resolves to the updated entry
+ */
       throw new Error('Failed to fetch entry');
     }
 
     const entry = await response.json();
     
+    // Note: The API already converts image-ref:// to data URLs
     // Note: The API already converts image-ref:// to data URLs
     // So entry.entry should already contain the proper image data
     
@@ -244,6 +227,13 @@ export async function getEntryById(id: string): Promise<any> {
   }
 }
 
+/**
+ * Fetch draft entries for a specific author
+ * Converts image references for display
+ * 
+ * @param author - Author name to filter by
+ * @returns Promise that resolves to array of draft entries
+ */
 export async function getDraftEntries(author: string): Promise<any[]> {
   try {
     console.log('getDraftEntries: Fetching drafts for author:', author);
@@ -259,62 +249,19 @@ export async function getDraftEntries(author: string): Promise<any[]> {
     console.log('getDraftEntries: Received', entries.length, 'draft entries');
     
     // Client-side fallback: Convert image-ref:// to data URLs using images array
-    for (const entry of entries) {
-      if (entry.images && entry.images.length > 0 && entry.entry) {
-        let html = entry.entry;
-        console.log('getDraftEntries: Converting', entry.images.length, 'image references for entry', entry.id);
-        
-        for (const img of entry.images) {
-          try {
-            // Handle both position values and null positions (fallback to index)
-            const position = img.position !== null && img.position !== undefined ? img.position : entry.images.indexOf(img);
-            const ref = `image-ref://img-${position}`;
-            if (html.includes(ref)) {
-              console.log('getDraftEntries: Found reference', ref, 'with position', position, 'fetching image ID', img.id);
-              const imgResponse = await fetch(`/api/images/${img.id}`);
-              console.log('getDraftEntries: Image API response status:', imgResponse.status);
-              if (imgResponse.ok) {
-                const blob = await imgResponse.blob();
-                console.log('getDraftEntries: Received blob with size:', blob.size, 'type:', blob.type);
-                const dataUrl = await new Promise<string>((resolve, reject) => {
-                  const reader = new FileReader();
-                  reader.onload = () => {
-                    const result = reader.result as string;
-                    console.log('getDraftEntries: FileReader onload - dataUrl length:', result.length);
-                    resolve(result);
-                  };
-                  reader.onerror = (error) => {
-                    console.error('getDraftEntries: FileReader error:', error);
-                    reject(error);
-                  };
-                  reader.readAsDataURL(blob);
-                });
-                const oldHtmlLength = html.length;
-                html = html.replace(ref, dataUrl);
-                const newHtmlLength = html.length;
-                console.log('getDraftEntries: Replaced', ref, '- HTML length changed from', oldHtmlLength, 'to', newHtmlLength);
-              } else {
-                console.error('getDraftEntries: Failed to fetch image', img.id, 'status:', imgResponse.status);
-                html = html.replace(ref, '');
-              }
-            } else {
-              console.log('getDraftEntries: Reference not found in HTML:', ref);
-            }
-          } catch (error) {
-            console.error('getDraftEntries: Error converting image reference:', error);
-          }
-        }
-        entry.entry = html;
-      }
-    }
-    
-    return entries;
+    return await convertEntriesImageReferences(entries, 'getDraftEntries');
   } catch (error) {
     console.error('Error fetching draft entries:', error);
     return [];
   }
 }
 
+/**
+ * Fetch submitted entries awaiting approval
+ * Converts image references for display
+ * 
+ * @returns Promise that resolves to array of submitted entries
+ */
 export async function getSubmittedEntries(): Promise<any[]> {
   try {
     console.log('getSubmittedEntries: Fetching submitted entries');
@@ -330,78 +277,32 @@ export async function getSubmittedEntries(): Promise<any[]> {
     console.log('getSubmittedEntries: Received', entries.length, 'submitted entries');
     
     // Client-side fallback: Convert image-ref:// to data URLs using images array
-    for (const entry of entries) {
-      if (entry.images && entry.images.length > 0 && entry.entry) {
-        let html = entry.entry;
-        console.log('getSubmittedEntries: Converting', entry.images.length, 'image references for entry', entry.id);
-        
-        for (const img of entry.images) {
-          try {
-            // Handle both position values and null positions (fallback to index)
-            const position = img.position !== null && img.position !== undefined ? img.position : entry.images.indexOf(img);
-            const ref = `image-ref://img-${position}`;
-            if (html.includes(ref)) {
-              console.log('getSubmittedEntries: Found reference', ref, 'with position', position, 'fetching image ID', img.id);
-              const imgResponse = await fetch(`/api/images/${img.id}`);
-              console.log('getSubmittedEntries: Image API response status:', imgResponse.status);
-              if (imgResponse.ok) {
-                const blob = await imgResponse.blob();
-                console.log('getSubmittedEntries: Received blob with size:', blob.size, 'type:', blob.type);
-                const dataUrl = await new Promise<string>((resolve, reject) => {
-                  const reader = new FileReader();
-                  reader.onload = () => {
-                    const result = reader.result as string;
-                    console.log('getSubmittedEntries: FileReader onload - dataUrl length:', result.length);
-                    resolve(result);
-                  };
-                  reader.onerror = (error) => {
-                    console.error('getSubmittedEntries: FileReader error:', error);
-                    reject(error);
-                  };
-                  reader.readAsDataURL(blob);
-                });
-                const oldHtmlLength = html.length;
-                html = html.replace(ref, dataUrl);
-                const newHtmlLength = html.length;
-                console.log('getSubmittedEntries: Replaced', ref, '- HTML length changed from', oldHtmlLength, 'to', newHtmlLength);
-              } else {
-                console.error('getSubmittedEntries: Failed to fetch image', img.id, 'status:', imgResponse.status);
-                html = html.replace(ref, '');
-              }
-            } else {
-              console.log('getSubmittedEntries: Reference not found in HTML:', ref);
-            }
-          } catch (error) {
-            console.error('getSubmittedEntries: Error converting image reference:', error);
-          }
-        }
-        entry.entry = html;
-      }
-    }
-    
-    return entries;
+    return await convertEntriesImageReferences(entries, 'getSubmittedEntries');
   } catch (error) {
     console.error('Error fetching submitted entries:', error);
     return [];
   }
 }
+
+/**
+ * Toggle the approval status of an entry
+ * 
+ * @param entryId - Entry ID to update
+ * @param approved - New approval status
+ * @returns Promise that resolves to the updated entry
+ */
 export async function toggleApproval(entryId: string, approved: boolean): Promise<any> {
-  try {
-    const response = await fetch('/api/entries', {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ id: entryId, approved }),
-    });
+  const response = await fetch(`/api/entries`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ id: entryId, approved }),
+  });
 
-    if (!response.ok) {
-      throw new Error('Failed to update approval status');
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error toggling approval:', error);
-    throw error;
+  if (!response.ok) {
+    throw new Error('Failed to update approval status');
   }
+
+  return response.json();
 }

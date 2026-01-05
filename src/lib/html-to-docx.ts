@@ -3,7 +3,9 @@
 import { Paragraph, TextRun, HeadingLevel, AlignmentType, ImageRun } from 'docx';
 
 /**
- * Convert base64 data URL to Buffer
+ * Convert base64 data URL to Buffer for image embedding
+ * @param dataUrl - Data URL starting with data:image/...;base64,
+ * @returns Buffer containing the image data
  */
 function base64ToBuffer(dataUrl: string): Buffer {
   const base64String = dataUrl.replace(/^data:image\/[^;]+;base64,/, '');
@@ -12,6 +14,10 @@ function base64ToBuffer(dataUrl: string): Buffer {
 
 /**
  * Server-side HTML parsing for images and basic tags
+ * Uses regex since DOMParser is not available in Node.js
+ * 
+ * @param html - HTML string to parse
+ * @returns Array of DOCX Paragraph objects
  */
 function parseHtmlContentServer(html: string): Paragraph[] {
   const paragraphs: Paragraph[] = [];
@@ -31,7 +37,8 @@ function parseHtmlContentServer(html: string): Paragraph[] {
         new Paragraph({
           children: [
             new ImageRun({
-              data: buffer,
+              data: buffer as unknown as Uint8Array,
+              type: 'png',
               transformation: {
                 width: 400,
                 height: 300,
@@ -202,7 +209,8 @@ function parseHtmlContentClient(html: string): Paragraph[] {
               new Paragraph({
                 children: [
                   new ImageRun({
-                    data: buffer,
+                    data: buffer as unknown as Uint8Array,
+                    type: 'png',
                     transformation: {
                       width,
                       height,
@@ -285,7 +293,8 @@ function extractTextRuns(element: Element): any[] {
               console.log('Embedding inline image, buffer size:', buffer.length);
               runs.push(
                 new ImageRun({
-                  data: buffer,
+                  data: buffer as unknown as Uint8Array,
+                  type: 'png',
                   transformation: { width, height },
                 })
               );

@@ -2,7 +2,7 @@
 
 import { MorningMeetingForm } from '@/components/MorningMeetingForm';
 import { MorningMeetingEntry } from '@/types/morning-meeting';
-import { saveEntry, getAllEntries, updateEntry } from '@/lib/storage';
+import { saveEntry, updateEntry, getEntryById } from '@/lib/storage';
 import { useRouter } from 'next/navigation';
 import { Suspense, useState, useEffect } from 'react';
 import { usePopup } from '@/lib/popup-context';
@@ -23,8 +23,7 @@ function FormContent() {
       // Load entry data for editing
       const loadEntry = async () => {
         try {
-          const entries = await getAllEntries();
-          const entryToEdit = entries.find((entry) => entry.id === editId);
+          const entryToEdit = await getEntryById(editId);
           if (entryToEdit) {
             setInitialData(entryToEdit);
           }

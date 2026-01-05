@@ -12,7 +12,16 @@ export interface BlobUploadResult {
 
 /**
  * Blob Storage Service
- * Supports multiple storage backends (local file system, S3, Azure, Cloudinary, etc.)
+ * Supports multiple storage backends:
+ * - Local file system (for development)
+ * - Azure Blob Storage (for production)
+ * 
+ * Configure via environment variables:
+ * - BLOB_STORAGE_TYPE: 'local' or 'azure'
+ * - BLOB_STORAGE_PATH: Local storage directory path
+ * - AZURE_STORAGE_ACCOUNT: Azure storage account name
+ * - AZURE_STORAGE_KEY: Azure storage account key
+ * - AZURE_STORAGE_CONTAINER: Azure container name
  */
 class BlobStorageService {
   private storageType: string;
@@ -44,6 +53,10 @@ class BlobStorageService {
 
   /**
    * Upload a blob to storage
+   * @param buffer - File contents as Buffer
+   * @param filename - Original filename
+   * @param mimeType - MIME type of the file
+   * @returns Promise that resolves to upload result with URL
    */
   async upload(buffer: Buffer, filename: string, mimeType: string): Promise<BlobUploadResult> {
     switch (this.storageType) {

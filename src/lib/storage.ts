@@ -234,7 +234,9 @@ export async function getDraftEntries(author: string): Promise<any[]> {
     const response = await fetch(`/api/entries?status=draft&author=${encodeURIComponent(author)}`);
     
     if (!response.ok) {
-      throw new Error('Failed to fetch draft entries');
+      const errorData = await response.json().catch(() => ({}));
+      console.error('getDraftEntries: API error response:', errorData);
+      throw new Error(`Failed to fetch draft entries: ${errorData.details || response.statusText}`);
     }
 
     const entries = await response.json();
@@ -291,7 +293,9 @@ export async function getSubmittedEntries(): Promise<any[]> {
     const response = await fetch('/api/entries?status=submitted');
     
     if (!response.ok) {
-      throw new Error('Failed to fetch submitted entries');
+      const errorData = await response.json().catch(() => ({}));
+      console.error('getSubmittedEntries: API error response:', errorData);
+      throw new Error(`Failed to fetch submitted entries: ${errorData.details || response.statusText}`);
     }
 
     const entries = await response.json();
@@ -336,5 +340,25 @@ export async function getSubmittedEntries(): Promise<any[]> {
   } catch (error) {
     console.error('Error fetching submitted entries:', error);
     return [];
+  }
+}
+export async function toggleApproval(entryId: string, approved: boolean): Promise<any> {
+  try {
+    const response = await fetch('/api/entries', {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ id: entryId, approved }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to update approval status');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error toggling approval:', error);
+    throw error;
   }
 }

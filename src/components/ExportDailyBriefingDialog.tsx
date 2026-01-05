@@ -44,11 +44,11 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
       const allEntries = await getAllEntries();
       const entriesForDate = allEntries.filter((entry) => {
         const entryDate = new Date(entry.date).toISOString().split('T')[0];
-        return entryDate === selectedDate;
+        return entryDate === selectedDate && entry.approved;
       });
 
       if (entriesForDate.length === 0) {
-        showInfo('No Entries', 'No entries found for the selected date.');
+        showInfo('No Approved Entries', 'No approved entries found for the selected date.');
         setIsExporting(false);
         return;
       }
@@ -58,17 +58,27 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
         if (entry.images && entry.images.length > 0) {
           let html = entry.entry;
           
+          console.log('Processing entry:', entry.id, 'with', entry.images.length, 'images');
+          console.log('HTML before image replacement:', html.substring(0, 500));
+          
           // Download each image from blob storage via API
           for (const img of entry.images) {
             try {
               const ref = `image-ref://img-${img.position}`;
+              
+              console.log('Looking for reference:', ref);
+              
+              if (!html.includes(ref)) {
+                console.warn(`Reference ${ref} not found in HTML`);
+                continue;
+              }
               
               // Download image from blob storage via API endpoint
               const response = await fetch(`/api/images/${img.id}`);
               if (!response.ok) {
                 console.error(`Failed to fetch image ${img.id} from API`);
                 // Remove broken image reference
-                html = html.replace(ref, '');
+                html = html.replace(new RegExp(`<img[^>]*src="${ref}"[^>]*>`, 'gi'), '');
                 continue;
               }
               
@@ -81,15 +91,21 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
               );
               const dataUrl = `data:${img.mimeType};base64,${base64Data}`;
               
-              html = html.replace(ref, dataUrl);
+              console.log('Created data URL, length:', dataUrl.length);
+              
+              // Replace the src attribute in img tags
+              html = html.replace(new RegExp(`src="${ref}"`, 'gi'), `src="${dataUrl}"`);
+              
+              console.log('HTML after replacement contains data:image?', html.includes('data:image'));
             } catch (error) {
               console.error(`Error downloading image ${img.id} from blob storage:`, error);
               // Remove broken image reference
               const ref = `image-ref://img-${img.position}`;
-              html = html.replace(ref, '');
+              html = html.replace(new RegExp(`<img[^>]*src="${ref}"[^>]*>`, 'gi'), '');
             }
           }
           
+          console.log('Final HTML contains img tags?', html.includes('<img'));
           entry.entry = html;
         }
       }

@@ -123,14 +123,19 @@ export function parseHtmlContent(html: string): Paragraph[] {
     } else if (tagName === 'img') {
       const src = element.getAttribute('src');
       const alt = element.getAttribute('alt') || 'Image';
-      const width = parseInt(element.getAttribute('data-width') || '400');
-      const height = parseInt(element.getAttribute('data-height') || '300');
+      const dataWidth = element.getAttribute('data-width');
+      const dataHeight = element.getAttribute('data-height');
+      const width = dataWidth ? parseInt(dataWidth) : 400;
+      const height = dataHeight ? parseInt(dataHeight) : 300;
+
+      console.log('Processing img tag:', { src: src?.substring(0, 50), alt, width, height });
 
       if (src) {
         try {
-          if (src.startsWith('data:')) {
+          if (src.startsWith('data:image')) {
             // Convert base64 image to buffer and embed
             const buffer = base64ToBuffer(src);
+            console.log('Embedding image, buffer size:', buffer.length);
             paragraphs.push(
               new Paragraph({
                 children: [
@@ -146,7 +151,8 @@ export function parseHtmlContent(html: string): Paragraph[] {
               })
             );
           } else {
-            // For external URLs, show as link text
+            // For external URLs or broken references, show as link text
+            console.warn('Image src is not a data URL:', src.substring(0, 50));
             paragraphs.push(
               new Paragraph({
                 children: [new TextRun({ text: `[Image: ${alt}]`, color: '0563C1', underline: {}, font: 'Roboto' })],
@@ -207,11 +213,14 @@ function extractTextRuns(element: Element): any[] {
           break;
         case 'img': {
           const src = el.getAttribute('src');
-          if (src && src.startsWith('data:')) {
+          if (src && src.startsWith('data:image')) {
             try {
               const buffer = base64ToBuffer(src);
-              const width = parseInt(el.getAttribute('data-width') || '200');
-              const height = parseInt(el.getAttribute('data-height') || '150');
+              const dataWidth = el.getAttribute('data-width');
+              const dataHeight = el.getAttribute('data-height');
+              const width = dataWidth ? parseInt(dataWidth) : 200;
+              const height = dataHeight ? parseInt(dataHeight) : 150;
+              console.log('Embedding inline image, buffer size:', buffer.length);
               runs.push(
                 new ImageRun({
                   data: buffer,

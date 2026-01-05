@@ -10,16 +10,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { getAllEntries, deleteEntry, getSubmittedEntries } from '@/lib/storage';
+import { getAllEntries, deleteEntry, getSubmittedEntries, toggleApproval } from '@/lib/storage';
 import { REGIONS, CATEGORIES, PRIORITIES, MorningMeetingEntry } from '@/types/morning-meeting';
-import { Search, FileText, Trash2, Eye, Download, FileDown, Edit, List } from 'lucide-react';
+import { Search, FileText, Trash2, Eye, Download, FileDown, Edit, List, CheckCircle2, Circle } from 'lucide-react';
 import Link from 'next/link';
 import { ExportDailyBriefingDialog } from './ExportDailyBriefingDialog';
 import { ViewEntryDialog } from './ViewEntryDialog';
 import { usePopup } from '@/lib/popup-context';
 
 export function MorningMeetingList() {
-  const { confirm: showConfirm, success: showSuccess } = usePopup();
+  const { confirm: showConfirm, success: showSuccess, info: showInfo } = usePopup();
   const [entries, setEntries] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRegion, setFilterRegion] = useState<string>('all');
@@ -50,6 +50,19 @@ export function MorningMeetingList() {
       await deleteEntry(id);
       showSuccess('Deleted', 'Entry deleted successfully');
       loadEntries();
+    }
+  };
+
+  const handleToggleApproval = async (entry: any) => {
+    try {
+      await toggleApproval(entry.id, !entry.approved);
+      showSuccess(
+        entry.approved ? 'Unapproved' : 'Approved',
+        `Entry has been ${!entry.approved ? 'approved' : 'unapproved'}`
+      );
+      loadEntries();
+    } catch (error) {
+      showSuccess('Error', 'Failed to update approval status');
     }
   };
 
@@ -113,7 +126,12 @@ export function MorningMeetingList() {
   };
 
   const exportToJSON = () => {
-    const dataStr = JSON.stringify(sortedEntries, null, 2);
+    const approvedEntries = sortedEntries.filter((entry) => entry.approved);
+    if (approvedEntries.length === 0) {
+      showInfo('No Approved Entries', 'There are no approved entries to export.');
+      return;
+    }
+    const dataStr = JSON.stringify(approvedEntries, null, 2);
     const dataBlob = new Blob([dataStr], { type: 'application/json' });
     const url = URL.createObjectURL(dataBlob);
     const link = document.createElement('a');
@@ -253,6 +271,9 @@ export function MorningMeetingList() {
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-700">
                   Category
                 </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-700">
+                  Approved
+                </th>
                 <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-700">
                   Actions
                 </th>
@@ -261,7 +282,7 @@ export function MorningMeetingList() {
             <tbody>
               {sortedEntries.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-12 text-center text-slate-500">
+                  <td colSpan={8} className="px-4 py-12 text-center text-slate-500">
                     No entries found. <Link href="/form" className="text-un-blue hover:underline">Create your first entry</Link>
                   </td>
                 </tr>
@@ -294,6 +315,21 @@ export function MorningMeetingList() {
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-600">
                       {entry.category}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3">
+                      <button
+                        onClick={() => handleToggleApproval(entry)}
+                        className="flex items-center gap-2 text-sm font-medium transition-colors hover:text-un-blue"
+                      >
+                        {entry.approved ? (
+                          <CheckCircle2 className="h-5 w-5 text-green-600" />
+                        ) : (
+                          <Circle className="h-5 w-5 text-slate-400" />
+                        )}
+                        <span className="text-xs text-slate-600">
+                          {entry.approved ? 'Yes' : 'No'}
+                        </span>
+                      </button>
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-right">
                       <div className="flex justify-end gap-1">

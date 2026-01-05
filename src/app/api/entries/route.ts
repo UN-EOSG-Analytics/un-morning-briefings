@@ -10,6 +10,8 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status');
     const author = searchParams.get('author');
 
+    console.log('GET /api/entries: Params -', { date, status, author });
+
     let sql = `
       SELECT 
         e.id,
@@ -24,6 +26,7 @@ export async function GET(request: NextRequest) {
         e.pu_note as "puNote",
         e.author,
         e.status,
+        e.approved,
         e.created_at as "createdAt",
         e.updated_at as "updatedAt",
         COALESCE(
@@ -70,7 +73,9 @@ export async function GET(request: NextRequest) {
 
     sql += ` GROUP BY e.id ORDER BY e.created_at DESC`;
 
+    console.log('GET /api/entries: Executing SQL with params:', { sql, params });
     const result = await query(sql, params);
+    console.log('GET /api/entries: Query returned', result.rows.length, 'rows');
     
     // Convert blob URLs to data URLs for private blob storage
     for (const entry of result.rows) {
@@ -106,7 +111,10 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(result.rows);
   } catch (error) {
     console.error('Error fetching entries:', error);
-    return NextResponse.json({ error: 'Failed to fetch entries' }, { status: 500 });
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    console.error('Error details:', { message: errorMessage, stack: errorStack });
+    return NextResponse.json({ error: 'Failed to fetch entries', details: errorMessage }, { status: 500 });
   }
 }
 
@@ -153,8 +161,8 @@ export async function POST(request: NextRequest) {
     await query(
       `INSERT INTO entries (
         id, category, priority, region, country, headline, date, entry,
-        source_url, pu_note, author, status, created_at, updated_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`,
+        source_url, pu_note, author, status, approved, created_at, updated_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`,
       [
         id,
         data.category,
@@ -168,6 +176,7 @@ export async function POST(request: NextRequest) {
         data.puNote || null,
         data.author || null,
         data.status || null,
+        data.approved || false,
         now,
         now,
       ]
@@ -268,6 +277,61 @@ export async function POST(request: NextRequest) {
     console.error('Error details:', { message: errorMessage, stack: errorStack });
     return NextResponse.json({ 
       error: 'Failed to create entry',
+      details: errorMessage 
+    }, { status: 500 });
+  }
+}
+// PATCH update entry (e.g., approval status)
+export async function PATCH(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { id, approved } = body;
+
+    if (!id) {
+      return NextResponse.json({ error: 'Entry ID is required' }, { status: 400 });
+    }
+
+    const now = new Date();
+
+    // Update entry approved status
+    await query(
+      `UPDATE entries SET approved = $1, updated_at = $2 WHERE id = $3`,
+      [approved, now, id]
+    );
+
+    // Fetch updated entry
+    const result = await query(
+      `SELECT 
+        id,
+        category,
+        priority,
+        region,
+        country,
+        headline,
+        date,
+        entry,
+        source_url as "sourceUrl",
+        pu_note as "puNote",
+        author,
+        status,
+        approved,
+        created_at as "createdAt",
+        updated_at as "updatedAt"
+      FROM entries
+      WHERE id = $1`,
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return NextResponse.json({ error: 'Entry not found' }, { status: 404 });
+    }
+
+    return NextResponse.json(result.rows[0]);
+  } catch (error) {
+    console.error('Error updating entry:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    return NextResponse.json({ 
+      error: 'Failed to update entry',
       details: errorMessage 
     }, { status: 500 });
   }

@@ -14,6 +14,7 @@ export interface MorningMeetingEntry {
   createdAt?: Date;
   updatedAt?: Date;
   status?: 'draft' | 'submitted';
+  approved?: boolean;
 }
 
 export interface FormFieldError {

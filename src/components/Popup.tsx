@@ -117,7 +117,7 @@ function PopupItem({ popup }: PopupItemProps) {
       }`}
     >
       <div
-        className={`rounded-lg border p-4 shadow-lg ${getBackgroundColor()}`}
+        className={`rounded-lg border p-4 ${getBackgroundColor()}`}
       >
         <div className="flex gap-3">
           <div className="flex-shrink-0 pt-0.5">{getIcon()}</div>

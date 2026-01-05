@@ -8,7 +8,7 @@ import { FileText, List, ArrowRight } from 'lucide-react';
 export default function HomePage() {
   return (
     <main className="min-h-screen bg-background">
-      <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6">
+      <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
         <div className="text-left mb-12">
           <h1 className="text-4xl font-bold text-foreground mb-1">
             Morning Meeting Briefings
@@ -18,7 +18,7 @@ export default function HomePage() {
           </p>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid gap-6 md:grid-cols-3">
           {/* New Entry Card */}
           <Card className="border-slate-200 p-8 hover:border-un-blue transition-colors">
             <div className="flex flex-col items-left text-left space-y-4">
@@ -30,7 +30,7 @@ export default function HomePage() {
                 Submit a new morning meeting briefing entry with key updates and information
               </p>
               <Link href="/form" className="w-full">
-                <Button className="w-full" size="lg">
+                <Button className="w-full bg-un-blue" size="lg">
                   Create
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
@@ -51,6 +51,24 @@ export default function HomePage() {
               <Link href="/list" className="w-full">
                 <Button variant="outline" className="w-full" size="lg">
                   View All
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+            </div>
+          </Card>
+          {/* View Entries Card */}
+          <Card className="border-slate-200 p-8 hover:border-un-blue transition-colors">
+            <div className="flex flex-col items-left text-left space-y-4">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-slate-700">
+                <List className="h-8 w-8 text-white" />
+              </div>
+              <h2 className="text-2xl font-semibold text-foreground">View Drafts</h2>
+              <p className="text-slate-600">
+                Work on your previously saved drafts before submitting final entries
+              </p>
+              <Link href="/drafts" className="w-full">
+                <Button variant="outline" className="w-full" size="lg">
+                  View Drafts
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>

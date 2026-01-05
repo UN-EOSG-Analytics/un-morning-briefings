@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/select';
 import { getDraftEntries, deleteEntry } from '@/lib/storage';
 import { REGIONS, CATEGORIES, PRIORITIES, MorningMeetingEntry } from '@/types/morning-meeting';
-import { Search, FileText, Trash2, Eye, Edit, FilePlus } from 'lucide-react';
+import { Search, FileText, Trash2, Eye, Edit } from 'lucide-react';
 import Link from 'next/link';
 import { ViewEntryDialog } from '@/components/ViewEntryDialog';
 import { usePopup } from '@/lib/popup-context';
@@ -54,11 +54,6 @@ export default function DraftsPage() {
     }
   };
 
-  const handleView = (entry: MorningMeetingEntry) => {
-    setSelectedEntry(entry);
-    setShowViewDialog(true);
-  };
-
   const filteredEntries = useMemo(() => {
     return entries.filter((entry) => {
       const matchesSearch =
@@ -84,72 +79,78 @@ export default function DraftsPage() {
       if (sortField === 'date') {
         aVal = new Date(aVal).getTime();
         bVal = new Date(bVal).getTime();
-      } else if (typeof aVal === 'string') {
-        aVal = aVal.toLowerCase();
-        bVal = bVal.toLowerCase();
       }
 
-      if (sortDirection === 'asc') {
-        return aVal > bVal ? 1 : -1;
-      } else {
-        return aVal < bVal ? 1 : -1;
-      }
+      if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
+      if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
+      return 0;
     });
-
     return sorted;
   }, [filteredEntries, sortField, sortDirection]);
 
-  const getPriorityLabel = (value: string) => {
-    return PRIORITIES.find((p) => p.value === value)?.label || value;
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('desc');
+    }
   };
 
-  const getPriorityBadgeColor = (priority: string) => {
-    return priority === 'sg-attention'
-      ? 'bg-red-100 text-red-800 border-red-300'
-      : 'bg-blue-100 text-blue-800 border-blue-300';
+  const getPriorityBadgeClass = (priority: string) => {
+    if (priority === 'sg-attention') return 'bg-red-100 text-red-800';
+    return 'bg-blue-100 text-blue-800';
+  };
+
+  const getRegionBadgeClass = (region: string) => {
+    const regionColors: Record<string, string> = {
+      'Africa': 'bg-yellow-100 text-yellow-800',
+      'Americas': 'bg-blue-100 text-blue-800',
+      'Asia and the Pacific': 'bg-green-100 text-green-800',
+      'Europe': 'bg-purple-100 text-purple-800',
+      'Middle East': 'bg-pink-100 text-pink-800',
+    };
+    return regionColors[region] || 'bg-gray-100 text-gray-800';
   };
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-8 px-4">
-      <div className="mx-auto w-full max-w-6xl">
-        {/* Header */}
-        <div className="mb-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-slate-900">My Drafts</h1>
-              <p className="mt-1 text-slate-600">
-                View and manage your draft entries
-              </p>
+    <div className="min-h-screen bg-background">
+      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+        <div className="space-y-4">
+          {/* Header */}
+      <Card className="border-slate-200">
+        <div className="flex items-center justify-between p-6">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded bg-un-blue">
+              <FileText className="h-5 w-5 text-white" />
             </div>
-            <Link href="/form">
-              <Button className="bg-un-blue hover:bg-un-blue/95">
-                <FilePlus className="mr-2 h-4 w-4" />
-                New Draft
-              </Button>
-            </Link>
+            <div>
+              <h1 className="text-2xl font-semibold text-foreground">My Drafts</h1>
+              <p className="text-sm text-slate-600">View and manage your draft entries</p>
+            </div>
           </div>
         </div>
+      </Card>
 
-        {/* Filters */}
-        <Card className="mb-6 p-4">
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-5">
+      {/* Filters */}
+      <Card className="border-slate-200">
+        <div className="p-4">
+          <div className="flex flex-wrap items-center gap-3">
             {/* Search */}
-            <div className="lg:col-span-2">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                <input
-                  type="text"
-                  placeholder="Search drafts..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="h-10 w-full rounded border border-slate-300 bg-white pl-10 pr-3 text-sm focus:border-un-blue focus:outline-none focus:ring-2 focus:ring-un-blue/20"
-                />
-              </div>
+            <div className="relative flex-1 min-w-[250px]">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search drafts..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="h-9 w-full rounded border border-slate-300 bg-white pl-9 pr-3 text-sm focus:border-un-blue focus:outline-none focus:ring-2 focus:ring-un-blue/20"
+              />
             </div>
 
             {/* Region Filter */}
             <Select value={filterRegion} onValueChange={setFilterRegion}>
-              <SelectTrigger className="h-10">
+              <SelectTrigger className="w-[180px] h-9">
                 <SelectValue placeholder="All Regions" />
               </SelectTrigger>
               <SelectContent>
@@ -164,7 +165,7 @@ export default function DraftsPage() {
 
             {/* Category Filter */}
             <Select value={filterCategory} onValueChange={setFilterCategory}>
-              <SelectTrigger className="h-10">
+              <SelectTrigger className="w-[180px] h-9">
                 <SelectValue placeholder="All Categories" />
               </SelectTrigger>
               <SelectContent>
@@ -179,7 +180,7 @@ export default function DraftsPage() {
 
             {/* Priority Filter */}
             <Select value={filterPriority} onValueChange={setFilterPriority}>
-              <SelectTrigger className="h-10">
+              <SelectTrigger className="w-[180px] h-9">
                 <SelectValue placeholder="All Priorities" />
               </SelectTrigger>
               <SelectContent>
@@ -191,100 +192,137 @@ export default function DraftsPage() {
                 ))}
               </SelectContent>
             </Select>
-          </div>
-        </Card>
 
-        {/* Results Count */}
-        <div className="mb-4 flex items-center justify-between">
-          <p className="text-sm text-slate-600">
-            Showing {sortedEntries.length} of {entries.length} draft(s)
-          </p>
+            <div className="ml-auto text-sm text-slate-600">
+              {sortedEntries.length} {sortedEntries.length === 1 ? 'draft' : 'drafts'}
+            </div>
+          </div>
         </div>
+      </Card>
 
-        {/* Drafts List */}
-        {sortedEntries.length === 0 ? (
-          <Card className="p-12 text-center">
-            <FileText className="mx-auto h-12 w-12 text-slate-300" />
-            <h3 className="mt-4 text-lg font-semibold text-slate-900">No drafts found</h3>
-            <p className="mt-2 text-sm text-slate-600">
-              {entries.length === 0
-                ? "You haven't created any drafts yet."
-                : 'Try adjusting your filters.'}
-            </p>
-            <Link href="/form">
-              <Button className="mt-4 bg-un-blue hover:bg-un-blue/95">
-                Create Your First Draft
-              </Button>
-            </Link>
-          </Card>
-        ) : (
-          <div className="space-y-4">
-            {sortedEntries.map((entry) => (
-              <Card key={entry.id} className="p-4 hover:shadow-md transition-shadow">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span
-                        className={`rounded border px-2 py-0.5 text-xs font-semibold ${getPriorityBadgeColor(
-                          entry.priority
-                        )}`}
-                      >
-                        {getPriorityLabel(entry.priority)}
+      {/* Table */}
+      <Card className="border-slate-200">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="border-b border-slate-200 bg-slate-50">
+              <tr>
+                <th
+                  className="cursor-pointer px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-700 hover:bg-slate-100"
+                  onClick={() => handleSort('date')}
+                >
+                  Date {sortField === 'date' && (sortDirection === 'asc' ? '↑' : '↓')}
+                </th>
+                <th
+                  className="cursor-pointer px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-700 hover:bg-slate-100"
+                  onClick={() => handleSort('region')}
+                >
+                  Region {sortField === 'region' && (sortDirection === 'asc' ? '↑' : '↓')}
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-700">
+                  Country
+                </th>
+                <th
+                  className="cursor-pointer px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-700 hover:bg-slate-100"
+                  onClick={() => handleSort('headline')}
+                >
+                  Headline {sortField === 'headline' && (sortDirection === 'asc' ? '↑' : '↓')}
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-700">
+                  Priority
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-700">
+                  Category
+                </th>
+                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-700">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {sortedEntries.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="px-4 py-12 text-center text-slate-500">
+                    No drafts found. <Link href="/form" className="text-un-blue hover:underline">Create your first draft</Link>
+                  </td>
+                </tr>
+              ) : (
+                sortedEntries.map((entry) => (
+                  <tr key={entry.id} className="border-b border-slate-100 hover:bg-slate-50">
+                    <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-600">
+                      {new Date(entry.date).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                      })}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3">
+                      <span className={`inline-block rounded px-2 py-1 text-xs font-medium ${getRegionBadgeClass(entry.region)}`}>
+                        {entry.region}
                       </span>
-                      <span className="text-xs text-slate-500">
-                        {new Date(entry.date).toLocaleDateString('en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                          year: 'numeric',
-                        })}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-600">
+                      {entry.country}
+                    </td>
+                    <td className="max-w-md px-4 py-3 text-sm">
+                      <div className="line-clamp-2">{entry.headline}</div>
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3">
+                      <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${getPriorityBadgeClass(entry.priority)}`}>
+                        <span className={`h-1.5 w-1.5 rounded-full ${entry.priority === 'sg-attention' ? 'bg-red-600' : 'bg-blue-600'}`} />
+                        {PRIORITIES.find(p => p.value === entry.priority)?.label}
                       </span>
-                    </div>
-                    <h3 className="text-lg font-semibold text-slate-900 mb-1">
-                      {entry.headline}
-                    </h3>
-                    <div className="flex items-center gap-4 text-sm text-slate-600">
-                      <span>{entry.region}</span>
-                      <span>•</span>
-                      <span>{entry.country}</span>
-                      <span>•</span>
-                      <span>{entry.category}</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleView(entry)}
-                    >
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                    <Link href={`/form?edit=${entry.id}`}>
-                      <Button size="sm" variant="outline">
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                    </Link>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleDelete(entry.id!)}
-                      className="text-red-600 hover:bg-red-50"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
-        )}
-      </div>
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-600">
+                      {entry.category}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3 text-right">
+                      <div className="flex justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                          onClick={() => {
+                            setSelectedEntry(entry);
+                            setShowViewDialog(true);
+                          }}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Link href={`/form?edit=${entry.id}`}>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0 text-slate-600 hover:bg-slate-100"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        </Link>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0 text-red-600 hover:bg-red-50 hover:text-red-700"
+                          onClick={() => handleDelete(entry.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </Card>
 
-      {/* View Dialog */}
+      {/* View Entry Dialog */}
       <ViewEntryDialog
         open={showViewDialog}
         onOpenChange={setShowViewDialog}
         entry={selectedEntry}
       />
-    </main>
+        </div>
+      </main>
+    </div>
   );
 }

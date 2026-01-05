@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -13,9 +13,10 @@ import {
 import { getAllEntries } from '@/lib/storage';
 import { Document, Paragraph, TextRun, HeadingLevel, AlignmentType, Packer } from 'docx';
 import { saveAs } from 'file-saver';
-import { FileText, Calendar } from 'lucide-react';
+import { FileText, Calendar, CheckCircle2 } from 'lucide-react';
 import { parseHtmlContent } from '@/lib/html-to-docx';
 import { usePopup } from '@/lib/popup-context';
+import type { MorningMeetingEntry } from '@/types/morning-meeting';
 
 interface ExportDialogProps {
   open: boolean;
@@ -37,6 +38,31 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
     new Date().toISOString().split('T')[0]
   );
   const [isExporting, setIsExporting] = useState(false);
+  const [approvedEntries, setApprovedEntries] = useState<MorningMeetingEntry[]>([]);
+  const [isLoadingEntries, setIsLoadingEntries] = useState(false);
+
+  useEffect(() => {
+    const loadEntriesForDate = async () => {
+      setIsLoadingEntries(true);
+      try {
+        const allEntries = await getAllEntries();
+        const entriesForDate = allEntries.filter((entry) => {
+          const entryDate = new Date(entry.date).toISOString().split('T')[0];
+          return entryDate === selectedDate && entry.approved;
+        });
+        setApprovedEntries(entriesForDate);
+      } catch (error) {
+        console.error('Error loading entries:', error);
+        setApprovedEntries([]);
+      } finally {
+        setIsLoadingEntries(false);
+      }
+    };
+
+    if (open) {
+      loadEntriesForDate();
+    }
+  }, [selectedDate, open]);
 
   const handleExport = async () => {
     setIsExporting(true);
@@ -343,7 +369,7 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
             Export Daily Briefing
           </DialogTitle>
           <DialogDescription>
-            Select a date to export all entries as a formatted Word document
+          The exported document will include all entries for the selected date, organized by priority with full content and formatting.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
@@ -361,10 +387,27 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
               />
             </div>
           </div>
-          <div className="rounded bg-slate-50 p-3 text-sm text-slate-600">
-            <p>
-              The exported document will include all entries for the selected date, organized by priority with full content and formatting.
-            </p>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-foreground">
+              Approved Entries ({approvedEntries.length})
+            </label>
+            <div className="max-h-48 overflow-y-auto rounded border border-slate-200 bg-slate-50 p-3">
+              {isLoadingEntries ? (
+                <p className="text-xs text-slate-500">Loading entries...</p>
+              ) : approvedEntries.length === 0 ? (
+                <p className="text-xs text-slate-500">No approved entries for this date</p>
+              ) : (
+                <ul className="space-y-2">
+                  {approvedEntries.map((entry) => (
+                    <li key={entry.id} className="flex items-start gap-2 text-sm">
+                      <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-green-600 mt-0.5" />
+                      <span className="text-slate-700 line-clamp-2">{entry.headline}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
           </div>
         </div>
         <DialogFooter>

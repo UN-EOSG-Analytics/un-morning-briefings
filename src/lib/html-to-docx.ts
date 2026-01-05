@@ -13,6 +13,83 @@ function base64ToBuffer(dataUrl: string): Buffer {
 }
 
 /**
+ * Extract dimensions from PNG image data
+ * PNG header format: bytes 16-20 contain width (big-endian), bytes 20-24 contain height (big-endian)
+ * @param buffer - Buffer containing PNG image data
+ * @returns Object with width and height, or null if cannot be determined
+ */
+function getPNGDimensions(buffer: Buffer): { width: number; height: number } | null {
+  try {
+    // PNG signature is 8 bytes, then IHDR chunk follows
+    // IHDR chunk: 4 bytes length + 4 bytes "IHDR" + 4 bytes width + 4 bytes height
+    if (buffer.length < 24) return null;
+    
+    // Check PNG signature
+    const pngSignature = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
+    for (let i = 0; i < 8; i++) {
+      if (buffer[i] !== pngSignature[i]) return null;
+    }
+    
+    // Read width and height from IHDR chunk (big-endian)
+    const width = buffer.readUInt32BE(16);
+    const height = buffer.readUInt32BE(20);
+    
+    if (width > 0 && height > 0) {
+      return { width, height };
+    }
+  } catch (error) {
+    console.error('Error extracting PNG dimensions:', error);
+  }
+  return null;
+}
+
+/**
+ * Calculate image dimensions preserving aspect ratio
+ * @param dataWidth - Optional width attribute
+ * @param dataHeight - Optional height attribute
+ * @param buffer - Optional image buffer for extracting real dimensions
+ * @param maxWidth - Maximum width to constrain to (default 500 for better DOCX display)
+ * @returns Object with calculated width and height
+ */
+function calculateImageDimensions(
+  dataWidth: string | null,
+  dataHeight: string | null,
+  buffer?: Buffer,
+  maxWidth: number = 500
+): { width: number; height: number } {
+  let width = maxWidth;
+  let height = 375; // Default aspect ratio fallback
+  
+  // Try to get dimensions from PNG header first
+  let origWidth: number | undefined;
+  let origHeight: number | undefined;
+  
+  if (buffer) {
+    const pngDims = getPNGDimensions(buffer);
+    if (pngDims) {
+      origWidth = pngDims.width;
+      origHeight = pngDims.height;
+    }
+  }
+  
+  // Fall back to data attributes if available
+  if (!origWidth && dataWidth) {
+    origWidth = parseInt(dataWidth);
+  }
+  if (!origHeight && dataHeight) {
+    origHeight = parseInt(dataHeight);
+  }
+  
+  // Calculate proportional dimensions
+  if (origWidth && origHeight && origWidth > 0 && origHeight > 0) {
+    const aspectRatio = origWidth / origHeight;
+    height = Math.round(width / aspectRatio);
+  }
+  
+  return { width, height };
+}
+
+/**
  * Server-side HTML parsing for images and basic tags
  * Uses regex since DOMParser is not available in Node.js
  * 
@@ -22,27 +99,28 @@ function base64ToBuffer(dataUrl: string): Buffer {
 function parseHtmlContentServer(html: string): Paragraph[] {
   const paragraphs: Paragraph[] = [];
   
-  // Extract images with data URLs
-  const dataImgRegex = /<img\s+[^>]*?src\s*=\s*["']?(data:image[^"'\s>]+)["']?[^>]*?>/gi;
+  // Extract images with data URLs including dimensions
+  const imgRegex = /<img\s+[^>]*?src\s*=\s*["']?(data:image[^"'\s>]+)["']?[^>]*?(?:data-width\s*=\s*["']?(\d+)["'])?[^>]*?(?:data-height\s*=\s*["']?(\d+)["'])?[^>]*?>/gi;
   let match;
   
   console.log('Server parser: Looking for data URL images');
-  while ((match = dataImgRegex.exec(html)) !== null) {
+  while ((match = imgRegex.exec(html)) !== null) {
     const dataUrl = match[1];
-    console.log('Server parser: Found data URL image, length:', dataUrl.length);
+    const dataWidth = match[2];
+    const dataHeight = match[3];
+    console.log('Server parser: Found data URL image with dimensions:', { width: dataWidth, height: dataHeight });
     
     try {
       const buffer = base64ToBuffer(dataUrl);
+      const dims = calculateImageDimensions(dataWidth, dataHeight, buffer, 500);
+      
       paragraphs.push(
         new Paragraph({
           children: [
             new ImageRun({
               data: buffer as unknown as Uint8Array,
               type: 'png',
-              transformation: {
-                width: 400,
-                height: 300,
-              },
+              transformation: { width: dims.width, height: dims.height },
             }),
           ],
           spacing: { after: 100 },
@@ -194,8 +272,18 @@ function parseHtmlContentClient(html: string): Paragraph[] {
       const alt = element.getAttribute('alt') || 'Image';
       const dataWidth = element.getAttribute('data-width');
       const dataHeight = element.getAttribute('data-height');
-      const width = dataWidth ? parseInt(dataWidth) : 400;
-      const height = dataHeight ? parseInt(dataHeight) : 300;
+      let width = 500;
+      let height = 375;
+      
+      // Use stored dimensions if available and preserve aspect ratio
+      if (dataWidth && dataHeight) {
+        const origWidth = parseInt(dataWidth);
+        const origHeight = parseInt(dataHeight);
+        if (origWidth && origHeight) {
+          const aspectRatio = origWidth / origHeight;
+          height = Math.round(width / aspectRatio);
+        }
+      }
 
       console.log('Client parser: Processing img tag:', { src: src?.substring(0, 50), alt, width, height });
 
@@ -288,14 +376,15 @@ function extractTextRuns(element: Element): any[] {
               const buffer = base64ToBuffer(src);
               const dataWidth = el.getAttribute('data-width');
               const dataHeight = el.getAttribute('data-height');
-              const width = dataWidth ? parseInt(dataWidth) : 200;
-              const height = dataHeight ? parseInt(dataHeight) : 150;
-              console.log('Embedding inline image, buffer size:', buffer.length);
+              
+              const dims = calculateImageDimensions(dataWidth, dataHeight, buffer, 300);
+              
+              console.log('Embedding inline image, buffer size:', buffer.length, 'dimensions:', dims);
               runs.push(
                 new ImageRun({
                   data: buffer as unknown as Uint8Array,
                   type: 'png',
-                  transformation: { width, height },
+                  transformation: { width: dims.width, height: dims.height },
                 })
               );
             } catch (error) {

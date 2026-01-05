@@ -50,7 +50,7 @@ export function FilterBar({
             placeholder="Search entries..."
             value={searchTerm}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="h-9 w-full rounded border border-slate-300 bg-white pl-9 pr-3 text-sm focus:border-un-blue focus:outline-none focus:ring-2 focus:ring-un-blue/20"
+            className="h-9 w-full rounded-md border border-slate-300 bg-white pl-9 pr-3 text-sm focus:border-un-blue focus:outline-none focus:ring-2 focus:ring-un-blue/20"
           />
         </div>
 

@@ -2,7 +2,6 @@
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { X } from 'lucide-react';
 import { MorningMeetingEntry, PRIORITIES } from '@/types/morning-meeting';
 import { getPriorityBadgeClass } from '@/lib/useEntriesFilter';
 
@@ -14,11 +13,6 @@ interface ViewEntryDialogProps {
 
 export function ViewEntryDialog({ open, onOpenChange, entry }: ViewEntryDialogProps) {
   if (!entry) return null;
-
-  // Debug: Log entry content
-  console.log('ViewEntryDialog: Rendering entry with HTML length:', entry.entry?.length);
-  console.log('ViewEntryDialog: HTML preview:', entry.entry?.substring(0, 500));
-  console.log('ViewEntryDialog: Images array:', entry.images);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -49,9 +43,9 @@ export function ViewEntryDialog({ open, onOpenChange, entry }: ViewEntryDialogPr
         </DialogHeader>
 
         {/* Scrollable content */}
-        <div className="flex-1 overflow-y-auto px-6 scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+        <div className="flex-1 overflow-y-auto px-6" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
           <style>{`
-            .scrollbar-hide::-webkit-scrollbar {
+            ::-webkit-scrollbar {
               display: none;
             }
           `}</style>

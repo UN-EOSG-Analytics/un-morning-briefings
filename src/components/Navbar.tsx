@@ -2,10 +2,18 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { Menu, X, Home, PlusCircle, List, FileEdit } from 'lucide-react';
+import { Menu, X, Home, PlusCircle, List, FileEdit, LogOut, User } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import NavButton from './NavButton';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
 
@@ -52,7 +60,31 @@ export function Navbar() {
             <span>New Entry</span>
           </NavButton>
 
-          
+          {/* User Account Menu */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-9 w-9 rounded-full p-0"
+              >
+                <div className="h-8 w-8 rounded-full bg-slate-200 flex items-center justify-center">
+                  <User className="h-4 w-4 text-slate-600" />
+                </div>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel className="flex flex-col gap-1">
+                <span className="font-semibold text-sm">John Doe</span>
+                <span className="text-xs text-slate-600">Political Unit EOSG</span>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="text-red-600 cursor-pointer gap-2">
+                <LogOut className="h-4 w-4" />
+                <span>Logout</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
       </div>

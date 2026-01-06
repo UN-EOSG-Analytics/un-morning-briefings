@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { Menu, X, Home, PlusCircle, List, FileEdit, LogOut, User } from 'lucide-react';
+import { Menu, X, Home, PlusCircle, List, FileEdit, LogOut, User, Zap, Info } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import NavButton from './NavButton';
@@ -24,7 +24,7 @@ export function Navbar() {
     <nav className="fixed top-0 left-0 right-0 z-50 border-b border-slate-200 bg-white">
       <div className="flex h-16 items-center justify-between px-4 sm:px-6 w-full max-w-6xl mx-auto">
         {/* Logo */}
-        <div className="flex items-center">
+        <div className="flex items-center gap-2">
         <Link href="/" className="flex items-center gap-3">
           <Image
             src={`${basePath}/images/UN_Logo_Stacked_Colour_English.svg`}
@@ -35,7 +35,10 @@ export function Navbar() {
             priority
           />
         </Link>
-        
+        <span className="ml-2 border border-slate-300 bg-slate-100 text-slate-700 text-xs font-semibold px-2 py-1 rounded-full flex items-center gap-1.5">
+          <Info className="h-3 w-3" />
+          Beta
+        </span>
         </div>
 
         {/* Desktop Menu */}

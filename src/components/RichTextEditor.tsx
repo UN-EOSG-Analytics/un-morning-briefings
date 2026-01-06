@@ -123,6 +123,12 @@ export function RichTextEditor({
     return editor.getText().length;
   };
 
+  const getWordCount = () => {
+    const text = editor.getText().trim();
+    if (!text) return 0;
+    return text.split(/\s+/).length;
+  };
+
   const handleImageUpload = () => {
     fileInputRef.current?.click();
   };
@@ -172,7 +178,7 @@ export function RichTextEditor({
   };
 
   return (
-    <div className="space-y-2">
+    <div>
       {/* Toolbar */}
       <div className={`rounded-t border p-2 ${
         error
@@ -463,7 +469,7 @@ export function RichTextEditor({
       </div>
 
       {/* Editor */}
-      <div className={`rounded-b border ${
+      <div className={`rounded-b border -mt-1 ${
         error
           ? 'border-t-0 border-red-500 bg-red-50'
           : 'border-t-0 border-slate-300 bg-slate-50'
@@ -475,9 +481,9 @@ export function RichTextEditor({
       </div>
 
       {/* Character count and error */}
-      <div className="flex items-start justify-between text-xs">
+      <div className="flex items-start justify-between text-xs mt-2">
         <div className="text-slate-500">
-          {getCharacterCount()} characters
+          {getCharacterCount()} characters | {getWordCount()} words
         </div>
         {error && (
           <div className="flex items-center gap-1 text-red-600">

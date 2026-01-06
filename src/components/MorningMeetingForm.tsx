@@ -56,13 +56,40 @@ export function MorningMeetingForm({
     return entry.replace(/<img[^>]*src=["']image-ref:\/\/[^"']*["'][^>]*>/gi, '');
   };
 
+  // Format date to YYYY-MM-DD for input field
+  const formatDateForInput = (dateValue: any): string => {
+    if (!dateValue) return new Date().toISOString().split('T')[0];
+    
+    if (typeof dateValue === 'string') {
+      // If it's already in YYYY-MM-DD format, return it
+      if (dateValue.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        return dateValue;
+      }
+      // If it's ISO format (with time), extract just the date part
+      if (dateValue.includes('T')) {
+        return dateValue.split('T')[0];
+      }
+      // Try to parse and reformat
+      const parsed = new Date(dateValue);
+      if (!isNaN(parsed.getTime())) {
+        return parsed.toISOString().split('T')[0];
+      }
+    }
+    
+    if (dateValue instanceof Date) {
+      return dateValue.toISOString().split('T')[0];
+    }
+    
+    return new Date().toISOString().split('T')[0];
+  };
+
   const [formData, setFormData] = useState<MorningMeetingEntry>({
     category: initialData?.category || '',
     priority: initialData?.priority || 'situational-awareness',
     region: initialData?.region || '',
     country: initialData?.country || '',
     headline: initialData?.headline || '',
-    date: initialData?.date || new Date().toISOString().split('T')[0],
+    date: formatDateForInput(initialData?.date),
     entry: cleanEntry(initialData?.entry || ''),
     sourceUrl: initialData?.sourceUrl || '',
     puNote: initialData?.puNote || '',
@@ -75,14 +102,36 @@ export function MorningMeetingForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [availableCountries, setAvailableCountries] = useState<string[]>([]);
 
+  // Initialize available countries from initialData region on mount
+  useEffect(() => {
+    if (initialData?.region && COUNTRIES_BY_REGION[initialData.region]) {
+      const countries = COUNTRIES_BY_REGION[initialData.region];
+      // Ensure existing country is included even if not in the region list
+      if (initialData?.country && !countries.includes(initialData.country)) {
+        setAvailableCountries([initialData.country, ...countries]);
+      } else {
+        setAvailableCountries(countries);
+      }
+    }
+  }, [initialData?.region, initialData?.country]);
+
   // Update available countries when region changes
   useEffect(() => {
     if (formData.region && COUNTRIES_BY_REGION[formData.region]) {
-      setAvailableCountries(COUNTRIES_BY_REGION[formData.region]);
+      const countries = COUNTRIES_BY_REGION[formData.region];
+      // Ensure existing country is included
+      if (formData.country && !countries.includes(formData.country)) {
+        setAvailableCountries([formData.country, ...countries]);
+      } else {
+        setAvailableCountries(countries);
+      }
+    } else if (formData.country) {
+      // If no region selected but country exists, still show it
+      setAvailableCountries([formData.country]);
     } else {
       setAvailableCountries([]);
     }
-  }, [formData.region]);
+  }, [formData.region, formData.country]);
 
   // Update country if it's not available in the new region
   useEffect(() => {
@@ -288,12 +337,9 @@ export function MorningMeetingForm({
         <Card className="rounded-t-none">
           <CardContent className="pt-6">
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Classification Section */}
+              {/* Classification & Location Section */}
               <section className="space-y-4 border-b pb-6">
-                <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-700">
-                  Classification
-                </h2>
-                <div className="grid gap-4 md:grid-cols-2">
+                <div className="grid gap-4 md:grid-cols-4">
                   {/* Category */}
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-slate-700">
@@ -355,15 +401,7 @@ export function MorningMeetingForm({
                       </div>
                     )}
                   </div>
-                </div>
-              </section>
 
-              {/* Location Section */}
-              <section className="space-y-4 border-b pb-6">
-                <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-700">
-                  Location
-                </h2>
-                <div className="grid gap-4 md:grid-cols-2">
                   {/* Region */}
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-slate-700">
@@ -402,11 +440,11 @@ export function MorningMeetingForm({
                     <Select
                       value={formData.country}
                       onValueChange={(value) => handleSelectChange('country', value)}
-                      disabled={availableCountries.length === 0}
+                      disabled={availableCountries.length === 0 && !formData.country}
                     >
                       <SelectTrigger
                         className={
-                          availableCountries.length === 0
+                          availableCountries.length === 0 && !formData.country
                             ? 'opacity-50'
                             : errors.country
                               ? 'border-red-500 bg-red-50'
@@ -416,7 +454,7 @@ export function MorningMeetingForm({
                         <SelectValue placeholder="Select country..." />
                       </SelectTrigger>
                       <SelectContent>
-                        {availableCountries.length === 0 ? (
+                        {availableCountries.length === 0 && !formData.country ? (
                           <div className="p-2 text-sm text-slate-500">Select region first</div>
                         ) : (
                           availableCountries.map((country) => (

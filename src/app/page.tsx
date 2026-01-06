@@ -13,13 +13,23 @@ export default function HomePage() {
   return (
     <main className="min-h-[80svh] bg-background flex flex-col">
       <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
-        <div className="text-left mb-12">
-          <h1 className="text-4xl font-bold text-foreground mb-1">
-            Morning Meeting Briefings
-          </h1>
-          <p className="text-lg text-slate-600">
-            Create and manage daily briefing entries
-          </p>
+        <div className="flex items-start justify-between mb-12">
+          <div className="text-left">
+            <h1 className="text-4xl font-bold text-foreground mb-1">
+              Morning Meeting Briefings
+            </h1>
+            <p className="text-lg text-slate-600">
+              Create and manage daily briefing entries
+            </p>
+          </div>
+          <Button
+            onClick={() => setShowExportDialog(true)}
+            className="bg-un-blue hover:bg-un-blue/90 whitespace-nowrap ml-4"
+            size="lg"
+          >
+            <Download className="mr-2 h-4 w-4" />
+            Export Today's Morning Briefing
+          </Button>
         </div>
 
         <div className="grid gap-6 md:grid-cols-3">
@@ -78,18 +88,6 @@ export default function HomePage() {
               </Link>
             </div>
           </Card>
-        </div>
-
-        {/* Export Button */}
-        <div className="mt-10 flex justify-center w-full">
-          <Button
-            onClick={() => setShowExportDialog(true)}
-            className="bg-un-blue hover:bg-un-blue/90"
-            size="lg"
-          >
-            <Download className="mr-2 h-4 w-4" />
-            Export Today's Morning Briefing
-          </Button>
         </div>
 
         <ExportDailyBriefingDialog

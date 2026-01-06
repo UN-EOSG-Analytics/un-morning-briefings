@@ -1,16 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { getDraftEntries, deleteEntry } from '@/lib/storage';
-import { MorningMeetingEntry, PRIORITIES } from '@/types/morning-meeting';
-import { FileText, Trash2, Eye, Edit, FileEdit } from 'lucide-react';
-import Link from 'next/link';
-import { ViewEntryDialog } from '@/components/ViewEntryDialog';
-import { FilterBar } from '@/components/FilterBar';
+import { FileEdit } from 'lucide-react';
+import { EntriesTable } from '@/components/EntriesTable';
 import { usePopup } from '@/lib/popup-context';
-import { useEntriesFilter, getPriorityBadgeClass, getRegionBadgeClass } from '@/lib/useEntriesFilter';
 
 // TODO: Replace with actual user authentication
 const CURRENT_USER = 'Current User';
@@ -18,25 +13,6 @@ const CURRENT_USER = 'Current User';
 export default function DraftsPage() {
   const { confirm: showConfirm, success: showSuccess } = usePopup();
   const [entries, setEntries] = useState<any[]>([]);
-  const [selectedEntry, setSelectedEntry] = useState<MorningMeetingEntry | null>(null);
-  const [showViewDialog, setShowViewDialog] = useState(false);
-
-  // Use shared filter hook
-  const {
-    searchTerm,
-    filterRegion,
-    filterCategory,
-    filterPriority,
-    sortField,
-    sortDirection,
-    setSearchTerm,
-    setFilterRegion,
-    setFilterCategory,
-    setFilterPriority,
-    handleSort,
-    handleResetFilters,
-    sortedEntries,
-  } = useEntriesFilter(entries);
 
   useEffect(() => {
     loadEntries();
@@ -84,135 +60,13 @@ export default function DraftsPage() {
         </div>
       </Card>
 
-      {/* Filters */}
-      <FilterBar
-        searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
-        filterRegion={filterRegion}
-        onRegionChange={setFilterRegion}
-        filterCategory={filterCategory}
-        onCategoryChange={setFilterCategory}
-        filterPriority={filterPriority}
-        onPriorityChange={setFilterPriority}
-        onReset={handleResetFilters}
-        resultCount={sortedEntries.length}
-        resultLabel={sortedEntries.length === 1 ? 'draft' : 'drafts'}
-      />
-
-      {/* Table */}
-      <Card className="border-slate-200 p-0">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="border-b border-slate-200 bg-slate-50">
-              <tr>
-                <th
-                  className="rounded-tl-xl cursor-pointer px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-700 hover:bg-slate-100"
-                  onClick={() => handleSort('date')}
-                >
-                  Date {sortField === 'date' && (sortDirection === 'asc' ? '↑' : '↓')}
-                </th>
-                <th
-                  className="cursor-pointer px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-700 hover:bg-slate-100"
-                  onClick={() => handleSort('headline')}
-                >
-                  Headline {sortField === 'headline' && (sortDirection === 'asc' ? '↑' : '↓')}
-                </th>
-                <th
-                  className="cursor-pointer px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-700 hover:bg-slate-100"
-                  onClick={() => handleSort('region')}
-                >
-                  Region {sortField === 'region' && (sortDirection === 'asc' ? '↑' : '↓')}
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-700">
-                  Priority
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-700">
-                  Category
-                </th>
-                <th className="rounded-tr-xl px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-700">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {sortedEntries.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="px-4 py-12 text-center text-slate-500">
-                    No drafts found. <Link href="/form" className="text-un-blue hover:underline">Create your first draft</Link>
-                  </td>
-                </tr>
-              ) : (
-                sortedEntries.map((entry) => (
-                  <tr key={entry.id} className="border-b border-slate-100 hover:bg-slate-50">
-                    <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-600">
-                      {new Date(entry.date).toLocaleDateString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric',
-                      })}
-                    </td>
-                    <td className="max-w-md px-4 py-3 text-sm">
-                      <div className="line-clamp-2">{entry.headline}</div>
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3">
-                      <span className={`inline-block rounded px-2 py-1 text-xs font-medium ${getRegionBadgeClass(entry.region)}`}>
-                        {entry.region}
-                      </span>
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3">
-                      <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${getPriorityBadgeClass(entry.priority)}`}>
-                        <span className={`h-1.5 w-1.5 rounded-full ${entry.priority === 'sg-attention' ? 'bg-red-600' : 'bg-blue-600'}`} />
-                        {PRIORITIES.find(p => p.value === entry.priority)?.label}
-                      </span>
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-600">
-                      {entry.category}
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-right">
-                      <div className="flex justify-end gap-1">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0"
-                          onClick={() => {
-                            setSelectedEntry(entry);
-                            setShowViewDialog(true);
-                          }}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Link href={`/form?edit=${entry.id}`}>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 w-8 p-0 text-slate-600 hover:bg-slate-100"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                        </Link>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0 text-red-600 hover:bg-red-50 hover:text-red-700"
-                          onClick={() => handleDelete(entry.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </Card>
-
-      {/* View Entry Dialog */}
-      <ViewEntryDialog
-        open={showViewDialog}
-        onOpenChange={setShowViewDialog}
-        entry={selectedEntry}
+      {/* Entries Table */}
+      <EntriesTable
+        entries={entries}
+        onDelete={handleDelete}
+        showApprovedColumn={false}
+        emptyMessage="No drafts found."
+        resultLabel="drafts"
       />
         </div>
       </main>

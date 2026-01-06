@@ -37,81 +37,53 @@ export function ViewEntryDialog({ open, onOpenChange, entry }: ViewEntryDialogPr
             }
           `}</style>
           {/* Entry metadata */}
-          <div className="grid grid-cols-3 gap-6 mb-6">
-            <Card className="border-slate-200 p-4">
-              <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                Date
-              </div>
-              <div className="mt-1 text-sm font-medium text-slate-900 break-words">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-3 mb-6 py-4 border-b border-slate-200">
+            <div>
+              <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Date</div>
+              <div className="text-sm text-slate-900">
                 {new Date(entry.date).toLocaleDateString('en-US', {
-                  weekday: 'long',
-                  month: 'long',
+                  month: 'short',
                   day: 'numeric',
                   year: 'numeric',
                 })}
               </div>
-            </Card>
+            </div>
 
-            <Card className="border-slate-200 p-4">
-              <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                Region
-              </div>
-              <div className="mt-1 text-sm font-medium text-slate-900 break-words">
-                {entry.region}
-              </div>
-            </Card>
+            <div>
+              <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Region</div>
+              <div className="text-sm text-slate-900">{entry.region}</div>
+            </div>
 
-            <Card className="border-slate-200 p-4">
-              <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                Country
-              </div>
-              <div className="mt-1 text-sm font-medium text-slate-900 break-words">
-                {entry.country}
-              </div>
-            </Card>
+            <div>
+              <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Country</div>
+              <div className="text-sm text-slate-900">{entry.country}</div>
+            </div>
 
-            <Card className="border-slate-200 p-4">
-              <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                Priority
-              </div>
-              <div className="mt-1 text-sm font-medium text-slate-900 break-words">
-                {entry.priority === 'sg-attention' ? 'SG Attention' : 'Regular'}
-              </div>
-            </Card>
+            <div>
+              <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Priority</div>
+              <div className="text-sm text-slate-900">{entry.priority === 'sg-attention' ? 'SG Attention' : 'Regular'}</div>
+            </div>
 
-            <Card className="border-slate-200 p-4">
-              <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                Category
-              </div>
-              <div className="mt-1 text-sm font-medium text-slate-900 break-words">
-                {entry.category}
-              </div>
-            </Card>
+            <div>
+              <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Category</div>
+              <div className="text-sm text-slate-900">{entry.category}</div>
+            </div>
 
-            <Card className="border-slate-200 p-4">
-              <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                Source
-              </div>
-              <div className="mt-1 text-sm font-medium text-slate-900 break-words">
-                {entry.source || 'N/A'}
-              </div>
-            </Card>
+            <div>
+              <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Source</div>
+              <div className="text-sm text-slate-900">{entry.source || 'N/A'}</div>
+            </div>
           </div>
 
           {/* Entry content */}
-          <Card className="border-slate-200 p-6 mb-6">
-            <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">
-              Content
-            </div>
-            <div className="prose prose-sm max-w-none break-words overflow-wrap-anywhere">
-              <div
-                className="text-slate-700 space-y-4 break-words whitespace-pre-wrap entry-content"
-                style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}
-                dangerouslySetInnerHTML={{
-                  __html: entry.entry,
-                }}
-              />
-            </div>
+          <div className="mb-6">
+            <div
+              className="text-slate-700 space-y-4 break-words whitespace-pre-wrap entry-content"
+              style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}
+              dangerouslySetInnerHTML={{
+                __html: entry.entry,
+              }}
+            />
             <style jsx>{`
               .entry-content :global(img) {
                 max-width: 100%;
@@ -120,35 +92,35 @@ export function ViewEntryDialog({ open, onOpenChange, entry }: ViewEntryDialogPr
                 margin: 1rem 0;
               }
             `}</style>
-          </Card>
+          </div>
 
           {/* PU notes */}
           {(entry.puNote || entry.pu_notes) && (
-            <Card className="border-slate-200 p-6 mb-6">
-              <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">
+            <div className="mb-6 pb-6 border-b border-slate-200">
+              <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">
                 PU Notes
               </div>
               <div className="text-sm text-slate-700 break-words whitespace-pre-wrap">
                 {entry.puNote || entry.pu_notes}
               </div>
-            </Card>
+            </div>
           )}
 
           {/* Source URL */}
           {(entry.sourceUrl || entry.source_url) && (
-            <Card className="border-slate-200 p-6 mb-6">
-              <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">
+            <div>
+              <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">
                 Source URL
               </div>
               <a
                 href={entry.sourceUrl || entry.source_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-un-blue hover:underline break-all"
+                className="text-un-blue hover:underline break-all text-sm"
               >
                 {entry.sourceUrl || entry.source_url}
               </a>
-            </Card>
+            </div>
           )}
         </div>
 

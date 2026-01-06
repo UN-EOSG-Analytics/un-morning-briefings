@@ -76,7 +76,7 @@ export default function HomePage() {
               <div className="flex h-16 w-16 items-center justify-center rounded-full bg-accent">
                 <FileEdit className="h-8 w-8 text-black" />
               </div>
-              <h2 className="text-2xl font-semibold text-foreground">View Drafts</h2>
+              <h2 className="text-2xl font-semibold text-foreground">My Drafts</h2>
               <p className="text-slate-600">
                 Work on your previously saved drafts before submitting final entries
               </p>

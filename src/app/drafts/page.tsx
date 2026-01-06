@@ -49,8 +49,8 @@ export default function DraftsPage() {
       <Card className="border-slate-200">
         <div className="flex items-center justify-between p-6">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded bg-un-blue">
-              <FileEdit className="h-5 w-5 text-white" />
+            <div className="flex h-10 w-10 items-center justify-center rounded bg-accent">
+              <FileEdit className="h-5 w-5 text-black" />
             </div>
             <div>
               <h1 className="text-2xl font-semibold text-foreground">My Drafts</h1>

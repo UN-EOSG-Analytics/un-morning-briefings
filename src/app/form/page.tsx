@@ -2,7 +2,7 @@
 
 import { MorningMeetingForm } from '@/components/MorningMeetingForm';
 import { MorningMeetingEntry } from '@/types/morning-meeting';
-import { saveEntry, updateEntry, getEntryById } from '@/lib/storage';
+import { saveEntry, updateEntry, getEntryById, getDraftEntries } from '@/lib/storage';
 import { useRouter } from 'next/navigation';
 import { Suspense, useState, useEffect } from 'react';
 import { usePopup } from '@/lib/popup-context';
@@ -65,6 +65,16 @@ function FormContent() {
     try {
       const editId = searchParams?.get('edit');
       const draftData = { ...data, status: 'draft' as const };
+      
+      // If no headline is provided, generate one based on draft number
+      if (!draftData.headline || draftData.headline.trim() === '') {
+        if (!editId) {
+          // Only generate a draft number for new drafts, not updates
+          const allDrafts = await getDraftEntries('Current User');
+          const nextDraftNumber = allDrafts.length + 1;
+          draftData.headline = `Draft #${nextDraftNumber}`;
+        }
+      }
       
       if (editId) {
         // Update existing draft

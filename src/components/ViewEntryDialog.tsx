@@ -4,14 +4,26 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { MorningMeetingEntry, PRIORITIES } from '@/types/morning-meeting';
 import { getPriorityBadgeClass } from '@/lib/useEntriesFilter';
+import { Edit, Trash2, CheckCircle2, Circle } from 'lucide-react';
+import Link from 'next/link';
 
 interface ViewEntryDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   entry: (MorningMeetingEntry & { [key: string]: any }) | null;
+  onDelete?: (id: string) => void;
+  onApprove?: (entry: any) => void;
+  showApproveButton?: boolean;
 }
 
-export function ViewEntryDialog({ open, onOpenChange, entry }: ViewEntryDialogProps) {
+export function ViewEntryDialog({ 
+  open, 
+  onOpenChange, 
+  entry,
+  onDelete,
+  onApprove,
+  showApproveButton = false,
+}: ViewEntryDialogProps) {
   if (!entry) return null;
 
   return (
@@ -230,10 +242,53 @@ export function ViewEntryDialog({ open, onOpenChange, entry }: ViewEntryDialogPr
         </div>
 
         {/* Footer */}
-        <div className="border-t border-slate-200 pt-4">
+        <div className="border-t border-slate-200 pt-4 flex justify-between">
+          <div className="flex gap-2">
+            <Link href={`/form?edit=${entry.id}`}>
+              <Button
+                variant="outline"
+                className="gap-2"
+              >
+                <Edit className="h-4 w-4" />
+                Edit
+              </Button>
+            </Link>
+            
+            {showApproveButton && onApprove && (
+              <Button
+                variant="outline"
+                onClick={() => onApprove(entry)}
+                className="gap-2"
+              >
+                {entry.approved ? (
+                  <>
+                    <CheckCircle2 className="h-4 w-4" />
+                    Approved
+                  </>
+                ) : (
+                  <>
+                    <Circle className="h-4 w-4" />
+                    Approve
+                  </>
+                )}
+              </Button>
+            )}
+
+            {onDelete && (
+              <Button
+                variant="outline"
+                onClick={() => onDelete(entry.id)}
+                className="gap-2 text-red-600 hover:bg-red-50 hover:text-red-700"
+              >
+                <Trash2 className="h-4 w-4" />
+                Delete
+              </Button>
+            )}
+          </div>
+
           <Button
             onClick={() => onOpenChange(false)}
-            className="w-full"
+            variant="outline"
           >
             Close
           </Button>

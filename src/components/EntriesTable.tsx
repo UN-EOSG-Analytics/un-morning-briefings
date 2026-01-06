@@ -202,6 +202,9 @@ export function EntriesTable({
         open={showViewDialog}
         onOpenChange={setShowViewDialog}
         entry={selectedEntry}
+        onDelete={onDelete}
+        onApprove={onToggleApproval}
+        showApproveButton={showApprovedColumn}
       />
     </>
   );

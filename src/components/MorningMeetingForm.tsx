@@ -29,6 +29,7 @@ import {
   Send,
   Save,
   Info,
+  Calendar,
 } from 'lucide-react';
 import { usePopup } from '@/lib/popup-context';
 
@@ -312,15 +313,15 @@ export function MorningMeetingForm({
                 <FileText className="h-6 w-6 text-white" />
               </div>
               <div>
-                <CardTitle className="text-2xl">Morning Meeting Entry Form</CardTitle>
+                <CardTitle className="text-2xl">Morning Briefing Entry Form</CardTitle>
                 <CardDescription>
-                  EOSG Political Unit • Data Entry Management System
+                  Political Unit (EOSG) • Data Management System
                 </CardDescription>
               </div>
             </div>
             <div className="mt-4 flex flex-wrap items-center gap-4 text-xs text-slate-500">
               <span className="flex items-center gap-1">
-                <Info className="h-3.5 w-3.5" />
+                <Calendar className="h-3.5 w-3.5" />
                 {currentDate}
               </span>
               {draftSaved && (

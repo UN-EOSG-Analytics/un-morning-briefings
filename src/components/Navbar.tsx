@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { Menu, X, Home, PlusCircle, List, FileEdit, LogOut, User, Zap, Info } from 'lucide-react';
+import { Menu, X, Home, PlusCircle, List, FileEdit, LogOut, User, Zap, Info, Users } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import NavButton from './NavButton';
@@ -36,7 +36,7 @@ export function Navbar() {
           />
         </Link>
         <span className="ml-2 border border-slate-300 bg-slate-100 text-slate-700 text-xs font-semibold px-2 py-1 rounded-full flex items-center gap-1.5">
-          <Info className="h-3 w-3" />
+          <Users className="h-3 w-3" />
           Political Unit (EOSG)
         </span>
         </div>

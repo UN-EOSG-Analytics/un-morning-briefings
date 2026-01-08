@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
   DialogContent,
@@ -40,6 +41,7 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
   const [isExporting, setIsExporting] = useState(false);
   const [approvedEntries, setApprovedEntries] = useState<MorningMeetingEntry[]>([]);
   const [isLoadingEntries, setIsLoadingEntries] = useState(false);
+  const [includeImages, setIncludeImages] = useState(true);
 
   useEffect(() => {
     const loadEntriesForDate = async () => {
@@ -82,6 +84,14 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
       // Restore images in HTML for each entry by downloading from blob storage
       for (const entry of entriesForDate) {
         let html = entry.entry;
+        
+        // Skip image processing if includeImages is false
+        if (!includeImages) {
+          // Remove all image tags from HTML
+          html = html.replace(/<img[^>]*>/gi, '');
+          entry.entry = html;
+          continue;
+        }
         
         console.log('Processing entry:', entry.id, 'with', entry.images?.length || 0, 'tracked images');
         
@@ -399,7 +409,7 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
           spacing: { before: 400 },
           children: [
             new TextRun({
-              text: `Morning Briefing of the ${new Date().toLocaleString('en-US')}`,
+              text: `Exported on ${new Date().toLocaleString('en-US')}`,
               italics: true,
               font: 'Roboto',
             }),
@@ -460,6 +470,20 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
                 className="h-10 w-full rounded border border-slate-300 bg-white pl-10 pr-3 text-sm focus:border-un-blue focus:outline-none focus:ring-2 focus:ring-un-blue/20"
               />
             </div>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="include-images"
+              checked={includeImages}
+              onCheckedChange={(checked) => setIncludeImages(checked as boolean)}
+            />
+            <label
+              htmlFor="include-images"
+              className="text-sm font-medium text-foreground cursor-pointer"
+            >
+              Include images in export
+            </label>
           </div>
 
           <div className="space-y-2">

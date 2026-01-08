@@ -285,7 +285,7 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
         );
 
         // Add entries for this region
-        entriesByRegion[region].forEach((entry) => {
+        entriesByRegion[region].forEach((entry: MorningMeetingEntry) => {
           // Country
           children.push(
             new Paragraph({

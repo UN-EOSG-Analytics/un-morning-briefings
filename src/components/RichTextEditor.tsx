@@ -26,9 +26,11 @@ import {
   Info,
   ImagePlus,
   Code,
+  Maximize,
+  Minimize,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { usePopup } from '@/lib/popup-context';
 
 interface RichTextEditorProps {
@@ -48,6 +50,7 @@ export function RichTextEditor({
 }: RichTextEditorProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { warning: showWarning } = usePopup();
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   const editor = useEditor({
     extensions: [
@@ -178,14 +181,28 @@ export function RichTextEditor({
   };
 
   return (
-    <div>
+    <div className={isFullscreen ? 'fixed top-16 left-0 right-0 bottom-0 z-40 bg-slate-100 flex flex-col' : ''}>
       {/* Toolbar */}
-      <div className={`rounded-t border p-2 ${
-        error
-          ? 'border-red-500 bg-red-50'
-          : 'border-slate-300 bg-slate-50'
-      }`}>
-        <div className="flex flex-wrap items-center gap-1">
+      <div className={isFullscreen ? 'bg-slate-100 px-4 py-2 border-b border-slate-200' : ''}>
+        <div className={`${isFullscreen ? 'max-w-[280mm] mx-auto rounded-none bg-white shadow-sm' : 'rounded-t'} border p-2 ${
+          error
+            ? 'border-red-500 bg-red-50'
+            : 'border-slate-300 bg-slate-50'
+        }`}>
+          <div className="flex flex-wrap items-center gap-1">
+          {/* Fullscreen Toggle */}
+          <Button
+            type="button"
+            size="sm"
+            variant={isFullscreen ? 'default' : 'outline'}
+            onClick={() => setIsFullscreen(!isFullscreen)}
+            className="h-8 w-8 p-0"
+            title={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
+          >
+            {isFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
+          </Button>
+
+          <div className="h-6 w-px bg-slate-300" />
           {/* Text Formatting */}
           <Button
             type="button"
@@ -466,18 +483,21 @@ export function RichTextEditor({
             <Redo2 className="h-4 w-4" />
           </Button>
         </div>
+        </div>
       </div>
 
       {/* Editor */}
-      <div className={`rounded-b border -mt-1 ${
-        error
-          ? 'border-t-0 border-red-500 bg-red-50'
-          : 'border-t-0 border-slate-300 bg-slate-50'
-      }`}>
-        <EditorContent 
-          editor={editor}
-          className={`${minHeight}`}
-        />
+      <div className={isFullscreen ? 'flex-1 overflow-auto py-8 px-4' : ''}>
+        <div className={`${isFullscreen ? 'max-w-[280mm] mx-auto bg-white shadow-lg rounded-none min-h-[297mm] p-16' : 'rounded-b'} border -mt-1 ${
+          error
+            ? 'border-t-0 border-red-500 bg-red-50'
+            : 'border-t-0 border-slate-300 bg-slate-50'
+        }`}>
+          <EditorContent 
+            editor={editor}
+            className={isFullscreen ? 'h-full prose prose-slate max-w-none' : minHeight}
+          />
+        </div>
       </div>
 
       {/* Character count and error */}

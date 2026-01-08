@@ -274,10 +274,10 @@ export function ViewEntryDialog({
               </Button>
             )}
 
-            {onDelete && (
+            {onDelete && entry.id && (
               <Button
                 variant="outline"
-                onClick={() => onDelete(entry.id)}
+                onClick={() => onDelete(entry.id!)}
                 className="gap-2 text-red-600 hover:bg-red-50 hover:text-red-700"
               >
                 <Trash2 className="h-4 w-4" />

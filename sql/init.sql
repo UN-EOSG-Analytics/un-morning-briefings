@@ -41,21 +41,4 @@ CREATE TABLE
     );
 
 -- Create index for images table
-CREATE INDEX IF NOT EXISTS idx_images_entry_id ON pu_morning_briefings.images (entry_id);
-
--- Create users table
-CREATE TABLE
-    pu_morning_briefings.users (
-        id TEXT PRIMARY KEY,
-        email TEXT NOT NULL UNIQUE,
-        password_hash TEXT NOT NULL,
-        name TEXT,
-        role TEXT NOT NULL DEFAULT 'user',
-        created_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
-    );
-
--- Create index for users table
-CREATE INDEX IF NOT EXISTS idx_users_email ON pu_morning_briefings.users (email);
-
 -- TODO

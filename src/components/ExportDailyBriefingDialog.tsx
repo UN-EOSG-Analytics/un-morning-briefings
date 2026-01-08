@@ -205,6 +205,17 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
         return 0;
       });
 
+      // Group entries by region and sort regions alphabetically
+      const entriesByRegion = sortedEntries.reduce((acc, entry) => {
+        if (!acc[entry.region]) {
+          acc[entry.region] = [];
+        }
+        acc[entry.region].push(entry);
+        return acc;
+      }, {} as Record<string, typeof sortedEntries>);
+
+      const sortedRegions = Object.keys(entriesByRegion).sort();
+
       // Build document children
       const children: any[] = [
         // Title
@@ -239,44 +250,46 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
           ],
         }),
         // Summary count
-        new Paragraph({
-          children: [
-            new TextRun({
-              text: `Total Entries: ${entriesForDate.length}`,
-              bold: true,
-              font: 'Roboto',
-            }),
-          ],
-          spacing: { after: 400 },
-        }),
+
         // Separator
         createSeparator(),
       ];
 
-      // Add entries
-      sortedEntries.forEach((entry, index) => {
-        // Entry number and region/country
+      // Add entries grouped by region
+      sortedRegions.forEach((region) => {
+        // Add region header
         children.push(
           new Paragraph({
+            heading: HeadingLevel.HEADING_2,
+            alignment: AlignmentType.CENTER,
+            spacing: { before: 300, after: 200 },
             children: [
               new TextRun({
-                text: `${index + 1}. `,
-                bold: true,
-                size: 24,
-                font: 'Roboto',
-              }),
-              new TextRun({
-                text: `${entry.region} - ${entry.country}`,
+                text: region,
                 bold: true,
                 size: 24,
                 font: 'Roboto',
               }),
             ],
-            spacing: { before: 300, after: 100 },
           })
         );
 
-        // Priority badge
+        // Add entries for this region
+        entriesByRegion[region].forEach((entry) => {
+          // Country
+          children.push(
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: `${entry.country}`,
+                  bold: true,
+                  size: 24,
+                  font: 'Roboto',
+                }),
+              ],
+              spacing: { before: 300, after: 100 },
+            })
+          );
         children.push(
           new Paragraph({
             children: [
@@ -284,8 +297,7 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
                 text: entry.priority === 'sg-attention'
                   ? 'SG Attention'
                   : 'Situational Awareness',
-                bold: true,
-                color: entry.priority === 'sg-attention' ? 'DC2626' : '2563EB',
+                italics: true,
                 font: 'Roboto',
               }),
               new TextRun({
@@ -347,7 +359,6 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
                 new TextRun({
                   text: entry.sourceUrl,
                   italics: true,
-                  color: '0000FF',
                   font: 'Roboto',
                 }),
               ],
@@ -378,6 +389,7 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
 
         // Separator between entries
         children.push(createSeparator());
+        });
       });
 
       // Footer
@@ -387,7 +399,7 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
           spacing: { before: 400 },
           children: [
             new TextRun({
-              text: `Generated on ${new Date().toLocaleString('en-US')}`,
+              text: `Morning Briefing of the ${new Date().toLocaleString('en-US')}`,
               italics: true,
               font: 'Roboto',
             }),

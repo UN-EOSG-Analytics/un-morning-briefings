@@ -1,6 +1,6 @@
 import { withAuth } from 'next-auth/middleware';
 
-export default withAuth({
+export const middleware = withAuth({
   pages: {
     signIn: '/login',
   },

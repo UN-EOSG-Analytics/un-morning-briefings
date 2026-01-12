@@ -16,8 +16,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
-
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -28,7 +26,7 @@ export function Navbar() {
         <div className="flex items-center gap-2">
         <Link href="/" className="flex items-center gap-2 sm:gap-3">
           <Image
-            src={`${basePath}/images/UN_Logo_Stacked_Colour_English.svg`}
+            src="/images/UN_Logo_Stacked_Colour_English.svg"
             alt="UN Logo"
             width={300}
             height={64}

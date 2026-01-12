@@ -7,8 +7,6 @@ import Image from 'next/image';
 import { Lock, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
-
 export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');

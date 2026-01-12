@@ -93,13 +93,44 @@ export function Navbar() {
         </div>
 
         {/* Mobile Menu Button */}
-        <button
-          onClick={() => setIsOpen(!isOpen)}
-          className="md:hidden rounded p-2 hover:bg-slate-100"
-          aria-label="Toggle menu"
-        >
+        <div className="flex items-center gap-2 md:hidden">
+          {/* User Account Menu - Mobile */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-9 w-9 rounded-full p-0"
+              >
+                <div className="h-8 w-8 rounded-full bg-slate-200 flex items-center justify-center">
+                  <User className="h-4 w-4 text-slate-600" />
+                </div>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel className="flex flex-col gap-1">
+                <span className="font-semibold text-sm">John Doe</span>
+                <span className="text-xs text-slate-600">Political Unit EOSG</span>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem 
+                className="text-red-600 cursor-pointer gap-2"
+                onClick={() => signOut({ callbackUrl: '/login' })}
+              >
+                <LogOut className="h-4 w-4" />
+                <span>Logout</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <button
+            onClick={() => setIsOpen(!isOpen)}
+            className="rounded p-2 hover:bg-slate-100"
+            aria-label="Toggle menu"
+          >
           {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </button>
+        </div>
       </div>
 
       {/* Mobile Menu */}
@@ -138,16 +169,6 @@ export function Navbar() {
               <PlusCircle className="h-4 w-4" />
               <span>New Entry</span>
             </Link>
-            <button
-              onClick={() => {
-                setIsOpen(false);
-                signOut({ callbackUrl: '/login' });
-              }}
-              className="flex items-center gap-2 rounded px-3 py-2 text-sm text-red-600 hover:bg-red-50"
-            >
-              <LogOut className="h-4 w-4" />
-              <span>Logout</span>
-            </button>
           </div>
         </div>
       )}

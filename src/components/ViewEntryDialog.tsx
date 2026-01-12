@@ -28,7 +28,7 @@ export function ViewEntryDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="!max-w-none w-full sm:w-[95vw] md:w-[85vw] lg:w-[70vw] max-h-[95vh] flex flex-col !pt-6 sm:!pt-8 !pb-6 sm:!pb-8">
+      <DialogContent className="!max-w-none w-full sm:w-[95vw] md:w-[85vw] lg:w-[70vw] max-h-[95vh] flex flex-col !pt-6 sm:!pt-8 !pb-4 sm:!pb-6">
         <DialogHeader className="border-b border-slate-200 pb-4">
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1">
@@ -242,7 +242,7 @@ export function ViewEntryDialog({
         </div>
 
         {/* Footer */}
-        <div className="border-t border-slate-200 pt-4 flex flex-col-reverse sm:flex-row justify-between gap-3 sm:gap-2">
+        <div className="border-t border-slate-200 pt-3 sm:pt-4 flex flex-col-reverse sm:flex-row justify-between gap-3 sm:gap-2 px-4 sm:px-6">
           <div className="flex gap-2 flex-col sm:flex-row w-full sm:w-auto">
             <Link href={`/form?edit=${entry.id}`} className="w-full sm:w-auto">
               <Button

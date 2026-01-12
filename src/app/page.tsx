@@ -12,82 +12,84 @@ export default function HomePage() {
 
   return (
     <main className="min-h-[80svh] bg-background flex flex-col">
-      <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
-        <div className="flex items-start justify-between mb-12">
-          <div className="text-left">
-            <h1 className="text-4xl font-bold text-foreground mb-1">
+      <div className="mx-auto w-full max-w-6xl px-2 sm:px-4 py-6 sm:py-16">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 sm:gap-6 mb-8 sm:mb-12">
+          <div className="text-left px-2 sm:px-0">
+            <h1 className="text-3xl sm:text-4xl font-bold text-foreground mb-1">
               Morning Meeting Briefings
             </h1>
-            <p className="text-lg text-slate-600">
+            <p className="hidden sm:block text-base sm:text-lg text-slate-600">
               Create and manage daily briefing entries
             </p>
           </div>
           <Button
             onClick={() => setShowExportDialog(true)}
-            className="bg-un-blue hover:bg-un-blue/90 whitespace-nowrap ml-4"
+            className="bg-un-blue hover:bg-un-blue/90 w-full sm:w-auto sm:whitespace-nowrap shrink-0 px-2"
             size="lg"
           >
             <Download className="mr-2 h-4 w-4" />
-            Export Today's Morning Briefing
+            <span className="hidden sm:inline">Export Today's Morning Briefing</span>
+            <span className="sm:hidden">Export Briefing</span>
           </Button>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-3">
+        <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-3">
           {/* New Entry Card */}
-          <Card className="border-slate-200 p-8 hover:border-un-blue transition-colors">
-            <div className="flex flex-col items-left text-left space-y-4">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-un-blue">
-                <PlusCircle className="h-8 w-8 text-white" />
-              </div>
-              <h2 className="text-2xl font-semibold text-foreground">Create New Entry</h2>
-              <p className="text-slate-600">
-                Submit a new morning meeting briefing entry with key updates and information
-              </p>
-              <Link href="/form" className="w-full">
-                <Button className="w-full bg-un-blue hover:bg-un-blue/90" size="lg">
+          <Link href="/form" className="group">
+            <Card className="border-slate-200 p-6 sm:p-8 hover:border-un-blue transition-colors h-full cursor-pointer sm:hover:shadow-md">
+              <div className="flex flex-col items-left text-left space-y-4 h-full">
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-un-blue shrink-0">
+                  <PlusCircle className="h-8 w-8 text-white" />
+                </div>
+                <h2 className="text-xl sm:text-2xl font-semibold text-foreground">Create New Entry</h2>
+                <p className="text-sm sm:text-base text-slate-600">
+                  Submit a new morning meeting briefing entry with key updates and information
+                </p>
+                <Button className="hidden sm:flex w-full bg-un-blue hover:bg-un-blue/90 mt-auto" size="lg">
                   Create
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
-              </Link>
-            </div>
-          </Card>
+              </div>
+            </Card>
+          </Link>
 
           {/* View Entries Card */}
-          <Card className="border-slate-200 p-8 hover:border-un-blue transition-colors">
-            <div className="flex flex-col items-left text-left space-y-4">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-slate-700">
-                <List className="h-8 w-8 text-white" />
-              </div>
-              <h2 className="text-2xl font-semibold text-foreground">View Entries</h2>
-              <p className="text-slate-600">
-                Browse, filter, and manage all submitted morning meeting briefing entries
-              </p>
-              <Link href="/list" className="w-full">
-                <Button className="w-full bg-slate-700" size="lg">
+          <Link href="/list" className="group">
+            <Card className="border-slate-200 p-6 sm:p-8 hover:border-un-blue transition-colors h-full cursor-pointer sm:hover:shadow-md">
+              <div className="flex flex-col items-left text-left space-y-4 h-full">
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-slate-700 shrink-0">
+                  <List className="h-8 w-8 text-white" />
+                </div>
+                <h2 className="text-xl sm:text-2xl font-semibold text-foreground">View Entries</h2>
+                <p className="text-sm sm:text-base text-slate-600">
+                  Browse, filter, and manage all submitted morning meeting briefing entries
+                </p>
+                <Button className="hidden sm:flex w-full bg-slate-700" size="lg">
                   View All
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
-              </Link>
-            </div>
-          </Card>
-          {/* View Entries Card */}
-          <Card className="border-slate-200 p-8 hover:border-un-blue transition-colors">
-            <div className="flex flex-col items-left text-left space-y-4">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-accent">
-                <FileEdit className="h-8 w-8 text-black" />
               </div>
-              <h2 className="text-2xl font-semibold text-foreground">My Drafts</h2>
-              <p className="text-slate-600">
-                Work on your previously saved drafts before submitting final entries
-              </p>
-              <Link href="/drafts" className="w-full">
-                <Button variant="outline" className="w-full" size="lg">
+            </Card>
+          </Link>
+
+          {/* My Drafts Card */}
+          <Link href="/drafts" className="group">
+            <Card className="border-slate-200 p-6 sm:p-8 hover:border-un-blue transition-colors h-full cursor-pointer sm:hover:shadow-md">
+              <div className="flex flex-col items-left text-left space-y-4 h-full">
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-accent shrink-0">
+                  <FileEdit className="h-8 w-8 text-black" />
+                </div>
+                <h2 className="text-xl sm:text-2xl font-semibold text-foreground">My Drafts</h2>
+                <p className="text-sm sm:text-base text-slate-600">
+                  Work on your previously saved drafts before submitting final entries
+                </p>
+                <Button variant="outline" className="hidden sm:flex w-full mt-auto" size="lg">
                   View Drafts
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
-              </Link>
-            </div>
-          </Card>
+              </div>
+            </Card>
+          </Link>
         </div>
 
         <ExportDailyBriefingDialog

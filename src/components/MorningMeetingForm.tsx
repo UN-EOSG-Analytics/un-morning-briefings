@@ -104,7 +104,30 @@ export function MorningMeetingForm({
   const [draftSaved, setDraftSaved] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [availableCountries, setAvailableCountries] = useState<string[]>([]);
-  const [useRichText, setUseRichText] = useState(true);
+  const [useRichText, setUseRichText] = useState<boolean | null>(null);
+  const [hasUserToggled, setHasUserToggled] = useState(false);
+
+  // Set default editor mode based on screen size
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(min-width: 768px)');
+    
+    const handleMediaChange = (e: MediaQueryListEvent | MediaQueryList) => {
+      if (!hasUserToggled) {
+        // Only auto-switch if user hasn't manually toggled
+        setUseRichText(e.matches);
+      }
+    };
+    
+    // Set initial value
+    if (!hasUserToggled) {
+      setUseRichText(mediaQuery.matches);
+    }
+    
+    // Listen for screen size changes
+    mediaQuery.addEventListener('change', handleMediaChange);
+    
+    return () => mediaQuery.removeEventListener('change', handleMediaChange);
+  }, [hasUserToggled]);
 
   // Initialize available countries from initialData region on mount
   useEffect(() => {
@@ -306,23 +329,23 @@ export function MorningMeetingForm({
   });
 
   return (
-    <div className="min-h-screen bg-white py-8 px-4">
+    <div className="min-h-screen bg-white py-4 sm:py-8 px-2 sm:px-4">
       <div className="mx-auto w-full max-w-6xl">
         {/* Header */}
-        <Card className="mb-0 rounded-b-none border-b-0 py-6">
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center rounded bg-un-blue p-2">
-                <FileText className="h-6 w-6 text-white" />
+        <Card className="mb-0 rounded-b-none border-b-0 py-4 sm:py-6">
+          <CardHeader className="p-4 sm:p-6">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="flex shrink-0 items-center justify-center rounded bg-un-blue p-2">
+                <FileText className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
               </div>
-              <div>
-                <CardTitle className="text-2xl">Morning Briefing Entry Form</CardTitle>
-                <CardDescription>
+              <div className="min-w-0">
+                <CardTitle className="text-lg sm:text-2xl">Morning Briefing Entry Form</CardTitle>
+                <CardDescription className="text-xs sm:text-sm">
                   Political Unit (EOSG) • Data Management System
                 </CardDescription>
               </div>
             </div>
-            <div className="mt-4 flex flex-wrap items-center gap-4 text-xs text-slate-500">
+            <div className="mt-3 sm:mt-4 flex flex-wrap items-center gap-2 sm:gap-4 text-xs text-slate-500">
               <span className="flex items-center gap-1">
                 <Calendar className="h-3.5 w-3.5" />
                 {currentDate}
@@ -339,11 +362,11 @@ export function MorningMeetingForm({
 
         {/* Form */}
         <Card className="rounded-t-none">
-          <CardContent className="pt-6">
+          <CardContent className="p-4 sm:p-6 pt-4 sm:pt-6">
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Classification & Location Section */}
-              <section className="space-y-4 border-b pb-6">
-                <div className="grid gap-4 md:grid-cols-4">
+              <section className="space-y-4 border-b pb-4 sm:pb-6">
+                <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-4">
                   {/* Category */}
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-slate-700">
@@ -480,12 +503,12 @@ export function MorningMeetingForm({
               </section>
 
               {/* Entry Details Section */}
-              <section className="space-y-4 border-b pb-6">
+              <section className="space-y-4 border-b pb-4 sm:pb-6">
                 <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-700">
                   Entry Details
                 </h2>
 
-                <div className="grid gap-4 md:grid-cols-2">
+                <div className="grid gap-3 sm:gap-4 grid-cols-1 md:grid-cols-2">
                   {/* Headline */}
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-slate-700">
@@ -550,7 +573,10 @@ export function MorningMeetingForm({
                     </label>
                     <button
                       type="button"
-                      onClick={() => setUseRichText(!useRichText)}
+                      onClick={() => {
+                        setUseRichText(!useRichText);
+                        setHasUserToggled(true);
+                      }}
                       className={`inline-flex items-center gap-1.5 rounded px-2.5 py-1 text-xs font-medium transition ${
                         useRichText
                           ? 'bg-un-blue text-white'
@@ -572,7 +598,10 @@ export function MorningMeetingForm({
                     </button>
                   </div>
                   
-                  {useRichText ? (
+                  {useRichText === null ? (
+                    // Show plain text while loading (will switch to rich text on desktop)
+                    <div className="min-h-[250px] w-full rounded border border-slate-300 bg-slate-50 px-3 py-2 text-sm" />
+                  ) : useRichText ? (
                     <RichTextEditor
                       content={formData.entry}
                       onChange={(content) => {
@@ -691,14 +720,14 @@ export function MorningMeetingForm({
         </Card>
 
         {/* Action Buttons */}
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-b bg-none px-6 py-4 text-sm">
-          <div className="flex flex-wrap gap-2">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-3 rounded-b bg-none px-4 sm:px-6 py-3 sm:py-4 text-sm">
+          <div className="flex flex-col sm:flex-row gap-2 order-2 sm:order-1">
             <Button
               type="button"
               variant="outline"
               size="sm"
               onClick={handleSaveDraft}
-              className="gap-2"
+              className="gap-2 w-full sm:w-auto justify-center"
             >
               <Save className="h-4 w-4" />
               Save Draft
@@ -708,19 +737,19 @@ export function MorningMeetingForm({
               variant="outline"
               size="sm"
               onClick={handleReset}
-              className="gap-2"
+              className="gap-2 w-full sm:w-auto justify-center"
             >
               <RotateCcw className="h-4 w-4" />
               Reset
             </Button>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-col sm:flex-row gap-2 order-1 sm:order-2">
             <Button
               type="button"
               variant="outline"
               size="sm"
               onClick={handleCancel}
-              className="gap-2"
+              className="gap-2 w-full sm:w-auto justify-center"
             >
               <X className="h-4 w-4" />
               Cancel
@@ -730,7 +759,7 @@ export function MorningMeetingForm({
               size="sm"
               onClick={handleSubmit}
               disabled={isSubmitting}
-              className="gap-2"
+              className="gap-2 w-full sm:w-auto justify-center"
             >
               <Send className="h-4 w-4" />
               {isSubmitting ? (isEditing ? 'Updating...' : 'Submitting...') : (isEditing ? 'Update Entry' : 'Submit Entry')}

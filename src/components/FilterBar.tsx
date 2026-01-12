@@ -41,9 +41,9 @@ export function FilterBar({
 }: FilterBarProps) {
   return (
     <Card className="border-slate-200 p-3">
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-2">
         {/* Search */}
-        <div className="relative flex-1 max-w-[350]">
+        <div className="relative flex-1 sm:max-w-[350px]">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
@@ -56,7 +56,7 @@ export function FilterBar({
 
         {/* Region Filter */}
         <Select value={filterRegion} onValueChange={onRegionChange}>
-          <SelectTrigger className="w-[180px] h-9 text-sm">
+          <SelectTrigger className="w-full sm:w-[180px] h-9 text-sm">
             <SelectValue placeholder="All Regions" />
           </SelectTrigger>
           <SelectContent>
@@ -71,7 +71,7 @@ export function FilterBar({
 
         {/* Category Filter */}
         <Select value={filterCategory} onValueChange={onCategoryChange}>
-          <SelectTrigger className="w-[180px] h-9 text-sm">
+          <SelectTrigger className="w-full sm:w-[180px] h-9 text-sm">
             <SelectValue placeholder="All Categories" />
           </SelectTrigger>
           <SelectContent>
@@ -86,7 +86,7 @@ export function FilterBar({
 
         {/* Priority Filter */}
         <Select value={filterPriority} onValueChange={onPriorityChange}>
-          <SelectTrigger className="w-[180px] h-9 text-sm">
+          <SelectTrigger className="w-full sm:w-[180px] h-9 text-sm">
             <SelectValue placeholder="All Priorities" />
           </SelectTrigger>
           <SelectContent>

@@ -26,17 +26,17 @@ export function Navbar() {
       <div className="flex h-16 items-center justify-between px-4 sm:px-6 w-full max-w-6xl mx-auto">
         {/* Logo */}
         <div className="flex items-center gap-2">
-        <Link href="/" className="flex items-center gap-3">
+        <Link href="/" className="flex items-center gap-2 sm:gap-3">
           <Image
             src={`${basePath}/images/UN_Logo_Stacked_Colour_English.svg`}
             alt="UN Logo"
             width={300}
             height={64}
-            className="h-10 w-auto"
+            className="h-8 w-auto sm:h-10"
             priority
           />
         </Link>
-        <span className="ml-2 border border-slate-300 bg-slate-100 text-slate-700 text-xs font-semibold px-2 py-1 rounded-full flex items-center gap-1.5">
+        <span className="hidden sm:flex ml-2 border border-slate-300 bg-slate-100 text-slate-700 text-xs font-semibold px-2 py-1 rounded-full items-center gap-1.5">
           <Users className="h-3 w-3" />
           Political Unit (EOSG)
         </span>
@@ -94,9 +94,65 @@ export function Navbar() {
           </DropdownMenu>
         </div>
 
+        {/* Mobile Menu Button */}
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className="md:hidden rounded p-2 hover:bg-slate-100"
+          aria-label="Toggle menu"
+        >
+          {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+        </button>
       </div>
 
- 
+      {/* Mobile Menu */}
+      {isOpen && (
+        <div className="border-t border-slate-200 bg-white md:hidden">
+          <div className="flex flex-col space-y-1 px-4 py-3">
+            <Link
+              href="/"
+              onClick={() => setIsOpen(false)}
+              className="flex items-center gap-2 rounded px-3 py-2 text-sm hover:bg-slate-50"
+            >
+              <Home className="h-4 w-4 text-slate-600" />
+              <span>Home</span>
+            </Link>
+            <Link
+              href="/list"
+              onClick={() => setIsOpen(false)}
+              className="flex items-center gap-2 rounded px-3 py-2 text-sm hover:bg-slate-50"
+            >
+              <List className="h-4 w-4 text-slate-600" />
+              <span>View Entries</span>
+            </Link>
+            <Link
+              href="/drafts"
+              onClick={() => setIsOpen(false)}
+              className="flex items-center gap-2 rounded px-3 py-2 text-sm hover:bg-slate-50"
+            >
+              <FileEdit className="h-4 w-4 text-slate-600" />
+              <span>My Drafts</span>
+            </Link>
+            <Link
+              href="/form"
+              onClick={() => setIsOpen(false)}
+              className="flex items-center gap-2 rounded bg-un-blue px-3 py-2 text-sm text-white hover:bg-un-blue/95"
+            >
+              <PlusCircle className="h-4 w-4" />
+              <span>New Entry</span>
+            </Link>
+            <button
+              onClick={() => {
+                setIsOpen(false);
+                signOut({ callbackUrl: '/login' });
+              }}
+              className="flex items-center gap-2 rounded px-3 py-2 text-sm text-red-600 hover:bg-red-50"
+            >
+              <LogOut className="h-4 w-4" />
+              <span>Logout</span>
+            </button>
+          </div>
+        </div>
+      )}
     </nav>
   );
 }

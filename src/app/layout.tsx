@@ -5,6 +5,7 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { PopupProvider } from "@/lib/popup-context";
 import { PopupContainer } from "@/components/Popup";
+import { AuthProvider } from "@/components/AuthProvider";
 import "./globals.css";
 
 // https://fonts.google.com/specimen/Roboto
@@ -39,14 +40,16 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${roboto.className} antialiased`}>
       <body>
-        <PopupProvider>
-          <Navbar />
-          <div className="pt-16">
-            {children}
-          </div>
-          <Footer />
-          <PopupContainer />
-        </PopupProvider>
+        <AuthProvider>
+          <PopupProvider>
+            <Navbar />
+            <div className="pt-16">
+              {children}
+            </div>
+            <Footer />
+            <PopupContainer />
+          </PopupProvider>
+        </AuthProvider>
         <GoogleAnalytics gaId="G-XYZ" />
       </body>
     </html>

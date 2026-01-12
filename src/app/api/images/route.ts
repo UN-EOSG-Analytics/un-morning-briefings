@@ -1,8 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
+import { checkAuth } from '@/lib/auth-helper';
 
 // POST upload temporary image (before entry is saved)
 export async function POST(request: NextRequest) {
+  // Check authentication
+  const auth = await checkAuth();
+  if (!auth.authenticated) {
+    return auth.response;
+  }
+
   try {
     const formData = await request.formData();
     const file = formData.get('file') as File;
@@ -32,6 +39,12 @@ export async function POST(request: NextRequest) {
 
 // GET image by ID
 export async function GET(request: NextRequest) {
+  // Check authentication
+  const auth = await checkAuth();
+  if (!auth.authenticated) {
+    return auth.response;
+  }
+
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');

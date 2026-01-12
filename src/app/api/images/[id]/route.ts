@@ -1,12 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { blobStorage } from '@/lib/blob-storage';
+import { checkAuth } from '@/lib/auth-helper';
 
 // GET image by ID - returns the image data from blob storage
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  // Check authentication
+  const auth = await checkAuth();
+  if (!auth.authenticated) {
+    return auth.response;
+  }
+
   try {
     const { id } = await params;
     console.log('GET /api/images/[id]: Request for image ID:', id);

@@ -267,10 +267,30 @@ export async function getSubmittedEntries(): Promise<any[]> {
     console.log('getSubmittedEntries: Fetching submitted entries');
     const response = await fetch('/api/entries?status=submitted');
     
+    console.log('getSubmittedEntries: Response status:', response.status, response.statusText);
+    console.log('getSubmittedEntries: Content-Type:', response.headers.get('content-type'));
+    
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
+      let errorData: any = {};
+      try {
+        const text = await response.text();
+        console.log('getSubmittedEntries: Response body:', text);
+        if (text) {
+          errorData = JSON.parse(text);
+        }
+      } catch (e) {
+        console.error('getSubmittedEntries: Failed to parse response');
+      }
+      
       console.error('getSubmittedEntries: API error response:', errorData);
-      throw new Error(`Failed to fetch submitted entries: ${errorData.details || response.statusText}`);
+      console.error('getSubmittedEntries: Response status text:', response.statusText);
+      
+      // Check if it's a database error
+      if (errorData.isDatabaseError || response.status === 500) {
+        console.error('DATABASE CONNECTION ERROR - Check your DATABASE_URL in .env.local');
+      }
+      
+      throw new Error(`Failed to fetch submitted entries (${response.status}): ${errorData.details || errorData.error || response.statusText}`);
     }
 
     const entries = await response.json();

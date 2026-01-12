@@ -76,26 +76,25 @@ export function MorningMeetingList() {
     <div className="space-y-4 mx-auto w-full max-w-6xl">
       {/* Header */}
       <Card className="border-slate-200">
-        <div className="flex items-center justify-between p-6">
+        <div className="flex flex-col gap-4 p-4 sm:p-6">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded bg-slate-700">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded bg-slate-700">
              <List className="h-5 w-5 text-white" />
             </div>
-            <div>
-              <h1 className="text-2xl font-semibold text-foreground">Morning Meeting Entries</h1>
-              <p className="text-sm text-slate-600">View and manage submitted entries</p>
+            <div className="min-w-0">
+              <h1 className="text-xl sm:text-2xl font-semibold text-foreground">Morning Meeting Entries</h1>
+              <p className="text-xs sm:text-sm text-slate-600">View and manage submitted entries</p>
             </div>
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={() => setShowExportDialog(true)}>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Button variant="outline" size="sm" onClick={() => setShowExportDialog(true)} className="w-full sm:w-auto justify-center">
               <FileDown className="h-4 w-4" />
-              Export Daily Briefing
+              <span className="sm:inline">Export Daily Briefing</span>
             </Button>
-            <Button variant="outline" size="sm" onClick={exportToJSON}>
+            <Button variant="outline" size="sm" onClick={exportToJSON} className="w-full sm:w-auto justify-center">
               <Download className="h-4 w-4" />
-              Export JSON
+              <span className="sm:inline">Export JSON</span>
             </Button>
-            
           </div>
         </div>
       </Card>

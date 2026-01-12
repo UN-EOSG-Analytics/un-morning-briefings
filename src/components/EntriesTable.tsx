@@ -75,7 +75,8 @@ export function EntriesTable({
 
       {/* Table */}
       <Card className="border-slate-200 p-0">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto -mx-px">
+          <div className="inline-block min-w-full align-middle">
           <table className="w-full">
             <thead className="border-b border-slate-200 bg-slate-50">
               <tr>
@@ -194,6 +195,7 @@ export function EntriesTable({
               )}
             </tbody>
           </table>
+          </div>
         </div>
       </Card>
 

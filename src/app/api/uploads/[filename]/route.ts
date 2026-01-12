@@ -2,12 +2,19 @@ import { NextRequest, NextResponse } from 'next/server';
 import { readFile } from 'fs/promises';
 import path from 'path';
 import { existsSync } from 'fs';
+import { checkAuth } from '@/lib/auth-helper';
 
 // GET uploaded file
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ filename: string }> }
 ) {
+  // Check authentication
+  const auth = await checkAuth();
+  if (!auth.authenticated) {
+    return auth.response;
+  }
+
   try {
     const { filename } = await params;
 

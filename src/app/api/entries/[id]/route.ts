@@ -2,12 +2,19 @@ import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { blobStorage } from '@/lib/blob-storage';
 import { convertImageReferencesServerSide } from '@/lib/image-conversion';
+import { checkAuth } from '@/lib/auth-helper';
 
 /**
  * GET /api/entries/[id]
  * Fetch a single entry by ID with image conversion
  */
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  // Check authentication
+  const auth = await checkAuth();
+  if (!auth.authenticated) {
+    return auth.response;
+  }
+
   try {
     const { id } = await params;
     const result = await query(
@@ -77,6 +84,12 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
  * Update an entry and handle image replacements
  */
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  // Check authentication
+  const auth = await checkAuth();
+  if (!auth.authenticated) {
+    return auth.response;
+  }
+
   try {
     const { id } = await params;
     const body = await request.json();
@@ -271,6 +284,12 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
  * Delete an entry and its associated images
  */
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  // Check authentication
+  const auth = await checkAuth();
+  if (!auth.authenticated) {
+    return auth.response;
+  }
+
   try {
     const { id } = await params;
 

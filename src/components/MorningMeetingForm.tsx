@@ -30,6 +30,8 @@ import {
   Save,
   Info,
   Calendar,
+  Zap,
+  Type,
 } from 'lucide-react';
 import { usePopup } from '@/lib/popup-context';
 
@@ -102,6 +104,7 @@ export function MorningMeetingForm({
   const [draftSaved, setDraftSaved] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [availableCountries, setAvailableCountries] = useState<string[]>([]);
+  const [useRichText, setUseRichText] = useState(true);
 
   // Initialize available countries from initialData region on mount
   useEffect(() => {
@@ -540,26 +543,80 @@ export function MorningMeetingForm({
 
                 {/* Entry Content */}
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-700">
-                    Entry Content{' '}
-                    <span className="text-red-500">*</span>
-                  </label>
-                  <RichTextEditor
-                    content={formData.entry}
-                    onChange={(content) => {
-                      setFormData((prev) => ({ ...prev, entry: content }));
-                      if (errors.entry) {
-                        setErrors((prev) => {
-                          const newErrors = { ...prev };
-                          delete newErrors.entry;
-                          return newErrors;
-                        });
-                      }
-                    }}
-                    placeholder="Provide a comprehensive summary of the development. Include key facts, actors involved, implications, and any recommended actions..."
-                    error={!!errors.entry}
-                    minHeight="min-h-[250px]"
-                  />
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium text-slate-700">
+                      Entry Content{' '}
+                      <span className="text-red-500">*</span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setUseRichText(!useRichText)}
+                      className={`inline-flex items-center gap-1.5 rounded px-2.5 py-1 text-xs font-medium transition ${
+                        useRichText
+                          ? 'bg-un-blue text-white'
+                          : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
+                      }`}
+                      title={useRichText ? 'Switch to plain text' : 'Switch to rich text editor'}
+                    >
+                      {useRichText ? (
+                        <>
+                          <Zap className="h-3.5 w-3.5" />
+                          Rich Text
+                        </>
+                      ) : (
+                        <>
+                          <Type className="h-3.5 w-3.5" />
+                          Plain Text
+                        </>
+                      )}
+                    </button>
+                  </div>
+                  
+                  {useRichText ? (
+                    <RichTextEditor
+                      content={formData.entry}
+                      onChange={(content) => {
+                        setFormData((prev) => ({ ...prev, entry: content }));
+                        if (errors.entry) {
+                          setErrors((prev) => {
+                            const newErrors = { ...prev };
+                            delete newErrors.entry;
+                            return newErrors;
+                          });
+                        }
+                      }}
+                      placeholder="Provide a comprehensive summary of the development. Include key facts, actors involved, implications, and any recommended actions..."
+                      error={!!errors.entry}
+                      minHeight="min-h-[250px]"
+                    />
+                  ) : (
+                    <textarea
+                      value={formData.entry}
+                      onChange={(e) => {
+                        setFormData((prev) => ({ ...prev, entry: e.target.value }));
+                        if (errors.entry) {
+                          setErrors((prev) => {
+                            const newErrors = { ...prev };
+                            delete newErrors.entry;
+                            return newErrors;
+                          });
+                        }
+                      }}
+                      placeholder="Provide a comprehensive summary of the development. Include key facts, actors involved, implications, and any recommended actions..."
+                      className={`w-full rounded border px-3 py-2 text-sm outline-none transition min-h-[250px] ${
+                        errors.entry
+                          ? 'border-red-500 bg-red-50 focus:border-red-500 focus:ring-2 focus:ring-red-500/15'
+                          : 'border-slate-300 bg-slate-50 focus:border-un-blue focus:ring-2 focus:ring-un-blue/15'
+                      }`}
+                    />
+                  )}
+                  
+                  {errors.entry && (
+                    <div className="flex items-center gap-1 text-xs text-red-600">
+                      <AlertCircle className="h-3.5 w-3.5" />
+                      {errors.entry}
+                    </div>
+                  )}
                 </div>
 
                 {/* Source URL */}

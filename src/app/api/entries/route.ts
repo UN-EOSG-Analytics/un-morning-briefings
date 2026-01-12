@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { blobStorage } from '@/lib/blob-storage';
 import { convertImageReferencesServerSide } from '@/lib/image-conversion';
+import { checkAuth } from '@/lib/auth-helper';
 
 /**
  * GET /api/entries
@@ -9,6 +10,12 @@ import { convertImageReferencesServerSide } from '@/lib/image-conversion';
  * Automatically converts image-ref:// to data URLs before sending response
  */
 export async function GET(request: NextRequest) {
+  // Check authentication
+  const auth = await checkAuth();
+  if (!auth.authenticated) {
+    return auth.response;
+  }
+
   try {
     const { searchParams } = new URL(request.url);
     const date = searchParams.get('date');
@@ -100,8 +107,25 @@ export async function GET(request: NextRequest) {
     console.error('Error fetching entries:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     const errorStack = error instanceof Error ? error.stack : undefined;
-    console.error('Error details:', { message: errorMessage, stack: errorStack });
-    return NextResponse.json({ error: 'Failed to fetch entries', details: errorMessage }, { status: 500 });
+    
+    // Check if it's a database connection error
+    const isDatabaseError = errorMessage.includes('connect') || 
+                           errorMessage.includes('ECONNREFUSED') ||
+                           errorMessage.includes('FATAL') ||
+                           errorMessage.includes('password');
+    
+    console.error('Error details:', { 
+      message: errorMessage, 
+      isDatabaseError,
+      stack: errorStack 
+    });
+    
+    return NextResponse.json({ 
+      error: 'Failed to fetch entries',
+      details: errorMessage,
+      isDatabaseError,
+      hint: isDatabaseError ? 'Check DATABASE_URL in .env.local' : undefined
+    }, { status: 500 });
   }
 }
 
@@ -110,6 +134,12 @@ export async function GET(request: NextRequest) {
  * Create a new entry with image uploads to blob storage
  */
 export async function POST(request: NextRequest) {
+  // Check authentication
+  const auth = await checkAuth();
+  if (!auth.authenticated) {
+    return auth.response;
+  }
+
   try {
     const body = await request.json();
     const { entry: entryContent, images, ...data } = body;
@@ -260,6 +290,12 @@ export async function POST(request: NextRequest) {
  * Update entry approval status
  */
 export async function PATCH(request: NextRequest) {
+  // Check authentication
+  const auth = await checkAuth();
+  if (!auth.authenticated) {
+    return auth.response;
+  }
+
   try {
     const body = await request.json();
     const { id, approved } = body;

@@ -28,7 +28,7 @@ export function ViewEntryDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="!max-w-none w-full sm:w-[95vw] md:w-[85vw] lg:w-[70vw] max-h-[95vh] flex flex-col">
+      <DialogContent className="!max-w-none w-full sm:w-[95vw] md:w-[85vw] lg:w-[70vw] max-h-[95vh] flex flex-col !pt-6 sm:!pt-8 !pb-6 sm:!pb-8">
         <DialogHeader className="border-b border-slate-200 pb-4">
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1">

@@ -181,10 +181,10 @@ export function RichTextEditor({
   };
 
   return (
-    <div className={isFullscreen ? 'fixed top-16 left-0 right-0 bottom-0 z-40 bg-slate-100 flex flex-col' : ''}>
+    <div className={`transition-all duration-100 ease-in-out ${isFullscreen ? 'fixed top-16 left-0 right-0 bottom-0 z-40 bg-slate-100 flex flex-col' : ''}`}>
       {/* Toolbar */}
-      <div className={isFullscreen ? 'bg-slate-100 px-4 py-2 border-b border-slate-200' : ''}>
-        <div className={`${isFullscreen ? 'max-w-[280mm] mx-auto rounded-none bg-white shadow-sm' : 'rounded-t'} border p-2 ${
+      <div className={`transition-all duration-100 ${isFullscreen ? 'bg-slate-100 px-4 py-2 border-b border-slate-200' : ''}`}>
+        <div className={`transition-all duration-100 ${isFullscreen ? 'max-w-[280mm] mx-auto rounded-none bg-white shadow-sm' : 'rounded-t'} border p-2 ${
           error
             ? 'border-red-500 bg-red-50'
             : 'border-slate-300 bg-slate-50'
@@ -235,17 +235,6 @@ export function RichTextEditor({
             title="Strikethrough"
           >
             <Strikethrough className="h-4 w-4" />
-          </Button>
-
-          <Button
-            type="button"
-            size="sm"
-            variant={editor.isActive('code') ? 'default' : 'outline'}
-            onClick={() => editor.chain().focus().toggleCode().run()}
-            className="h-8 w-8 p-0"
-            title="Inline Code"
-          >
-            <Code className="h-4 w-4" />
           </Button>
 
           <div className="h-6 w-px bg-slate-300" />
@@ -310,17 +299,6 @@ export function RichTextEditor({
             title="Blockquote"
           >
             <Quote className="h-4 w-4" />
-          </Button>
-
-          <Button
-            type="button"
-            size="sm"
-            variant={editor.isActive('codeBlock') ? 'default' : 'outline'}
-            onClick={() => editor.chain().focus().toggleCodeBlock().run()}
-            className="h-8 w-8 p-0"
-            title="Code Block"
-          >
-            <Code2 className="h-4 w-4" />
           </Button>
 
           <Button
@@ -487,8 +465,8 @@ export function RichTextEditor({
       </div>
 
       {/* Editor */}
-      <div className={isFullscreen ? 'flex-1 overflow-auto py-8 px-4' : ''}>
-        <div className={`${isFullscreen ? 'max-w-[280mm] mx-auto bg-white shadow-lg rounded-none min-h-[297mm] p-16' : 'rounded-b'} border -mt-1 ${
+      <div className={`transition-all duration-300 ${isFullscreen ? 'flex-1 overflow-hidden py-8 px-4' : ''}`}>
+        <div className={`transition-all duration-300 ${isFullscreen ? 'max-w-[280mm] mx-auto bg-white shadow-lg rounded-none min-h-[297mm] p-16 h-full overflow-y-auto' : 'rounded-b'} ${isFullscreen ? '' : 'border -mt-1'} ${
           error
             ? 'border-t-0 border-red-500 bg-red-50'
             : 'border-t-0 border-slate-300 bg-slate-50'

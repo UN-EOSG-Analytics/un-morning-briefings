@@ -23,6 +23,7 @@ export default function DraftsPage() {
   }, [currentUserName]);
 
   const loadEntries = async () => {
+    if (!currentUserName || currentUserName === 'Current User') return;
     const data = await getDraftEntries(currentUserName);
     // Filter to only show drafts by the current user
     const userDrafts = data.filter((entry: any) => entry.author === currentUserName);

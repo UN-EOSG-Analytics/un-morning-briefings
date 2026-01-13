@@ -1,13 +1,13 @@
 'use client';
 
 import { signIn } from 'next-auth/react';
-import { useState, FormEvent, useEffect } from 'react';
+import { useState, FormEvent, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Lock, AlertCircle, Mail, CheckCircle2, UserPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { RegisterDialog } from '@/components/RegisterDialog';
 
-export default function LoginPage() {
+function LoginPageContent() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -168,5 +168,13 @@ export default function LoginPage() {
 
       <RegisterDialog open={showRegister} onOpenChange={setShowRegister} />
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginPageContent />
+    </Suspense>
   );
 }

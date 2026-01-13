@@ -1,9 +1,10 @@
 'use client';
 
+import { Suspense } from 'react';
 import { MorningMeetingList } from '@/components/MorningMeetingList';
 import { useSearchParams } from 'next/navigation';
 
-export default function ListPage() {
+function ListPageContent() {
   const searchParams = useSearchParams();
   const dateFilter = searchParams.get('date') || undefined;
 
@@ -13,5 +14,13 @@ export default function ListPage() {
         <MorningMeetingList initialDateFilter={dateFilter} />
       </main>
     </div>
+  );
+}
+
+export default function ListPage() {
+  return (
+    <Suspense>
+      <ListPageContent />
+    </Suspense>
   );
 }

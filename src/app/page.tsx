@@ -3,12 +3,15 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { FileText, List, ArrowRight, FileEdit, PlusCircle, Download } from 'lucide-react';
+import { PlusCircle, FileText, Archive, ArrowRight, Download } from 'lucide-react';
 import { useState } from 'react';
 import { ExportDailyBriefingDialog } from '@/components/ExportDailyBriefingDialog';
 
 export default function HomePage() {
   const [showExportDialog, setShowExportDialog] = useState(false);
+
+  // Get today's date in YYYY-MM-DD format
+  const today = new Date().toISOString().split('T')[0];
 
   return (
     <main className="min-h-[80svh] bg-background flex flex-col">
@@ -34,7 +37,7 @@ export default function HomePage() {
         </div>
 
         <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-3">
-          {/* New Entry Card */}
+          {/* Enter Form Card */}
           <Link href="/form" className="group">
             <Card className="border-slate-200 p-4 sm:p-8 hover:border-un-blue transition-colors h-full cursor-pointer sm:hover:shadow-md">
               <div className="flex flex-col sm:flex-col items-left text-left space-y-0 h-full sm:space-y-4">
@@ -43,7 +46,7 @@ export default function HomePage() {
                     <PlusCircle className="h-8 w-8 text-white" />
                   </div>
                   <div className="flex flex-col flex-1">
-                    <h2 className="text-lg font-semibold text-foreground">Create New Entry</h2>
+                    <h2 className="text-lg font-semibold text-foreground">Enter Form</h2>
                     <p className="text-xs text-slate-600">
                       Submit a new morning meeting briefing entry
                     </p>
@@ -53,7 +56,7 @@ export default function HomePage() {
                   <div className="flex h-16 w-16 items-center justify-center rounded-full bg-un-blue shrink-0">
                     <PlusCircle className="h-8 w-8 text-white" />
                   </div>
-                  <h2 className="text-xl sm:text-2xl font-semibold text-foreground mt-4">Create New Entry</h2>
+                  <h2 className="text-xl sm:text-2xl font-semibold text-foreground mt-4">Enter Form</h2>
                   <p className="text-sm sm:text-base text-slate-600 mt-2">
                     Submit a new morning meeting briefing entry with key updates and information
                   </p>
@@ -66,64 +69,64 @@ export default function HomePage() {
             </Card>
           </Link>
 
-          {/* View Entries Card */}
-          <Link href="/list" className="group">
+          {/* Current Briefing Card */}
+          <Link href={`/list?date=${today}`} className="group">
             <Card className="border-slate-200 p-4 sm:p-8 hover:border-un-blue transition-colors h-full cursor-pointer sm:hover:shadow-md">
               <div className="flex flex-col sm:flex-col items-left text-left space-y-0 h-full sm:space-y-4">
                 <div className="flex sm:hidden gap-3 items-center">
                   <div className="flex h-16 w-16 items-center justify-center rounded-full bg-slate-700 shrink-0">
-                    <List className="h-8 w-8 text-white" />
+                    <FileText className="h-8 w-8 text-white" />
                   </div>
                   <div className="flex flex-col flex-1">
-                    <h2 className="text-lg font-semibold text-foreground">View Entries</h2>
+                    <h2 className="text-lg font-semibold text-foreground">Current Briefing</h2>
                     <p className="text-xs text-slate-600">
-                      Browse and manage all submitted entries
+                      View today's briefing entries
                     </p>
                   </div>
                 </div>
                 <div className="hidden sm:flex flex-col">
                   <div className="flex h-16 w-16 items-center justify-center rounded-full bg-slate-700 shrink-0">
-                    <List className="h-8 w-8 text-white" />
+                    <FileText className="h-8 w-8 text-white" />
                   </div>
-                  <h2 className="text-xl sm:text-2xl font-semibold text-foreground mt-4">View Entries</h2>
+                  <h2 className="text-xl sm:text-2xl font-semibold text-foreground mt-4">Current Briefing</h2>
                   <p className="text-sm sm:text-base text-slate-600 mt-2">
-                    Browse, filter, and manage all submitted morning meeting briefing entries
+                    View and manage today's morning meeting briefing entries
                   </p>
                 </div>
-                <Button className="hidden sm:flex w-full bg-slate-700" size="lg">
-                  View All
+                <Button className="hidden sm:flex w-full bg-slate-700 hover:bg-slate-700/90 mt-auto" size="lg">
+                  View
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </div>
             </Card>
           </Link>
 
-          {/* My Drafts Card */}
-          <Link href="/drafts" className="group">
+          {/* Archive Card */}
+          <Link href="/list" className="group">
             <Card className="border-slate-200 p-4 sm:p-8 hover:border-un-blue transition-colors h-full cursor-pointer sm:hover:shadow-md">
               <div className="flex flex-col sm:flex-col items-left text-left space-y-0 h-full sm:space-y-4">
                 <div className="flex sm:hidden gap-3 items-center">
-                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-accent shrink-0">
-                    <FileEdit className="h-8 w-8 text-black" />
+                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-slate-200 shrink-0">
+                    <Archive className="h-8 w-8 text-slate-700" />
                   </div>
                   <div className="flex flex-col flex-1">
-                    <h2 className="text-lg font-semibold text-foreground">My Drafts</h2>
+                    <h2 className="text-lg font-semibold text-foreground">Archive</h2>
                     <p className="text-xs text-slate-600">
-                      Work on your previously saved drafts
+                      Browse all entries
                     </p>
                   </div>
                 </div>
                 <div className="hidden sm:flex flex-col">
-                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-accent shrink-0">
-                    <FileEdit className="h-8 w-8 text-black" />
+                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-slate-200 shrink-0">
+                    <Archive className="h-8 w-8 text-slate-700" />
                   </div>
-                  <h2 className="text-xl sm:text-2xl font-semibold text-foreground mt-4">My Drafts</h2>
+                  <h2 className="text-xl sm:text-2xl font-semibold text-foreground mt-4">Archive</h2>
                   <p className="text-sm sm:text-base text-slate-600 mt-2">
-                    Work on your previously saved drafts before submitting final entries
+                    Browse, filter, and manage all submitted morning meeting briefing entries
                   </p>
                 </div>
-                <Button variant="outline" className="hidden sm:flex w-full mt-auto" size="lg">
-                  View Drafts
+                <Button className="hidden sm:flex w-full bg-slate-200 text-slate-700 hover:bg-slate-300 mt-auto" size="lg">
+                  View All
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </div>

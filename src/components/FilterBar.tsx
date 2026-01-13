@@ -21,6 +21,8 @@ interface FilterBarProps {
   onCategoryChange: (value: string) => void;
   filterPriority: string;
   onPriorityChange: (value: string) => void;
+  filterDate: string;
+  onDateChange: (value: string) => void;
   onReset: () => void;
   resultCount: number;
   resultLabel: string;
@@ -35,6 +37,8 @@ export function FilterBar({
   onCategoryChange,
   filterPriority,
   onPriorityChange,
+  filterDate,
+  onDateChange,
   onReset,
   resultCount,
   resultLabel,
@@ -98,6 +102,14 @@ export function FilterBar({
             ))}
           </SelectContent>
         </Select>
+
+        {/* Date Filter */}
+        <input
+          type="date"
+          value={filterDate}
+          onChange={(e) => onDateChange(e.target.value)}
+          className="h-9 rounded-md border border-slate-300 bg-white px-3 text-sm focus:border-un-blue focus:outline-none focus:ring-2 focus:ring-un-blue/20"
+        />
 
         {/* Reset Button */}
         <Button

@@ -10,7 +10,7 @@ import { ExportDailyBriefingDialog } from './ExportDailyBriefingDialog';
 import { EntriesTable } from './EntriesTable';
 import { usePopup } from '@/lib/popup-context';
 
-export function MorningMeetingList() {
+export function MorningMeetingList({ initialDateFilter }: { initialDateFilter?: string } = {}) {
   const { confirm: showConfirm, success: showSuccess, info: showInfo } = usePopup();
   const [entries, setEntries] = useState<any[]>([]);
   const [showExportDialog, setShowExportDialog] = useState(false);
@@ -76,7 +76,7 @@ export function MorningMeetingList() {
     <div className="space-y-4 mx-auto w-full max-w-6xl">
       {/* Header */}
       <Card className="border-slate-200">
-        <div className="flex flex-col gap-4 p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 sm:p-6">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded bg-slate-700">
              <List className="h-5 w-5 text-white" />
@@ -86,7 +86,7 @@ export function MorningMeetingList() {
               <p className="text-xs sm:text-sm text-slate-600">View and manage submitted entries</p>
             </div>
           </div>
-          <div className="flex flex-col sm:flex-row gap-2">
+          <div className="flex flex-col sm:flex-row gap-2 sm:shrink-0">
             <Button variant="outline" size="sm" onClick={() => setShowExportDialog(true)} className="w-full sm:w-auto justify-center">
               <FileDown className="h-4 w-4" />
               <span className="sm:inline">Export Daily Briefing</span>
@@ -107,6 +107,7 @@ export function MorningMeetingList() {
         showApprovedColumn={true}
         emptyMessage="No entries found."
         resultLabel="entries"
+        initialDateFilter={initialDateFilter}
       />
 
       {/* Export Dialog */}

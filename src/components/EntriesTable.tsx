@@ -3,11 +3,12 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { MorningMeetingEntry, PRIORITIES } from '@/types/morning-meeting';
+import { MorningMeetingEntry, PRIORITIES, REGIONS, CATEGORIES } from '@/types/morning-meeting';
 import { Trash2, Edit, CheckCircle2, Circle } from 'lucide-react';
 import Link from 'next/link';
 import { ViewEntryDialog } from './ViewEntryDialog';
-import { FilterBar } from './FilterBar';
+import { SearchBar } from './SearchBar';
+import { ColumnFilter } from './ColumnFilter';
 import { useEntriesFilter, getPriorityBadgeClass, getRegionBadgeClass } from '@/lib/useEntriesFilter';
 
 interface EntriesTableProps {
@@ -17,6 +18,7 @@ interface EntriesTableProps {
   showApprovedColumn?: boolean;
   emptyMessage?: string;
   resultLabel?: string;
+  initialDateFilter?: string;
 }
 
 export function EntriesTable({
@@ -26,6 +28,7 @@ export function EntriesTable({
   showApprovedColumn = false,
   emptyMessage = 'No entries found.',
   resultLabel = 'entries',
+  initialDateFilter,
 }: EntriesTableProps) {
   const [selectedEntry, setSelectedEntry] = useState<MorningMeetingEntry | null>(null);
   const [showViewDialog, setShowViewDialog] = useState(false);
@@ -35,16 +38,18 @@ export function EntriesTable({
     filterRegion,
     filterCategory,
     filterPriority,
+    filterDate,
     sortField,
     sortDirection,
     setSearchTerm,
     setFilterRegion,
     setFilterCategory,
     setFilterPriority,
+    setFilterDate,
     handleSort,
     handleResetFilters,
     sortedEntries,
-  } = useEntriesFilter(entries);
+  } = useEntriesFilter(entries, initialDateFilter);
 
   const handleRowClick = (entry: any) => {
     setSelectedEntry(entry);
@@ -56,27 +61,22 @@ export function EntriesTable({
     callback();
   };
 
+  // Extract unique dates from entries
+  const uniqueDates = Array.from(
+    new Set(entries.map((entry) => new Date(entry.date).toISOString().split('T')[0]))
+  ).sort().reverse();
+
   return (
     <>
-      {/* Filters */}
-      <FilterBar
+      {/* Search Bar */}
+      <SearchBar
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
-        filterRegion={filterRegion}
-        onRegionChange={setFilterRegion}
-        filterCategory={filterCategory}
-        onCategoryChange={setFilterCategory}
-        filterPriority={filterPriority}
-        onPriorityChange={setFilterPriority}
-        onReset={handleResetFilters}
-        resultCount={sortedEntries.length}
-        resultLabel={sortedEntries.length === 1 ? resultLabel.replace(/s$/, '') : resultLabel}
       />
 
       {/* Table */}
-      <Card className="border-slate-200 p-0">
-        <div className="overflow-x-auto -mx-px">
-          <div className="inline-block min-w-full align-middle">
+      <Card className="border-slate-200 p-0 mt-4 overflow-hidden">
+        <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="border-b border-slate-200 bg-slate-50">
               <tr>
@@ -84,25 +84,85 @@ export function EntriesTable({
                   className="rounded-tl-xl cursor-pointer px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-700 hover:bg-slate-100"
                   onClick={() => handleSort('date')}
                 >
-                  Date {sortField === 'date' && (sortDirection === 'asc' ? '↑' : '↓')}
+                  <div className="flex items-center gap-2">
+                    Date {sortField === 'date' && (sortDirection === 'asc' ? '↑' : '↓')}
+                    <ColumnFilter
+                      columnName="Date"
+                      options={uniqueDates.map((date) =>
+                        new Date(date).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric',
+                        })
+                      )}
+                      selectedValue={
+                        filterDate
+                          ? new Date(filterDate).toLocaleDateString('en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                              year: 'numeric',
+                            })
+                          : 'all'
+                      }
+                      onValueChange={(label) => {
+                        if (label === 'all') {
+                          setFilterDate('');
+                        } else {
+                          // Parse the date label back to YYYY-MM-DD format
+                          const dateObj = new Date(label);
+                          const isoDate = dateObj.toISOString().split('T')[0];
+                          setFilterDate(isoDate);
+                        }
+                      }}
+                    />
+                  </div>
                 </th>
                 <th
                   className="cursor-pointer px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-700 hover:bg-slate-100"
                   onClick={() => handleSort('headline')}
                 >
-                  Headline {sortField === 'headline' && (sortDirection === 'asc' ? '↑' : '↓')}
+                  <div className="flex items-center gap-2">
+                    Headline {sortField === 'headline' && (sortDirection === 'asc' ? '↑' : '↓')}
+                  </div>
                 </th>
                 <th
                   className="cursor-pointer px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-700 hover:bg-slate-100"
                   onClick={() => handleSort('region')}
                 >
-                  Region {sortField === 'region' && (sortDirection === 'asc' ? '↑' : '↓')}
+                  <div className="flex items-center gap-2">
+                    Region {sortField === 'region' && (sortDirection === 'asc' ? '↑' : '↓')}
+                    <ColumnFilter
+                      columnName="Region"
+                      options={REGIONS}
+                      selectedValue={filterRegion}
+                      onValueChange={setFilterRegion}
+                    />
+                  </div>
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-700">
-                  Priority
+                  <div className="flex items-center gap-2">
+                    Priority
+                    <ColumnFilter
+                      columnName="Priority"
+                      options={PRIORITIES.map((p) => p.label)}
+                      selectedValue={filterPriority === 'all' ? 'all' : PRIORITIES.find((p) => p.value === filterPriority)?.label || 'all'}
+                      onValueChange={(label) => {
+                        const value = PRIORITIES.find((p) => p.label === label)?.value || 'all';
+                        setFilterPriority(value);
+                      }}
+                    />
+                  </div>
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-700">
-                  Category
+                  <div className="flex items-center gap-2">
+                    Category
+                    <ColumnFilter
+                      columnName="Category"
+                      options={CATEGORIES}
+                      selectedValue={filterCategory}
+                      onValueChange={setFilterCategory}
+                    />
+                  </div>
                 </th>
                 {showApprovedColumn && (
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-700">
@@ -195,9 +255,13 @@ export function EntriesTable({
               )}
             </tbody>
           </table>
-          </div>
         </div>
       </Card>
+
+      {/* Result Count */}
+      <div className="text-sm text-slate-600 mt-2">
+        {sortedEntries.length} {sortedEntries.length === 1 ? (resultLabel.endsWith('ies') ? resultLabel.slice(0, -3) + 'y' : resultLabel.slice(0, -1)) : resultLabel}
+      </div>
 
       {/* View Entry Dialog */}
       <ViewEntryDialog

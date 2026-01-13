@@ -7,11 +7,12 @@ import { useState, useMemo } from 'react';
  * @param entries - Array of entries to filter and sort
  * @returns Object with filter state, handlers, and filtered/sorted entries
  */
-export function useEntriesFilter(entries: any[]) {
+export function useEntriesFilter(entries: any[], initialDateFilter?: string) {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRegion, setFilterRegion] = useState<string>('all');
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [filterPriority, setFilterPriority] = useState<string>('all');
+  const [filterDate, setFilterDate] = useState<string>(initialDateFilter || '');
   const [sortField, setSortField] = useState<string>('date');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
 
@@ -29,10 +30,16 @@ export function useEntriesFilter(entries: any[]) {
       const matchesRegion = filterRegion === 'all' || entry.region === filterRegion;
       const matchesCategory = filterCategory === 'all' || entry.category === filterCategory;
       const matchesPriority = filterPriority === 'all' || entry.priority === filterPriority;
+      
+      let matchesDate = true;
+      if (filterDate) {
+        const entryDate = new Date(entry.date).toISOString().split('T')[0];
+        matchesDate = entryDate === filterDate;
+      }
 
-      return matchesSearch && matchesRegion && matchesCategory && matchesPriority;
+      return matchesSearch && matchesRegion && matchesCategory && matchesPriority && matchesDate;
     });
-  }, [entries, searchTerm, filterRegion, filterCategory, filterPriority]);
+  }, [entries, searchTerm, filterRegion, filterCategory, filterPriority, filterDate]);
 
   /**
    * Sort filtered entries by specified field and direction
@@ -75,6 +82,7 @@ export function useEntriesFilter(entries: any[]) {
     setFilterRegion('all');
     setFilterCategory('all');
     setFilterPriority('all');
+    setFilterDate('');
   };
 
   return {
@@ -83,6 +91,7 @@ export function useEntriesFilter(entries: any[]) {
     filterRegion,
     filterCategory,
     filterPriority,
+    filterDate,
     sortField,
     sortDirection,
     // Setters
@@ -90,6 +99,7 @@ export function useEntriesFilter(entries: any[]) {
     setFilterRegion,
     setFilterCategory,
     setFilterPriority,
+    setFilterDate,
     // Handlers
     handleSort,
     handleResetFilters,

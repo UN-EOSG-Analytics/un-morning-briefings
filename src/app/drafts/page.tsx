@@ -1,26 +1,32 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
 import { Card } from '@/components/ui/card';
 import { getDraftEntries, deleteEntry } from '@/lib/storage';
 import { FileEdit } from 'lucide-react';
 import { EntriesTable } from '@/components/EntriesTable';
 import { usePopup } from '@/lib/popup-context';
 
-// TODO: Replace with actual user authentication
-const CURRENT_USER = 'Current User';
-
 export default function DraftsPage() {
+  const { data: session } = useSession();
   const { confirm: showConfirm, success: showSuccess } = usePopup();
   const [entries, setEntries] = useState<any[]>([]);
 
+  // Get current user's full name
+  const currentUserName = session?.user
+    ? `${session.user.firstName || ''} ${session.user.lastName || ''}`.trim() || session.user.email
+    : 'Current User';
+
   useEffect(() => {
     loadEntries();
-  }, []);
+  }, [currentUserName]);
 
   const loadEntries = async () => {
-    const data = await getDraftEntries(CURRENT_USER);
-    setEntries(data);
+    const data = await getDraftEntries(currentUserName);
+    // Filter to only show drafts by the current user
+    const userDrafts = data.filter((entry: any) => entry.author === currentUserName);
+    setEntries(userDrafts);
   };
 
   const handleDelete = async (id: string) => {

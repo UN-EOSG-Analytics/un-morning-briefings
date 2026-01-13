@@ -4,7 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Menu, X, Home, PlusCircle, List, FileEdit, LogOut, User, Zap, Info, Users } from 'lucide-react';
 import { useState } from 'react';
-import { signOut } from 'next-auth/react';
+import { signOut, useSession } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import NavButton from './NavButton';
 import {
@@ -18,6 +18,14 @@ import {
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
+  const { data: session } = useSession();
+
+  const userName = session?.user?.firstName && session?.user?.lastName
+    ? `${session.user.firstName} ${session.user.lastName}`
+    : session?.user?.name || 'User';
+  
+  const userTeam = session?.user?.team || 'Political Unit (EOSG)';
+  const userEmail = session?.user?.email || '';
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 border-b border-slate-200 bg-white">
@@ -36,7 +44,7 @@ export function Navbar() {
         </Link>
         <span className="hidden sm:flex ml-2 border border-slate-300 bg-slate-100 text-slate-700 text-xs font-semibold px-2 py-1 rounded-full items-center gap-1.5">
           <Users className="h-3 w-3" />
-          Political Unit (EOSG)
+          {userTeam}
         </span>
         </div>
 
@@ -62,24 +70,25 @@ export function Navbar() {
             <span>New Entry</span>
           </NavButton>
 
-          {/* User Account Menu */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-9 w-9 rounded-full p-0"
-              >
-                <div className="h-8 w-8 rounded-full bg-slate-200 flex items-center justify-center">
-                  <User className="h-4 w-4 text-slate-600" />
-                </div>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel className="flex flex-col gap-1">
-                <span className="font-semibold text-sm">John Doe</span>
-                <span className="text-xs text-slate-600">Political Unit EOSG</span>
-              </DropdownMenuLabel>
+          {/* User Account Menu - Only show if logged in */}
+          {session && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild suppressHydrationWarning>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-9 w-9 rounded-full p-0"
+                >
+                  <div className="h-8 w-8 rounded-full bg-slate-200 flex items-center justify-center">
+                    <User className="h-4 w-4 text-slate-600" />
+                  </div>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56" suppressHydrationWarning>
+                <DropdownMenuLabel className="flex flex-col gap-1">
+                  <span className="font-semibold text-sm">{userName}</span>
+                  <span className="text-xs text-slate-600">{userEmail}</span>
+                </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem 
                 className="text-red-600 cursor-pointer gap-2"
@@ -89,39 +98,42 @@ export function Navbar() {
                 <span>Logout</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
-          </DropdownMenu>
+            </DropdownMenu>
+          )}
         </div>
 
         {/* Mobile Menu Button */}
         <div className="flex items-center gap-2 md:hidden">
-          {/* User Account Menu - Mobile */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-9 w-9 rounded-full p-0"
-              >
-                <div className="h-8 w-8 rounded-full bg-slate-200 flex items-center justify-center">
-                  <User className="h-4 w-4 text-slate-600" />
-                </div>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel className="flex flex-col gap-1">
-                <span className="font-semibold text-sm">John Doe</span>
-                <span className="text-xs text-slate-600">Political Unit EOSG</span>
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem 
-                className="text-red-600 cursor-pointer gap-2"
-                onClick={() => signOut({ callbackUrl: '/login' })}
-              >
-                <LogOut className="h-4 w-4" />
-                <span>Logout</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {/* User Account Menu - Mobile - Only show if logged in */}
+          {session && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild suppressHydrationWarning>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-9 w-9 rounded-full p-0"
+                >
+                  <div className="h-8 w-8 rounded-full bg-slate-200 flex items-center justify-center">
+                    <User className="h-4 w-4 text-slate-600" />
+                  </div>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56" suppressHydrationWarning>
+                <DropdownMenuLabel className="flex flex-col gap-1">
+                  <span className="font-semibold text-sm">{userName}</span>
+                  <span className="text-xs text-slate-600">{userEmail}</span>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem 
+                  className="text-red-600 cursor-pointer gap-2"
+                  onClick={() => signOut({ callbackUrl: '/login' })}
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span>Logout</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
 
           <button
             onClick={() => setIsOpen(!isOpen)}

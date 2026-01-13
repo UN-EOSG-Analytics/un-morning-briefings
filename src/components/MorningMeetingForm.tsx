@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -106,6 +107,18 @@ export function MorningMeetingForm({
   const [availableCountries, setAvailableCountries] = useState<string[]>([]);
   const [useRichText, setUseRichText] = useState<boolean | null>(null);
   const [hasUserToggled, setHasUserToggled] = useState(false);
+  const { data: session } = useSession();
+
+  // Autofill form with current user's information
+  useEffect(() => {
+    if (session?.user && !initialData?.author) {
+      const fullName = `${session.user.firstName || ''} ${session.user.lastName || ''}`.trim();
+      setFormData((prev) => ({
+        ...prev,
+        author: fullName || session.user.email || 'Current User',
+      }));
+    }
+  }, [session, initialData?.author]);
 
   // Set default editor mode based on screen size
   useEffect(() => {

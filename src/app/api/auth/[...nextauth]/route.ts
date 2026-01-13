@@ -1,5 +1,7 @@
 import NextAuth, { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
+import { query } from '@/lib/db';
+import bcrypt from 'bcryptjs';
 
 // Get the base URL for callbacks
 const getBaseUrl = () => {
@@ -19,34 +21,66 @@ const getBaseUrl = () => {
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
-      name: 'Password',
+      name: 'Credentials',
       credentials: {
+        email: { label: 'Email', type: 'email' },
         password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
         console.log('authorize: Called with credentials');
-        if (!credentials?.password) {
-          console.log('authorize: No password provided');
+        if (!credentials?.email || !credentials?.password) {
+          console.log('authorize: Missing email or password');
           return null;
         }
 
-        const sitePassword = process.env.SITE_PASSWORD;
-        if (!sitePassword) {
-          console.error('authorize: SITE_PASSWORD not configured');
-          throw new Error('SITE_PASSWORD not configured');
+        // Validate email domain
+        if (!credentials.email.endsWith('@un.org')) {
+          console.log('authorize: Invalid email domain');
+          return null;
         }
 
-        if (credentials.password === sitePassword) {
-          console.log('authorize: Password correct, returning user');
+        try {
+          // Query user from database
+          const result = await query(
+            `SELECT id, email, password_hash, first_name, last_name, team, email_verified 
+             FROM pu_morning_briefings.users 
+             WHERE email = $1`,
+            [credentials.email.toLowerCase()]
+          );
+
+          if (result.rows.length === 0) {
+            console.log('authorize: User not found');
+            return null;
+          }
+
+          const user = result.rows[0];
+
+          // Check if email is verified
+          if (!user.email_verified) {
+            console.log('authorize: Email not verified');
+            return null;
+          }
+
+          // Verify password
+          const passwordMatch = await bcrypt.compare(credentials.password, user.password_hash);
+          if (!passwordMatch) {
+            console.log('authorize: Password incorrect');
+            return null;
+          }
+
+          console.log('authorize: Login successful');
           return {
-            id: 'un-user',
-            name: 'UN Political Unit',
-            email: 'political-unit@un.org',
+            id: user.id.toString(),
+            email: user.email,
+            name: `${user.first_name} ${user.last_name}`,
+            firstName: user.first_name,
+            lastName: user.last_name,
+            team: user.team,
           };
+        } catch (error) {
+          console.error('authorize: Database error:', error);
+          return null;
         }
-
-        console.log('authorize: Password incorrect');
-        return null;
       },
     }),
   ],
@@ -59,6 +93,9 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         console.log('jwt callback: Adding user to token');
         token.id = user.id;
+        token.firstName = user.firstName;
+        token.lastName = user.lastName;
+        token.team = user.team;
       }
       return token;
     },
@@ -66,6 +103,9 @@ export const authOptions: NextAuthOptions = {
       console.log('session callback: Called', { hasToken: !!token, tokenId: token.id });
       if (session.user && token.id) {
         session.user.id = token.id as string;
+        session.user.firstName = token.firstName;
+        session.user.lastName = token.lastName;
+        session.user.team = token.team;
       }
       return session;
     },

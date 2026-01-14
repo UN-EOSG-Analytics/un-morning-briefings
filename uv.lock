@@ -567,7 +567,7 @@ wheels = [
 ]
 
 [[package]]
-name = "un-website-boilerplate"
+name = "un-morning-briefing-tool"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [

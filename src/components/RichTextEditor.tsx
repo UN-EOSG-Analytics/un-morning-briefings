@@ -5,6 +5,8 @@ import StarterKit from '@tiptap/starter-kit';
 import Link from '@tiptap/extension-link';
 import TextAlign from '@tiptap/extension-text-align';
 import Image from '@tiptap/extension-image';
+import Highlight from '@tiptap/extension-highlight';
+import { Mark } from '@tiptap/core';
 import {
   Bold,
   Italic,
@@ -28,6 +30,7 @@ import {
   Code,
   Maximize,
   Minimize,
+  MessageCircle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useRef, useState } from 'react';
@@ -51,6 +54,45 @@ export function RichTextEditor({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { warning: showWarning } = usePopup();
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [highlightColor, setHighlightColor] = useState<string>('yellow');
+  const [selectedComment, setSelectedComment] = useState<string>('');
+
+  // Custom Comment mark extension
+  const CommentMark = Mark.create({
+    name: 'comment',
+    parseHTML() {
+      return [
+        {
+          tag: 'mark[data-comment]',
+          getAttrs: (element) => ({
+            comment: (element as HTMLElement).getAttribute('data-comment'),
+          }),
+        },
+      ];
+    },
+    renderHTML({ HTMLAttributes }) {
+      return [
+        'mark',
+        {
+          'data-comment': HTMLAttributes.comment,
+          class: 'bg-orange-100 border-b-2 border-orange-400 cursor-help',
+          title: HTMLAttributes.comment,
+        },
+        0,
+      ];
+    },
+    addAttributes() {
+      return {
+        comment: {
+          default: '',
+          parseHTML: (element) => (element as HTMLElement).getAttribute('data-comment'),
+          renderHTML: (attributes) => ({
+            'data-comment': attributes.comment,
+          }),
+        },
+      };
+    },
+  });
 
   const editor = useEditor({
     extensions: [
@@ -66,6 +108,10 @@ export function RichTextEditor({
       TextAlign.configure({
         types: ['heading', 'paragraph'],
       }),
+      Highlight.configure({
+        multicolor: true,
+      }),
+      CommentMark,
       Image.configure({
         inline: false,
         allowBase64: true,
@@ -235,6 +281,50 @@ export function RichTextEditor({
             title="Strikethrough"
           >
             <Strikethrough className="h-4 w-4" />
+          </Button>
+
+          {/* Highlight Color Picker */}
+          <div className="flex items-center gap-1">
+            <select
+              onChange={(e) => setHighlightColor(e.target.value)}
+              value={highlightColor}
+              className="h-8 rounded border border-slate-300 bg-white px-2 py-1 text-xs"
+              title="Highlight color"
+            >
+              <option value="yellow">Yellow</option>
+              <option value="green">Green</option>
+              <option value="blue">Blue</option>
+              <option value="pink">Pink</option>
+              <option value="purple">Purple</option>
+            </select>
+            <Button
+              type="button"
+              size="sm"
+              variant={editor.isActive('highlight') ? 'default' : 'outline'}
+              onClick={() => editor.chain().focus().toggleHighlight({ color: `#${highlightColor === 'yellow' ? 'FFFF00' : highlightColor === 'green' ? 'BFFF00' : highlightColor === 'blue' ? '00CCFF' : highlightColor === 'pink' ? 'FF00FF' : '9900FF'}` }).run()}
+              className="h-8 w-8 p-0"
+              title="Highlight text"
+            >
+              <div className={`h-2 w-6 rounded ${highlightColor === 'yellow' ? 'bg-yellow-300' : highlightColor === 'green' ? 'bg-green-300' : highlightColor === 'blue' ? 'bg-blue-300' : highlightColor === 'pink' ? 'bg-pink-300' : 'bg-purple-300'}`} />
+            </Button>
+          </div>
+
+          {/* Comment Mark */}
+          <Button
+            type="button"
+            size="sm"
+            variant={editor.isActive('comment') ? 'default' : 'outline'}
+            onClick={() => {
+              const comment = prompt('Add a comment/note:');
+              if (comment) {
+                editor.chain().focus().toggleMark('comment', { comment }).run();
+                setSelectedComment(comment);
+              }
+            }}
+            className="h-8 w-8 p-0"
+            title="Add comment to selected text"
+          >
+            <MessageCircle className="h-4 w-4" />
           </Button>
 
           <div className="h-6 w-px bg-slate-300" />
@@ -465,15 +555,15 @@ export function RichTextEditor({
       </div>
 
       {/* Editor */}
-      <div className={`transition-all duration-300 ${isFullscreen ? 'flex-1 overflow-hidden py-8 px-4' : ''}`}>
-        <div className={`transition-all duration-300 ${isFullscreen ? 'max-w-[280mm] mx-auto bg-white shadow-lg rounded-none min-h-[297mm] p-16 h-full overflow-y-auto' : 'rounded-b'} ${isFullscreen ? '' : 'border -mt-1'} ${
+      <div className={`transition-all duration-300 ${isFullscreen ? 'flex-1 overflow-y-auto py-8 px-4' : ''}`}>
+        <div className={`transition-all duration-300 ${isFullscreen ? 'max-w-[280mm] mx-auto bg-white shadow-lg rounded-none min-h-[297mm] p-16' : 'rounded-b'} ${isFullscreen ? '' : 'border -mt-1'} ${
           error
             ? 'border-t-0 border-red-500 bg-red-50'
             : 'border-t-0 border-slate-300 bg-slate-50'
         }`}>
           <EditorContent 
             editor={editor}
-            className={isFullscreen ? 'h-full prose prose-slate max-w-none' : minHeight}
+            className={isFullscreen ? 'prose prose-slate max-w-none' : minHeight}
           />
         </div>
       </div>

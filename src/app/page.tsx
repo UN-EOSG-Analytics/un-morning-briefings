@@ -14,7 +14,7 @@ export default function HomePage() {
   const today = new Date().toISOString().split('T')[0];
 
   return (
-    <main className="min-h-[80svh] bg-background flex flex-col">
+    <main className="bg-background flex flex-col">
       <div className="mx-auto w-full max-w-6xl px-2 sm:px-4 py-6 sm:py-16">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 sm:gap-6 mb-8 sm:mb-12">
           <div className="text-left px-2 sm:px-0">
@@ -46,7 +46,7 @@ export default function HomePage() {
                     <PlusCircle className="h-8 w-8 text-white" />
                   </div>
                   <div className="flex flex-col flex-1">
-                    <h2 className="text-lg font-semibold text-foreground">Enter Form</h2>
+                    <h2 className="text-lg font-semibold text-foreground">Create Entry</h2>
                     <p className="text-xs text-slate-600">
                       Submit a new morning meeting briefing entry
                     </p>
@@ -56,7 +56,7 @@ export default function HomePage() {
                   <div className="flex h-16 w-16 items-center justify-center rounded-full bg-un-blue shrink-0">
                     <PlusCircle className="h-8 w-8 text-white" />
                   </div>
-                  <h2 className="text-xl sm:text-2xl font-semibold text-foreground mt-4">Enter Form</h2>
+                  <h2 className="text-xl sm:text-2xl font-semibold text-foreground mt-4">Create Entry</h2>
                   <p className="text-sm sm:text-base text-slate-600 mt-2">
                     Submit a new morning meeting briefing entry with key updates and information
                   </p>

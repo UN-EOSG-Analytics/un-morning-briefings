@@ -163,6 +163,17 @@ body {
 body::-webkit-scrollbar {
   display: none;
 }
+
+/* Hide scrollbars on all elements with overflow (Webkit) */
+*::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbars in Firefox */
+* {
+  scrollbar-width: none;
+}
+
 /* TipTap Editor Styles */
 .ProseMirror {
   outline: none;

@@ -18,6 +18,8 @@ export async function sendVerificationEmail(
   baseUrl: string
 ) {
   const verificationUrl = `${baseUrl}/api/auth/verify-email?token=${token}`;
+  const logoUrl = `${baseUrl}/images/UN_Logo_Horizontal_Colour_English.png`;
+  const siteTitle = 'United Nations | Morning Briefings';
 
   const mailOptions = {
     from: process.env.SMTP_FROM,
@@ -28,77 +30,63 @@ export async function sendVerificationEmail(
       <html>
         <head>
           <meta charset="utf-8">
-          <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
-            .container { max-width: 600px; margin: 0 auto; padding: 0; background-color: #f5f5f5; }
-            .header { background-color: #003399; color: white; padding: 40px 20px; text-align: center; border-bottom: 4px solid #0055cc; }
-            .logo { max-width: 120px; height: auto; margin-bottom: 20px; }
-            .header h1 { margin: 0; font-size: 24px; font-weight: 600; }
-            .header p { margin: 5px 0 0 0; font-size: 14px; opacity: 0.9; }
-            .content { padding: 40px 20px; background-color: white; }
-            .welcome { font-size: 16px; color: #003399; font-weight: 600; margin-bottom: 20px; }
-            .message { font-size: 15px; color: #333; line-height: 1.8; margin-bottom: 30px; }
-            .button-container { text-align: center; margin: 30px 0; }
-            .button { display: inline-block; padding: 14px 40px; background-color: #003399; color: white; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px; }
-            .button:hover { background-color: #0055cc; }
-            .link-section { background-color: #f9f9f9; padding: 20px; border-left: 4px solid #003399; margin: 20px 0; border-radius: 4px; }
-            .link-label { font-size: 12px; color: #666; font-weight: 600; margin-bottom: 8px; }
-            .link-text { font-size: 13px; color: #003399; word-break: break-all; font-family: monospace; }
-            .expiry { font-size: 13px; color: #ff6b6b; margin: 20px 0; font-weight: 600; }
-            .footer { background-color: #f5f5f5; padding: 30px 20px; text-align: center; border-top: 1px solid #ddd; }
-            .footer p { margin: 5px 0; font-size: 12px; color: #666; }
-            .footer-accent { color: #003399; font-weight: 600; }
-          </style>
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
         </head>
-        <body>
-          <div class="container">
-            <div class="header">
-              <img src="https://www.un.org/img/logo.png" alt="United Nations Logo" class="logo" />
-              <h1>UN Morning Briefing System</h1>
-              <p>Email Verification</p>
-            </div>
-            <div class="content">
-              <p class="welcome">Hello ${firstName},</p>
-              <p class="message">
-                Thank you for registering with the <strong>UN Morning Briefing System</strong>. 
-                To complete your registration, please verify your email address by clicking the button below:
-              </p>
-              <div class="button-container">
-                <a href="${verificationUrl}" class="button">Verify Email Address</a>
-              </div>
-              <p style="text-align: center; color: #666; font-size: 14px;">Or copy and paste this link in your browser:</p>
-              <div class="link-section">
-                <div class="link-label">Verification Link:</div>
-                <div class="link-text">${verificationUrl}</div>
-              </div>
-              <p class="expiry">⏱ This link will expire in 24 hours.</p>
-              <p style="color: #666; font-size: 13px; line-height: 1.6;">
-                If you did not create this account or did not request this email, please ignore it. 
-                Your account will not be activated until you verify your email address.
-              </p>
-            </div>
-            <div class="footer">
-              <p><span class="footer-accent">UN Morning Briefing System</span></p>
-              <p>&copy; 2026 United Nations. All rights reserved.</p>
-              <p style="margin-top: 10px; font-size: 11px;">Political Unit (EOSG)</p>
-            </div>
-          </div>
+        <body style="margin:0;padding:0;background:#ffffff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+          <table width="100%" cellpadding="0" cellspacing="0" style="background:#ffffff;padding:32px 20px;">
+            <tr>
+              <td align="center">
+                <table width="100%" style="max-width:520px;">
+                  <!-- Header matching website -->
+                  <tr>
+                    <td style="padding:0 0 24px;">
+                      <table cellpadding="0" cellspacing="0">
+                        <tr>
+                          <td style="vertical-align:middle;padding-right:16px;">
+                            <img src="${logoUrl}" alt="UN" width="120" style="display:block;border:none;max-width:100%;" />
+                          </td>
+                          <td style="vertical-align:middle;">
+                            <div style="font-size:20px;font-weight:700;color:#000000;line-height:1.2;">${siteTitle}</div>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                  <!-- Divider -->
+                  <tr>
+                    <td style="border-top:1px solid #e5e7eb;padding:24px 0 0;"></td>
+                  </tr>
+                  <!-- Content -->
+                  <tr>
+                    <td>
+                      <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#374151;">Click the button below to verify your email address and complete your registration.<br><br>This link will expire in 24 hours.</p>
+                      <a href="${verificationUrl}" style="display:inline-block;background:#009edb;color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:6px;font-size:14px;font-weight:500;border:none;cursor:pointer;">Verify Email</a>
+                      <p style="margin:24px 0 0;font-size:13px;line-height:1.5;color:#9ca3af;">If the button doesn't work, copy and paste this link into your browser:<br><a href="${verificationUrl}" style="color:#009edb;word-break:break-all;text-decoration:none;">${verificationUrl}</a></p>
+                    </td>
+                  </tr>
+                  <!-- Footer -->
+                  <tr>
+                    <td style="padding:32px 0 0;">
+                      <p style="margin:0;font-size:12px;color:#9ca3af;line-height:1.5;">If you did not request this email, you can safely ignore it.</p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
         </body>
       </html>
     `,
     text: `
-      Hello ${firstName},
+      United Nations | Morning Briefings
 
-      Thank you for registering with the UN Morning Briefing System. 
-      Please verify your email address by visiting the link below:
+      Click the link below to verify your email address:
 
       ${verificationUrl}
 
       This link will expire in 24 hours.
 
-      If you did not create this account, please ignore this email.
-
-      United Nations
+      If you did not request this email, you can safely ignore it.
     `,
   };
 

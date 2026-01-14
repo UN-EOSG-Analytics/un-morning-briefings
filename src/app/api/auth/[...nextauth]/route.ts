@@ -82,6 +82,19 @@ export const authOptions: NextAuthOptions = {
     signIn: '/login',
   },
   callbacks: {
+    async redirect({ url, baseUrl }) {
+      // If the user is being redirected back to the login page after sign-in,
+      // redirect them to the homepage instead
+      if (url === `${baseUrl}/login`) {
+        return `${baseUrl}/`;
+      }
+      // Allow relative callback URLs
+      if (url.startsWith('/')) {
+        return `${baseUrl}${url}`;
+      }
+      // Fallback to baseUrl
+      return baseUrl;
+    },
     async jwt({ token, user, account }) {
       console.log('jwt callback: Called', { hasUser: !!user, hasAccount: !!account });
       if (user) {

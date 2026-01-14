@@ -10,6 +10,8 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { AlertCircle, CheckCircle2, Mail } from 'lucide-react';
+import { SelectField } from '@/components/SelectField';
+import { TEAMS } from '@/lib/teams';
 
 interface RegisterDialogProps {
   open: boolean;
@@ -171,8 +173,6 @@ export function RegisterDialog({ open, onOpenChange }: RegisterDialogProps) {
               />
             </div>
           </div>
-
-          <div>
             <label className="text-sm font-medium text-slate-700">Email Address</label>
             <input
               type="email"
@@ -182,18 +182,18 @@ export function RegisterDialog({ open, onOpenChange }: RegisterDialogProps) {
               placeholder="your.name@un.org"
               className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-un-blue focus:outline-none focus:ring-2 focus:ring-un-blue/20"
             />
-          </div>
-
           <div>
-            <label className="text-sm font-medium text-slate-700">Team</label>
-            <input
-              type="text"
-              required
-              value={formData.team}
-              onChange={(e) => setFormData({ ...formData, team: e.target.value })}
-              placeholder="e.g., Political Unit (EOSG)"
-              className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-un-blue focus:outline-none focus:ring-2 focus:ring-un-blue/20"
-            />
+            <div className="mt-1">
+              <SelectField
+                label="Team"
+                placeholder="Select a team..."
+                value={formData.team}
+                onValueChange={(value) => setFormData({ ...formData, team: value })}
+                options={TEAMS}
+                required={true}
+                className="w-full block"
+              />
+            </div>
           </div>
 
           <div>

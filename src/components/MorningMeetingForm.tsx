@@ -4,14 +4,8 @@ import { useState, useCallback, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
+import { SelectField } from '@/components/SelectField';
 import { RichTextEditor } from '@/components/RichTextEditor';
 import {
   MorningMeetingEntry,
@@ -342,7 +336,7 @@ export function MorningMeetingForm({
   });
 
   return (
-    <div className="min-h-screen bg-white py-4 sm:py-8 px-2 sm:px-4">
+    <div className="w-full bg-white py-4 sm:py-8 px-2 sm:px-4">
       <div className="mx-auto w-full max-w-6xl">
         {/* Header */}
         <Card className="mb-0 rounded-b-none border-b-0 py-4 sm:py-6">
@@ -381,137 +375,51 @@ export function MorningMeetingForm({
               <section className="space-y-4 border-b pb-4 sm:pb-6">
                 <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-4">
                   {/* Category */}
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-700">
-                      Category <span className="text-red-500">*</span>
-                    </label>
-                    <Select
-                      value={formData.category}
-                      onValueChange={(value) => handleSelectChange('category', value)}
-                    >
-                      <SelectTrigger
-                        className={errors.category ? 'border-red-500 bg-red-50' : ''}
-                      >
-                        <SelectValue placeholder="Select category..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {CATEGORIES.map((cat) => (
-                          <SelectItem key={cat} value={cat}>
-                            {cat}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {errors.category && (
-                      <div className="flex items-center gap-1 text-xs text-red-600">
-                        <AlertCircle className="h-3.5 w-3.5" />
-                        {errors.category}
-                      </div>
-                    )}
-                  </div>
+                  <SelectField
+                    label="Category"
+                    placeholder="Select category..."
+                    value={formData.category}
+                    onValueChange={(value) => handleSelectChange('category', value)}
+                    options={CATEGORIES.map((cat) => ({ value: cat, label: cat }))}
+                    error={errors.category}
+                    required={true}
+                  />
 
                   {/* Priority */}
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-700">
-                      Priority <span className="text-red-500">*</span>
-                    </label>
-                    <Select
-                      value={formData.priority}
-                      onValueChange={(value) =>
-                        handleSelectChange('priority', value as 'sg-attention' | 'situational-awareness')
-                      }
-                    >
-                      <SelectTrigger
-                        className={errors.priority ? 'border-red-500 bg-red-50' : ''}
-                      >
-                        <SelectValue placeholder="Select priority..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {PRIORITIES.map((p) => (
-                          <SelectItem key={p.value} value={p.value}>
-                            {p.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {errors.priority && (
-                      <div className="flex items-center gap-1 text-xs text-red-600">
-                        <AlertCircle className="h-3.5 w-3.5" />
-                        {errors.priority}
-                      </div>
-                    )}
-                  </div>
+                  <SelectField
+                    label="Priority"
+                    placeholder="Select priority..."
+                    value={formData.priority}
+                    onValueChange={(value) =>
+                      handleSelectChange('priority', value as 'sg-attention' | 'situational-awareness')
+                    }
+                    options={PRIORITIES}
+                    error={errors.priority}
+                    required={true}
+                  />
 
                   {/* Region */}
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-700">
-                      Region <span className="text-red-500">*</span>
-                    </label>
-                    <Select
-                      value={formData.region}
-                      onValueChange={(value) => handleSelectChange('region', value)}
-                    >
-                      <SelectTrigger
-                        className={errors.region ? 'border-red-500 bg-red-50' : ''}
-                      >
-                        <SelectValue placeholder="Select region..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {REGIONS.map((region) => (
-                          <SelectItem key={region} value={region}>
-                            {region}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {errors.region && (
-                      <div className="flex items-center gap-1 text-xs text-red-600">
-                        <AlertCircle className="h-3.5 w-3.5" />
-                        {errors.region}
-                      </div>
-                    )}
-                  </div>
+                  <SelectField
+                    label="Region"
+                    placeholder="Select region..."
+                    value={formData.region}
+                    onValueChange={(value) => handleSelectChange('region', value)}
+                    options={REGIONS.map((region) => ({ value: region, label: region }))}
+                    error={errors.region}
+                    required={true}
+                  />
 
                   {/* Country */}
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-700">
-                      Country <span className="text-red-500">*</span>
-                    </label>
-                    <Select
-                      value={formData.country}
-                      onValueChange={(value) => handleSelectChange('country', value)}
-                      disabled={availableCountries.length === 0 && !formData.country}
-                    >
-                      <SelectTrigger
-                        className={
-                          availableCountries.length === 0 && !formData.country
-                            ? 'opacity-50'
-                            : errors.country
-                              ? 'border-red-500 bg-red-50'
-                              : ''
-                        }
-                      >
-                        <SelectValue placeholder="Select country..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {availableCountries.length === 0 && !formData.country ? (
-                          <div className="p-2 text-sm text-slate-500">Select region first</div>
-                        ) : (
-                          availableCountries.map((country) => (
-                            <SelectItem key={country} value={country}>
-                              {country}
-                            </SelectItem>
-                          ))
-                        )}
-                      </SelectContent>
-                    </Select>
-                    {errors.country && (
-                      <div className="flex items-center gap-1 text-xs text-red-600">
-                        <AlertCircle className="h-3.5 w-3.5" />
-                        {errors.country}
-                      </div>
-                    )}
-                  </div>
+                  <SelectField
+                    label="Country"
+                    placeholder={availableCountries.length === 0 && !formData.country ? "Select region first" : "Select country..."}
+                    value={formData.country}
+                    onValueChange={(value) => handleSelectChange('country', value)}
+                    options={availableCountries.map((country) => ({ value: country, label: country }))}
+                    error={errors.country}
+                    required={true}
+                    disabled={availableCountries.length === 0 && !formData.country}
+                  />
                 </div>
               </section>
 

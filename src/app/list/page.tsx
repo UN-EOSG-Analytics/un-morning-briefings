@@ -9,7 +9,7 @@ function ListPageContent() {
   const dateFilter = searchParams.get('date') || undefined;
 
   return (
-    <div className="min-h-[80svh] bg-background">
+    <div className="bg-background">
       <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
         <MorningMeetingList initialDateFilter={dateFilter} />
       </main>

@@ -440,7 +440,7 @@ export function MorningMeetingForm({
       <div className="mx-auto w-full max-w-6xl">
         {/* Header */}
         <Card className="mb-0 rounded-b-none border-b-0 py-4 sm:py-6">
-          <CardHeader className="p-4 sm:p-6">
+          <CardHeader className="px-4 sm:px-6">
             <div className="flex items-center justify-between gap-2 sm:gap-3">
               <div className="flex items-center gap-2 sm:gap-3">
                 <div className="flex shrink-0 items-center justify-center rounded bg-un-blue p-2">

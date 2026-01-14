@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { Menu, X, Home, PlusCircle, List, FileEdit, LogOut, User, Zap, Info, Users, Settings } from 'lucide-react';
+import { Menu, X, Home, PlusCircle, List, FileEdit, LogOut, User, Users, Settings } from 'lucide-react';
 import { useState } from 'react';
 import { signOut, useSession } from 'next-auth/react';
 import { Button } from '@/components/ui/button';

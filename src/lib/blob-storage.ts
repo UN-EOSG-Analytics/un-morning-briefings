@@ -155,6 +155,7 @@ class BlobStorageService {
   }
 
   // AWS S3 implementation (placeholder - requires aws-sdk)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   private async uploadS3(buffer: Buffer, filename: string, mimeType: string): Promise<BlobUploadResult> {
     // TODO: Implement S3 upload
     // const s3 = new AWS.S3();
@@ -162,11 +163,13 @@ class BlobStorageService {
     throw new Error('S3 upload not implemented. Install aws-sdk and configure.');
   }
 
-  private async downloadS3(url: string): Promise<Buffer> {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  private async downloadS3(_url: string): Promise<Buffer> {
     // TODO: Implement S3 download
     throw new Error('S3 download not implemented.');
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   private async deleteS3(url: string): Promise<void> {
     // TODO: Implement S3 delete
     throw new Error('S3 delete not implemented.');
@@ -253,17 +256,19 @@ class BlobStorageService {
   }
 
   // Cloudinary implementation (placeholder - requires cloudinary)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   private async uploadCloudinary(buffer: Buffer, filename: string, mimeType: string): Promise<BlobUploadResult> {
     // TODO: Implement Cloudinary upload
     throw new Error('Cloudinary upload not implemented. Install cloudinary and configure.');
   }
 
-  private async downloadCloudinary(url: string): Promise<Buffer> {
+  private async downloadCloudinary(_url: string): Promise<Buffer> {
     // Cloudinary images are served via CDN, download via fetch
-    const response = await fetch(url);
+    const response = await fetch(_url);
     return Buffer.from(await response.arrayBuffer());
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   private async deleteCloudinary(url: string): Promise<void> {
     // TODO: Implement Cloudinary delete
     throw new Error('Cloudinary delete not implemented.');

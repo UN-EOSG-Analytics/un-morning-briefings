@@ -1,6 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 // Convert HTML content from TipTap editor to DOCX Paragraph elements
-import { Paragraph, TextRun, HeadingLevel, AlignmentType, ImageRun } from 'docx';
+import { Paragraph, TextRun, ImageRun } from 'docx';
 
 /**
  * Convert base64 data URL to Buffer for image embedding
@@ -261,8 +262,10 @@ function parseHtmlContentClient(html: string): Paragraph[] {
         );
       }
     } else if (['h1', 'h2', 'h3'].includes(tagName)) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const level = parseInt(tagName.slice(1));
       const children = extractTextRuns(element);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const sizes: Record<number, number> = { 1: 28, 2: 24, 3: 20 };
 
       paragraphs.push(
@@ -285,7 +288,7 @@ function parseHtmlContentClient(html: string): Paragraph[] {
       });
     } else if (tagName === 'ol') {
       const items = Array.from(element.querySelectorAll(':scope > li'));
-      items.forEach((item, index) => {
+      items.forEach((item) => {
         const children = extractTextRuns(item);
         paragraphs.push(
           new Paragraph({

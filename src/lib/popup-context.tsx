@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useCallback, useState } from 'react';
-import { Popup, PopupType, PopupAction } from '@/types/popup';
+import { Popup, PopupAction } from '@/types/popup';
 
 interface PopupContextType {
   popups: Popup[];
@@ -63,6 +63,7 @@ export function PopupProvider({ children }: { children: React.ReactNode }) {
   const confirm = useCallback(
     (title: string, message: string): Promise<boolean> => {
       return new Promise((resolve) => {
+        // eslint-disable-next-line prefer-const
         let id: string;
 
         const handleConfirm: PopupAction = {

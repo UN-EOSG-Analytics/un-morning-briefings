@@ -13,7 +13,6 @@ import {
   Strikethrough,
   List,
   ListOrdered,
-  Code2,
   Quote,
   Undo2,
   Redo2,
@@ -25,9 +24,7 @@ import {
   AlignCenter,
   AlignRight,
   Minus,
-  Info,
   ImagePlus,
-  Code,
   Maximize,
   Minimize,
   MessageCircle,
@@ -48,7 +45,6 @@ interface RichTextEditorProps {
 export function RichTextEditor({
   content,
   onChange,
-  placeholder = 'Enter text...',
   error = false,
   minHeight = 'min-h-[200px]',
 }: RichTextEditorProps) {
@@ -353,7 +349,7 @@ export function RichTextEditor({
         const success = editor
           .chain()
           .focus()
-          .command(({ tr, state }) => {
+          .command(({ tr }) => {
             // Delete the selection
             tr.delete(selectionFrom, selectionTo);
             // Insert the new text at the deletion point

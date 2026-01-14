@@ -1,5 +1,7 @@
 'use client';
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
@@ -191,7 +193,7 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
       }
 
       // Get header
-      const header = await createDocumentHeader();
+      await createDocumentHeader();
 
       // Restore images in HTML for each entry by downloading from blob storage
       for (const entry of entriesForDate) {

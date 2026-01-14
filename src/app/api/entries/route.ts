@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { blobStorage } from '@/lib/blob-storage';

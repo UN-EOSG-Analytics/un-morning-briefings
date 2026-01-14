@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import { Settings, Trash2, AlertTriangle, Check, X } from 'lucide-react';
 import {
@@ -11,7 +11,6 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { useRouter } from 'next/navigation';
 
 interface SettingsDialogProps {
   open: boolean;
@@ -20,7 +19,6 @@ interface SettingsDialogProps {
 
 export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   const { data: session, update: updateSession } = useSession();
-  const router = useRouter();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState('');
@@ -29,13 +27,6 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   const [lastName, setLastName] = useState(session?.user?.lastName || '');
   const [isSavingName, setIsSavingName] = useState(false);
 
-  const handleOpenChange = useCallback((newOpen: boolean) => {
-    onOpenChange(newOpen);
-  }, [onOpenChange]);
-
-  const handleShowDeleteConfirm = useCallback((show: boolean) => {
-    setShowDeleteConfirm(show);
-  }, []);
 
   const handleDeleteAccount = async () => {
     if (!session?.user?.email) return;

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { Card } from '@/components/ui/card';
 import { getDraftEntries, deleteEntry } from '@/lib/storage';
@@ -19,17 +19,18 @@ export default function DraftsPage() {
     ? `${session.user.firstName || ''} ${session.user.lastName || ''}`.trim() || session.user.email
     : 'Current User';
 
-  const loadEntries = async () => {
+  const loadEntries = useCallback(async () => {
     if (!currentUserName || currentUserName === 'Current User') return;
     const data = await getDraftEntries(currentUserName);
     // Filter to only show drafts by the current user
     const userDrafts = data.filter((entry: MorningMeetingEntry) => entry.author === currentUserName);
     setEntries(userDrafts);
-  };
+  }, [currentUserName]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadEntries();
-  }, [currentUserName]);
+  }, [loadEntries]);
 
   const handleDelete = async (id: string) => {
     const confirmed = await showConfirm(

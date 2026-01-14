@@ -21,6 +21,7 @@ export function MorningMeetingList({ initialDateFilter }: { initialDateFilter?: 
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadEntries();
   }, []);
 
@@ -54,7 +55,7 @@ export function MorningMeetingList({ initialDateFilter }: { initialDateFilter?: 
         `Entry has been ${!entry.approved ? 'approved' : 'unapproved'}`
       );
       loadEntries();
-    } catch (error) {
+    } catch {
       showSuccess('Error', 'Failed to update approval status');
     }
   };

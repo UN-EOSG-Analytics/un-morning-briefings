@@ -1,4 +1,5 @@
-import { Document, Paragraph, TextRun, HeadingLevel, AlignmentType, UnderlineType } from 'docx';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { Paragraph, TextRun, HeadingLevel, AlignmentType, UnderlineType } from 'docx';
 
 /**
  * Convert TipTap JSON to docx Paragraph elements

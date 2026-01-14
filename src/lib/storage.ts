@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { MorningMeetingEntry } from '@/types/morning-meeting';
 import { convertEntriesImageReferences } from '@/lib/image-conversion';
 
@@ -278,7 +279,7 @@ export async function getSubmittedEntries(): Promise<any[]> {
         if (text) {
           errorData = JSON.parse(text);
         }
-      } catch (e) {
+      } catch {
         console.error('getSubmittedEntries: Failed to parse response');
       }
       

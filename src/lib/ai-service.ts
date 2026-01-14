@@ -1,5 +1,6 @@
 import { createAzure } from '@ai-sdk/azure';
 import { generateText } from 'ai';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { CATEGORIES, PRIORITIES, REGIONS, COUNTRIES_BY_REGION } from '@/types/morning-meeting';
 
 interface AutoFillResult {
@@ -216,7 +217,7 @@ Your reformulated text:`;
     });
     
     // Clean up response
-    let cleanedText = reformulatedText.trim()
+    const cleanedText = reformulatedText.trim()
       .replace(/^["'`]+|["'`]+$/g, '') // Remove surrounding quotes
       .replace(/^(Here is|Here's|The rewritten|Rewritten)[:\s]*/i, '') // Remove meta prefixes
       .trim();

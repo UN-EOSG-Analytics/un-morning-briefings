@@ -72,7 +72,7 @@ function LoginPageContent() {
         router.push('/');
         router.refresh();
       }
-    } catch (err) {
+    } catch {
       setError('An error occurred. Please try again.');
     } finally {
       setIsLoading(false);
@@ -128,7 +128,7 @@ function LoginPageContent() {
 
       setRegistrationEmail(regFormData.email);
       setRegistrationSuccess(true);
-    } catch (err) {
+    } catch {
       setError('An error occurred. Please try again.');
     } finally {
       setIsLoading(false);
@@ -162,7 +162,7 @@ function LoginPageContent() {
             </div>
             <h2 className="text-xl font-semibold text-slate-900 text-center mb-2">Check Your Email</h2>
             <p className="text-sm text-slate-600 text-center mb-6">
-              We've sent a verification link to <strong>{registrationEmail}</strong>
+              We&apos;ve sent a verification link to <strong>{registrationEmail}</strong>
             </p>
             <div className="flex items-start gap-3 rounded-md bg-blue-50 p-4 mb-6">
               <Mail className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
@@ -407,7 +407,7 @@ function LoginPageContent() {
           {/* Register Section */}
           <div className="mt-6 pt-6 border-t border-slate-200">
             <p className="text-sm text-slate-600 text-center mb-3">
-              Don't have an account?
+              Don&apos;t have an account?
             </p>
             <Button
               type="button"

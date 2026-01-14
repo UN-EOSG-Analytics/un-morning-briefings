@@ -31,7 +31,7 @@ export default function HomePage() {
             size="lg"
           >
             <Download className="mr-2 h-4 w-4" />
-            <span className="hidden sm:inline">Export Today's Morning Briefing</span>
+            <span className="hidden sm:inline">Export Today&apos;s Morning Briefing</span>
             <span className="sm:hidden">Export Briefing</span>
           </Button>
         </div>
@@ -80,7 +80,7 @@ export default function HomePage() {
                   <div className="flex flex-col flex-1">
                     <h2 className="text-lg font-semibold text-foreground">Current Briefing</h2>
                     <p className="text-xs text-slate-600">
-                      View today's briefing entries
+                      View today&apos;s briefing entries
                     </p>
                   </div>
                 </div>
@@ -90,7 +90,7 @@ export default function HomePage() {
                   </div>
                   <h2 className="text-xl sm:text-2xl font-semibold text-foreground mt-4">Current Briefing</h2>
                   <p className="text-sm sm:text-base text-slate-600 mt-2">
-                    View and manage today's morning meeting briefing entries
+                    View and manage today&apos;s morning meeting briefing entries
                   </p>
                 </div>
                 <Button className="hidden sm:flex w-full bg-slate-700 hover:bg-slate-700/90 mt-auto" size="lg">

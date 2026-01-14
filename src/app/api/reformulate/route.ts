@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { reformulateBriefing, reformulateSelection } from '@/lib/gemini-service';
+import { reformulateBriefing, reformulateSelection } from '@/lib/ai-service';
 
 export async function POST(req: NextRequest) {
   try {

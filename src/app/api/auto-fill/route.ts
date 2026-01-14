@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { autoFillFromContent } from '@/lib/gemini-service';
+import { autoFillFromContent } from '@/lib/ai-service';
 
 export async function POST(req: NextRequest) {
   try {

@@ -1,4 +1,5 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { createAzure } from '@ai-sdk/azure';
+import { generateText } from 'ai';
 import { CATEGORIES, PRIORITIES, REGIONS, COUNTRIES_BY_REGION } from '@/types/morning-meeting';
 
 interface AutoFillResult {
@@ -11,16 +12,19 @@ interface AutoFillResult {
   entry: string;
 }
 
+// Initialize Azure OpenAI client
+const azure = createAzure({
+  apiKey: process.env.AZURE_OPENAI_API_KEY,
+  resourceName: process.env.AZURE_OPENAI_ENDPOINT?.replace('https://', '').replace('.openai.azure.com/', ''),
+});
+
 export async function autoFillFromContent(content: string): Promise<AutoFillResult> {
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = process.env.AZURE_OPENAI_API_KEY;
   
   if (!apiKey) {
-    console.error('[GEMINI SERVICE] GEMINI_API_KEY is not configured in .env file');
-    throw new Error('GEMINI_API_KEY is not configured. Please add it to your .env file.');
+    console.error('[AI SERVICE] AZURE_OPENAI_API_KEY is not configured in .env file');
+    throw new Error('AZURE_OPENAI_API_KEY is not configured. Please add it to your .env file.');
   }
-
-  const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: 'gemini-3-flash-preview' });
 
   // Build lists for the prompt
   const categoryList = CATEGORIES.join(', ');
@@ -48,9 +52,10 @@ Return JSON:
 }`;
 
   try {
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
+    const { text } = await generateText({
+      model: azure('gpt-4o'),
+      prompt,
+    });
     
     // Remove markdown code blocks if present
     const jsonText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
@@ -69,7 +74,7 @@ Return JSON:
       entry: entryHtml,
     };
   } catch (error) {
-    console.error('[GEMINI SERVICE] Error details:', error);
+    console.error('[AI SERVICE] Error details:', error);
     if (error instanceof Error) {
       throw new Error(`AI processing failed: ${error.message}`);
     }
@@ -115,15 +120,12 @@ function plainTextToTipTapHtml(text: string): string {
  * Generate a concise bullet-point summary of the briefing content
  */
 export async function generateSummary(content: string): Promise<string[]> {
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = process.env.AZURE_OPENAI_API_KEY;
   
   if (!apiKey) {
-    console.error('[GEMINI SERVICE] GEMINI_API_KEY is not configured in .env file');
-    throw new Error('GEMINI_API_KEY is not configured. Please add it to your .env file.');
+    console.error('[AI SERVICE] AZURE_OPENAI_API_KEY is not configured in .env file');
+    throw new Error('AZURE_OPENAI_API_KEY is not configured. Please add it to your .env file.');
   }
-
-  const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: 'gemini-3-flash-preview' });
 
   // Extract plain text from HTML
   const plainText = content.replace(/<[^>]*>/g, ' ').replace(/&[a-z]+;/g, ' ').replace(/\s+/g, ' ').trim();
@@ -145,9 +147,10 @@ Content:
 ${plainText}`;
 
   try {
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text().trim();
+    const { text } = await generateText({
+      model: azure('gpt-4o'),
+      prompt,
+    });
     
     // Split into lines and clean up
     const bullets = text
@@ -159,7 +162,7 @@ ${plainText}`;
     
     return bullets;
   } catch (error) {
-    console.error('[GEMINI SERVICE] Summary generation error:', error);
+    console.error('[AI SERVICE] Summary generation error:', error);
     if (error instanceof Error) {
       throw new Error(`Summary generation failed: ${error.message}`);
     }
@@ -176,22 +179,12 @@ export async function reformulateSelection(
   selectionStart: number,
   selectionEnd: number
 ): Promise<string> {
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = process.env.AZURE_OPENAI_API_KEY;
   
   if (!apiKey) {
-    console.error('[GEMINI SERVICE] GEMINI_API_KEY is not configured in .env file');
-    throw new Error('GEMINI_API_KEY is not configured. Please add it to your .env file.');
+    console.error('[AI SERVICE] AZURE_OPENAI_API_KEY is not configured in .env file');
+    throw new Error('AZURE_OPENAI_API_KEY is not configured. Please add it to your .env file.');
   }
-
-  const genAI = new GoogleGenerativeAI(apiKey);
-  // Use flash model for fast responses
-  const model = genAI.getGenerativeModel({ 
-    model: 'gemini-3-flash-preview',
-    generationConfig: {
-      temperature: 0.7,
-      maxOutputTokens: 400, // Allow complete responses
-    }
-  });
 
   // Extract the parts
   const beforeText = fullSentence.substring(0, selectionStart);
@@ -215,12 +208,15 @@ CRITICAL: Output ONLY your rewritten version of the selected text. Do not includ
 Your reformulated text:`;
 
   try {
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    let reformulatedText = response.text().trim();
+    const { text: reformulatedText } = await generateText({
+      model: azure('gpt-4o'),
+      prompt,
+      temperature: 0.7,
+      maxOutputTokens: 400,
+    });
     
     // Clean up response
-    reformulatedText = reformulatedText
+    let cleanedText = reformulatedText.trim()
       .replace(/^["'`]+|["'`]+$/g, '') // Remove surrounding quotes
       .replace(/^(Here is|Here's|The rewritten|Rewritten)[:\s]*/i, '') // Remove meta prefixes
       .trim();
@@ -233,21 +229,21 @@ Your reformulated text:`;
     ];
     
     for (const pattern of metaPatterns) {
-      if (pattern.test(reformulatedText)) {
-        console.warn('[GEMINI SERVICE] AI returned invalid response format');
+      if (pattern.test(cleanedText)) {
+        console.warn('[AI SERVICE] AI returned invalid response format');
         return selectedText;
       }
     }
     
     // If empty or suspiciously long, return original
-    if (!reformulatedText || reformulatedText.length > selectedText.length * 3) {
-      console.warn('[GEMINI SERVICE] AI response invalid, using original text');
+    if (!cleanedText || cleanedText.length > selectedText.length * 3) {
+      console.warn('[AI SERVICE] AI response invalid, using original text');
       return selectedText;
     }
     
-    return reformulatedText;
+    return cleanedText;
   } catch (error) {
-    console.error('[GEMINI SERVICE] Selection reformulation error:', error);
+    console.error('[AI SERVICE] Selection reformulation error:', error);
     if (error instanceof Error) {
       throw new Error(`Reformulation failed: ${error.message}`);
     }
@@ -260,15 +256,12 @@ Your reformulated text:`;
  * Preserves images at their original positions in the content
  */
 export async function reformulateBriefing(content: string): Promise<string> {
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = process.env.AZURE_OPENAI_API_KEY;
   
   if (!apiKey) {
-    console.error('[GEMINI SERVICE] GEMINI_API_KEY is not configured in .env file');
-    throw new Error('GEMINI_API_KEY is not configured. Please add it to your .env file.');
+    console.error('[AI SERVICE] AZURE_OPENAI_API_KEY is not configured in .env file');
+    throw new Error('AZURE_OPENAI_API_KEY is not configured. Please add it to your .env file.');
   }
-
-  const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
 
   // Extract and preserve all images with their positions
   const imageRegex = /<img[^>]*>/g;
@@ -312,12 +305,13 @@ Original content:
 ${plainText}`;
 
   try {
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const reformulatedText = response.text().trim();
+    const { text: reformulatedText } = await generateText({
+      model: azure('gpt-4o'),
+      prompt,
+    });
     
     // Convert reformulated text to TipTap HTML format
-    let reformulatedHtml = plainTextToTipTapHtml(reformulatedText);
+    let reformulatedHtml = plainTextToTipTapHtml(reformulatedText.trim());
     
     // Re-insert images at their placeholder positions
     images.forEach((img, index) => {
@@ -331,7 +325,7 @@ ${plainText}`;
     
     return reformulatedHtml;
   } catch (error) {
-    console.error('[GEMINI SERVICE] Reformulation error:', error);
+    console.error('[AI SERVICE] Reformulation error:', error);
     if (error instanceof Error) {
       throw new Error(`Reformulation failed: ${error.message}`);
     }

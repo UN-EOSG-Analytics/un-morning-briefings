@@ -153,10 +153,12 @@
 html {
   overflow-y: scroll;
   scrollbar-gutter: stable;
+  height: 100%;
 }
 
 body {
   overflow-y: scroll;
+  height: 100%;
 }
 
 /* Hide scrollbar for Webkit browsers (Chrome, Safari) */

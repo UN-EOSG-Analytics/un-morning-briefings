@@ -54,6 +54,39 @@ export function MorningMeetingForm({
     return entry.replace(/<img[^>]*src=["']image-ref:\/\/[^"']*["'][^>]*>/gi, '');
   };
 
+  // Extract plain text from HTML content
+  const extractPlainText = (html: string) => {
+    if (!html) return '';
+    
+    // Check if we're in browser environment
+    if (typeof document === 'undefined') return html;
+    
+    // If it's already plain text (no HTML tags), return as-is
+    if (!html.includes('<')) return html;
+    
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = html;
+    
+    // Replace block elements with newlines
+    tempDiv.querySelectorAll('p, div, h1, h2, h3, h4, h5, h6, li').forEach(element => {
+      element.appendChild(document.createTextNode('\n'));
+    });
+    
+    // Remove script and style elements
+    tempDiv.querySelectorAll('script, style').forEach(element => {
+      element.remove();
+    });
+    
+    // Get text content and clean up
+    let text = tempDiv.textContent || '';
+    
+    // Replace multiple newlines with double newline (for paragraph breaks)
+    text = text.replace(/\n\n+/g, '\n\n');
+    
+    // Trim trailing whitespace but preserve leading for structure
+    return text.trim();
+  };
+
   // Format date to YYYY-MM-DD for input field
   const formatDateForInput = (dateValue: any): string => {
     if (!dateValue) return new Date().toISOString().split('T')[0];
@@ -541,7 +574,7 @@ export function MorningMeetingForm({
                     />
                   ) : (
                     <textarea
-                      value={formData.entry}
+                      value={extractPlainText(formData.entry)}
                       onChange={(e) => {
                         setFormData((prev) => ({ ...prev, entry: e.target.value }));
                         if (errors.entry) {
@@ -553,11 +586,12 @@ export function MorningMeetingForm({
                         }
                       }}
                       placeholder="Provide a comprehensive summary of the development. Include key facts, actors involved, implications, and any recommended actions..."
-                      className={`w-full rounded border px-3 py-2 text-sm outline-none transition min-h-[250px] ${
+                      className={`w-full rounded border px-3 py-2 text-sm outline-none transition min-h-[250px] resize-none ${
                         errors.entry
                           ? 'border-red-500 bg-red-50 focus:border-red-500 focus:ring-2 focus:ring-red-500/15'
                           : 'border-slate-300 bg-slate-50 focus:border-un-blue focus:ring-2 focus:ring-un-blue/15'
                       }`}
+                      spellCheck="true"
                     />
                   )}
                   

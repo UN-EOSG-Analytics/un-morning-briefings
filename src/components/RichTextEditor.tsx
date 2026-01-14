@@ -54,8 +54,6 @@ export function RichTextEditor({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { warning: showWarning } = usePopup();
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [highlightColor, setHighlightColor] = useState<string>('yellow');
-  const [selectedComment, setSelectedComment] = useState<string>('');
 
   // Custom Comment mark extension
   const CommentMark = Mark.create({
@@ -283,31 +281,17 @@ export function RichTextEditor({
             <Strikethrough className="h-4 w-4" />
           </Button>
 
-          {/* Highlight Color Picker */}
-          <div className="flex items-center gap-1">
-            <select
-              onChange={(e) => setHighlightColor(e.target.value)}
-              value={highlightColor}
-              className="h-8 rounded border border-slate-300 bg-white px-2 py-1 text-xs"
-              title="Highlight color"
-            >
-              <option value="yellow">Yellow</option>
-              <option value="green">Green</option>
-              <option value="blue">Blue</option>
-              <option value="pink">Pink</option>
-              <option value="purple">Purple</option>
-            </select>
-            <Button
-              type="button"
-              size="sm"
-              variant={editor.isActive('highlight') ? 'default' : 'outline'}
-              onClick={() => editor.chain().focus().toggleHighlight({ color: `#${highlightColor === 'yellow' ? 'FFFF00' : highlightColor === 'green' ? 'BFFF00' : highlightColor === 'blue' ? '00CCFF' : highlightColor === 'pink' ? 'FF00FF' : '9900FF'}` }).run()}
-              className="h-8 w-8 p-0"
-              title="Highlight text"
-            >
-              <div className={`h-2 w-6 rounded ${highlightColor === 'yellow' ? 'bg-yellow-300' : highlightColor === 'green' ? 'bg-green-300' : highlightColor === 'blue' ? 'bg-blue-300' : highlightColor === 'pink' ? 'bg-pink-300' : 'bg-purple-300'}`} />
-            </Button>
-          </div>
+          {/* Highlight */}
+          <Button
+            type="button"
+            size="sm"
+            variant={editor.isActive('highlight') ? 'default' : 'outline'}
+            onClick={() => editor.chain().focus().toggleHighlight({ color: '#FFFF00' }).run()}
+            className="h-8 w-8 p-0"
+            title="Highlight text"
+          >
+            <div className="h-2 w-6 rounded bg-yellow-300" />
+          </Button>
 
           {/* Comment Mark */}
           <Button
@@ -318,7 +302,6 @@ export function RichTextEditor({
               const comment = prompt('Add a comment/note:');
               if (comment) {
                 editor.chain().focus().toggleMark('comment', { comment }).run();
-                setSelectedComment(comment);
               }
             }}
             className="h-8 w-8 p-0"

@@ -39,11 +39,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${roboto.className} antialiased`}>
-      <body>
+      <body className="flex flex-col min-h-screen">
         <AuthProvider>
           <PopupProvider>
             <Navbar />
-            <div className="pt-16">
+            <div className="pt-16 flex-1">
               {children}
             </div>
             <Footer />

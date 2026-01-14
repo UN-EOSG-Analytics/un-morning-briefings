@@ -753,7 +753,7 @@ export function RichTextEditor({
 
       {/* Editor */}
       <div className={`transition-all duration-300 ${isFullscreen ? 'flex-1 overflow-y-auto py-8 px-4' : ''}`}>
-        <div className={`transition-all duration-300 ${isFullscreen ? 'max-w-[280mm] mx-auto bg-white shadow-lg rounded-md min-h-[297mm] p-16' : 'rounded-md'} ${isFullscreen ? '' : 'border -mt-1'} ${
+        <div className={`transition-all duration-300 ${isFullscreen ? 'max-w-[280mm] mx-auto bg-white shadow-lg rounded-lg min-h-[297mm] p-16' : 'rounded-b'} ${isFullscreen ? '' : 'border -mt-1'} ${
           error
             ? 'border-t-0 border-red-500 bg-red-50'
             : 'border-t-0 border-slate-300 bg-slate-50'

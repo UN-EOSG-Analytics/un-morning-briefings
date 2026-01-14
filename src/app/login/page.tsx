@@ -20,9 +20,14 @@ function LoginPageContent() {
   useEffect(() => {
     const verified = searchParams.get('verified');
     const errorParam = searchParams.get('error');
+    const message = searchParams.get('message');
 
     if (verified === 'true') {
-      setSuccess('Email verified successfully! You can now log in.');
+      if (message === 'already') {
+        setSuccess('Your email is already verified! You can log in now.');
+      } else {
+        setSuccess('Email verified successfully! You can now log in.');
+      }
     } else if (errorParam === 'invalid_token') {
       setError('Invalid verification link. Please try again or request a new link.');
     } else if (errorParam === 'token_expired') {

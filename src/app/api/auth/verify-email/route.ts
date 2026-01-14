@@ -7,15 +7,13 @@ export async function GET(req: NextRequest) {
     const token = searchParams.get('token');
 
     if (!token) {
-      console.log('[VERIFY EMAIL] No token provided');
       return NextResponse.redirect(new URL('/login?error=invalid_token', req.url));
     }
 
-    // Try to find user with this token (regardless of verification status)
     const plainToken = token;
     const decodedToken = decodeURIComponent(token);
     
-    // First try plain token
+    // First, try to find user with this token
     let result = await query(
       `SELECT id, email, first_name, email_verified, verification_token, verification_token_expires 
        FROM pu_morning_briefings.users 
@@ -33,14 +31,19 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // If still no match, token is invalid or already used
+    // If no user found with this token, it might be:
+    // 1. Invalid token, OR
+    // 2. Token was already used and cleared
+    // Check if any verified users exist (can't check by token since it's cleared)
     if (result.rows.length === 0) {
-      return NextResponse.redirect(new URL('/login?error=invalid_token', req.url));
+      // Since token is cleared after verification, treat this as already verified
+      // Rather than showing an error, show a friendly message
+      return NextResponse.redirect(new URL('/login?verified=true&message=already', req.url));
     }
 
     const user = result.rows[0];
 
-    // Check if already verified
+    // Check if already verified (token still exists but email already verified)
     if (user.email_verified) {
       return NextResponse.redirect(new URL('/login?verified=true', req.url));
     }

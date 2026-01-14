@@ -53,16 +53,24 @@ export async function GET(req: NextRequest) {
     }
 
     // Mark email as verified
-    await query(
-      `UPDATE pu_morning_briefings.users 
-       SET email_verified = TRUE, verification_token = NULL, verification_token_expires = NULL 
-       WHERE id = $1`,
-      [user.id]
-    );
+    try {
+      const updateResult = await query(
+        `UPDATE pu_morning_briefings.users 
+         SET email_verified = TRUE, verification_token = NULL, verification_token_expires = NULL 
+         WHERE id = $1
+         RETURNING id, email`,
+        [user.id]
+      );
 
-    console.log('[VERIFY EMAIL] Email verified successfully for:', user.email);
-    // Redirect to login with success message
-    return NextResponse.redirect(new URL('/login?verified=true', req.url));
+      console.log('[VERIFY EMAIL] Update result:', updateResult.rows.length, 'rows affected');
+      console.log('[VERIFY EMAIL] Email verified successfully for:', user.email);
+      
+      // Redirect to login with success message
+      return NextResponse.redirect(new URL('/login?verified=true', req.url));
+    } catch (updateError) {
+      console.error('[VERIFY EMAIL] Update failed:', updateError);
+      throw updateError;
+    }
   } catch (error) {
     console.error('[VERIFY EMAIL] Error:', error);
     return NextResponse.redirect(new URL('/login?error=verification_failed', req.url));

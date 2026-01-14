@@ -4,7 +4,7 @@ import labels from '@/lib/labels.json';
 export interface MorningMeetingEntry {
   id?: string;
   category: string;
-  priority: 'sg-attention' | 'situational-awareness';
+  priority: 'sg-attention' | 'situational-awareness' | '';
   region: string;
   country: string;
   headline: string;

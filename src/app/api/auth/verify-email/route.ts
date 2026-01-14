@@ -14,29 +14,23 @@ export async function GET(req: NextRequest) {
     // The token should be plain hex, but try both versions to handle encoding variations
     const plainToken = token;
     const decodedToken = decodeURIComponent(token);
-    
-    console.log('[VERIFY EMAIL] Received token (raw):', plainToken);
-    console.log('[VERIFY EMAIL] Received token (decoded):', decodedToken);
 
-    // Try to find user with plain token first
+    // Try to find user with plain token first (regardless of verification status)
     let result = await query(
-      `SELECT id, email, first_name, verification_token_expires 
+      `SELECT id, email, first_name, verification_token_expires, email_verified
        FROM pu_morning_briefings.users 
-       WHERE verification_token = $1 AND email_verified = FALSE`,
+       WHERE verification_token = $1`,
       [plainToken]
     );
 
-    console.log('[VERIFY EMAIL] Token match (plain):', result.rows.length > 0);
-    
     // If not found with plain token, try decoded version
     if (result.rows.length === 0 && decodedToken !== plainToken) {
       result = await query(
-        `SELECT id, email, first_name, verification_token_expires 
+        `SELECT id, email, first_name, verification_token_expires, email_verified
          FROM pu_morning_briefings.users 
-         WHERE verification_token = $1 AND email_verified = FALSE`,
+         WHERE verification_token = $1`,
         [decodedToken]
       );
-      console.log('[VERIFY EMAIL] Token match (decoded):', result.rows.length > 0);
     }
 
     if (result.rows.length === 0) {
@@ -46,6 +40,12 @@ export async function GET(req: NextRequest) {
 
     const user = result.rows[0];
 
+    // If already verified, that's fine - just redirect to success
+    if (user.email_verified) {
+      console.log('[VERIFY EMAIL] Email already verified for:', user.email);
+      return NextResponse.redirect(new URL('/login?verified=true', req.url));
+    }
+
     // Check if token has expired
     if (new Date() > new Date(user.verification_token_expires)) {
       console.log('[VERIFY EMAIL] Token expired for user:', user.email);
@@ -53,24 +53,15 @@ export async function GET(req: NextRequest) {
     }
 
     // Mark email as verified
-    try {
-      const updateResult = await query(
-        `UPDATE pu_morning_briefings.users 
-         SET email_verified = TRUE, verification_token = NULL, verification_token_expires = NULL 
-         WHERE id = $1
-         RETURNING id, email`,
-        [user.id]
-      );
+    await query(
+      `UPDATE pu_morning_briefings.users 
+       SET email_verified = TRUE, verification_token = NULL, verification_token_expires = NULL 
+       WHERE id = $1`,
+      [user.id]
+    );
 
-      console.log('[VERIFY EMAIL] Update result:', updateResult.rows.length, 'rows affected');
-      console.log('[VERIFY EMAIL] Email verified successfully for:', user.email);
-      
-      // Redirect to login with success message
-      return NextResponse.redirect(new URL('/login?verified=true', req.url));
-    } catch (updateError) {
-      console.error('[VERIFY EMAIL] Update failed:', updateError);
-      throw updateError;
-    }
+    console.log('[VERIFY EMAIL] Email verified successfully for:', user.email);
+    return NextResponse.redirect(new URL('/login?verified=true', req.url));
   } catch (error) {
     console.error('[VERIFY EMAIL] Error:', error);
     return NextResponse.redirect(new URL('/login?error=verification_failed', req.url));

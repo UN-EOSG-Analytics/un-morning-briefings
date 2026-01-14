@@ -24,7 +24,7 @@ function LoginPageContent() {
 
     if (verified === 'true') {
       if (message === 'already') {
-        setSuccess('Your email is already verified! You can log in now.');
+        setSuccess('Your email is verified! You can log in now.');
       } else {
         setSuccess('Email verified successfully! You can now log in.');
       }

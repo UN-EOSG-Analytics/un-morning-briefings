@@ -31,9 +31,10 @@ import {
   Maximize,
   Minimize,
   MessageCircle,
+  Wand2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { usePopup } from '@/lib/popup-context';
 
 interface RichTextEditorProps {
@@ -52,8 +53,9 @@ export function RichTextEditor({
   minHeight = 'min-h-[200px]',
 }: RichTextEditorProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { warning: showWarning } = usePopup();
+  const { warning: showWarning, success: showSuccess } = usePopup();
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isReformulating, setIsReformulating] = useState(false);
 
   // Custom Comment mark extension
   const CommentMark = Mark.create({
@@ -162,6 +164,13 @@ export function RichTextEditor({
     },
   });
 
+  // Update editor content when prop changes (for auto-fill functionality)
+  useEffect(() => {
+    if (editor && content !== editor.getHTML()) {
+      editor.commands.setContent(content);
+    }
+  }, [content, editor]);
+
   if (!editor) {
     return null;
   }
@@ -224,6 +233,41 @@ export function RichTextEditor({
     e.target.value = '';
   };
 
+  const handleReformulate = async () => {
+    if (!editor) return;
+
+    const currentContent = editor.getHTML();
+    if (!currentContent || currentContent === '<p></p>') {
+      showWarning('No Content', 'Please enter content to reformulate');
+      return;
+    }
+
+    setIsReformulating(true);
+    try {
+      const response = await fetch('/api/reformulate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ content: currentContent }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to reformulate content');
+      }
+
+      const result = await response.json();
+      editor.commands.setContent(result.content);
+      showSuccess('Content Reformulated', 'Your briefing has been reformulated to be more concise and professional.');
+    } catch (error) {
+      console.error('[REFORMULATE] Error:', error);
+      showWarning('Reformulation Failed', error instanceof Error ? error.message : 'Failed to reformulate content');
+    } finally {
+      setIsReformulating(false);
+    }
+  };
+
   return (
     <div className={`transition-all duration-100 ease-in-out ${isFullscreen ? 'fixed top-16 left-0 right-0 bottom-0 z-40 bg-slate-100 flex flex-col' : ''}`}>
       {/* Toolbar */}
@@ -233,7 +277,7 @@ export function RichTextEditor({
             ? 'border-red-500 bg-red-50'
             : 'border-slate-300 bg-slate-50'
         }`}>
-          <div className="flex flex-wrap items-center gap-1">
+          <div className="flex flex-wrap items-center gap-1 justify-between">
           {/* Fullscreen Toggle */}
           <Button
             type="button"
@@ -532,6 +576,24 @@ export function RichTextEditor({
             title="Redo"
           >
             <Redo2 className="h-4 w-4" />
+          </Button>
+
+          <div className="h-6 w-px bg-slate-300" />
+
+          {/* Regenerate Button */}
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={handleReformulate}
+            disabled={isReformulating}
+            className="h-8 px-2 gap-1"
+            title="Reformulate content to be concise and professional"
+          >
+            <Wand2 className="h-4 w-4" />
+            <span className="text-xs hidden sm:inline">
+              {isReformulating ? 'Reformulating...' : 'Regenerate'}
+            </span>
           </Button>
         </div>
         </div>

@@ -56,7 +56,7 @@ export async function sendVerificationEmail(
                       <table cellpadding="0" cellspacing="0">
                         <tr>
                           ${logoDataUri ? `<td style="vertical-align:middle;padding-right:16px;">
-                            <img src="${logoDataUri}" alt="UN" width="120" style="display:block;border:none;max-width:100%;" />
+                            <img src="${logoDataUri}" alt="UN" width="180" style="display:block;border:none;max-width:100%;" />
                           </td>` : ''}
                           <td style="vertical-align:middle;">
                             <div style="font-size:20px;font-weight:700;color:#000000;line-height:1.2;">${siteTitle}</div>

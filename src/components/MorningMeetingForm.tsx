@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { SelectField } from '@/components/SelectField';
 import { RichTextEditor } from '@/components/RichTextEditor';
 import {
@@ -27,6 +28,7 @@ import {
   Calendar,
   Zap,
   Type,
+  Sparkles,
 } from 'lucide-react';
 import { usePopup } from '@/lib/popup-context';
 
@@ -134,7 +136,11 @@ export function MorningMeetingForm({
   const [availableCountries, setAvailableCountries] = useState<string[]>([]);
   const [useRichText, setUseRichText] = useState<boolean | null>(null);
   const [hasUserToggled, setHasUserToggled] = useState(false);
+  const [showAutoFillDialog, setShowAutoFillDialog] = useState(false);
+  const [autoFillContent, setAutoFillContent] = useState('');
+  const [isAutoFilling, setIsAutoFilling] = useState(false);
   const { data: session } = useSession();
+  const { warning: showWarning, success: showSuccess } = usePopup();
 
   // Autofill form with current user's information
   useEffect(() => {
@@ -357,6 +363,67 @@ export function MorningMeetingForm({
     }
   };
 
+  const handleAutoFill = async () => {
+    if (!autoFillContent.trim()) {
+      showWarning('No Content', 'Please paste some content to analyze');
+      return;
+    }
+
+    setIsAutoFilling(true);
+    try {
+      const response = await fetch('/api/auto-fill', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ content: autoFillContent }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to process content');
+      }
+
+      const result = await response.json();
+
+      // Update available countries BEFORE setting form data
+      // This ensures the country dropdown is populated when we set the country value
+      if (result.region && COUNTRIES_BY_REGION[result.region]) {
+        const regionCountries = COUNTRIES_BY_REGION[result.region];
+        // If country is not in the region list, add it anyway (like existing logic does)
+        if (result.country && !regionCountries.includes(result.country)) {
+          setAvailableCountries([result.country, ...regionCountries]);
+        } else {
+          setAvailableCountries(regionCountries);
+        }
+      } else if (result.country) {
+        // If region not found but country exists, still show the country
+        setAvailableCountries([result.country]);
+      }
+
+      // Update form with AI results
+      setFormData((prev) => ({
+        ...prev,
+        category: result.category || prev.category,
+        priority: result.priority || prev.priority,
+        region: result.region || prev.region,
+        country: result.country || prev.country,
+        headline: result.headline || prev.headline,
+        date: result.date || prev.date,
+        entry: result.entry || prev.entry,
+      }));
+
+      setShowAutoFillDialog(false);
+      setAutoFillContent('');
+      showSuccess('Form Auto-Filled', 'The form has been filled with AI-analyzed data. Please review and adjust as needed.');
+    } catch (error) {
+      console.error('[AUTO-FILL] Error:', error);
+      showWarning('Auto-Fill Failed', error instanceof Error ? error.message : 'Failed to process content');
+    } finally {
+      setIsAutoFilling(false);
+    }
+  };
+
   const getPriorityLabel = (value: string) => {
     return PRIORITIES.find((p) => p.value === value)?.label || value;
   };
@@ -374,16 +441,29 @@ export function MorningMeetingForm({
         {/* Header */}
         <Card className="mb-0 rounded-b-none border-b-0 py-4 sm:py-6">
           <CardHeader className="p-4 sm:p-6">
-            <div className="flex items-center gap-2 sm:gap-3">
-              <div className="flex shrink-0 items-center justify-center rounded bg-un-blue p-2">
-                <FileText className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+            <div className="flex items-center justify-between gap-2 sm:gap-3">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="flex shrink-0 items-center justify-center rounded bg-un-blue p-2">
+                  <FileText className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+                </div>
+                <div className="min-w-0">
+                  <CardTitle className="text-lg sm:text-2xl">Morning Briefing Entry Form</CardTitle>
+                  <CardDescription className="text-xs sm:text-sm">
+                    Political Unit (EOSG) • Data Management System
+                  </CardDescription>
+                </div>
               </div>
-              <div className="min-w-0">
-                <CardTitle className="text-lg sm:text-2xl">Morning Briefing Entry Form</CardTitle>
-                <CardDescription className="text-xs sm:text-sm">
-                  Political Unit (EOSG) • Data Management System
-                </CardDescription>
-              </div>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => setShowAutoFillDialog(true)}
+                className="shrink-0"
+                title="Paste content to auto-fill form with AI"
+              >
+                <Sparkles className="h-4 w-4 mr-1.5" />
+                <span className="hidden sm:inline">Auto-Fill</span>
+              </Button>
             </div>
             <div className="mt-3 sm:mt-4 flex flex-wrap items-center gap-2 sm:gap-4 text-xs text-slate-500">
               <span className="flex items-center gap-1">
@@ -724,6 +804,62 @@ export function MorningMeetingForm({
 
       
       </div>
+
+      {/* Auto-Fill Dialog */}
+      <Dialog open={showAutoFillDialog} onOpenChange={setShowAutoFillDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-un-blue" />
+              Auto-Fill Form with AI
+            </DialogTitle>
+            <DialogDescription>
+              Paste news content, article text, or briefing information below. AI will analyze it and automatically fill the form fields.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium text-slate-700 mb-2 block">
+                Content to Analyze
+              </label>
+              <textarea
+                value={autoFillContent}
+                onChange={(e) => setAutoFillContent(e.target.value)}
+                placeholder="Paste your content here... (news article, briefing text, report excerpt, etc.)"
+                className="w-full min-h-[200px] rounded border border-slate-300 bg-slate-50 px-3 py-2 text-sm outline-none transition focus:border-un-blue focus:ring-2 focus:ring-un-blue/15 resize-none"
+                disabled={isAutoFilling}
+              />
+            </div>
+            <div className="text-xs text-slate-500 bg-slate-50 p-3 rounded border border-slate-200">
+              <strong>AI will extract:</strong> Category, Priority, Region, Country, Headline, Date, and Entry Content
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setShowAutoFillDialog(false);
+                setAutoFillContent('');
+              }}
+              disabled={isAutoFilling}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={handleAutoFill}
+              disabled={isAutoFilling || !autoFillContent.trim()}
+              className="gap-2"
+            >
+              <Sparkles className="h-4 w-4" />
+              {isAutoFilling ? 'Processing...' : 'Auto-Fill Form'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

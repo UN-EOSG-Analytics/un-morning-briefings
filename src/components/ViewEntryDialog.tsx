@@ -4,8 +4,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { MorningMeetingEntry, PRIORITIES } from '@/types/morning-meeting';
 import { getPriorityBadgeClass } from '@/lib/useEntriesFilter';
-import { Edit, Trash2, CheckCircle2, Circle } from 'lucide-react';
+import { Edit, Trash2, CheckCircle2, Circle, Sparkles } from 'lucide-react';
 import Link from 'next/link';
+import { useState, useEffect } from 'react';
 
 interface ViewEntryDialogProps {
   open: boolean;
@@ -24,17 +25,55 @@ export function ViewEntryDialog({
   onApprove,
   showApproveButton = false,
 }: ViewEntryDialogProps) {
+  const [summary, setSummary] = useState<string[] | null>(null);
+  const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
+  const [summaryError, setSummaryError] = useState<string | null>(null);
+
+  // Clear summary when entry changes or dialog closes
+  useEffect(() => {
+    setSummary(null);
+    setSummaryError(null);
+  }, [entry?.id, open]);
+
+  const handleGenerateSummary = async () => {
+    if (!entry?.entry) return;
+    
+    setIsGeneratingSummary(true);
+    setSummaryError(null);
+    
+    try {
+      const response = await fetch('/api/summarize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: entry.entry }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to generate summary');
+      }
+      
+      const data = await response.json();
+      setSummary(data.summary);
+    } catch (error) {
+      console.error('Summary generation error:', error);
+      setSummaryError('Failed to generate summary. Please try again.');
+    } finally {
+      setIsGeneratingSummary(false);
+    }
+  };
+
   if (!entry) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="!max-w-none w-full sm:w-[95vw] md:w-[85vw] lg:w-[70vw] max-h-[95vh] flex flex-col !pt-6 sm:!pt-8 !pb-4 sm:!pb-6">
-        <DialogHeader className="border-b border-slate-200 pb-4">
-          <div className="flex items-start justify-between gap-4">
+        <DialogHeader className="border-b border-slate-200 pb-4 pr-12">
+          <div className="flex items-start justify-between gap-4 w-full">
             <div className="flex-1">
               <DialogTitle className="text-2xl font-bold text-slate-900 mb-3">
                 {entry.headline}
               </DialogTitle>
+              
               <div className="flex gap-2 flex-wrap">
                 {/* Date Badge */}
                 <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">
@@ -51,8 +90,47 @@ export function ViewEntryDialog({
                 </span>
               </div>
             </div>
+            
+            {/* AI Summary Button - Right side, with spacing for close button */}
+            <Button
+              size="sm"
+              onClick={handleGenerateSummary}
+              disabled={isGeneratingSummary}
+              className="bg-[#009edb] hover:bg-[#0080b8] text-white gap-2 shrink-0"
+            >
+              <Sparkles className="h-4 w-4" />
+              {isGeneratingSummary ? 'Generating...' : 'AI Summary'}
+            </Button>
           </div>
         </DialogHeader>
+        
+        {/* AI Summary Box - Below header */}
+        {(summary || summaryError) && (
+          <div className="px-4 sm:px-6 pt-4 pb-2 border-b border-slate-200">
+            {summary && (
+              <div className="rounded-lg border-2 border-[#009edb] bg-[#009edb]/5 p-4">
+                <div className="text-sm font-semibold text-[#009edb] mb-2 flex items-center gap-2">
+                  <Sparkles className="h-4 w-4" />
+                  Key Points
+                </div>
+                <ul className="space-y-2">
+                  {summary.map((point, index) => (
+                    <li key={index} className="text-sm text-slate-700 flex gap-2">
+                      <span className="text-[#009edb] font-bold shrink-0">•</span>
+                      <span>{point}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            
+            {summaryError && (
+              <div className="rounded-lg border border-red-300 bg-red-50 p-3">
+                <div className="text-sm text-red-700">{summaryError}</div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Scrollable content */}
         <div className="flex-1 overflow-y-auto px-4 sm:px-6" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>

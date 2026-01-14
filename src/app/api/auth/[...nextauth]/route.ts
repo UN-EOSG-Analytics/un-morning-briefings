@@ -2,12 +2,6 @@ import NextAuth, { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { query } from '@/lib/db';
 import bcrypt from 'bcryptjs';
-
-// Get the base URL for callbacks
-const getBaseUrl = () => {
-  if (typeof window !== 'undefined') return '';
-  
-  if (process.env.NEXTAUTH_URL) {
     return process.env.NEXTAUTH_URL;
   }
   

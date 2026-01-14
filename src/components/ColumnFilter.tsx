@@ -2,7 +2,6 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { Filter } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 
 interface ColumnFilterProps {
   columnName: string;

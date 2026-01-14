@@ -347,7 +347,7 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
           try {
             const contentElements = parseHtmlContent(entry.entry);
             children.push(...contentElements);
-          } catch (error) {
+          } catch {
             // Fallback to plain text if parsing fails
             children.push(
               new Paragraph({
@@ -676,7 +676,7 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
             try {
               const contentElements = parseHtmlContent(entry.entry);
               children.push(...contentElements);
-            } catch (error) {
+            } catch {
               children.push(
                 new Paragraph({
                   children: [

@@ -5,24 +5,24 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { deleteEntry, getSubmittedEntries, toggleApproval } from '@/lib/storage';
 import { Download, FileDown, List } from 'lucide-react';
-import Link from 'next/link';
 import { ExportDailyBriefingDialog } from './ExportDailyBriefingDialog';
 import { EntriesTable } from './EntriesTable';
 import { usePopup } from '@/lib/popup-context';
+import type { MorningMeetingEntry } from '@/types/morning-meeting';
 
 export function MorningMeetingList({ initialDateFilter }: { initialDateFilter?: string } = {}) {
   const { confirm: showConfirm, success: showSuccess, info: showInfo } = usePopup();
-  const [entries, setEntries] = useState<any[]>([]);
+  const [entries, setEntries] = useState<MorningMeetingEntry[]>([]);
   const [showExportDialog, setShowExportDialog] = useState(false);
-
-  useEffect(() => {
-    loadEntries();
-  }, []);
 
   const loadEntries = async () => {
     const data = await getSubmittedEntries();
     setEntries(data);
   };
+
+  useEffect(() => {
+    loadEntries();
+  }, []);
 
   const handleDelete = async (id: string) => {
     const confirmed = await showConfirm(
@@ -42,7 +42,7 @@ export function MorningMeetingList({ initialDateFilter }: { initialDateFilter?: 
     }
   };
 
-  const handleToggleApproval = async (entry: any) => {
+  const handleToggleApproval = async (entry: MorningMeetingEntry) => {
     try {
       await toggleApproval(entry.id, !entry.approved);
       showSuccess(

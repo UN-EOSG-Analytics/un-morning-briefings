@@ -7,28 +7,29 @@ import { getDraftEntries, deleteEntry } from '@/lib/storage';
 import { FileEdit } from 'lucide-react';
 import { EntriesTable } from '@/components/EntriesTable';
 import { usePopup } from '@/lib/popup-context';
+import type { MorningMeetingEntry } from '@/types/morning-meeting';
 
 export default function DraftsPage() {
   const { data: session } = useSession();
   const { confirm: showConfirm, success: showSuccess } = usePopup();
-  const [entries, setEntries] = useState<any[]>([]);
+  const [entries, setEntries] = useState<MorningMeetingEntry[]>([]);
 
   // Get current user's full name
   const currentUserName = session?.user
     ? `${session.user.firstName || ''} ${session.user.lastName || ''}`.trim() || session.user.email
     : 'Current User';
 
-  useEffect(() => {
-    loadEntries();
-  }, [currentUserName]);
-
   const loadEntries = async () => {
     if (!currentUserName || currentUserName === 'Current User') return;
     const data = await getDraftEntries(currentUserName);
     // Filter to only show drafts by the current user
-    const userDrafts = data.filter((entry: any) => entry.author === currentUserName);
+    const userDrafts = data.filter((entry: MorningMeetingEntry) => entry.author === currentUserName);
     setEntries(userDrafts);
   };
+
+  useEffect(() => {
+    loadEntries();
+  }, [currentUserName]);
 
   const handleDelete = async (id: string) => {
     const confirmed = await showConfirm(

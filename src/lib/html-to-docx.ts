@@ -57,7 +57,7 @@ function calculateImageDimensions(
   buffer?: Buffer,
   maxWidth: number = 500
 ): { width: number; height: number } {
-  let width = maxWidth;
+  const width = maxWidth;
   let height = 375; // Default aspect ratio fallback
   
   // Try to get dimensions from PNG header first
@@ -120,7 +120,7 @@ function parseHtmlContentServer(html: string): Paragraph[] {
   console.log('Server parser: Found', paraMatches.length, 'paragraphs');
   
   for (const paraMatch of paraMatches) {
-    let paraContent = paraMatch[1] || paraMatch[0];
+    const paraContent = paraMatch[1] || paraMatch[0];
     const paraRuns: (TextRun | ImageRun)[] = [];
     
     // Split content by <br> tags first
@@ -331,7 +331,7 @@ function parseHtmlContentClient(html: string): Paragraph[] {
       const alt = element.getAttribute('alt') || 'Image';
       const dataWidth = element.getAttribute('data-width');
       const dataHeight = element.getAttribute('data-height');
-      let width = 500;
+      const width = 500;
       let height = 375;
       
       // Use stored dimensions if available and preserve aspect ratio

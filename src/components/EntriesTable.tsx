@@ -12,9 +12,9 @@ import { ColumnFilter } from './ColumnFilter';
 import { useEntriesFilter, getPriorityBadgeClass, getRegionBadgeClass } from '@/lib/useEntriesFilter';
 
 interface EntriesTableProps {
-  entries: any[];
+  entries: MorningMeetingEntry[];
   onDelete: (id: string) => void;
-  onToggleApproval?: (entry: any) => void;
+  onToggleApproval?: (entry: MorningMeetingEntry) => void;
   showApprovedColumn?: boolean;
   emptyMessage?: string;
   resultLabel?: string;
@@ -47,11 +47,10 @@ export function EntriesTable({
     setFilterPriority,
     setFilterDate,
     handleSort,
-    handleResetFilters,
     sortedEntries,
   } = useEntriesFilter(entries, initialDateFilter);
 
-  const handleRowClick = (entry: any) => {
+  const handleRowClick = (entry: MorningMeetingEntry) => {
     setSelectedEntry(entry);
     setShowViewDialog(true);
   };

@@ -13,7 +13,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { getSubmittedEntries } from '@/lib/storage';
-import { Document, Paragraph, TextRun, HeadingLevel, AlignmentType, Packer } from 'docx';
+import { Document, Paragraph, TextRun, HeadingLevel, AlignmentType, Packer, Table, TableRow, TableCell, BorderStyle, ImageRun, Header } from 'docx';
 import { saveAs } from 'file-saver';
 import { FileText, Calendar, CheckCircle2, Mail, Download} from 'lucide-react';
 import { parseHtmlContent } from '@/lib/html-to-docx';
@@ -73,6 +73,108 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
     }
   }, [selectedDate, open]);
 
+  /**
+   * Create a header section with UN logo and classification text
+   */
+  const createDocumentHeader = async (): Promise<Table> => {
+    // Load UN logo from public folder
+    let logoParagraphChildren: (ImageRun | TextRun)[] = [];
+    
+    try {
+      const response = await fetch('/images/UN_Logo_Black.png');
+      const blob = await response.blob();
+      const arrayBuffer = await blob.arrayBuffer();
+      const imageData = new Uint8Array(arrayBuffer);
+      
+      logoParagraphChildren = [
+        new ImageRun({
+          data: imageData,
+          transformation: {
+            width: 48,
+            height: 40,
+          },
+          type: 'png',
+        }),
+      ];
+    } catch (error) {
+      console.error('Failed to load UN logo:', error);
+      // Fallback to text if image fails to load
+      logoParagraphChildren = [
+        new TextRun({
+          text: '[UN Logo]',
+          size: 16,
+          color: '666666',
+          font: 'Roboto',
+        }),
+      ];
+    }
+
+    // Create a table-based header with logo on left and classification on right
+    const headerTable = new Table({
+      width: { size: 100, type: 'pct' },
+      borders: {
+        top: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' },
+        bottom: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' },
+        left: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' },
+        right: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' },
+        insideHorizontal: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' },
+        insideVertical: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' },
+      },
+      rows: [
+        new TableRow({
+          height: { value: 720, rule: 'atLeast' },
+          children: [
+            // Left cell with logo
+            new TableCell({
+              width: { size: 50, type: 'pct' },
+              borders: {
+                top: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' },
+                bottom: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' },
+                left: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' },
+                right: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' },
+              },
+              margins: { top: 0, bottom: 0, left: 0, right: 100 },
+              verticalAlign: 'center',
+              children: [
+                new Paragraph({
+                  children: logoParagraphChildren,
+                }),
+              ],
+            }),
+            // Right cell with classification
+            new TableCell({
+              width: { size: 50, type: 'pct' },
+              borders: {
+                top: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' },
+                bottom: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' },
+                left: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' },
+                right: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' },
+              },
+              margins: { top: 0, bottom: 0, left: 100, right: 0 },
+              verticalAlign: 'center',
+              children: [
+                new Paragraph({
+                  alignment: AlignmentType.RIGHT,
+                  children: [
+                    new TextRun({
+                      text: 'INTERNAL | NOT FOR FURTHER DISTRIBUTION',
+                      bold: false,
+                      size: 18,
+                      color: '000000',
+                      font: 'Roboto',
+                    }),
+                  ],
+                }),
+              ],
+            }),
+          ],
+        }),
+      ],
+    });
+
+    return headerTable;
+  };
+
   const handleExport = async () => {
     setIsExporting(true);
     try {
@@ -87,6 +189,9 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
         setIsExporting(false);
         return;
       }
+
+      // Get header
+      const header = await createDocumentHeader();
 
       // Restore images in HTML for each entry by downloading from blob storage
       for (const entry of entriesForDate) {
@@ -238,7 +343,7 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
         // Title
         new Paragraph({
           heading: HeadingLevel.HEADING_1,
-          alignment: AlignmentType.CENTER,
+          alignment: AlignmentType.LEFT,
           spacing: { after: 200 },
           children: [
             new TextRun({
@@ -246,12 +351,13 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
               bold: true,
               size: 32,
               font: 'Roboto',
+              color: '009edb',
             }),
           ],
         }),
         // Date
         new Paragraph({
-          alignment: AlignmentType.CENTER,
+          alignment: AlignmentType.LEFT,
           spacing: { after: 400 },
           children: [
             new TextRun({
@@ -263,6 +369,7 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
               }),
               size: 24,
               font: 'Roboto',
+              color: '009edb',
             }),
           ],
         }),
@@ -278,7 +385,7 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
         children.push(
           new Paragraph({
             heading: HeadingLevel.HEADING_2,
-            alignment: AlignmentType.CENTER,
+            alignment: AlignmentType.LEFT,
             spacing: { before: 300, after: 200 },
             children: [
               new TextRun({
@@ -286,6 +393,7 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
                 bold: true,
                 size: 24,
                 font: 'Roboto',
+                color: '009edb',
               }),
             ],
           })
@@ -424,11 +532,22 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
         })
       );
 
-      // Create document
+      // Create document with header
+      const headerTable = await createDocumentHeader();
+      
       const doc = new Document({
         sections: [
           {
-            properties: {},
+            properties: {
+              page: {
+                headerDistanceFromEdge: 360,
+              },
+            },
+            headers: {
+              default: new Header({
+                children: [headerTable],
+              }),
+            },
             children,
           },
         ],
@@ -577,7 +696,7 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
       const children: any[] = [
         new Paragraph({
           heading: HeadingLevel.HEADING_1,
-          alignment: AlignmentType.CENTER,
+          alignment: AlignmentType.LEFT,
           spacing: { after: 200 },
           children: [
             new TextRun({
@@ -585,11 +704,12 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
               bold: true,
               size: 32,
               font: 'Roboto',
+              color: '009edb',
             }),
           ],
         }),
         new Paragraph({
-          alignment: AlignmentType.CENTER,
+          alignment: AlignmentType.LEFT,
           spacing: { after: 400 },
           children: [
             new TextRun({
@@ -601,6 +721,7 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
               }),
               size: 24,
               font: 'Roboto',
+              color: '009edb',
             }),
           ],
         }),
@@ -611,7 +732,7 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
         children.push(
           new Paragraph({
             heading: HeadingLevel.HEADING_2,
-            alignment: AlignmentType.CENTER,
+            alignment: AlignmentType.LEFT,
             spacing: { before: 300, after: 200 },
             children: [
               new TextRun({
@@ -619,6 +740,7 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
                 bold: true,
                 size: 24,
                 font: 'Roboto',
+                color: '009edb',
               }),
             ],
           })
@@ -748,10 +870,22 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
         })
       );
 
+      // Get header
+      const headerTable = await createDocumentHeader();
+
       const doc = new Document({
         sections: [
           {
-            properties: {},
+            properties: {
+              page: {
+                headerDistanceFromEdge: 360,
+              },
+            },
+            headers: {
+              default: new Header({
+                children: [headerTable],
+              }),
+            },
             children,
           },
         ],

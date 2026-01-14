@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
     // Read and encode the logo as base64
     let logoDataUri = '';
     try {
-      const logoPath = path.join(process.cwd(), 'public/images/UN_Logo_Horizontal_Colour_English.png');
+      const logoPath = path.join(process.cwd(), 'public/images/UN_Logo_Stacked_Colour_English.png');
       const logoBuffer = fs.readFileSync(logoPath);
       logoDataUri = `data:image/png;base64,${logoBuffer.toString('base64')}`;
     } catch (error) {

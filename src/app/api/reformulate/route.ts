@@ -4,21 +4,28 @@ import { reformulateBriefing, reformulateSelection } from '@/lib/gemini-service'
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { mode, content, selectedText, beforeContext, afterContext } = body;
+    const { mode, content, fullSentence, selectionStart, selectionEnd } = body;
 
     if (mode === 'selection') {
-      // Regenerate only selected text with context
-      if (!selectedText || typeof selectedText !== 'string') {
+      // Regenerate only selected text with full sentence context
+      if (!fullSentence || typeof fullSentence !== 'string') {
         return NextResponse.json(
-          { error: 'Selected text is required' },
+          { error: 'Full sentence context is required' },
+          { status: 400 }
+        );
+      }
+
+      if (selectionStart === undefined || selectionEnd === undefined) {
+        return NextResponse.json(
+          { error: 'Selection boundaries are required' },
           { status: 400 }
         );
       }
 
       const reformulatedText = await reformulateSelection(
-        selectedText,
-        beforeContext || '',
-        afterContext || ''
+        fullSentence,
+        selectionStart,
+        selectionEnd
       );
 
       return NextResponse.json({ content: reformulatedText });

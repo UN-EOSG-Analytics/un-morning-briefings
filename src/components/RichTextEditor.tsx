@@ -238,37 +238,49 @@ export function RichTextEditor({
   };
 
   /**
-   * Extract sentence boundaries for context-aware regeneration
-   * Returns the full sentences containing the selection
+   * Extract full sentences touched by selection for context-aware regeneration
+   * Returns the complete sentences that contain the selection, preserving all whitespace
    */
-  const getFullSentenceContext = (text: string, start: number, end: number): { before: string; selected: string; after: string; fullBefore: string; fullAfter: string } => {
-    // Find sentence boundaries (., !, ?) before and after selection
-    const sentenceEnders = /[.!?]\s/g;
+  const getFullSentenceContext = (text: string, selStart: number, selEnd: number) => {
+    // Find sentence boundaries (., !, ?) with optional whitespace
+    const sentenceEnders = /[.!?]+[\s]*/g;
     
     let sentenceStart = 0;
     let sentenceEnd = text.length;
     
-    // Find sentence start (look backward from selection start)
-    const textBeforeSelection = text.substring(0, start);
+    // Find the start of the sentence containing the selection
+    // Look backward from selection start
+    const textBeforeSelection = text.substring(0, selStart);
     const matches = [...textBeforeSelection.matchAll(sentenceEnders)];
     if (matches.length > 0) {
       const lastMatch = matches[matches.length - 1];
       sentenceStart = (lastMatch.index ?? 0) + lastMatch[0].length;
     }
     
-    // Find sentence end (look forward from selection end)
-    const textAfterSelection = text.substring(end);
-    const nextEnder = textAfterSelection.search(sentenceEnders);
-    if (nextEnder !== -1) {
-      sentenceEnd = end + nextEnder + 1;
+    // Find the end of the sentence containing the selection
+    // Look forward from selection end
+    const textAfterSelection = text.substring(selEnd);
+    const nextMatch = textAfterSelection.match(sentenceEnders);
+    if (nextMatch && nextMatch.index !== undefined) {
+      sentenceEnd = selEnd + nextMatch.index + nextMatch[0].length;
     }
     
+    // Extract the full sentence(s) that contain the selection
+    const fullSentence = text.substring(sentenceStart, sentenceEnd);
+    
+    // Calculate relative positions within the sentence
+    const relativeStart = selStart - sentenceStart;
+    const relativeEnd = selEnd - sentenceStart;
+    
     return {
-      before: text.substring(sentenceStart, start).trim(),
-      selected: text.substring(start, end).trim(),
-      after: text.substring(end, sentenceEnd).trim(),
-      fullBefore: text.substring(0, sentenceStart).trim(),
-      fullAfter: text.substring(sentenceEnd).trim(),
+      fullSentence,
+      sentenceStart,
+      sentenceEnd,
+      relativeStart,
+      relativeEnd,
+      beforeText: fullSentence.substring(0, relativeStart),
+      selectedText: fullSentence.substring(relativeStart, relativeEnd),
+      afterText: fullSentence.substring(relativeEnd),
     };
   };
 
@@ -281,9 +293,8 @@ export function RichTextEditor({
     setIsReformulating(true);
     try {
       if (hasSelection) {
-        // Regenerate only selected text with context
-        const fullText = editor.getText();
-        const selectedText = editor.state.doc.textBetween(from, to, ' ');
+        // Get the selected text with exact whitespace preservation
+        const selectedText = editor.state.doc.textBetween(from, to, '\n');
         
         if (!selectedText.trim()) {
           showWarning('No Text Selected', 'Please select text to regenerate');
@@ -291,19 +302,18 @@ export function RichTextEditor({
           return;
         }
 
-        // Extract leading and trailing spaces to preserve them
-        const leadingSpaces = selectedText.match(/^\s*/)?.[0] || '';
-        const trailingSpaces = selectedText.match(/\s*$/)?.[0] || '';
-        const trimmedText = selectedText.trim();
-
-        // Calculate actual text positions in the plain text string
-        const textBeforeSelection = editor.state.doc.textBetween(0, from, ' ');
-        const textStart = textBeforeSelection.length + leadingSpaces.length;
-        const textEnd = textStart + trimmedText.length;
-
-        // Get sentence context using plain text positions
-        const context = getFullSentenceContext(fullText, textStart, textEnd);
+        // Get full plain text to find sentence boundaries
+        const fullText = editor.getText();
         
+        // Calculate the actual character position in plain text
+        const textBeforeSelection = editor.state.doc.textBetween(0, from, '\n');
+        const selStart = textBeforeSelection.length;
+        const selEnd = selStart + selectedText.length;
+        
+        // Get the full sentence context
+        const context = getFullSentenceContext(fullText, selStart, selEnd);
+        
+        // Send the full sentence to AI but indicate what part should be reformulated
         const response = await fetch('/api/reformulate', {
           method: 'POST',
           headers: {
@@ -311,9 +321,9 @@ export function RichTextEditor({
           },
           body: JSON.stringify({
             mode: 'selection',
-            selectedText: context.selected,
-            beforeContext: context.before,
-            afterContext: context.after,
+            fullSentence: context.fullSentence,
+            selectionStart: context.relativeStart,
+            selectionEnd: context.relativeEnd,
           }),
         });
 
@@ -330,26 +340,43 @@ export function RichTextEditor({
         }
 
         const result = await response.json();
+        const reformulatedText = result.content;
         
-        // Reconstruct with leading and trailing spaces preserved
-        const contentWithSpaces = leadingSpaces + result.content + trailingSpaces;
+        // Store the selection positions before any modification
+        const selectionFrom = from;
+        const selectionTo = to;
         
-        // Replace only the selected text and select the newly inserted content
-        editor
+        // Replace the selected text using a single command chain
+        // This ensures atomic operation and proper position tracking
+        const success = editor
           .chain()
           .focus()
-          .deleteSelection()
-          .insertContent(contentWithSpaces)
+          .command(({ tr, state }) => {
+            // Delete the selection
+            tr.delete(selectionFrom, selectionTo);
+            // Insert the new text at the deletion point
+            tr.insertText(reformulatedText, selectionFrom);
+            return true;
+          })
           .run();
-
-        // Select the newly inserted text (minus trailing spaces for better UX)
-        const newFrom = from;
-        const newTo = from + leadingSpaces.length + result.content.length;
-        editor.view.dispatch(
-          editor.state.tr.setSelection(
-            editor.state.selection.constructor.create(editor.state.doc, newFrom, newTo)
-          )
-        );
+        
+        if (!success) {
+          showWarning('Replacement Failed', 'Could not replace the selected text');
+          return;
+        }
+        
+        // Calculate the new end position for selection
+        // Since we deleted and inserted at the same position, 
+        // the new end is: start + length of new text
+        const newEnd = selectionFrom + reformulatedText.length;
+        
+        // Wait a tick for the editor to update, then select the new text
+        setTimeout(() => {
+          editor.commands.setTextSelection({ 
+            from: selectionFrom, 
+            to: newEnd 
+          });
+        }, 10);
         
         showSuccess('Text Regenerated', 'Selected text has been regenerated.');
       } else {

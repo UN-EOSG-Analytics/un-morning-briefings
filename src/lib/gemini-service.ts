@@ -168,13 +168,13 @@ ${plainText}`;
 }
 
 /**
- * Reformulate selected text to be concise and professional while fitting with context
- * This is optimized for speed using the flash model and focused prompts
+ * Reformulate a selected portion of text while keeping it coherent with the full sentence
+ * Takes the full sentence for context and returns only the reformulated selection
  */
 export async function reformulateSelection(
-  selectedText: string,
-  beforeContext: string,
-  afterContext: string
+  fullSentence: string,
+  selectionStart: number,
+  selectionEnd: number
 ): Promise<string> {
   const apiKey = process.env.GEMINI_API_KEY;
   
@@ -189,25 +189,63 @@ export async function reformulateSelection(
     model: 'gemini-3-flash-preview',
     generationConfig: {
       temperature: 0.7,
-      maxOutputTokens: 500, // Limit output for faster response
+      maxOutputTokens: 400, // Allow complete responses
     }
   });
 
-  const prompt = `Rewrite ONLY the selected text to be more concise and professional for a UN briefing. Keep the meaning and ensure it flows naturally with the surrounding context.
+  // Extract the parts
+  const beforeText = fullSentence.substring(0, selectionStart);
+  const selectedText = fullSentence.substring(selectionStart, selectionEnd);
+  const afterText = fullSentence.substring(selectionEnd);
 
-Context before: "${beforeContext}"
-SELECTED TEXT TO REWRITE: "${selectedText}"
-Context after: "${afterContext}"
+  const prompt = `Reformulate the selected portion of this UN briefing text to be more concise and professional.
 
-Return ONLY the rewritten version of the selected text, nothing else. No explanations, no quotes, just the improved text that fits naturally with the context.`;
+Full sentence(s):
+"${beforeText}<<<START SELECTION>>>${selectedText}<<<END SELECTION>>>${afterText}"
+
+Task: Rewrite ONLY the text between <<<START SELECTION>>> and <<<END SELECTION>>>.
+Make it concise and professional while ensuring it flows naturally with the surrounding text.
+
+CRITICAL: Output ONLY your rewritten version of the selected text. Do not include:
+- The surrounding context
+- Quotes around your answer
+- Explanations or comments
+- The selection markers
+
+Your reformulated text:`;
 
   try {
     const result = await model.generateContent(prompt);
     const response = await result.response;
-    const reformulatedText = response.text().trim();
+    let reformulatedText = response.text().trim();
     
-    // Remove any quotes that might have been added
-    return reformulatedText.replace(/^["']|["']$/g, '');
+    // Clean up response
+    reformulatedText = reformulatedText
+      .replace(/^["'`]+|["'`]+$/g, '') // Remove surrounding quotes
+      .replace(/^(Here is|Here's|The rewritten|Rewritten)[:\s]*/i, '') // Remove meta prefixes
+      .trim();
+    
+    // Validate response isn't meta-commentary
+    const metaPatterns = [
+      /^(Wait|Note|Context|Explanation|I would|I will|Let me|The text|This)/i,
+      /<<<START SELECTION>>>/,
+      /<<<END SELECTION>>>/
+    ];
+    
+    for (const pattern of metaPatterns) {
+      if (pattern.test(reformulatedText)) {
+        console.warn('[GEMINI SERVICE] AI returned invalid response format');
+        return selectedText;
+      }
+    }
+    
+    // If empty or suspiciously long, return original
+    if (!reformulatedText || reformulatedText.length > selectedText.length * 3) {
+      console.warn('[GEMINI SERVICE] AI response invalid, using original text');
+      return selectedText;
+    }
+    
+    return reformulatedText;
   } catch (error) {
     console.error('[GEMINI SERVICE] Selection reformulation error:', error);
     if (error instanceof Error) {

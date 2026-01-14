@@ -27,15 +27,12 @@ export const authOptions: NextAuthOptions = {
         password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
-        console.log('authorize: Called with credentials');
         if (!credentials?.email || !credentials?.password) {
-          console.log('authorize: Missing email or password');
           return null;
         }
 
         // Validate email domain
         if (!credentials.email.endsWith('@un.org')) {
-          console.log('authorize: Invalid email domain');
           return null;
         }
 
@@ -49,33 +46,23 @@ export const authOptions: NextAuthOptions = {
           );
 
           if (result.rows.length === 0) {
-            console.log('authorize: User not found:', credentials.email);
             return null;
           }
 
           const user = result.rows[0];
-          console.log('authorize: User found:', user.email, '| email_verified:', user.email_verified);
 
           // Check if email is verified
           if (!user.email_verified) {
-            console.log('authorize: Email not verified for:', user.email);
             return null;
           }
 
           // Verify password
-          console.log('authorize: Comparing password...');
-          console.log('authorize: Password hash from DB exists:', !!user.password_hash);
-          console.log('authorize: Password hash length:', user.password_hash?.length);
-          
           const passwordMatch = await bcrypt.compare(credentials.password, user.password_hash);
-          console.log('authorize: Password match result:', passwordMatch);
           
           if (!passwordMatch) {
-            console.log('authorize: Password incorrect for:', user.email);
             return null;
           }
 
-          console.log('authorize: Login successful for:', user.email);
           return {
             id: user.id.toString(),
             email: user.email,

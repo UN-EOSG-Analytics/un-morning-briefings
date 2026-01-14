@@ -54,8 +54,6 @@ export async function POST(req: NextRequest) {
     const tokenExpires = new Date();
     tokenExpires.setHours(tokenExpires.getHours() + 24); // Token valid for 24 hours
 
-    console.log('[REGISTER] Generated token:', verificationToken);
-
     // Insert user
     const result = await query(
       `INSERT INTO pu_morning_briefings.users (email, password_hash, first_name, last_name, team, verification_token, verification_token_expires)
@@ -63,8 +61,6 @@ export async function POST(req: NextRequest) {
        RETURNING id, email`,
       [email.toLowerCase(), passwordHash, firstName, lastName, team, verificationToken, tokenExpires]
     );
-
-    console.log('[REGISTER] User created:', result.rows[0].email, '| Token stored:', verificationToken);
 
     // Send verification email
     // Use the request origin for production domains, fallback to NEXTAUTH_URL

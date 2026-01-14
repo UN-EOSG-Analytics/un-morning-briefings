@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import { Settings, Trash2, AlertTriangle, Check, X } from 'lucide-react';
 import {
@@ -28,6 +28,14 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   const [firstName, setFirstName] = useState(session?.user?.firstName || '');
   const [lastName, setLastName] = useState(session?.user?.lastName || '');
   const [isSavingName, setIsSavingName] = useState(false);
+
+  const handleOpenChange = useCallback((newOpen: boolean) => {
+    onOpenChange(newOpen);
+  }, [onOpenChange]);
+
+  const handleShowDeleteConfirm = useCallback((show: boolean) => {
+    setShowDeleteConfirm(show);
+  }, []);
 
   const handleDeleteAccount = async () => {
     if (!session?.user?.email) return;

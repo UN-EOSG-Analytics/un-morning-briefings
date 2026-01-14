@@ -101,11 +101,20 @@ function parseHtmlContentServer(html: string): Paragraph[] {
   
   // First, split by paragraph tags
   const paraRegex = /<p[^>]*>(.*?)<\/p>/gs;
-  const paraMatches = [...html.matchAll(paraRegex)];
+  const matches = [...html.matchAll(paraRegex)];
+  const paraMatches: (RegExpMatchArray | { 0: string; 1: string; index: number; input: string; groups?: undefined })[] = [];
   
-  if (paraMatches.length === 0) {
+  if (matches.length === 0) {
     // If no paragraphs found, treat entire content as one paragraph
-    paraMatches.push([html, html] as RegExpMatchArray);
+    paraMatches.push({
+      0: html,
+      1: html,
+      index: 0,
+      input: html,
+      groups: undefined,
+    });
+  } else {
+    paraMatches.push(...matches);
   }
   
   console.log('Server parser: Found', paraMatches.length, 'paragraphs');

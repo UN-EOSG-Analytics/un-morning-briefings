@@ -1,5 +1,6 @@
 'use client';
 
+import { useCallback } from 'react';
 import {
   Select,
   SelectContent,
@@ -36,6 +37,9 @@ export function SelectField({
   disabled = false,
   showLabel = true,
 }: SelectFieldProps) {
+  const handleValueChange = useCallback((newValue: string) => {
+    onValueChange(newValue);
+  }, [onValueChange]);
   return (
     <div className={`space-y-2 ${className}`}>
       {label && showLabel && (
@@ -44,7 +48,7 @@ export function SelectField({
           {required && <span className="text-red-500">*</span>}
         </label>
       )}
-      <Select value={value} onValueChange={onValueChange} disabled={disabled}>
+      <Select value={value} onValueChange={handleValueChange} disabled={disabled}>
         <SelectTrigger
           className={`w-full ${
             error ? 'border-red-500 bg-red-50' : ''

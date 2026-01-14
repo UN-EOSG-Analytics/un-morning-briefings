@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -42,6 +42,10 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
   );
   const [isExporting, setIsExporting] = useState(false);
   const [isSendingEmail, setIsSendingEmail] = useState(false);
+  
+  const handleOpenChange = useCallback((newOpen: boolean) => {
+    onOpenChange(newOpen);
+  }, [onOpenChange]);
   const [approvedEntries, setApprovedEntries] = useState<MorningMeetingEntry[]>([]);
   const [isLoadingEntries, setIsLoadingEntries] = useState(false);
   const [includeImages, setIncludeImages] = useState(true);
@@ -438,7 +442,7 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
       );
 
       showSuccess('Export Successful', 'Daily briefing exported successfully!');
-      onOpenChange(false);
+      handleOpenChange(false);
     } catch (error) {
       console.error('Error exporting briefing:', error);
       showError('Export Failed', 'Failed to export daily briefing. Please try again.');
@@ -783,7 +787,7 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
       }
 
       showSuccess('Email Sent', `Briefing sent successfully to ${session.user.email}`);
-      onOpenChange(false);
+      handleOpenChange(false);
     } catch (error) {
       console.error('Error sending briefing via email:', error);
       showError('Send Failed', error instanceof Error ? error.message : 'Failed to send briefing via email.');
@@ -869,7 +873,7 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
 
             {isExporting ? 'Exporting...' : 'Export to Word'}
           </Button>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button variant="outline" onClick={() => handleOpenChange(false)}>
             Cancel
           </Button>
         </DialogFooter>

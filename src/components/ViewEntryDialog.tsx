@@ -7,7 +7,7 @@ import { getPriorityBadgeClass } from '@/lib/useEntriesFilter';
 import { usePopup } from '@/lib/popup-context';
 import { Edit, Trash2, CheckCircle2, Circle, Sparkles } from 'lucide-react';
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 interface ViewEntryDialogProps {
   open: boolean;
@@ -29,6 +29,22 @@ export function ViewEntryDialog({
   const [summary, setSummary] = useState<string[] | null>(null);
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
   const { warning: showWarning, success: showSuccess } = usePopup();
+
+  const handleOpenChange = useCallback((newOpen: boolean) => {
+    onOpenChange(newOpen);
+  }, [onOpenChange]);
+
+  const handleDelete = useCallback(() => {
+    if (entry?.id && onDelete) {
+      onDelete(entry.id);
+    }
+  }, [entry?.id, onDelete]);
+
+  const handleApprove = useCallback(() => {
+    if (entry && onApprove) {
+      onApprove(entry);
+    }
+  }, [entry, onApprove]);
 
   // Clear summary when entry changes or dialog closes
   useEffect(() => {
@@ -74,7 +90,7 @@ export function ViewEntryDialog({
   if (!entry) return null;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="!max-w-none w-full sm:w-[95vw] md:w-[85vw] lg:w-[70vw] max-h-[95vh] flex flex-col !pt-6 sm:!pt-8 !pb-4 sm:!pb-6">
         <DialogHeader className="border-b border-slate-200 pb-4 pr-12">
           <div className="flex items-start justify-between gap-4 w-full">
@@ -336,7 +352,7 @@ export function ViewEntryDialog({
             {showApproveButton && onApprove && (
               <Button
                 variant="outline"
-                onClick={() => onApprove(entry)}
+                onClick={handleApprove}
                 className="gap-2 w-full sm:w-auto"
               >
                 {entry.approved ? (
@@ -356,7 +372,7 @@ export function ViewEntryDialog({
             {onDelete && entry.id && (
               <Button
                 variant="outline"
-                onClick={() => onDelete(entry.id!)}
+                onClick={handleDelete}
                 className="gap-2 w-full sm:w-auto text-red-600 hover:bg-red-50 hover:text-red-700"
               >
                 <Trash2 className="h-4 w-4" />
@@ -366,7 +382,7 @@ export function ViewEntryDialog({
           </div>
 
           <Button
-            onClick={() => onOpenChange(false)}
+            onClick={() => handleOpenChange(false)}
             variant="outline"
             className="w-full sm:w-auto"
           >

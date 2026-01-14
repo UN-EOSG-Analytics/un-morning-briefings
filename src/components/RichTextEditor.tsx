@@ -34,7 +34,7 @@ import {
   Wand2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect, useCallback } from 'react';
 import { usePopup } from '@/lib/popup-context';
 
 interface RichTextEditorProps {
@@ -56,6 +56,10 @@ export function RichTextEditor({
   const { warning: showWarning, success: showSuccess } = usePopup();
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isReformulating, setIsReformulating] = useState(false);
+
+  const handleChange = useCallback((newContent: string) => {
+    onChange(newContent);
+  }, [onChange]);
 
   // Custom Comment mark extension
   const CommentMark = Mark.create({
@@ -155,7 +159,7 @@ export function RichTextEditor({
     content,
     immediatelyRender: false,
     onUpdate: ({ editor }) => {
-      onChange(editor.getHTML());
+      handleChange(editor.getHTML());
     },
     editorProps: {
       attributes: {

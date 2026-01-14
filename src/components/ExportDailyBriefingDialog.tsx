@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -14,7 +15,7 @@ import {
 import { getSubmittedEntries } from '@/lib/storage';
 import { Document, Paragraph, TextRun, HeadingLevel, AlignmentType, Packer } from 'docx';
 import { saveAs } from 'file-saver';
-import { FileText, Calendar, CheckCircle2 } from 'lucide-react';
+import { FileText, Calendar, CheckCircle2, Mail, Download} from 'lucide-react';
 import { parseHtmlContent } from '@/lib/html-to-docx';
 import { usePopup } from '@/lib/popup-context';
 import type { MorningMeetingEntry } from '@/types/morning-meeting';
@@ -34,11 +35,13 @@ const createSeparator = (
   });
 
 export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogProps) {
+  const { data: session } = useSession();
   const { info: showInfo, success: showSuccess, error: showError } = usePopup();
   const [selectedDate, setSelectedDate] = useState<string>(
     new Date().toISOString().split('T')[0]
   );
   const [isExporting, setIsExporting] = useState(false);
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
   const [approvedEntries, setApprovedEntries] = useState<MorningMeetingEntry[]>([]);
   const [isLoadingEntries, setIsLoadingEntries] = useState(false);
   const [includeImages, setIncludeImages] = useState(true);
@@ -444,6 +447,351 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
     }
   };
 
+  const handleSendViaEmail = async () => {
+    if (!session?.user?.email) {
+      showError('Not Authenticated', 'You must be logged in to send emails.');
+      return;
+    }
+
+    if (approvedEntries.length === 0) {
+      showError('No Entries', 'No approved entries found for the selected date.');
+      return;
+    }
+
+    setIsSendingEmail(true);
+    try {
+      // First, generate the document blob (reusing the same logic as export)
+      // Process entries for images
+      const entriesForDate = [...approvedEntries];
+      
+      for (const entry of entriesForDate) {
+        let html = entry.entry;
+        
+        if (!includeImages) {
+          html = html.replace(/<img[^>]*>/gi, '');
+          entry.entry = html;
+          continue;
+        }
+        
+        if (entry.images && entry.images.length > 0) {
+          for (const img of entry.images) {
+            try {
+              if (img.position === null || img.position === undefined) {
+                continue;
+              }
+              
+              const ref = `image-ref://img-${img.position}`;
+              
+              if (!html.includes(ref)) {
+                continue;
+              }
+              
+              const response = await fetch(`/api/images/${img.id}`);
+              if (!response.ok) {
+                html = html.replace(new RegExp(`<img[^>]*src=["']${ref}["'][^>]*>`, 'gi'), '');
+                continue;
+              }
+              
+              const arrayBuffer = await response.arrayBuffer();
+              const base64Data = btoa(
+                new Uint8Array(arrayBuffer).reduce(
+                  (data, byte) => data + String.fromCharCode(byte),
+                  ''
+                )
+              );
+              const dataUrl = `data:${img.mimeType};base64,${base64Data}`;
+              
+              const searchPattern = new RegExp(`src=["']${ref.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}["']`, 'gi');
+              html = html.replace(searchPattern, `src="${dataUrl}"`);
+            } catch (error) {
+              console.error(`Error downloading image ${img.id}:`, error);
+              const ref = `image-ref://img-${img.position}`;
+              html = html.replace(new RegExp(`<img[^>]*src=["']${ref}["'][^>]*>`, 'gi'), '');
+            }
+          }
+        }
+        
+        const externalImgRegex = /<img[^>]*src=["']?(https?:\/\/[^"'\s>]+)["']?([^>]*)>/gi;
+        let match;
+        const replacements: Array<{from: string, to: string}> = [];
+        
+        while ((match = externalImgRegex.exec(html)) !== null) {
+          const fullTag = match[0];
+          const imageUrl = match[1];
+          const restOfTag = match[2];
+          
+          try {
+            const response = await fetch(imageUrl, { mode: 'cors' });
+            if (!response.ok) {
+              continue;
+            }
+            
+            const blob = await response.blob();
+            const arrayBuffer = await blob.arrayBuffer();
+            const base64Data = btoa(
+              new Uint8Array(arrayBuffer).reduce(
+                (data, byte) => data + String.fromCharCode(byte),
+                ''
+              )
+            );
+            
+            const mimeType = blob.type || response.headers.get('content-type') || 'image/png';
+            const dataUrl = `data:${mimeType};base64,${base64Data}`;
+            
+            const newTag = `<img src="${dataUrl}"${restOfTag}>`;
+            replacements.push({ from: fullTag, to: newTag });
+          } catch (error) {
+            console.error('Error downloading external image:', imageUrl, error);
+          }
+        }
+        
+        for (const { from, to } of replacements) {
+          html = html.replace(from, to);
+        }
+        
+        entry.entry = html;
+      }
+
+      // Sort and organize entries
+      const sortedEntries = [...entriesForDate].sort((a, b) => {
+        if (a.priority === 'sg-attention' && b.priority !== 'sg-attention') return -1;
+        if (a.priority !== 'sg-attention' && b.priority === 'sg-attention') return 1;
+        return 0;
+      });
+
+      const entriesByRegion = sortedEntries.reduce((acc, entry) => {
+        if (!acc[entry.region]) {
+          acc[entry.region] = [];
+        }
+        acc[entry.region].push(entry);
+        return acc;
+      }, {} as Record<string, typeof sortedEntries>);
+
+      const sortedRegions = Object.keys(entriesByRegion).sort();
+
+      // Build document
+      const children: any[] = [
+        new Paragraph({
+          heading: HeadingLevel.HEADING_1,
+          alignment: AlignmentType.CENTER,
+          spacing: { after: 200 },
+          children: [
+            new TextRun({
+              text: 'Daily Morning Meeting Briefing',
+              bold: true,
+              size: 32,
+              font: 'Roboto',
+            }),
+          ],
+        }),
+        new Paragraph({
+          alignment: AlignmentType.CENTER,
+          spacing: { after: 400 },
+          children: [
+            new TextRun({
+              text: new Date(selectedDate).toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+              }),
+              size: 24,
+              font: 'Roboto',
+            }),
+          ],
+        }),
+        createSeparator(),
+      ];
+
+      sortedRegions.forEach((region) => {
+        children.push(
+          new Paragraph({
+            heading: HeadingLevel.HEADING_2,
+            alignment: AlignmentType.CENTER,
+            spacing: { before: 300, after: 200 },
+            children: [
+              new TextRun({
+                text: region,
+                bold: true,
+                size: 24,
+                font: 'Roboto',
+              }),
+            ],
+          })
+        );
+
+        entriesByRegion[region].forEach((entry: MorningMeetingEntry) => {
+          children.push(
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: `${entry.country}`,
+                  bold: true,
+                  size: 24,
+                  font: 'Roboto',
+                }),
+              ],
+              spacing: { before: 300, after: 100 },
+            })
+          );
+          children.push(
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: entry.priority === 'sg-attention'
+                    ? 'SG Attention'
+                    : 'Situational Awareness',
+                  italics: true,
+                  font: 'Roboto',
+                }),
+                new TextRun({
+                  text: ` | Category: ${entry.category}`,
+                  italics: true,
+                  font: 'Roboto',
+                })
+              ],
+              spacing: { after: 100 },
+            })
+          );
+
+          children.push(
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: entry.headline,
+                  bold: true,
+                  size: 22,
+                  font: 'Roboto',
+                }),
+              ],
+              spacing: { after: 150 },
+            })
+          );
+
+          if (entry.entry) {
+            try {
+              const contentElements = parseHtmlContent(entry.entry);
+              children.push(...contentElements);
+            } catch (error) {
+              children.push(
+                new Paragraph({
+                  children: [
+                    new TextRun({
+                      text: entry.entry,
+                      font: 'Roboto',
+                    }),
+                  ],
+                  spacing: { after: 100 },
+                })
+              );
+            }
+          }
+
+          if (entry.sourceUrl) {
+            children.push(
+              new Paragraph({
+                children: [
+                  new TextRun({
+                    text: 'Source: ',
+                    italics: true,
+                    font: 'Roboto',
+                  }),
+                  new TextRun({
+                    text: entry.sourceUrl,
+                    italics: true,
+                    font: 'Roboto',
+                  }),
+                ],
+                spacing: { after: 100 },
+              })
+            );
+          }
+
+          if (entry.puNote) {
+            children.push(
+              new Paragraph({
+                children: [
+                  new TextRun({
+                    text: 'PU Note: ',
+                    bold: true,
+                    font: 'Roboto',
+                  }),
+                  new TextRun({
+                    text: entry.puNote,
+                    font: 'Roboto',
+                  }),
+                ],
+                spacing: { after: 100 },
+              })
+            );
+          }
+
+          children.push(createSeparator());
+        });
+      });
+
+      children.push(
+        new Paragraph({
+          alignment: AlignmentType.CENTER,
+          spacing: { before: 400 },
+          children: [
+            new TextRun({
+              text: `Exported on ${new Date().toLocaleString('en-US')}`,
+              italics: true,
+              font: 'Roboto',
+            }),
+          ],
+        })
+      );
+
+      const doc = new Document({
+        sections: [
+          {
+            properties: {},
+            children,
+          },
+        ],
+      });
+
+      // Generate blob
+      const blob = await Packer.toBlob(doc);
+      
+      // Convert blob to base64
+      const arrayBuffer = await blob.arrayBuffer();
+      const base64Data = btoa(
+        new Uint8Array(arrayBuffer).reduce(
+          (data, byte) => data + String.fromCharCode(byte),
+          ''
+        )
+      );
+      const docxBlob = `data:application/vnd.openxmlformats-officedocument.wordprocessingml.document;base64,${base64Data}`;
+
+      // Send via API
+      const response = await fetch('/api/send-briefing', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          docxBlob,
+          fileName: `Morning-Briefing-${selectedDate}.docx`,
+          briefingDate: selectedDate,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to send email');
+      }
+
+      showSuccess('Email Sent', `Briefing sent successfully to ${session.user.email}`);
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Error sending briefing via email:', error);
+      showError('Send Failed', error instanceof Error ? error.message : 'Failed to send briefing via email.');
+    } finally {
+      setIsSendingEmail(false);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
@@ -508,12 +856,21 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
             </div>
           </div>
         </div>
-        <DialogFooter>
+        <DialogFooter className="flex gap-2 w-full justify-between">
+          <Button 
+            onClick={handleSendViaEmail} 
+            disabled={isSendingEmail || isExporting}
+          >
+            <Mail className="h-4 w-4" />
+            {isSendingEmail ? 'Sending...' : 'Send via Email'}
+          </Button>
+          <Button onClick={handleExport} disabled={isExporting || isSendingEmail}>
+            <Download className="h-4 w-4" />
+
+            {isExporting ? 'Exporting...' : 'Export to Word'}
+          </Button>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
-          </Button>
-          <Button onClick={handleExport} disabled={isExporting}>
-            {isExporting ? 'Exporting...' : 'Export to Word'}
           </Button>
         </DialogFooter>
       </DialogContent>

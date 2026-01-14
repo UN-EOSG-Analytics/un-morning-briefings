@@ -1,4 +1,6 @@
 import nodemailer from 'nodemailer';
+import * as fs from 'fs';
+import * as path from 'path';
 
 // Create a transporter using the configured SMTP server
 const transporter = nodemailer.createTransport({
@@ -18,8 +20,19 @@ export async function sendVerificationEmail(
   baseUrl: string
 ) {
   const verificationUrl = `${baseUrl}/api/auth/verify-email?token=${token}`;
-  const logoUrl = `${baseUrl}/images/UN_Logo_Horizontal_Colour_English.png`;
   const siteTitle = 'United Nations | Morning Briefings';
+
+  // Read and encode the logo as base64
+  let logoDataUri = '';
+  try {
+    const logoPath = path.join(process.cwd(), 'public/images/UN_Logo_Horizontal_Colour_English.png');
+    const logoBuffer = fs.readFileSync(logoPath);
+    logoDataUri = `data:image/png;base64,${logoBuffer.toString('base64')}`;
+  } catch (error) {
+    console.warn('[EMAIL SERVICE] Warning: Could not read logo file', error);
+    // Fallback: use a simple UN text if logo can't be loaded
+    logoDataUri = '';
+  }
 
   const mailOptions = {
     from: process.env.SMTP_FROM,
@@ -42,9 +55,9 @@ export async function sendVerificationEmail(
                     <td style="padding:0 0 24px;">
                       <table cellpadding="0" cellspacing="0">
                         <tr>
-                          <td style="vertical-align:middle;padding-right:16px;">
-                            <img src="${logoUrl}" alt="UN" width="120" style="display:block;border:none;max-width:100%;" />
-                          </td>
+                          ${logoDataUri ? `<td style="vertical-align:middle;padding-right:16px;">
+                            <img src="${logoDataUri}" alt="UN" width="180" style="display:block;border:none;max-width:100%;" />
+                          </td>` : ''}
                           <td style="vertical-align:middle;">
                             <div style="font-size:20px;font-weight:700;color:#000000;line-height:1.2;">${siteTitle}</div>
                           </td>

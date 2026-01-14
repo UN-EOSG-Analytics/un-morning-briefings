@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { SelectField } from '@/components/SelectField';
 import { RichTextEditor } from '@/components/RichTextEditor';
 import {
@@ -27,6 +28,7 @@ import {
   Calendar,
   Zap,
   Type,
+  Sparkles,
 } from 'lucide-react';
 import { usePopup } from '@/lib/popup-context';
 
@@ -116,7 +118,7 @@ export function MorningMeetingForm({
 
   const [formData, setFormData] = useState<MorningMeetingEntry>({
     category: initialData?.category || '',
-    priority: initialData?.priority || 'situational-awareness',
+    priority: initialData?.priority || '',
     region: initialData?.region || '',
     country: initialData?.country || '',
     headline: initialData?.headline || '',
@@ -131,10 +133,32 @@ export function MorningMeetingForm({
   const [showPuNote, setShowPuNote] = useState(false);
   const [draftSaved, setDraftSaved] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [availableCountries, setAvailableCountries] = useState<string[]>([]);
+  
+  // Initialize available countries - show all if no region selected, or filter by region
+  const [availableCountries, setAvailableCountries] = useState<string[]>(() => {
+    const initialRegion = initialData?.region;
+    if (initialRegion && COUNTRIES_BY_REGION[initialRegion]) {
+      const countries = COUNTRIES_BY_REGION[initialRegion];
+      if (initialData?.country && !countries.includes(initialData.country)) {
+        return [initialData.country, ...countries];
+      }
+      return countries;
+    }
+    // If no initial region, show all countries sorted
+    const allCountries = new Set<string>();
+    Object.values(COUNTRIES_BY_REGION).forEach((countries) => {
+      countries.forEach((country) => allCountries.add(country));
+    });
+    return Array.from(allCountries).sort();
+  });
+  
   const [useRichText, setUseRichText] = useState<boolean | null>(null);
   const [hasUserToggled, setHasUserToggled] = useState(false);
+  const [showAutoFillDialog, setShowAutoFillDialog] = useState(false);
+  const [autoFillContent, setAutoFillContent] = useState('');
+  const [isAutoFilling, setIsAutoFilling] = useState(false);
   const { data: session } = useSession();
+  const { warning: showWarning, success: showSuccess } = usePopup();
 
   // Autofill form with current user's information
   useEffect(() => {
@@ -185,6 +209,7 @@ export function MorningMeetingForm({
   // Update available countries when region changes
   useEffect(() => {
     if (formData.region && COUNTRIES_BY_REGION[formData.region]) {
+      // If region is selected, show only countries from that region
       const countries = COUNTRIES_BY_REGION[formData.region];
       // Ensure existing country is included
       if (formData.country && !countries.includes(formData.country)) {
@@ -192,11 +217,14 @@ export function MorningMeetingForm({
       } else {
         setAvailableCountries(countries);
       }
-    } else if (formData.country) {
-      // If no region selected but country exists, still show it
-      setAvailableCountries([formData.country]);
     } else {
-      setAvailableCountries([]);
+      // If no region selected, show all countries
+      const allCountries = new Set<string>();
+      Object.values(COUNTRIES_BY_REGION).forEach((countries) => {
+        countries.forEach((country) => allCountries.add(country));
+      });
+      const sortedCountries = Array.from(allCountries).sort();
+      setAvailableCountries(sortedCountries);
     }
   }, [formData.region, formData.country]);
 
@@ -210,6 +238,16 @@ export function MorningMeetingForm({
       setFormData((prev) => ({ ...prev, country: '' }));
     }
   }, [availableCountries, formData.country]);
+
+  // Helper function to find region that contains a country
+  const findRegionForCountry = (country: string): string | null => {
+    for (const [region, countries] of Object.entries(COUNTRIES_BY_REGION)) {
+      if (countries.includes(country)) {
+        return region;
+      }
+    }
+    return null;
+  };
 
   const handleInputChange = useCallback(
     (
@@ -232,6 +270,41 @@ export function MorningMeetingForm({
 
   const handleSelectChange = useCallback(
     (name: string, value: string) => {
+      // If selecting a country without a region, auto-set the region
+      if (name === 'country' && value && !formData.region) {
+        const region = findRegionForCountry(value);
+        if (region) {
+          setFormData((prev) => ({ ...prev, [name]: value, region }));
+          // Clear errors for both fields
+          if (errors.country || errors.region) {
+            setErrors((prev) => {
+              const newErrors = { ...prev };
+              delete newErrors.country;
+              delete newErrors.region;
+              return newErrors;
+            });
+          }
+          return;
+        }
+      }
+
+      // If changing region, reset country if it's not in the new region
+      if (name === 'region' && value && formData.country) {
+        const regionCountries = COUNTRIES_BY_REGION[value];
+        if (regionCountries && !regionCountries.includes(formData.country)) {
+          setFormData((prev) => ({ ...prev, [name]: value, country: '' }));
+          if (errors.country || errors.region) {
+            setErrors((prev) => {
+              const newErrors = { ...prev };
+              delete newErrors.country;
+              delete newErrors.region;
+              return newErrors;
+            });
+          }
+          return;
+        }
+      }
+
       setFormData((prev) => ({ ...prev, [name]: value }));
 
       // Clear error for this field
@@ -243,7 +316,7 @@ export function MorningMeetingForm({
         });
       }
     },
-    [errors]
+    [errors, formData.region, formData.country]
   );
 
   const validateForm = useCallback((): boolean => {
@@ -357,8 +430,73 @@ export function MorningMeetingForm({
     }
   };
 
-  const getPriorityLabel = (value: string) => {
-    return PRIORITIES.find((p) => p.value === value)?.label || value;
+  const handleAutoFill = async () => {
+    if (!autoFillContent.trim()) {
+      showWarning('No Content', 'Please paste some content to analyze');
+      return;
+    }
+
+    setIsAutoFilling(true);
+    try {
+      const response = await fetch('/api/auto-fill', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ content: autoFillContent }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        const errorMessage = error.error || 'Failed to process content';
+        
+        // Check if it's an API key configuration error
+        if (errorMessage.includes('GEMINI_API_KEY') || errorMessage.includes('not configured')) {
+          showWarning('AI Usage not enabled', 'Please wait for Update');
+        } else {
+          showWarning('Auto-Fill Failed', errorMessage);
+        }
+        return;
+      }
+
+      const result = await response.json();
+
+      // Update available countries BEFORE setting form data
+      // This ensures the country dropdown is populated when we set the country value
+      if (result.region && COUNTRIES_BY_REGION[result.region]) {
+        const regionCountries = COUNTRIES_BY_REGION[result.region];
+        // If country is not in the region list, add it anyway (like existing logic does)
+        if (result.country && !regionCountries.includes(result.country)) {
+          setAvailableCountries([result.country, ...regionCountries]);
+        } else {
+          setAvailableCountries(regionCountries);
+        }
+      } else if (result.country) {
+        // If region not found but country exists, still show the country
+        setAvailableCountries([result.country]);
+      }
+
+      // Update form with AI results
+      setFormData((prev) => ({
+        ...prev,
+        category: result.category || prev.category,
+        priority: result.priority || prev.priority,
+        region: result.region || prev.region,
+        country: result.country || prev.country,
+        headline: result.headline || prev.headline,
+        date: result.date || prev.date,
+        entry: result.entry || prev.entry,
+      }));
+
+      setShowAutoFillDialog(false);
+      setAutoFillContent('');
+      showSuccess('Form Auto-Filled', 'The form has been filled with AI-analyzed data. Please review and adjust as needed.');
+    } catch (error) {
+      console.error('[AUTO-FILL] Error:', error);
+      showWarning('AI Usage not enabled', 'Please wait for Update');
+    } finally {
+      setIsAutoFilling(false);
+    }
   };
 
   const currentDate = new Date().toLocaleDateString('en-US', {
@@ -373,17 +511,30 @@ export function MorningMeetingForm({
       <div className="mx-auto w-full max-w-6xl">
         {/* Header */}
         <Card className="mb-0 rounded-b-none border-b-0 py-4 sm:py-6">
-          <CardHeader className="p-4 sm:p-6">
-            <div className="flex items-center gap-2 sm:gap-3">
-              <div className="flex shrink-0 items-center justify-center rounded bg-un-blue p-2">
-                <FileText className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+          <CardHeader className="px-4 sm:px-6">
+            <div className="flex items-center justify-between gap-2 sm:gap-3">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="flex shrink-0 items-center justify-center rounded bg-un-blue p-2">
+                  <FileText className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+                </div>
+                <div className="min-w-0">
+                  <CardTitle className="text-lg sm:text-2xl">Morning Briefing Entry Form</CardTitle>
+                  <CardDescription className="text-xs sm:text-sm">
+                    Political Unit (EOSG) • Data Management System
+                  </CardDescription>
+                </div>
               </div>
-              <div className="min-w-0">
-                <CardTitle className="text-lg sm:text-2xl">Morning Briefing Entry Form</CardTitle>
-                <CardDescription className="text-xs sm:text-sm">
-                  Political Unit (EOSG) • Data Management System
-                </CardDescription>
-              </div>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => setShowAutoFillDialog(true)}
+                className="shrink-0"
+                title="Paste content to auto-fill form with AI"
+              >
+                <Sparkles className="h-4 w-4 mr-1.5" />
+                <span className="hidden sm:inline">Auto-Fill</span>
+              </Button>
             </div>
             <div className="mt-3 sm:mt-4 flex flex-wrap items-center gap-2 sm:gap-4 text-xs text-slate-500">
               <span className="flex items-center gap-1">
@@ -445,13 +596,12 @@ export function MorningMeetingForm({
                   {/* Country */}
                   <SelectField
                     label="Country"
-                    placeholder={availableCountries.length === 0 && !formData.country ? "Select region first" : "Select country..."}
+                    placeholder="Select country..."
                     value={formData.country}
                     onValueChange={(value) => handleSelectChange('country', value)}
                     options={availableCountries.map((country) => ({ value: country, label: country }))}
                     error={errors.country}
                     required={true}
-                    disabled={availableCountries.length === 0 && !formData.country}
                   />
                 </div>
               </section>
@@ -724,6 +874,62 @@ export function MorningMeetingForm({
 
       
       </div>
+
+      {/* Auto-Fill Dialog */}
+      <Dialog open={showAutoFillDialog} onOpenChange={setShowAutoFillDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-un-blue" />
+              Auto-Fill Form with AI
+            </DialogTitle>
+            <DialogDescription>
+              Paste news content, article text, or briefing information below. AI will analyze it and automatically fill the form fields.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium text-slate-700 mb-2 block">
+                Content to Analyze
+              </label>
+              <textarea
+                value={autoFillContent}
+                onChange={(e) => setAutoFillContent(e.target.value)}
+                placeholder="Paste your content here... (news article, briefing text, report excerpt, etc.)"
+                className="w-full min-h-[200px] rounded border border-slate-300 bg-slate-50 px-3 py-2 text-sm outline-none transition focus:border-un-blue focus:ring-2 focus:ring-un-blue/15 resize-none"
+                disabled={isAutoFilling}
+              />
+            </div>
+            <div className="text-xs text-slate-500 bg-slate-50 p-3 rounded border border-slate-200">
+              <strong>AI will extract:</strong> Category, Priority, Region, Country, Headline, Date, and Entry Content
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setShowAutoFillDialog(false);
+                setAutoFillContent('');
+              }}
+              disabled={isAutoFilling}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={handleAutoFill}
+              disabled={isAutoFilling || !autoFillContent.trim()}
+              className="gap-2"
+            >
+              <Sparkles className="h-4 w-4" />
+              {isAutoFilling ? 'Processing...' : 'Auto-Fill Form'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

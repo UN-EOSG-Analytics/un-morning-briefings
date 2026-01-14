@@ -4,7 +4,7 @@ import labels from '@/lib/labels.json';
 export interface MorningMeetingEntry {
   id?: string;
   category: string;
-  priority: 'sg-attention' | 'situational-awareness';
+  priority: 'sg-attention' | 'situational-awareness' | '';
   region: string;
   country: string;
   headline: string;
@@ -13,6 +13,11 @@ export interface MorningMeetingEntry {
   sourceUrl?: string;
   puNote?: string;
   author?: string;
+  images?: Array<{
+    id: string;
+    position: number | null;
+    mimeType: string;
+  }>;
   createdAt?: Date;
   updatedAt?: Date;
   status?: 'draft' | 'submitted';

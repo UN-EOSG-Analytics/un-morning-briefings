@@ -1,4 +1,4 @@
 export const TEAMS = [
-  { value: 'eosg-political', label: 'EOSG - Political Unit' },
-  { value: 'other', label: 'Other' },
+  { value: 'EOSG - Political Unit', label: 'EOSG - Political Unit' },
+  { value: 'Other', label: 'Other' },
 ];

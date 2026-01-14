@@ -99,54 +99,96 @@ function calculateImageDimensions(
 function parseHtmlContentServer(html: string): Paragraph[] {
   const paragraphs: Paragraph[] = [];
   
-  // Extract images with data URLs including dimensions
-  const imgRegex = /<img\s+[^>]*?src\s*=\s*["']?(data:image[^"'\s>]+)["']?[^>]*?(?:data-width\s*=\s*["']?(\d+)["'])?[^>]*?(?:data-height\s*=\s*["']?(\d+)["'])?[^>]*?>/gi;
-  let match;
+  // First, split by paragraph tags
+  const paraRegex = /<p[^>]*>(.*?)<\/p>/gs;
+  const paraMatches = [...html.matchAll(paraRegex)];
   
-  console.log('Server parser: Looking for data URL images');
-  while ((match = imgRegex.exec(html)) !== null) {
-    const dataUrl = match[1];
-    const dataWidth = match[2];
-    const dataHeight = match[3];
-    console.log('Server parser: Found data URL image with dimensions:', { width: dataWidth, height: dataHeight });
+  if (paraMatches.length === 0) {
+    // If no paragraphs found, treat entire content as one paragraph
+    paraMatches.push([html, html] as RegExpMatchArray);
+  }
+  
+  console.log('Server parser: Found', paraMatches.length, 'paragraphs');
+  
+  for (const paraMatch of paraMatches) {
+    let paraContent = paraMatch[1] || paraMatch[0];
+    const paraRuns: (TextRun | ImageRun)[] = [];
     
-    try {
-      const buffer = base64ToBuffer(dataUrl);
-      const dims = calculateImageDimensions(dataWidth, dataHeight, buffer, 500);
+    // Split content by <br> tags first
+    const parts = paraContent.split(/<br\s*\/?>/i);
+    
+    for (let partIndex = 0; partIndex < parts.length; partIndex++) {
+      const part = parts[partIndex];
       
-      paragraphs.push(
-        new Paragraph({
-          children: [
+      // Process images within this part
+      const imgRegex = /<img\s+[^>]*?src\s*=\s*["']?(data:image[^"'\s>]+)["']?[^>]*?(?:data-width\s*=\s*["']?(\d+)["'])?[^>]*?(?:data-height\s*=\s*["']?(\d+)["'])?[^>]*?>/gi;
+      let lastIndex = 0;
+      let imgMatch;
+      
+      while ((imgMatch = imgRegex.exec(part)) !== null) {
+        // Add text before the image
+        const textBefore = part.substring(lastIndex, imgMatch.index);
+        const cleanedText = textBefore.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').trim();
+        if (cleanedText) {
+          paraRuns.push(new TextRun({ text: cleanedText, font: 'Roboto' }));
+        }
+        
+        // Add the image
+        const dataUrl = imgMatch[1];
+        const dataWidth = imgMatch[2];
+        const dataHeight = imgMatch[3];
+        console.log('Server parser: Found data URL image with dimensions:', { width: dataWidth, height: dataHeight });
+        
+        try {
+          const buffer = base64ToBuffer(dataUrl);
+          const dims = calculateImageDimensions(dataWidth, dataHeight, buffer, 500);
+          
+          paraRuns.push(
             new ImageRun({
               data: buffer as unknown as Uint8Array,
               type: 'png',
               transformation: { width: dims.width, height: dims.height },
-            }),
-          ],
+            })
+          );
+          console.log('Server parser: Successfully embedded data URL image');
+        } catch (error) {
+          console.error('Server parser: Error processing data URL image:', error);
+          paraRuns.push(new TextRun({ text: '[Image]', color: '0563C1', underline: {}, font: 'Roboto' }));
+        }
+        
+        lastIndex = imgMatch.index + imgMatch[0].length;
+      }
+      
+      // Add remaining text after the last image
+      const textAfter = part.substring(lastIndex);
+      const cleanedTextAfter = textAfter.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').trim();
+      if (cleanedTextAfter) {
+        paraRuns.push(new TextRun({ text: cleanedTextAfter, font: 'Roboto' }));
+      }
+      
+      // Add line break between parts (except after the last part)
+      if (partIndex < parts.length - 1) {
+        paraRuns.push(new TextRun({ text: '', break: 1 }));
+      }
+    }
+    
+    // Only add paragraph if it has content
+    if (paraRuns.length > 0) {
+      paragraphs.push(
+        new Paragraph({
+          children: paraRuns,
           spacing: { after: 100 },
         })
       );
-      console.log('Server parser: Successfully embedded data URL image');
-    } catch (error) {
-      console.error('Server parser: Error processing data URL image:', error);
+    } else if (paraContent.trim() === '' || paraContent.match(/<br\s*\/?>/i)) {
+      // Empty paragraph (for line breaks)
       paragraphs.push(
         new Paragraph({
-          children: [new TextRun({ text: '[Image]', color: '0563C1', underline: {}, font: 'Roboto' })],
+          children: [new TextRun({ text: '' })],
           spacing: { after: 100 },
         })
       );
     }
-  }
-  
-  // Extract text content, removing all HTML tags (this captures text between images)
-  const textOnly = html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
-  if (textOnly) {
-    paragraphs.push(
-      new Paragraph({
-        children: [new TextRun({ text: textOnly, font: 'Roboto' })],
-        spacing: { after: 100 },
-      })
-    );
   }
   
   console.log('Server parser: Finished, returned', paragraphs.length, 'paragraphs');
@@ -190,6 +232,14 @@ function parseHtmlContentClient(html: string): Paragraph[] {
         paragraphs.push(
           new Paragraph({
             children,
+            spacing: { after: 100 },
+          })
+        );
+      } else if (!element.textContent?.trim() && element.innerHTML.includes('<br>')) {
+        // Empty paragraph with br tag - preserve as line break
+        paragraphs.push(
+          new Paragraph({
+            children: [new TextRun({ text: '' })],
             spacing: { after: 100 },
           })
         );
@@ -339,15 +389,27 @@ function extractTextRuns(element: Element): any[] {
 
   for (const node of Array.from(element.childNodes)) {
     if (node.nodeType === Node.TEXT_NODE) {
-      const text = (node as Text).textContent?.trim();
+      const text = (node as Text).textContent;
       if (text) {
-        runs.push(new TextRun({ text, font: 'Roboto' }));
+        // Split by line breaks if any
+        const lines = text.split('\n');
+        lines.forEach((line, index) => {
+          if (line) {
+            runs.push(new TextRun({ text: line, font: 'Roboto' }));
+          }
+          if (index < lines.length - 1) {
+            runs.push(new TextRun({ text: '', break: 1 }));
+          }
+        });
       }
     } else if (node.nodeType === Node.ELEMENT_NODE) {
       const el = node as Element;
       const tag = el.tagName.toLowerCase();
 
       switch (tag) {
+        case 'br':
+          runs.push(new TextRun({ text: '', break: 1 }));
+          break;
         case 'strong':
         case 'b':
           runs.push(new TextRun({ text: el.textContent || '', bold: true, font: 'Roboto' }));

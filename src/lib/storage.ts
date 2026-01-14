@@ -309,16 +309,16 @@ export async function getSubmittedEntries(): Promise<any[]> {
  * Toggle the approval status of an entry
  * 
  * @param entryId - Entry ID to update
- * @param approved - New approval status
+ * @param approvalStatus - New approval status
  * @returns Promise that resolves to the updated entry
  */
-export async function toggleApproval(entryId: string, approved: boolean): Promise<any> {
+export async function toggleApproval(entryId: string, approvalStatus: 'pending' | 'approved' | 'denied'): Promise<any> {
   const response = await fetch(`/api/entries`, {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ id: entryId, approved }),
+    body: JSON.stringify({ id: entryId, approvalStatus }),
   });
 
   if (!response.ok) {

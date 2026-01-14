@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { MorningMeetingEntry, PRIORITIES } from '@/types/morning-meeting';
 import { getPriorityBadgeClass } from '@/lib/useEntriesFilter';
 import { usePopup } from '@/lib/popup-context';
-import { Edit, Trash2, CheckCircle2, Circle, Sparkles } from 'lucide-react';
+import { Edit, Trash2, Check, X, Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useEffect, useCallback } from 'react';
 
@@ -18,6 +18,7 @@ interface ViewEntryDialogProps {
   onDelete?: (id: string) => void;
   onApprove?: (entry: any) => void;
   showApproveButton?: boolean;
+  allEntries?: MorningMeetingEntry[];
 }
 
 export function ViewEntryDialog({ 
@@ -27,10 +28,13 @@ export function ViewEntryDialog({
   onDelete,
   onApprove,
   showApproveButton = false,
+  allEntries = [],
 }: ViewEntryDialogProps) {
   const [summary, setSummary] = useState<string[] | null>(null);
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
+  const [isUpdatingApproval, setIsUpdatingApproval] = useState(false);
   const { warning: showWarning, success: showSuccess } = usePopup();
+  const [currentIndex, setCurrentIndex] = useState(0);
 
   const handleOpenChange = useCallback((newOpen: boolean) => {
     onOpenChange(newOpen);
@@ -42,19 +46,81 @@ export function ViewEntryDialog({
     }
   }, [entry?.id, onDelete]);
 
-  const handleApprove = useCallback(() => {
-    if (entry && onApprove) {
-      onApprove(entry);
+  const handlePrevious = useCallback(() => {
+    if (currentIndex > 0 && allEntries.length > 0) {
+      const newIndex = currentIndex - 1;
+      setCurrentIndex(newIndex);
+      // Entry will update automatically through effect
     }
-  }, [entry, onApprove]);
+  }, [currentIndex, allEntries.length]);
+
+  const handleNext = useCallback(() => {
+    if (currentIndex < allEntries.length - 1) {
+      const newIndex = currentIndex + 1;
+      setCurrentIndex(newIndex);
+      // Entry will update automatically through effect
+    }
+  }, [currentIndex, allEntries.length]);
+
+  // Update current index when entry changes
+  useEffect(() => {
+    if (entry && allEntries.length > 0) {
+      const index = allEntries.findIndex(e => e.id === entry.id);
+      if (index >= 0) {
+        setCurrentIndex(index);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [entry?.id, allEntries]);
+
+  // Get the current entry from allEntries if available
+  const displayEntry = allEntries.length > 0 ? allEntries[currentIndex] : entry;
+
+  const handleApprove = useCallback(async (status: 'pending' | 'approved' | 'denied') => {
+    if (!displayEntry?.id) return;
+    
+    setIsUpdatingApproval(true);
+    try {
+      const response = await fetch('/api/entries', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: displayEntry.id, approvalStatus: status }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update approval status');
+      }
+
+      const statusLabels = {
+        approved: 'Approved',
+        denied: 'Denied',
+        pending: 'Pending'
+      };
+
+      showSuccess(
+        statusLabels[status],
+        `Entry status changed to ${statusLabels[status].toLowerCase()}`
+      );
+
+      // Call the onApprove callback to refresh the data
+      if (onApprove) {
+        onApprove({ ...displayEntry, approvalStatus: status });
+      }
+    } catch (error) {
+      console.error('Approval update error:', error);
+      showWarning('Update Failed', 'Failed to update approval status. Please try again.');
+    } finally {
+      setIsUpdatingApproval(false);
+    }
+  }, [displayEntry, onApprove, showSuccess, showWarning]);
 
   // Clear summary when entry changes or dialog closes
   useEffect(() => {
     setSummary(null);
-  }, [entry?.id, open]);
+  }, [displayEntry?.id, open]);
 
   const handleGenerateSummary = async () => {
-    if (!entry?.entry) return;
+    if (!displayEntry?.entry) return;
     
     setIsGeneratingSummary(true);
     
@@ -62,7 +128,7 @@ export function ViewEntryDialog({
       const response = await fetch('/api/summarize', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: entry.entry }),
+        body: JSON.stringify({ content: displayEntry.entry }),
       });
       
       if (!response.ok) {
@@ -89,31 +155,31 @@ export function ViewEntryDialog({
     }
   };
 
-  if (!entry) return null;
+  if (!displayEntry) return null;
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="!max-w-none w-full sm:w-[95vw] md:w-[85vw] lg:w-[70vw] max-h-[95vh] flex flex-col !pt-6 sm:!pt-8 !pb-4 sm:!pb-6">
+      <DialogContent className="!max-w-none w-full sm:w-[95vw] md:w-[85vw] lg:w-[70vw] h-[90vh] flex flex-col !pt-6 sm:!pt-8 !pb-4 sm:!pb-6">
         <DialogHeader className="border-b border-slate-200 pb-4 pr-12">
           <div className="flex items-start justify-between gap-4 w-full">
             <div className="flex-1">
               <DialogTitle className="text-2xl font-bold text-slate-900 mb-3">
-                {entry.headline}
+                {displayEntry.headline}
               </DialogTitle>
               
               <div className="flex gap-2 flex-wrap">
                 {/* Date Badge */}
                 <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">
-                  {new Date(entry.date).toLocaleDateString('en-US', {
+                  {new Date(displayEntry.date).toLocaleDateString('en-US', {
                     month: 'short',
                     day: 'numeric',
                     year: 'numeric',
                   })}
                 </span>
                 {/* Priority Badge */}
-                <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${getPriorityBadgeClass(entry.priority)}`}>
-                  <span className={`h-1.5 w-1.5 rounded-full ${entry.priority === 'sg-attention' ? 'bg-red-600' : 'bg-blue-600'}`} />
-                  {PRIORITIES.find(p => p.value === entry.priority)?.label}
+                <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${getPriorityBadgeClass(displayEntry.priority)}`}>
+                  <span className={`h-1.5 w-1.5 rounded-full ${displayEntry.priority === 'sg-attention' ? 'bg-red-600' : 'bg-blue-600'}`} />
+                  {PRIORITIES.find(p => p.value === displayEntry.priority)?.label}
                 </span>
               </div>
             </div>
@@ -162,22 +228,22 @@ export function ViewEntryDialog({
           <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-x-4 sm:gap-x-6 gap-y-3 mb-6 py-4 border-b border-slate-200">
             <div>
               <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Region</div>
-              <div className="text-sm text-slate-900">{entry.region}</div>
+              <div className="text-sm text-slate-900">{displayEntry.region}</div>
             </div>
 
             <div>
               <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Country</div>
-              <div className="text-sm text-slate-900">{entry.country}</div>
+              <div className="text-sm text-slate-900">{displayEntry.country}</div>
             </div>
 
             <div>
               <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Category</div>
-              <div className="text-sm text-slate-900">{entry.category}</div>
+              <div className="text-sm text-slate-900">{displayEntry.category}</div>
             </div>
 
             <div>
-              <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Source</div>
-              <div className="text-sm text-slate-900">{entry.source || 'N/A'}</div>
+              <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Author</div>
+              <div className="text-sm text-slate-900">{displayEntry.author || 'N/A'}</div>
             </div>
           </div>
 
@@ -186,7 +252,7 @@ export function ViewEntryDialog({
             <div
               className="entry-content"
               dangerouslySetInnerHTML={{
-                __html: entry.entry,
+                __html: displayEntry.entry,
               }}
             />
             <style jsx global>{`
@@ -309,87 +375,135 @@ export function ViewEntryDialog({
           </div>
 
           {/* PU notes */}
-          {(entry.puNote || entry.pu_notes) && (
+          {displayEntry.puNote && (
             <div className="mb-6 pb-6 border-b border-slate-200">
               <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">
                 PU Notes
               </div>
               <div className="text-sm text-slate-700 break-words whitespace-pre-wrap">
-                {entry.puNote || entry.pu_notes}
+                {displayEntry.puNote}
               </div>
             </div>
           )}
 
           {/* Source URL */}
-          {(entry.sourceUrl || entry.source_url) && (
+          {displayEntry.sourceUrl && (
             <div>
               <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">
                 Source URL
               </div>
               <a
-                href={entry.sourceUrl || entry.source_url}
+                href={displayEntry.sourceUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-un-blue hover:underline break-all text-sm"
               >
-                {entry.sourceUrl || entry.source_url}
+                {displayEntry.sourceUrl}
               </a>
             </div>
           )}
         </div>
 
         {/* Footer */}
-        <div className="border-t border-slate-200 pt-3 sm:pt-4 flex flex-col-reverse sm:flex-row justify-between gap-3 sm:gap-2 px-4 sm:px-6">
-          <div className="flex gap-2 flex-col sm:flex-row w-full sm:w-auto">
-            <Link href={`/form?edit=${entry.id}`} className="w-full sm:w-auto">
+        <div className="border-t border-slate-200 pt-3 sm:pt-4 flex flex-col gap-3 px-4 sm:px-6">
+          {/* Navigation buttons */}
+          {allEntries.length > 1 && (
+            <div className="flex gap-2 justify-center">
               <Button
                 variant="outline"
-                className="gap-2 w-full sm:w-auto"
+                size="sm"
+                onClick={handlePrevious}
+                disabled={currentIndex === 0}
+                className="gap-2"
               >
-                <Edit className="h-4 w-4" />
-                Edit
+                <ChevronLeft className="h-4 w-4" />
+                Previous
               </Button>
-            </Link>
-            
-            {showApproveButton && onApprove && (
+              <span className="flex items-center text-sm text-slate-600">
+                {currentIndex + 1} of {allEntries.length}
+              </span>
               <Button
                 variant="outline"
-                onClick={handleApprove}
-                className="gap-2 w-full sm:w-auto"
+                size="sm"
+                onClick={handleNext}
+                disabled={currentIndex >= allEntries.length - 1}
+                className="gap-2"
               >
-                {entry.approved ? (
-                  <>
-                    <CheckCircle2 className="h-4 w-4" />
-                    Approved
-                  </>
-                ) : (
-                  <>
-                    <Circle className="h-4 w-4" />
+                Next
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
+
+          {/* Action buttons */}
+          <div className="flex flex-col-reverse sm:flex-row justify-between gap-3 sm:gap-2">
+            <div className="flex gap-2 flex-col sm:flex-row w-full sm:w-auto">
+              <Link href={`/form?edit=${displayEntry.id}`} className="w-full sm:w-auto">
+                <Button
+                  variant="outline"
+                  className="gap-2 w-full sm:w-auto"
+                >
+                  <Edit className="h-4 w-4" />
+                  Edit
+                </Button>
+              </Link>
+              
+              {showApproveButton && onApprove && (
+                <div className="flex gap-2 w-full sm:w-auto">
+                  <Button
+                    variant={displayEntry.approvalStatus === 'approved' ? 'default' : 'outline'}
+                    onClick={() => handleApprove('approved')}
+                    disabled={isUpdatingApproval}
+                    className={`gap-2 flex-1 sm:flex-none ${
+                      displayEntry.approvalStatus === 'approved'
+                        ? 'bg-green-600 hover:bg-green-700 text-white'
+                        : displayEntry.approvalStatus === 'denied'
+                        ? 'opacity-50 text-green-600 hover:opacity-100 hover:bg-green-50 hover:text-green-700'
+                        : 'text-green-600 hover:bg-green-50 hover:text-green-700'
+                    }`}
+                  >
+                    <Check className="h-4 w-4" />
                     Approve
-                  </>
-                )}
-              </Button>
-            )}
+                  </Button>
+                  
+                  <Button
+                    variant={displayEntry.approvalStatus === 'denied' ? 'default' : 'outline'}
+                    onClick={() => handleApprove('denied')}
+                    disabled={isUpdatingApproval}
+                    className={`gap-2 flex-1 sm:flex-none ${
+                      displayEntry.approvalStatus === 'denied'
+                        ? 'bg-red-600 hover:bg-red-700 text-white'
+                        : displayEntry.approvalStatus === 'approved'
+                        ? 'opacity-50 text-red-600 hover:opacity-100 hover:bg-red-50 hover:text-red-700'
+                        : 'text-red-600 hover:bg-red-50 hover:text-red-700'
+                    }`}
+                  >
+                    <X className="h-4 w-4" />
+                    Deny
+                  </Button>
+                </div>
+              )}
 
-            {onDelete && entry.id && (
-              <Button
-                variant="outline"
-                onClick={handleDelete}
-                className="gap-2 w-full sm:w-auto text-red-600 hover:bg-red-50 hover:text-red-700"
-              >
-                <Trash2 className="h-4 w-4" />
-                Delete
-              </Button>
-            )}
+              {onDelete && displayEntry.id && (
+                <Button
+                  variant="outline"
+                  onClick={handleDelete}
+                  className="gap-2 w-full sm:w-auto text-red-600 hover:bg-red-50 hover:text-red-700"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Delete
+                </Button>
+              )}
+            </div>
+
+            <Button
+              onClick={() => handleOpenChange(false)}
+              variant="outline"
+              className="w-full sm:w-auto"
+            >
+              Close
+            </Button>
           </div>
-
-          <Button
-            onClick={() => handleOpenChange(false)}
-            variant="outline"
-            className="w-full sm:w-auto"
-          >
-            Close
-          </Button>
         </div>
       </DialogContent>
     </Dialog>

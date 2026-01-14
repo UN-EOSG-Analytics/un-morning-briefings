@@ -54,16 +54,24 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
 
   useEffect(() => {
     const loadEntriesForDate = async () => {
+      // Don't load entries if session is not ready
+      if (!session?.user) {
+        console.log('ExportDailyBriefingDialog: Session not ready, skipping load');
+        return;
+      }
+
       setIsLoadingEntries(true);
       try {
         const allEntries = await getSubmittedEntries();
         const entriesForDate = allEntries.filter((entry: MorningMeetingEntry) => {
           const entryDate = new Date(entry.date).toISOString().split('T')[0];
-          return entryDate === selectedDate && entry.approved;
+          return entryDate === selectedDate && entry.approvalStatus === 'approved';
         });
         setApprovedEntries(entriesForDate);
       } catch (error) {
-        console.error('Error loading entries:', error);
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        console.error('Error loading entries:', errorMessage);
+        showError('Failed to Load Entries', errorMessage);
         setApprovedEntries([]);
       } finally {
         setIsLoadingEntries(false);
@@ -73,7 +81,7 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
     if (open) {
       loadEntriesForDate();
     }
-  }, [selectedDate, open]);
+  }, [selectedDate, open, session?.user, showError]);
 
   /**
    * Create a header section with UN logo and classification text
@@ -183,7 +191,7 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
       const allEntries = await getSubmittedEntries();
       const entriesForDate = allEntries.filter((entry: MorningMeetingEntry) => {
         const entryDate = new Date(entry.date).toISOString().split('T')[0];
-        return entryDate === selectedDate && entry.approved;
+        return entryDate === selectedDate && entry.approvalStatus === 'approved';
       });
 
       if (entriesForDate.length === 0) {

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { MorningMeetingEntry, PRIORITIES, REGIONS, CATEGORIES } from '@/types/morning-meeting';
-import { Trash2, Edit, CheckCircle2, Circle } from 'lucide-react';
+import { Trash2, Edit, Clock, Check, X } from 'lucide-react';
 import Link from 'next/link';
 import { ViewEntryDialog } from './ViewEntryDialog';
 import { SearchBar } from './SearchBar';
@@ -165,7 +165,7 @@ export function EntriesTable({
                 </th>
                 {showApprovedColumn && (
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-700">
-                    Approved
+                    Status
                   </th>
                 )}
                 <th className="rounded-tr-xl px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-700">
@@ -211,21 +211,39 @@ export function EntriesTable({
                     <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-600">
                       {entry.category}
                     </td>
-                    {showApprovedColumn && onToggleApproval && (
+                    {showApprovedColumn && (
                       <td className="whitespace-nowrap px-4 py-3">
-                        <button
-                          onClick={(e) => handleActionClick(e, () => onToggleApproval(entry))}
-                          className="flex items-center gap-2 text-sm font-medium transition-colors hover:text-un-blue"
-                        >
-                          {entry.approved ? (
-                            <CheckCircle2 className="h-5 w-5 text-green-600" />
-                          ) : (
-                            <Circle className="h-5 w-5 text-slate-400" />
-                          )}
-                          <span className="text-xs text-slate-600">
-                            {entry.approved ? 'Yes' : 'No'}
-                          </span>
-                        </button>
+                        {(() => {
+                          const status = entry.approvalStatus || 'pending';
+                          const badgeConfig = {
+                            pending: {
+                              bg: 'bg-amber-50',
+                              text: 'text-amber-700',
+                              icon: Clock,
+                              label: 'Pending'
+                            },
+                            approved: {
+                              bg: 'bg-green-50',
+                              text: 'text-green-700',
+                              icon: Check,
+                              label: 'Approved'
+                            },
+                            denied: {
+                              bg: 'bg-red-50',
+                              text: 'text-red-700',
+                              icon: X,
+                              label: 'Denied'
+                            }
+                          };
+                          const config = badgeConfig[status as keyof typeof badgeConfig] || badgeConfig.pending;
+                          const Icon = config.icon;
+                          return (
+                            <div className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium ${config.bg} ${config.text}`}>
+                              <Icon className="h-3.5 w-3.5" />
+                              {config.label}
+                            </div>
+                          );
+                        })()}
                       </td>
                     )}
                     <td className="whitespace-nowrap px-4 py-3 text-right">
@@ -270,6 +288,7 @@ export function EntriesTable({
         onDelete={onDelete}
         onApprove={onToggleApproval}
         showApproveButton={showApprovedColumn}
+        allEntries={sortedEntries}
       />
     </>
   );

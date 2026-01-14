@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { deleteEntry, getSubmittedEntries, toggleApproval } from '@/lib/storage';
+import { deleteEntry, getSubmittedEntries } from '@/lib/storage';
 import { Download, FileDown, List } from 'lucide-react';
 import { ExportDailyBriefingDialog } from './ExportDailyBriefingDialog';
 import { EntriesTable } from './EntriesTable';
@@ -49,11 +49,8 @@ export function MorningMeetingList({ initialDateFilter }: { initialDateFilter?: 
         showInfo('Error', 'Cannot update entry without ID');
         return;
       }
-      await toggleApproval(entry.id, !entry.approved);
-      showSuccess(
-        entry.approved ? 'Unapproved' : 'Approved',
-        `Entry has been ${!entry.approved ? 'approved' : 'unapproved'}`
-      );
+      
+      // Just refresh the data - the dialog has already updated the status via API
       loadEntries();
     } catch {
       showSuccess('Error', 'Failed to update approval status');
@@ -61,7 +58,7 @@ export function MorningMeetingList({ initialDateFilter }: { initialDateFilter?: 
   };
 
   const exportToJSON = () => {
-    const approvedEntries = entries.filter((entry) => entry.approved);
+    const approvedEntries = entries.filter((entry) => entry.approvalStatus === 'approved');
     if (approvedEntries.length === 0) {
       showInfo('No Approved Entries', 'There are no approved entries to export.');
       return;

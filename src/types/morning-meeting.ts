@@ -1,5 +1,7 @@
 import labels from '@/lib/labels.json';
 
+export type ApprovalStatus = 'pending' | 'approved' | 'denied';
+
 // Morning Meeting Form Types
 export interface MorningMeetingEntry {
   id?: string;
@@ -21,7 +23,8 @@ export interface MorningMeetingEntry {
   createdAt?: Date;
   updatedAt?: Date;
   status?: 'draft' | 'submitted';
-  approved?: boolean;
+  approvalStatus?: ApprovalStatus;
+  approved?: boolean; // For backwards compatibility
 }
 
 export interface FormFieldError {

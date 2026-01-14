@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
         e.pu_note as "puNote",
         e.author,
         e.status,
-        e.approved,
+        COALESCE(e.approval_status, CASE WHEN e.approved THEN 'approved' ELSE 'pending' END) as "approvalStatus",
         e.created_at as "createdAt",
         e.updated_at as "updatedAt",
         COALESCE(
@@ -183,7 +183,7 @@ export async function POST(request: NextRequest) {
     await query(
       `INSERT INTO entries (
         id, category, priority, region, country, headline, date, entry,
-        source_url, pu_note, author, status, approved, created_at, updated_at
+        source_url, pu_note, author, status, approval_status, created_at, updated_at
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`,
       [
         id,
@@ -198,7 +198,7 @@ export async function POST(request: NextRequest) {
         data.puNote || null,
         data.author || null,
         data.status || null,
-        data.approved || false,
+        'pending',
         now,
         now,
       ]
@@ -241,6 +241,7 @@ export async function POST(request: NextRequest) {
         e.pu_note as "puNote",
         e.author,
         e.status,
+        COALESCE(e.approval_status, CASE WHEN e.approved THEN 'approved' ELSE 'pending' END) as "approvalStatus",
         e.created_at as "createdAt",
         e.updated_at as "updatedAt",
         COALESCE(
@@ -300,18 +301,22 @@ export async function PATCH(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { id, approved } = body;
+    const { id, approvalStatus } = body;
 
     if (!id) {
       return NextResponse.json({ error: 'Entry ID is required' }, { status: 400 });
     }
 
+    if (!approvalStatus || !['pending', 'approved', 'denied'].includes(approvalStatus)) {
+      return NextResponse.json({ error: 'Invalid approval status' }, { status: 400 });
+    }
+
     const now = new Date().toISOString();
 
-    // Update entry approved status
+    // Update entry approval status
     await query(
-      `UPDATE entries SET approved = $1, updated_at = $2 WHERE id = $3`,
-      [approved, now, id]
+      `UPDATE entries SET approval_status = $1, updated_at = $2 WHERE id = $3`,
+      [approvalStatus, now, id]
     );
 
     // Fetch updated entry
@@ -329,7 +334,7 @@ export async function PATCH(request: NextRequest) {
         pu_note as "puNote",
         author,
         status,
-        approved,
+        COALESCE(approval_status, CASE WHEN approved THEN 'approved' ELSE 'pending' END) as "approvalStatus",
         created_at as "createdAt",
         updated_at as "updatedAt"
       FROM entries

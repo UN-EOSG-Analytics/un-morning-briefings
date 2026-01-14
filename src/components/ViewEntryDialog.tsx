@@ -62,7 +62,7 @@ export function ViewEntryDialog({
     }
   }, [currentIndex, allEntries.length]);
 
-  // Update current index when entry changes
+  // Update current index when entry changes (from parent)
   useEffect(() => {
     if (entry && allEntries.length > 0) {
       const index = allEntries.findIndex(e => e.id === entry.id);
@@ -71,7 +71,7 @@ export function ViewEntryDialog({
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [entry?.id, allEntries]);
+  }, [entry?.id]);
 
   // Get the current entry from allEntries if available
   const displayEntry = allEntries.length > 0 ? allEntries[currentIndex] : entry;
@@ -159,64 +159,46 @@ export function ViewEntryDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="!max-w-none w-full sm:w-[95vw] md:w-[85vw] lg:w-[70vw] h-[90vh] flex flex-col !pt-6 sm:!pt-8 !pb-4 sm:!pb-6">
-        <DialogHeader className="border-b border-slate-200 pb-4 pr-12">
-          <div className="flex items-start justify-between gap-4 w-full">
-            <div className="flex-1">
-              <DialogTitle className="text-2xl font-bold text-slate-900 mb-3">
-                {displayEntry.headline}
-              </DialogTitle>
-              
-              <div className="flex gap-2 flex-wrap">
-                {/* Date Badge */}
-                <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">
-                  {new Date(displayEntry.date).toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                    year: 'numeric',
-                  })}
-                </span>
-                {/* Priority Badge */}
-                <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${getPriorityBadgeClass(displayEntry.priority)}`}>
-                  <span className={`h-1.5 w-1.5 rounded-full ${displayEntry.priority === 'sg-attention' ? 'bg-red-600' : 'bg-blue-600'}`} />
-                  {PRIORITIES.find(p => p.value === displayEntry.priority)?.label}
-                </span>
-              </div>
-            </div>
-            
-            {/* AI Summary Button - Right side, with spacing for close button */}
+      <DialogContent className="!max-w-none w-full h-screen sm:w-[95vw] sm:h-[90vh] md:w-[85vw] md:h-[90vh] lg:w-[70vw] lg:h-[90vh] flex flex-col !pt-4 sm:!pt-6 sm:!pt-8 !pb-4 sm:!pb-6 rounded-none sm:rounded-lg">
+        <DialogHeader className="border-b border-slate-200 pb-0 pr-0">
+          <div className="w-full">
+            <DialogTitle className="text-xl sm:text-2xl font-bold text-slate-900 mb-2 line-clamp-2">
+              {displayEntry.headline}
+            </DialogTitle>
+          </div>
+        </DialogHeader>
+        
+        {/* AI Summary Button - Below heading */}
+        <div className="px-4 sm:px-6 py-3 border-b border-slate-200 flex gap-2">
+          <div className="flex gap-2 flex-wrap items-start">
+            {/* Date Badge */}
+            <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">
+              {new Date(displayEntry.date).toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+              })}
+            </span>
+            {/* Priority Badge */}
+            <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${getPriorityBadgeClass(displayEntry.priority)}`}>
+              <span className={`h-1.5 w-1.5 rounded-full ${displayEntry.priority === 'sg-attention' ? 'bg-red-600' : 'bg-blue-600'}`} />
+              {PRIORITIES.find(p => p.value === displayEntry.priority)?.label}
+            </span>
+          </div>
+          <div className="ml-auto">
             <Button
               size="sm"
               onClick={handleGenerateSummary}
               disabled={isGeneratingSummary}
-              className="bg-[#009edb] hover:bg-[#0080b8] text-white gap-2 shrink-0"
+              className="bg-[#009edb] hover:bg-[#0080b8] text-white gap-2 text-xs sm:text-sm px-2 py-1 sm:px-3 sm:py-2 h-auto"
             >
-              <Sparkles className="h-4 w-4" />
-              {isGeneratingSummary ? 'Generating...' : 'AI Summary'}
+              <Sparkles className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">{isGeneratingSummary ? 'Generating...' : 'Create Summary'}</span>
+              <span className="sm:hidden">{isGeneratingSummary ? '...' : 'AI'}</span>
             </Button>
           </div>
-        </DialogHeader>
+        </div>
         
-        {/* AI Summary Box - Below header */}
-        {summary && (
-          <div className="px-4 sm:px-6 pt-4 pb-2 border-b border-slate-200">
-            <div className="rounded-lg border-2 border-[#009edb] bg-[#009edb]/5 p-4">
-              <div className="text-sm font-semibold text-[#009edb] mb-2 flex items-center gap-2">
-                <Sparkles className="h-4 w-4" />
-                Key Points
-              </div>
-              <ul className="space-y-2">
-                {summary.map((point, index) => (
-                  <li key={index} className="text-sm text-slate-700 flex gap-2">
-                    <span className="text-[#009edb] font-bold shrink-0">•</span>
-                    <span>{point}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        )}
-
         {/* Scrollable content */}
         <div className="flex-1 overflow-y-auto px-4 sm:px-6" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
           <style>{`
@@ -224,26 +206,47 @@ export function ViewEntryDialog({
               display: none;
             }
           `}</style>
+          
+          {/* AI Summary Box - Inside scrollable area */}
+          {summary && (
+            <div className="pt-4 pb-2 border-b border-slate-200 mb-4">
+              <div className="rounded-lg border-2 border-[#009edb] bg-[#009edb]/5 p-4">
+                <div className="text-sm font-semibold text-[#009edb] mb-2 flex items-center gap-2">
+                  <Sparkles className="h-4 w-4" />
+                  Key Points
+                </div>
+                <ul className="space-y-2">
+                  {summary.map((point, index) => (
+                    <li key={index} className="text-sm text-slate-700 flex gap-2">
+                      <span className="text-[#009edb] font-bold shrink-0">•</span>
+                      <span>{point}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
+          
           {/* Entry metadata */}
-          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-x-4 sm:gap-x-6 gap-y-3 mb-6 py-4 border-b border-slate-200">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-2 sm:gap-x-4 gap-y-2 mb-4 py-2 sm:py-4 border-b border-slate-200">
             <div>
-              <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Region</div>
-              <div className="text-sm text-slate-900">{displayEntry.region}</div>
+              <div className="text-xs sm:text-sm font-semibold text-slate-500 uppercase tracking-wide">Region</div>
+              <div className="text-xs sm:text-base text-slate-900 line-clamp-2">{displayEntry.region}</div>
             </div>
 
             <div>
-              <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Country</div>
-              <div className="text-sm text-slate-900">{displayEntry.country}</div>
+              <div className="text-xs sm:text-sm font-semibold text-slate-500 uppercase tracking-wide">Country</div>
+              <div className="text-xs sm:text-base text-slate-900 line-clamp-2">{displayEntry.country}</div>
             </div>
 
             <div>
-              <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Category</div>
-              <div className="text-sm text-slate-900">{displayEntry.category}</div>
+              <div className="text-xs sm:text-sm font-semibold text-slate-500 uppercase tracking-wide">Category</div>
+              <div className="text-xs sm:text-base text-slate-900 line-clamp-2">{displayEntry.category}</div>
             </div>
 
             <div>
-              <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Author</div>
-              <div className="text-sm text-slate-900">{displayEntry.author || 'N/A'}</div>
+              <div className="text-xs sm:text-sm font-semibold text-slate-500 uppercase tracking-wide">Author</div>
+              <div className="text-xs sm:text-base text-slate-900 line-clamp-2">{displayEntry.author || 'N/A'}</div>
             </div>
           </div>
 
@@ -435,6 +438,43 @@ export function ViewEntryDialog({
             </div>
           )}
 
+          {/* Approve/Deny buttons - shown above on mobile */}
+          {showApproveButton && onApprove && (
+            <div className="flex gap-2 w-full sm:hidden">
+              <Button
+                variant={displayEntry.approvalStatus === 'approved' ? 'default' : 'outline'}
+                onClick={() => handleApprove('approved')}
+                disabled={isUpdatingApproval}
+                className={`gap-2 flex-1 ${
+                  displayEntry.approvalStatus === 'approved'
+                    ? 'bg-green-600 hover:bg-green-700 text-white'
+                    : displayEntry.approvalStatus === 'denied'
+                    ? 'opacity-50 text-green-600 hover:opacity-100 hover:bg-green-50 hover:text-green-700'
+                    : 'text-green-600 hover:bg-green-50 hover:text-green-700'
+                }`}
+              >
+                <Check className="h-4 w-4" />
+                Approve
+              </Button>
+              
+              <Button
+                variant={displayEntry.approvalStatus === 'denied' ? 'default' : 'outline'}
+                onClick={() => handleApprove('denied')}
+                disabled={isUpdatingApproval}
+                className={`gap-2 flex-1 ${
+                  displayEntry.approvalStatus === 'denied'
+                    ? 'bg-red-600 hover:bg-red-700 text-white'
+                    : displayEntry.approvalStatus === 'approved'
+                    ? 'opacity-50 text-red-600 hover:opacity-100 hover:bg-red-50 hover:text-red-700'
+                    : 'text-red-600 hover:bg-red-50 hover:text-red-700'
+                }`}
+              >
+                <X className="h-4 w-4" />
+                Deny
+              </Button>
+            </div>
+          )}
+
           {/* Action buttons */}
           <div className="flex flex-col-reverse sm:flex-row justify-between gap-3 sm:gap-2">
             <div className="flex gap-2 flex-col sm:flex-row w-full sm:w-auto">
@@ -449,7 +489,7 @@ export function ViewEntryDialog({
               </Link>
               
               {showApproveButton && onApprove && (
-                <div className="flex gap-2 w-full sm:w-auto">
+                <div className="hidden sm:flex gap-2 w-full sm:w-auto">
                   <Button
                     variant={displayEntry.approvalStatus === 'approved' ? 'default' : 'outline'}
                     onClick={() => handleApprove('approved')}
@@ -488,7 +528,7 @@ export function ViewEntryDialog({
                 <Button
                   variant="outline"
                   onClick={handleDelete}
-                  className="gap-2 w-full sm:w-auto text-red-600 hover:bg-red-50 hover:text-red-700"
+                  className="hidden sm:flex gap-2 w-full sm:w-auto text-red-600 hover:bg-red-50 hover:text-red-700"
                 >
                   <Trash2 className="h-4 w-4" />
                   Delete

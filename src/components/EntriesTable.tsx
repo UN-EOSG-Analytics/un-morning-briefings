@@ -80,40 +80,43 @@ export function EntriesTable({
             <thead className="border-b border-slate-200 bg-slate-50">
               <tr>
                 <th
-                  className="rounded-tl-xl cursor-pointer px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-700 hover:bg-slate-100"
+                  className="rounded-tl-xl cursor-pointer px-2 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-700 hover:bg-slate-100"
                   onClick={() => handleSort('date')}
                 >
-                  <div className="flex items-center gap-2">
-                    Date {sortField === 'date' && (sortDirection === 'asc' ? '↑' : '↓')}
-                    <ColumnFilter
-                      columnName="Date"
-                      options={uniqueDates.map((date) =>
-                        new Date(date).toLocaleDateString('en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                          year: 'numeric',
-                        })
-                      )}
-                      selectedValue={
-                        filterDate
-                          ? new Date(filterDate).toLocaleDateString('en-US', {
-                              month: 'short',
-                              day: 'numeric',
-                              year: 'numeric',
-                            })
-                          : 'all'
-                      }
-                      onValueChange={(label) => {
-                        if (label === 'all') {
-                          setFilterDate('');
-                        } else {
-                          // Parse the date label back to YYYY-MM-DD format
-                          const dateObj = new Date(label);
-                          const isoDate = dateObj.toISOString().split('T')[0];
-                          setFilterDate(isoDate);
+                  <div className="flex items-center gap-1 sm:gap-2">
+                    <span className="hidden sm:inline">Date {sortField === 'date' && (sortDirection === 'asc' ? '↑' : '↓')}</span>
+                    <span className="sm:hidden">Date</span>
+                    <div className="hidden sm:block">
+                      <ColumnFilter
+                        columnName="Date"
+                        options={uniqueDates.map((date) =>
+                          new Date(date).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric',
+                          })
+                        )}
+                        selectedValue={
+                          filterDate
+                            ? new Date(filterDate).toLocaleDateString('en-US', {
+                                month: 'short',
+                                day: 'numeric',
+                                year: 'numeric',
+                              })
+                            : 'all'
                         }
-                      }}
-                    />
+                        onValueChange={(label) => {
+                          if (label === 'all') {
+                            setFilterDate('');
+                          } else {
+                            // Parse the date label back to YYYY-MM-DD format
+                            const dateObj = new Date(label);
+                            const isoDate = dateObj.toISOString().split('T')[0];
+                            setFilterDate(isoDate);
+                          }
+                        }}
+                      />
+                    </div>
                   </div>
                 </th>
                 <th
@@ -125,7 +128,7 @@ export function EntriesTable({
                   </div>
                 </th>
                 <th
-                  className="cursor-pointer px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-700 hover:bg-slate-100"
+                  className="hidden sm:table-cell cursor-pointer px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-700 hover:bg-slate-100"
                   onClick={() => handleSort('region')}
                 >
                   <div className="flex items-center gap-2">
@@ -138,7 +141,7 @@ export function EntriesTable({
                     />
                   </div>
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-700">
+                <th className="hidden sm:table-cell px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-700">
                   <div className="flex items-center gap-2">
                     Priority
                     <ColumnFilter
@@ -152,7 +155,7 @@ export function EntriesTable({
                     />
                   </div>
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-700">
+                <th className="hidden sm:table-cell px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-700">
                   <div className="flex items-center gap-2">
                     Category
                     <ColumnFilter
@@ -164,11 +167,11 @@ export function EntriesTable({
                   </div>
                 </th>
                 {showApprovedColumn && (
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-700">
+                  <th className="hidden sm:table-cell px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-700">
                     Status
                   </th>
                 )}
-                <th className="rounded-tr-xl px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-700">
+                <th className="hidden sm:table-cell rounded-tr-xl px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-700">
                   Actions
                 </th>
               </tr>
@@ -187,32 +190,31 @@ export function EntriesTable({
                     className="border-b border-slate-100 hover:bg-slate-50 cursor-pointer"
                     onClick={() => handleRowClick(entry)}
                   >
-                    <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-600">
+                    <td className="whitespace-nowrap px-2 sm:px-4 py-3 text-sm text-slate-600">
                       {new Date(entry.date).toLocaleDateString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
                       })}
                     </td>
                     <td className="max-w-md px-4 py-3 text-sm">
-                      <div className="line-clamp-2">{entry.headline}</div>
+                      <div className="line-clamp-3 sm:line-clamp-2">{entry.headline}</div>
                     </td>
-                    <td className="whitespace-nowrap px-4 py-3">
+                    <td className="hidden sm:table-cell whitespace-nowrap px-4 py-3">
                       <span className={`inline-block rounded px-2 py-1 text-xs font-medium ${getRegionBadgeClass(entry.region)}`}>
                         {entry.region}
                       </span>
                     </td>
-                    <td className="whitespace-nowrap px-4 py-3">
+                    <td className="hidden sm:table-cell whitespace-nowrap px-4 py-3">
                       <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${getPriorityBadgeClass(entry.priority)}`}>
                         <span className={`h-1.5 w-1.5 rounded-full ${entry.priority === 'sg-attention' ? 'bg-red-600' : 'bg-blue-600'}`} />
                         {PRIORITIES.find(p => p.value === entry.priority)?.label}
                       </span>
                     </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-600">
+                    <td className="hidden sm:table-cell whitespace-nowrap px-4 py-3 text-sm text-slate-600">
                       {entry.category}
                     </td>
                     {showApprovedColumn && (
-                      <td className="whitespace-nowrap px-4 py-3">
+                      <td className="hidden sm:table-cell whitespace-nowrap px-4 py-3">
                         {(() => {
                           const status = entry.approvalStatus || 'pending';
                           const badgeConfig = {
@@ -246,7 +248,7 @@ export function EntriesTable({
                         })()}
                       </td>
                     )}
-                    <td className="whitespace-nowrap px-4 py-3 text-right">
+                    <td className="hidden sm:table-cell whitespace-nowrap px-4 py-3 text-right">
                       <div className="flex justify-end gap-1">
                         <Link href={`/form?edit=${entry.id}`} onClick={(e) => e.stopPropagation()}>
                           <Button

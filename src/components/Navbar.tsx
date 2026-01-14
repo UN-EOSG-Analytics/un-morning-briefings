@@ -2,11 +2,12 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { Menu, X, Home, PlusCircle, List, FileEdit, LogOut, User, Zap, Info, Users } from 'lucide-react';
+import { Menu, X, Home, PlusCircle, List, FileEdit, LogOut, User, Zap, Info, Users, Settings } from 'lucide-react';
 import { useState } from 'react';
 import { signOut, useSession } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import NavButton from './NavButton';
+import { SettingsDialog } from './SettingsDialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,6 +19,7 @@ import {
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const { data: session } = useSession();
 
   const userName = session?.user?.firstName && session?.user?.lastName
@@ -91,6 +93,13 @@ export function Navbar() {
                 </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem 
+                className="cursor-pointer gap-2"
+                onClick={() => setShowSettings(true)}
+              >
+                <Settings className="h-4 w-4" />
+                <span>Settings</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem 
                 className="text-red-600 cursor-pointer gap-2"
                 onClick={() => signOut({ callbackUrl: '/login' })}
               >
@@ -124,6 +133,13 @@ export function Navbar() {
                   <span className="text-xs text-slate-600">{userEmail}</span>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                <DropdownMenuItem 
+                  className="cursor-pointer gap-2"
+                  onClick={() => setShowSettings(true)}
+                >
+                  <Settings className="h-4 w-4" />
+                  <span>Settings</span>
+                </DropdownMenuItem>
                 <DropdownMenuItem 
                   className="text-red-600 cursor-pointer gap-2"
                   onClick={() => signOut({ callbackUrl: '/login' })}
@@ -184,6 +200,9 @@ export function Navbar() {
           </div>
         </div>
       )}
+
+      {/* Settings Dialog */}
+      <SettingsDialog open={showSettings} onOpenChange={setShowSettings} />
     </nav>
   );
 }

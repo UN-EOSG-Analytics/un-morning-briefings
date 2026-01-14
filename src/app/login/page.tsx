@@ -21,8 +21,11 @@ function LoginPageContent() {
     const verified = searchParams.get('verified');
     const errorParam = searchParams.get('error');
     const message = searchParams.get('message');
+    const deleted = searchParams.get('deleted');
 
-    if (verified === 'true') {
+    if (deleted === 'true') {
+      setSuccess('Your account has been deleted successfully.');
+    } else if (verified === 'true') {
       if (message === 'already') {
         setSuccess('Your email is verified! You can log in now.');
       } else {

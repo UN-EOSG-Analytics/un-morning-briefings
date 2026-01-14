@@ -168,6 +168,56 @@ ${plainText}`;
 }
 
 /**
+ * Reformulate selected text to be concise and professional while fitting with context
+ * This is optimized for speed using the flash model and focused prompts
+ */
+export async function reformulateSelection(
+  selectedText: string,
+  beforeContext: string,
+  afterContext: string
+): Promise<string> {
+  const apiKey = process.env.GEMINI_API_KEY;
+  
+  if (!apiKey) {
+    console.error('[GEMINI SERVICE] GEMINI_API_KEY is not configured in .env file');
+    throw new Error('GEMINI_API_KEY is not configured. Please add it to your .env file.');
+  }
+
+  const genAI = new GoogleGenerativeAI(apiKey);
+  // Use flash model for fast responses
+  const model = genAI.getGenerativeModel({ 
+    model: 'gemini-3-flash-preview',
+    generationConfig: {
+      temperature: 0.7,
+      maxOutputTokens: 500, // Limit output for faster response
+    }
+  });
+
+  const prompt = `Rewrite ONLY the selected text to be more concise and professional for a UN briefing. Keep the meaning and ensure it flows naturally with the surrounding context.
+
+Context before: "${beforeContext}"
+SELECTED TEXT TO REWRITE: "${selectedText}"
+Context after: "${afterContext}"
+
+Return ONLY the rewritten version of the selected text, nothing else. No explanations, no quotes, just the improved text that fits naturally with the context.`;
+
+  try {
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const reformulatedText = response.text().trim();
+    
+    // Remove any quotes that might have been added
+    return reformulatedText.replace(/^["']|["']$/g, '');
+  } catch (error) {
+    console.error('[GEMINI SERVICE] Selection reformulation error:', error);
+    if (error instanceof Error) {
+      throw new Error(`Reformulation failed: ${error.message}`);
+    }
+    throw new Error('Failed to reformulate selected text');
+  }
+}
+
+/**
  * Reformulate text to be concise, professional, and appropriate for a UN briefing
  * Preserves images at their original positions in the content
  */
@@ -180,7 +230,7 @@ export async function reformulateBriefing(content: string): Promise<string> {
   }
 
   const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: 'gemini-3-flash-preview' });
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
 
   // Extract and preserve all images with their positions
   const imageRegex = /<img[^>]*>/g;

@@ -237,41 +237,156 @@ export function RichTextEditor({
     e.target.value = '';
   };
 
+  /**
+   * Extract sentence boundaries for context-aware regeneration
+   * Returns the full sentences containing the selection
+   */
+  const getFullSentenceContext = (text: string, start: number, end: number): { before: string; selected: string; after: string; fullBefore: string; fullAfter: string } => {
+    // Find sentence boundaries (., !, ?) before and after selection
+    const sentenceEnders = /[.!?]\s/g;
+    
+    let sentenceStart = 0;
+    let sentenceEnd = text.length;
+    
+    // Find sentence start (look backward from selection start)
+    const textBeforeSelection = text.substring(0, start);
+    const matches = [...textBeforeSelection.matchAll(sentenceEnders)];
+    if (matches.length > 0) {
+      const lastMatch = matches[matches.length - 1];
+      sentenceStart = (lastMatch.index ?? 0) + lastMatch[0].length;
+    }
+    
+    // Find sentence end (look forward from selection end)
+    const textAfterSelection = text.substring(end);
+    const nextEnder = textAfterSelection.search(sentenceEnders);
+    if (nextEnder !== -1) {
+      sentenceEnd = end + nextEnder + 1;
+    }
+    
+    return {
+      before: text.substring(sentenceStart, start).trim(),
+      selected: text.substring(start, end).trim(),
+      after: text.substring(end, sentenceEnd).trim(),
+      fullBefore: text.substring(0, sentenceStart).trim(),
+      fullAfter: text.substring(sentenceEnd).trim(),
+    };
+  };
+
   const handleReformulate = async () => {
     if (!editor) return;
 
-    const currentContent = editor.getHTML();
-    if (!currentContent || currentContent === '<p></p>') {
-      showWarning('No Content', 'Please enter content to reformulate');
-      return;
-    }
+    const { from, to } = editor.state.selection;
+    const hasSelection = from !== to;
 
     setIsReformulating(true);
     try {
-      const response = await fetch('/api/reformulate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ content: currentContent }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        const errorMessage = error.error || 'Failed to reformulate content';
+      if (hasSelection) {
+        // Regenerate only selected text with context
+        const fullText = editor.getText();
+        const selectedText = editor.state.doc.textBetween(from, to, ' ');
         
-        // Check if it's an API key configuration error
-        if (errorMessage.includes('GEMINI_API_KEY') || errorMessage.includes('not configured')) {
-          showWarning('AI Usage not enabled', 'Please wait for Update');
-        } else {
-          showWarning('Reformulation Failed', errorMessage);
+        if (!selectedText.trim()) {
+          showWarning('No Text Selected', 'Please select text to regenerate');
+          setIsReformulating(false);
+          return;
         }
-        return;
-      }
 
-      const result = await response.json();
-      editor.commands.setContent(result.content);
-      showSuccess('Content Reformulated', 'Your briefing has been reformulated to be more concise and professional.');
+        // Extract leading and trailing spaces to preserve them
+        const leadingSpaces = selectedText.match(/^\s*/)?.[0] || '';
+        const trailingSpaces = selectedText.match(/\s*$/)?.[0] || '';
+        const trimmedText = selectedText.trim();
+
+        // Calculate actual text positions in the plain text string
+        const textBeforeSelection = editor.state.doc.textBetween(0, from, ' ');
+        const textStart = textBeforeSelection.length + leadingSpaces.length;
+        const textEnd = textStart + trimmedText.length;
+
+        // Get sentence context using plain text positions
+        const context = getFullSentenceContext(fullText, textStart, textEnd);
+        
+        const response = await fetch('/api/reformulate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            mode: 'selection',
+            selectedText: context.selected,
+            beforeContext: context.before,
+            afterContext: context.after,
+          }),
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          const errorMessage = error.error || 'Failed to regenerate text';
+          
+          if (errorMessage.includes('GEMINI_API_KEY') || errorMessage.includes('not configured')) {
+            showWarning('AI Usage not enabled', 'Please wait for Update');
+          } else {
+            showWarning('Regeneration Failed', errorMessage);
+          }
+          return;
+        }
+
+        const result = await response.json();
+        
+        // Reconstruct with leading and trailing spaces preserved
+        const contentWithSpaces = leadingSpaces + result.content + trailingSpaces;
+        
+        // Replace only the selected text and select the newly inserted content
+        editor
+          .chain()
+          .focus()
+          .deleteSelection()
+          .insertContent(contentWithSpaces)
+          .run();
+
+        // Select the newly inserted text (minus trailing spaces for better UX)
+        const newFrom = from;
+        const newTo = from + leadingSpaces.length + result.content.length;
+        editor.view.dispatch(
+          editor.state.tr.setSelection(
+            editor.state.selection.constructor.create(editor.state.doc, newFrom, newTo)
+          )
+        );
+        
+        showSuccess('Text Regenerated', 'Selected text has been regenerated.');
+      } else {
+        // Regenerate entire content
+        const currentContent = editor.getHTML();
+        if (!currentContent || currentContent === '<p></p>') {
+          showWarning('No Content', 'Please enter content to reformulate');
+          return;
+        }
+
+        const response = await fetch('/api/reformulate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ 
+            mode: 'full',
+            content: currentContent 
+          }),
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          const errorMessage = error.error || 'Failed to reformulate content';
+          
+          if (errorMessage.includes('GEMINI_API_KEY') || errorMessage.includes('not configured')) {
+            showWarning('AI Usage not enabled', 'Please wait for Update');
+          } else {
+            showWarning('Reformulation Failed', errorMessage);
+          }
+          return;
+        }
+
+        const result = await response.json();
+        editor.commands.setContent(result.content);
+        showSuccess('Content Reformulated', 'Your briefing has been reformulated.');
+      }
     } catch (error) {
       console.error('[REFORMULATE] Error:', error);
       showWarning('AI Usage not enabled', 'Please wait for Update');

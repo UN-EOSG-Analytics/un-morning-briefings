@@ -381,7 +381,15 @@ export function MorningMeetingForm({
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Failed to process content');
+        const errorMessage = error.error || 'Failed to process content';
+        
+        // Check if it's an API key configuration error
+        if (errorMessage.includes('GEMINI_API_KEY') || errorMessage.includes('not configured')) {
+          showWarning('AI Usage not enabled', 'Please wait for Update');
+        } else {
+          showWarning('Auto-Fill Failed', errorMessage);
+        }
+        return;
       }
 
       const result = await response.json();
@@ -418,14 +426,10 @@ export function MorningMeetingForm({
       showSuccess('Form Auto-Filled', 'The form has been filled with AI-analyzed data. Please review and adjust as needed.');
     } catch (error) {
       console.error('[AUTO-FILL] Error:', error);
-      showWarning('Auto-Fill Failed', error instanceof Error ? error.message : 'Failed to process content');
+      showWarning('AI Usage not enabled', 'Please wait for Update');
     } finally {
       setIsAutoFilling(false);
     }
-  };
-
-  const getPriorityLabel = (value: string) => {
-    return PRIORITIES.find((p) => p.value === value)?.label || value;
   };
 
   const currentDate = new Date().toLocaleDateString('en-US', {

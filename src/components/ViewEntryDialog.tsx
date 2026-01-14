@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { MorningMeetingEntry, PRIORITIES } from '@/types/morning-meeting';
 import { getPriorityBadgeClass } from '@/lib/useEntriesFilter';
+import { usePopup } from '@/lib/popup-context';
 import { Edit, Trash2, CheckCircle2, Circle, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
@@ -27,19 +28,17 @@ export function ViewEntryDialog({
 }: ViewEntryDialogProps) {
   const [summary, setSummary] = useState<string[] | null>(null);
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
-  const [summaryError, setSummaryError] = useState<string | null>(null);
+  const { warning: showWarning, success: showSuccess } = usePopup();
 
   // Clear summary when entry changes or dialog closes
   useEffect(() => {
     setSummary(null);
-    setSummaryError(null);
   }, [entry?.id, open]);
 
   const handleGenerateSummary = async () => {
     if (!entry?.entry) return;
     
     setIsGeneratingSummary(true);
-    setSummaryError(null);
     
     try {
       const response = await fetch('/api/summarize', {
@@ -49,14 +48,24 @@ export function ViewEntryDialog({
       });
       
       if (!response.ok) {
-        throw new Error('Failed to generate summary');
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData.error || 'Failed to generate summary';
+        
+        // Check if it's an API key configuration error
+        if (errorMessage.includes('GEMINI_API_KEY') || errorMessage.includes('not configured')) {
+          showWarning('AI Usage not enabled', 'Please wait for Update');
+        } else {
+          showWarning('Summary Failed', 'Failed to generate summary. Please try again.');
+        }
+        return;
       }
       
       const data = await response.json();
       setSummary(data.summary);
+      showSuccess('Summary Generated', 'AI summary created successfully.');
     } catch (error) {
       console.error('Summary generation error:', error);
-      setSummaryError('Failed to generate summary. Please try again.');
+      showWarning('AI Usage not enabled', 'Please wait for Update');
     } finally {
       setIsGeneratingSummary(false);
     }
@@ -105,30 +114,22 @@ export function ViewEntryDialog({
         </DialogHeader>
         
         {/* AI Summary Box - Below header */}
-        {(summary || summaryError) && (
+        {summary && (
           <div className="px-4 sm:px-6 pt-4 pb-2 border-b border-slate-200">
-            {summary && (
-              <div className="rounded-lg border-2 border-[#009edb] bg-[#009edb]/5 p-4">
-                <div className="text-sm font-semibold text-[#009edb] mb-2 flex items-center gap-2">
-                  <Sparkles className="h-4 w-4" />
-                  Key Points
-                </div>
-                <ul className="space-y-2">
-                  {summary.map((point, index) => (
-                    <li key={index} className="text-sm text-slate-700 flex gap-2">
-                      <span className="text-[#009edb] font-bold shrink-0">•</span>
-                      <span>{point}</span>
-                    </li>
-                  ))}
-                </ul>
+            <div className="rounded-lg border-2 border-[#009edb] bg-[#009edb]/5 p-4">
+              <div className="text-sm font-semibold text-[#009edb] mb-2 flex items-center gap-2">
+                <Sparkles className="h-4 w-4" />
+                Key Points
               </div>
-            )}
-            
-            {summaryError && (
-              <div className="rounded-lg border border-red-300 bg-red-50 p-3">
-                <div className="text-sm text-red-700">{summaryError}</div>
-              </div>
-            )}
+              <ul className="space-y-2">
+                {summary.map((point, index) => (
+                  <li key={index} className="text-sm text-slate-700 flex gap-2">
+                    <span className="text-[#009edb] font-bold shrink-0">•</span>
+                    <span>{point}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
         )}
 

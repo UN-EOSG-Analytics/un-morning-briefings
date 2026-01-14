@@ -254,7 +254,15 @@ export function RichTextEditor({
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Failed to reformulate content');
+        const errorMessage = error.error || 'Failed to reformulate content';
+        
+        // Check if it's an API key configuration error
+        if (errorMessage.includes('GEMINI_API_KEY') || errorMessage.includes('not configured')) {
+          showWarning('AI Usage not enabled', 'Please wait for Update');
+        } else {
+          showWarning('Reformulation Failed', errorMessage);
+        }
+        return;
       }
 
       const result = await response.json();
@@ -262,7 +270,7 @@ export function RichTextEditor({
       showSuccess('Content Reformulated', 'Your briefing has been reformulated to be more concise and professional.');
     } catch (error) {
       console.error('[REFORMULATE] Error:', error);
-      showWarning('Reformulation Failed', error instanceof Error ? error.message : 'Failed to reformulate content');
+      showWarning('AI Usage not enabled', 'Please wait for Update');
     } finally {
       setIsReformulating(false);
     }

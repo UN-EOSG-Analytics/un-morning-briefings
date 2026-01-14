@@ -44,6 +44,10 @@ export function MorningMeetingList({ initialDateFilter }: { initialDateFilter?: 
 
   const handleToggleApproval = async (entry: MorningMeetingEntry) => {
     try {
+      if (!entry.id) {
+        showInfo('Error', 'Cannot update entry without ID');
+        return;
+      }
       await toggleApproval(entry.id, !entry.approved);
       showSuccess(
         entry.approved ? 'Unapproved' : 'Approved',

@@ -539,9 +539,7 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
         sections: [
           {
             properties: {
-              page: {
-                headerDistanceFromEdge: 360,
-              },
+              page: {},
             },
             headers: {
               default: new Header({
@@ -877,9 +875,7 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
         sections: [
           {
             properties: {
-              page: {
-                headerDistanceFromEdge: 360,
-              },
+              page: {},
             },
             headers: {
               default: new Header({
@@ -931,7 +927,7 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">

@@ -57,9 +57,11 @@ export function RichTextEditor({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isReformulating, setIsReformulating] = useState(false);
 
+  const memoizedOnChange = useCallback(onChange, [onChange]);
+
   const handleChange = useCallback((newContent: string) => {
-    onChange(newContent);
-  }, [onChange]);
+    memoizedOnChange(newContent);
+  }, [memoizedOnChange]);
 
   // Custom Comment mark extension
   const CommentMark = Mark.create({

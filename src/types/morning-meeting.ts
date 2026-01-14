@@ -13,6 +13,11 @@ export interface MorningMeetingEntry {
   sourceUrl?: string;
   puNote?: string;
   author?: string;
+  images?: Array<{
+    id: string;
+    position: number | null;
+    mimeType: string;
+  }>;
   createdAt?: Date;
   updatedAt?: Date;
   status?: 'draft' | 'submitted';

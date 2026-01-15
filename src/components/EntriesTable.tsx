@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { MorningMeetingEntry, PRIORITIES, REGIONS, CATEGORIES } from '@/types/morning-meeting';
@@ -33,6 +33,8 @@ export function EntriesTable({
 }: EntriesTableProps) {
   const [selectedEntry, setSelectedEntry] = useState<MorningMeetingEntry | null>(null);
   const [showViewDialog, setShowViewDialog] = useState(false);
+  const [openStatusDropdown, setOpenStatusDropdown] = useState<string | null>(null);
+  const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
 
   const {
     searchTerm,
@@ -55,6 +57,52 @@ export function EntriesTable({
     setSelectedEntry(entry);
     setShowViewDialog(true);
   };
+
+  const handleStatusChange = async (entryId: string, newStatus: string) => {
+    setUpdatingStatus(entryId);
+    try {
+      const response = await fetch(`/api/entries`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id: entryId, approvalStatus: newStatus }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('API Error:', response.status, errorData);
+        throw new Error(`Failed to update status: ${response.status}`);
+      }
+
+      // Update the entry in the list
+      const updatedEntry = entries.find(e => e.id === entryId);
+      if (updatedEntry) {
+        updatedEntry.approvalStatus = newStatus as any;
+      }
+    } catch (error) {
+      console.error('Error updating status:', error);
+    } finally {
+      setUpdatingStatus(null);
+      setOpenStatusDropdown(null);
+    }
+  };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      // Close if clicking outside any dropdown
+      if (!target.closest('.status-dropdown-container')) {
+        setOpenStatusDropdown(null);
+      }
+    };
+
+    if (openStatusDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [openStatusDropdown]);
 
   const handleActionClick = (e: React.MouseEvent, callback: () => void) => {
     e.stopPropagation();
@@ -211,38 +259,67 @@ export function EntriesTable({
                       </span>
                     </td>
                     {showApprovedColumn && (
-                      <td className="hidden sm:table-cell whitespace-nowrap px-4 py-3">
-                        {(() => {
-                          const status = entry.approvalStatus || 'pending';
-                          const badgeConfig = {
-                            pending: {
-                              bg: 'bg-amber-50',
-                              text: 'text-amber-700',
-                              icon: Clock,
-                              label: 'Pending'
-                            },
-                            approved: {
-                              bg: 'bg-green-50',
-                              text: 'text-green-700',
-                              icon: Check,
-                              label: 'Approved'
-                            },
-                            denied: {
-                              bg: 'bg-red-50',
-                              text: 'text-red-700',
-                              icon: X,
-                              label: 'Denied'
-                            }
-                          };
-                          const config = badgeConfig[status as keyof typeof badgeConfig] || badgeConfig.pending;
-                          const Icon = config.icon;
-                          return (
-                            <div className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium ${config.bg} ${config.text}`}>
-                              <Icon className="h-3.5 w-3.5" />
-                              {config.label}
-                            </div>
-                          );
-                        })()}
+                      <td className="hidden sm:table-cell whitespace-nowrap px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                        <div className="relative status-dropdown-container">
+                          {(() => {
+                            const status = entry.approvalStatus || 'pending';
+                            const badgeConfig = {
+                              pending: {
+                                bg: 'bg-amber-50',
+                                text: 'text-amber-700',
+                                icon: Clock,
+                                label: 'Pending'
+                              },
+                              approved: {
+                                bg: 'bg-green-50',
+                                text: 'text-green-700',
+                                icon: Check,
+                                label: 'Approved'
+                              },
+                              denied: {
+                                bg: 'bg-red-50',
+                                text: 'text-red-700',
+                                icon: X,
+                                label: 'Denied'
+                              }
+                            };
+                            const config = badgeConfig[status as keyof typeof badgeConfig] || badgeConfig.pending;
+                            const Icon = config.icon;
+                            return (
+                              <>
+                                <button
+                                  onClick={() => setOpenStatusDropdown(openStatusDropdown === entry.id ? null : entry.id)}
+                                  disabled={updatingStatus === entry.id}
+                                  className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium cursor-pointer hover:opacity-80 transition-opacity ${config.bg} ${config.text} disabled:opacity-50`}
+                                >
+                                  <Icon className="h-3.5 w-3.5" />
+                                  {config.label}
+                                </button>
+                                {openStatusDropdown === entry.id && (
+                                  <div className="absolute top-full mt-1.5 left-0 z-50 bg-white border border-slate-200 rounded-lg shadow-lg py-1 w-max">
+                                    {['pending', 'approved', 'denied'].filter(s => s !== status).map((statusOption) => {
+                                      const statusConfig = badgeConfig[statusOption as keyof typeof badgeConfig];
+                                      const StatusIcon = statusConfig.icon;
+                                      return (
+                                        <button
+                                          key={statusOption}
+                                          onClick={() => handleStatusChange(entry.id, statusOption)}
+                                          disabled={updatingStatus === entry.id}
+                                          className="block px-3 py-2 hover:bg-slate-50 transition-colors disabled:opacity-50"
+                                        >
+                                          <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium ${statusConfig.bg} ${statusConfig.text}`}>
+                                            <StatusIcon className="h-3.5 w-3.5" />
+                                            {statusConfig.label}
+                                          </span>
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                )}
+                              </>
+                            );
+                          })()}
+                        </div>
                       </td>
                     )}
                     <td className="hidden sm:table-cell whitespace-nowrap px-2 py-3 text-right">

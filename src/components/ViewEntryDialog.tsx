@@ -159,20 +159,20 @@ export function ViewEntryDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="!max-w-none w-full h-screen sm:w-[95vw] sm:h-[90vh] md:w-[85vw] md:h-[90vh] lg:w-[70vw] lg:h-[90vh] flex flex-col !pt-4 sm:!pt-6 sm:!pt-8 !pb-4 sm:!pb-6 rounded-none sm:rounded-lg">
-        <DialogHeader className="border-b border-slate-200 pb-0 pr-0">
-          <div className="w-full">
-            <DialogTitle className="text-xl sm:text-2xl font-bold text-slate-900 mb-2 line-clamp-2">
+      <DialogContent className="!max-w-none w-full h-screen sm:w-[95vw] sm:h-[90vh] md:w-[85vw] md:h-[90vh] lg:w-[70vw] lg:h-[90vh] flex flex-col !pt-2 sm:!pt-6 sm:!pt-8 !pb-2 sm:!pb-6 rounded-none sm:rounded-lg">
+        <DialogHeader className="border-b border-slate-200 pb-2 pr-0">
+          <div className="w-full px-3 sm:px-6">
+            <DialogTitle className="text-lg sm:text-2xl font-bold text-slate-900 mb-1 line-clamp-2">
               {displayEntry.headline}
             </DialogTitle>
           </div>
         </DialogHeader>
         
         {/* AI Summary Button - Below heading */}
-        <div className="px-4 sm:px-6 py-3 border-b border-slate-200 flex gap-2">
+        <div className="px-3 sm:px-6 py-2 border-b border-slate-200 flex gap-2">
           <div className="flex gap-2 flex-wrap items-start">
             {/* Date Badge */}
-            <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">
+            <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">
               {new Date(displayEntry.date).toLocaleDateString('en-US', {
                 month: 'short',
                 day: 'numeric',
@@ -180,7 +180,7 @@ export function ViewEntryDialog({
               })}
             </span>
             {/* Priority Badge */}
-            <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${getPriorityBadgeClass(displayEntry.priority)}`}>
+            <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${getPriorityBadgeClass(displayEntry.priority)}`}>
               <span className={`h-1.5 w-1.5 rounded-full ${displayEntry.priority === 'sg-attention' ? 'bg-red-600' : 'bg-blue-600'}`} />
               {PRIORITIES.find(p => p.value === displayEntry.priority)?.label}
             </span>
@@ -190,7 +190,7 @@ export function ViewEntryDialog({
               size="sm"
               onClick={handleGenerateSummary}
               disabled={isGeneratingSummary}
-              className="bg-[#009edb] hover:bg-[#0080b8] text-white gap-2 text-xs sm:text-sm px-2 py-1 sm:px-3 sm:py-2 h-auto"
+              className="bg-[#009edb] hover:bg-[#0080b8] text-white gap-1 text-xs sm:text-sm px-2 py-0.5 sm:px-3 sm:py-2 h-auto"
             >
               <Sparkles className="h-3 w-3 sm:h-4 sm:w-4" />
               <span className="hidden sm:inline">{isGeneratingSummary ? 'Generating...' : 'Create Summary'}</span>
@@ -200,7 +200,7 @@ export function ViewEntryDialog({
         </div>
         
         {/* Scrollable content */}
-        <div className="flex-1 overflow-y-auto px-4 sm:px-6" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+        <div className="flex-1 overflow-y-auto px-3 sm:px-6" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
           <style>{`
             ::-webkit-scrollbar {
               display: none;
@@ -209,15 +209,15 @@ export function ViewEntryDialog({
           
           {/* AI Summary Box - Inside scrollable area */}
           {summary && (
-            <div className="pt-4 pb-2 border-b border-slate-200 mb-4">
-              <div className="rounded-lg border-2 border-[#009edb] bg-[#009edb]/5 p-4">
-                <div className="text-sm font-semibold text-[#009edb] mb-2 flex items-center gap-2">
-                  <Sparkles className="h-4 w-4" />
+            <div className="pt-2 pb-1 border-b border-slate-200 mb-2">
+              <div className="rounded-lg border-2 border-[#009edb] bg-[#009edb]/5 p-3">
+                <div className="text-xs sm:text-sm font-semibold text-[#009edb] mb-2 flex items-center gap-2">
+                  <Sparkles className="h-3 w-3 sm:h-4 sm:w-4" />
                   Key Points
                 </div>
-                <ul className="space-y-2">
+                <ul className="space-y-1">
                   {summary.map((point, index) => (
-                    <li key={index} className="text-sm text-slate-700 flex gap-2">
+                    <li key={index} className="text-xs sm:text-sm text-slate-700 flex gap-2">
                       <span className="text-[#009edb] font-bold shrink-0">•</span>
                       <span>{point}</span>
                     </li>
@@ -228,7 +228,7 @@ export function ViewEntryDialog({
           )}
           
           {/* Entry metadata */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-2 sm:gap-x-4 gap-y-2 mb-4 py-2 sm:py-4 border-b border-slate-200">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-2 sm:gap-x-4 gap-y-1 mb-2 py-1.5 sm:py-4 border-b border-slate-200">
             <div>
               <div className="text-xs sm:text-sm font-semibold text-slate-500 uppercase tracking-wide">Region</div>
               <div className="text-xs sm:text-base text-slate-900 line-clamp-2">{displayEntry.region}</div>
@@ -379,11 +379,11 @@ export function ViewEntryDialog({
 
           {/* PU notes */}
           {displayEntry.puNote && (
-            <div className="mb-6 pb-6 border-b border-slate-200">
-              <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">
+            <div className="mb-2 pb-2 border-b border-slate-200">
+              <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">
                 PU Notes
               </div>
-              <div className="text-sm text-slate-700 break-words whitespace-pre-wrap">
+              <div className="text-xs sm:text-sm text-slate-700 break-words whitespace-pre-wrap">
                 {displayEntry.puNote}
               </div>
             </div>
@@ -408,7 +408,7 @@ export function ViewEntryDialog({
         </div>
 
         {/* Footer */}
-        <div className="border-t border-slate-200 pt-3 sm:pt-4 flex flex-col gap-3 px-4 sm:px-6">
+        <div className="border-t border-slate-200 pt-2 sm:pt-4 flex flex-col gap-2 px-3 sm:px-6">
           {/* Navigation buttons */}
           {allEntries.length > 1 && (
             <div className="flex gap-2 justify-center">
@@ -417,12 +417,12 @@ export function ViewEntryDialog({
                 size="sm"
                 onClick={handlePrevious}
                 disabled={currentIndex === 0}
-                className="gap-2"
+                className="gap-1 h-8 text-xs"
               >
-                <ChevronLeft className="h-4 w-4" />
+                <ChevronLeft className="h-3 w-3" />
                 Previous
               </Button>
-              <span className="flex items-center text-sm text-slate-600">
+              <span className="flex items-center text-xs text-slate-600">
                 {currentIndex + 1} of {allEntries.length}
               </span>
               <Button
@@ -430,10 +430,10 @@ export function ViewEntryDialog({
                 size="sm"
                 onClick={handleNext}
                 disabled={currentIndex >= allEntries.length - 1}
-                className="gap-2"
+                className="gap-1 h-8 text-xs"
               >
                 Next
-                <ChevronRight className="h-4 w-4" />
+                <ChevronRight className="h-3 w-3" />
               </Button>
             </div>
           )}
@@ -445,7 +445,7 @@ export function ViewEntryDialog({
                 variant={displayEntry.approvalStatus === 'approved' ? 'default' : 'outline'}
                 onClick={() => handleApprove('approved')}
                 disabled={isUpdatingApproval}
-                className={`gap-2 flex-1 ${
+                className={`gap-1 flex-1 h-8 text-xs ${
                   displayEntry.approvalStatus === 'approved'
                     ? 'bg-green-600 hover:bg-green-700 text-white'
                     : displayEntry.approvalStatus === 'denied'
@@ -453,7 +453,7 @@ export function ViewEntryDialog({
                     : 'text-green-600 hover:bg-green-50 hover:text-green-700'
                 }`}
               >
-                <Check className="h-4 w-4" />
+                <Check className="h-3 w-3" />
                 Approve
               </Button>
               
@@ -461,7 +461,7 @@ export function ViewEntryDialog({
                 variant={displayEntry.approvalStatus === 'denied' ? 'default' : 'outline'}
                 onClick={() => handleApprove('denied')}
                 disabled={isUpdatingApproval}
-                className={`gap-2 flex-1 ${
+                className={`gap-1 flex-1 h-8 text-xs ${
                   displayEntry.approvalStatus === 'denied'
                     ? 'bg-red-600 hover:bg-red-700 text-white'
                     : displayEntry.approvalStatus === 'approved'
@@ -469,7 +469,7 @@ export function ViewEntryDialog({
                     : 'text-red-600 hover:bg-red-50 hover:text-red-700'
                 }`}
               >
-                <X className="h-4 w-4" />
+                <X className="h-3 w-3" />
                 Deny
               </Button>
             </div>
@@ -481,9 +481,9 @@ export function ViewEntryDialog({
               <Link href={`/form?edit=${displayEntry.id}`}>
                 <Button
                   variant="outline"
-                  className="gap-2 w-full h-10 px-3"
+                  className="gap-2 w-full h-8 text-xs px-3"
                 >
-                  <Edit className="h-4 w-4" />
+                  <Edit className="h-3 w-3" />
                   Edit
                 </Button>
               </Link>
@@ -491,9 +491,9 @@ export function ViewEntryDialog({
               <Button
                 onClick={() => handleOpenChange(false)}
                 variant="outline"
-                className="gap-2 h-10 px-3"
+                className="gap-2 h-8 text-xs px-3"
               >
-                <X className="h-4 w-4" />
+                <X className="h-3 w-3" />
                 Close
               </Button>
             </div>

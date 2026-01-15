@@ -166,7 +166,7 @@ export function PopupContainer() {
   const { popups } = usePopup();
 
   return (
-    <div className="fixed bottom-4 right-4 z-[9999] max-w-md space-y-3 pointer-events-auto">
+    <div className="fixed bottom-4 right-4 z-[9999] max-w-md space-y-3 pointer-events-auto hidden sm:flex flex-col">
       {popups.map((popup) => (
         <PopupItem key={popup.id} popup={popup} />
       ))}

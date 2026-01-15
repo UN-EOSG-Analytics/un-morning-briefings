@@ -382,16 +382,19 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
         return 0;
       });
 
-      // Group entries by region and sort regions alphabetically
-      const entriesByRegion = sortedEntries.reduce((acc, entry) => {
+      // Group entries by region and country
+      const entriesByRegionAndCountry = sortedEntries.reduce((acc, entry) => {
         if (!acc[entry.region]) {
-          acc[entry.region] = [];
+          acc[entry.region] = {};
         }
-        acc[entry.region].push(entry);
+        if (!acc[entry.region][entry.country]) {
+          acc[entry.region][entry.country] = [];
+        }
+        acc[entry.region][entry.country].push(entry);
         return acc;
-      }, {} as Record<string, typeof sortedEntries>);
+      }, {} as Record<string, Record<string, typeof sortedEntries>>);
 
-      const sortedRegions = Object.keys(entriesByRegion).sort();
+      const sortedRegions = Object.keys(entriesByRegionAndCountry).sort();
 
       // Build document children
       const children: any[] = [
@@ -429,7 +432,7 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
         createSeparator(),
       ];
 
-      // Add entries grouped by region
+      // Add entries grouped by region and country
       sortedRegions.forEach((region) => {
         // Add region header
         children.push(
@@ -449,121 +452,137 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
           })
         );
 
-        // Add entries for this region
-        entriesByRegion[region].forEach((entry: MorningMeetingEntry) => {
-          // Country
+        // Get countries for this region and sort them
+        const countries = Object.keys(entriesByRegionAndCountry[region]).sort();
+
+        // Add entries grouped by country
+        countries.forEach((country) => {
+          // Country header (shown once per country)
           children.push(
             new Paragraph({
               children: [
                 new TextRun({
-                  text: `${entry.country}`,
+                  text: country,
                   bold: true,
                   size: 24,
                   font: 'Roboto',
                 }),
               ],
-              spacing: { before: 300, after: 100 },
+              spacing: { before: 300, after: 200 },
             })
           );
-        children.push(
-          new Paragraph({
-            children: [
-              new TextRun({
-                text: entry.priority === 'sg-attention'
-                  ? 'SG Attention'
-                  : 'Situational Awareness',
-                italics: true,
-                font: 'Roboto',
-              }),
-              new TextRun({
-                text: ` | Category: ${entry.category}`,
-                italics: true,
-                font: 'Roboto',
-              })
-            ],
-            spacing: { after: 100 },
-          })
-        );
 
-        // Headline
-        children.push(
-          new Paragraph({
-            children: [
-              new TextRun({
-                text: entry.headline,
-                bold: true,
-                size: 22,
-                font: 'Roboto',
-              }),
-            ],
-            spacing: { after: 150 },
-          })
-        );
-
-        // Content - parse TipTap JSON
-        if (entry.entry) {
-          try {
-            const contentElements = parseHtmlContent(entry.entry);
-            children.push(...contentElements);
-          } catch {
-            // Fallback to plain text if parsing fails
+          // Add all entries for this country
+          entriesByRegionAndCountry[region][country].forEach((entry: MorningMeetingEntry, index: number) => {
+            // Headline with priority and category
             children.push(
               new Paragraph({
                 children: [
                   new TextRun({
-                    text: entry.entry,
+                    text: entry.headline,
+                    bold: true,
+                    size: 22,
                     font: 'Roboto',
                   }),
                 ],
                 spacing: { after: 100 },
               })
             );
-          }
-        }
 
-        // Source URL if available
-        if (entry.sourceUrl) {
-          children.push(
-            new Paragraph({
-              children: [
-                new TextRun({
-                  text: 'Source: ',
-                  italics: true,
-                  font: 'Roboto',
-                }),
-                new TextRun({
-                  text: entry.sourceUrl,
-                  italics: true,
-                  font: 'Roboto',
-                }),
-              ],
-              spacing: { after: 100 },
-            })
-          );
-        }
+            // Priority and Category on next line
+            children.push(
+              new Paragraph({
+                children: [
+                  new TextRun({
+                    text: entry.priority === 'sg-attention'
+                      ? 'SG Attention'
+                      : 'Situational Awareness',
+                    italics: true,
+                    size: 20,
+                    font: 'Roboto',
+                  }),
+                  new TextRun({
+                    text: ` | ${entry.category}`,
+                    italics: true,
+                    size: 20,
+                    font: 'Roboto',
+                  })
+                ],
+                spacing: { after: 150 },
+              })
+            );
 
-        // PU Note if available
-        if (entry.puNote) {
-          children.push(
-            new Paragraph({
-              children: [
-                new TextRun({
-                  text: 'PU Note: ',
-                  bold: true,
-                  font: 'Roboto',
-                }),
-                new TextRun({
-                  text: entry.puNote,
-                  font: 'Roboto',
-                }),
-              ],
-              spacing: { after: 100 },
-            })
-          );
-        }
+            // Content - parse TipTap JSON
+            if (entry.entry) {
+              try {
+                const contentElements = parseHtmlContent(entry.entry);
+                children.push(...contentElements);
+              } catch {
+                // Fallback to plain text if parsing fails
+                children.push(
+                  new Paragraph({
+                    children: [
+                      new TextRun({
+                        text: entry.entry,
+                        font: 'Roboto',
+                      }),
+                    ],
+                    spacing: { after: 100 },
+                  })
+                );
+              }
+            }
 
-        // Separator between entries
-        children.push(createSeparator());
+            // Source URL if available
+            if (entry.sourceUrl) {
+              children.push(
+                new Paragraph({
+                  children: [
+                    new TextRun({
+                      text: 'Source: ',
+                      italics: true,
+                      font: 'Roboto',
+                    }),
+                    new TextRun({
+                      text: entry.sourceUrl,
+                      italics: true,
+                      font: 'Roboto',
+                    }),
+                  ],
+                  spacing: { after: 100 },
+                })
+              );
+            }
+
+            // PU Note if available
+            if (entry.puNote) {
+              children.push(
+                new Paragraph({
+                  children: [
+                    new TextRun({
+                      text: 'PU Note: ',
+                      bold: true,
+                      font: 'Roboto',
+                    }),
+                    new TextRun({
+                      text: entry.puNote,
+                      font: 'Roboto',
+                    }),
+                  ],
+                  spacing: { after: 100 },
+                })
+              );
+            }
+
+            // Separator between entries (but not after the last entry in the country)
+            const countryEntries = entriesByRegionAndCountry[region][country];
+            if (index < countryEntries.length - 1) {
+              children.push(createSeparator(40, { before: 200, after: 200 }));
+            }
+          });
+
+          // Separator after country section
+          children.push(createSeparator());
         });
       });
 

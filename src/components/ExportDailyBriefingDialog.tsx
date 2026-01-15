@@ -938,8 +938,8 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
+      <DialogContent className="w-screen h-dvh sm:max-w-md sm:h-auto !p-0 sm:!p-6 flex flex-col rounded-none sm:rounded-lg">
+        <DialogHeader className="px-4 pt-4 sm:px-0 sm:pt-0">
           <DialogTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5 text-un-blue" />
             Export Daily Briefing
@@ -948,18 +948,18 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
           The exported document will include all entries for the selected date, organized by priority with full content and formatting.
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-4 py-4">
+        <div className="space-y-4 py-4 px-4 sm:px-0 flex-1 overflow-y-auto">
           <div className="space-y-2">
             <label className="text-sm font-medium text-foreground">
               Select Date
             </label>
             <div className="relative">
-              <Calendar className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <Calendar className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 pointer-events-none" />
               <input
                 type="date"
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
-                className="h-10 w-full rounded border border-slate-300 bg-white pl-10 pr-3 text-sm focus:border-un-blue focus:outline-none focus:ring-2 focus:ring-un-blue/20"
+                className="h-10 w-full rounded border border-slate-300 bg-white pl-10 pr-3 text-sm focus:border-un-blue focus:outline-none focus:ring-2 focus:ring-un-blue/20 appearance-none"
               />
             </div>
           </div>
@@ -1000,21 +1000,29 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
             </div>
           </div>
         </div>
-        <DialogFooter className="flex gap-2 w-full justify-between">
+        <DialogFooter className="flex flex-col sm:flex-row gap-2 w-full px-4 pb-4 sm:px-0 sm:pb-0 flex-shrink-0">
+          <Button 
+            onClick={handleOpenChange.bind(null, false)}
+            variant="outline" 
+            className="w-full sm:w-auto order-3 sm:order-1"
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleExport} 
+            disabled={isExporting || isSendingEmail}
+            className="w-full sm:w-auto order-1 sm:order-2"
+          >
+            <Download className="h-4 w-4" />
+            {isExporting ? 'Exporting...' : 'Export to Word'}
+          </Button>
           <Button 
             onClick={handleSendViaEmail} 
             disabled={isSendingEmail || isExporting}
+            className="w-full sm:w-auto order-2 sm:order-3"
           >
             <Mail className="h-4 w-4" />
             {isSendingEmail ? 'Sending...' : 'Send via Email'}
-          </Button>
-          <Button onClick={handleExport} disabled={isExporting || isSendingEmail}>
-            <Download className="h-4 w-4" />
-
-            {isExporting ? 'Exporting...' : 'Export to Word'}
-          </Button>
-          <Button variant="outline" onClick={() => handleOpenChange(false)}>
-            Cancel
           </Button>
         </DialogFooter>
       </DialogContent>

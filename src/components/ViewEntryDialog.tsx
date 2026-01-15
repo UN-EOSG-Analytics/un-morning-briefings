@@ -159,7 +159,7 @@ export function ViewEntryDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="!max-w-none w-screen h-dvh sm:w-[95vw] sm:h-[90vh] md:w-[85vw] md:h-[90vh] lg:w-[70vw] lg:h-[90vh] flex flex-col !p-0 rounded-none sm:rounded-lg overflow-hidden fixed top-0 left-0 sm:top-1/2 sm:left-1/2 sm:translate-x-0 sm:translate-y-0 sm:translate-x-[-50%] sm:translate-y-[-50%]">
+      <DialogContent className="!max-w-none w-screen h-dvh sm:w-[95vw] sm:h-[90vh] md:w-[85vw] md:h-[90vh] lg:w-[70vw] lg:h-[90vh] flex flex-col !p-0 rounded-none sm:rounded-lg overflow-hidden">
         {/* Hidden title for accessibility */}
         <DialogTitle className="sr-only">
           {displayEntry.headline}

@@ -159,8 +159,8 @@ export function ViewEntryDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="!max-w-none w-full h-screen sm:w-[95vw] sm:h-[90vh] md:w-[85vw] md:h-[90vh] lg:w-[70vw] lg:h-[90vh] flex flex-col !pt-2 sm:!pt-6 sm:!pt-8 !pb-2 sm:!pb-6 rounded-none sm:rounded-lg">
-        <DialogHeader className="border-b border-slate-200 pb-2 pr-0">
+      <DialogContent className="!max-w-none w-full h-screen sm:w-[95vw] sm:h-[90vh] md:w-[85vw] md:h-[90vh] lg:w-[70vw] lg:h-[90vh] flex flex-col !pt-3 sm:!pt-6 sm:!pt-8 !pb-3 sm:!pb-6 rounded-none sm:rounded-lg">
+        <DialogHeader className="border-b border-slate-200 pb-2 pr-0 flex-shrink-0">
           <div className="w-full px-3 sm:px-6">
             <DialogTitle className="text-lg sm:text-2xl font-bold text-slate-900 mb-1 line-clamp-2">
               {displayEntry.headline}
@@ -408,7 +408,7 @@ export function ViewEntryDialog({
         </div>
 
         {/* Footer */}
-        <div className="border-t border-slate-200 pt-2 sm:pt-4 flex flex-col gap-2 px-3 sm:px-6">
+        <div className="border-t border-slate-200 pt-2 sm:pt-4 flex flex-col gap-2 px-3 sm:px-6 flex-shrink-0">
           {/* Navigation buttons */}
           {allEntries.length > 1 && (
             <div className="flex gap-2 justify-center">

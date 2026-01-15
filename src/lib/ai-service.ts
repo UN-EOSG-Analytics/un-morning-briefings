@@ -9,7 +9,6 @@ interface AutoFillResult {
   region: string;
   country: string;
   headline: string;
-  date: string;
   entry: string;
 }
 
@@ -48,7 +47,6 @@ Return JSON:
   "region": "best matching region from list",
   "country": "specific country name",
   "headline": "concise headline (max 120 chars)",
-  "date": "YYYY-MM-DD format",
   "entry": "cleaned main content with logical paragraph breaks"
 }`;
 
@@ -71,7 +69,6 @@ Return JSON:
       region: parsed.region || '',
       country: parsed.country || '',
       headline: parsed.headline || '',
-      date: parsed.date || new Date().toISOString().split('T')[0],
       entry: entryHtml,
     };
   } catch (error) {

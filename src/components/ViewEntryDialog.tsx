@@ -160,8 +160,13 @@ export function ViewEntryDialog({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="!max-w-none w-full h-screen sm:w-[95vw] sm:h-[90vh] md:w-[85vw] md:h-[90vh] lg:w-[70vw] lg:h-[90vh] flex flex-col !p-0 rounded-none sm:rounded-lg overflow-hidden">
+        {/* Hidden title for accessibility */}
+        <DialogTitle className="sr-only">
+          {displayEntry.headline}
+        </DialogTitle>
+        
         {/* Header - Fixed at top */}
-        <div className="flex-shrink-0 bg-white border-b border-slate-200 pt-3 pb-2 px-3 sm:px-6">
+        <div className="flex-shrink-0 bg-white border-b border-slate-200 pt-3 pb-2 sm:pt-6 px-3 sm:px-6">
           <h2 className="text-lg sm:text-2xl font-bold text-slate-900 mb-1 line-clamp-2">
             {displayEntry.headline}
           </h2>
@@ -407,10 +412,10 @@ export function ViewEntryDialog({
         </div>
 
         {/* Footer */}
-        <div className="border-t border-slate-200 pt-2 pb-2 sm:pt-4 sm:pb-4 flex flex-col gap-2 px-3 sm:px-6 flex-shrink-0 bg-white">
-          {/* Navigation buttons */}
+        <div className="border-t border-slate-200 pt-2 pb-2 sm:pt-4 sm:pb-4 px-3 sm:px-6 flex-shrink-0 bg-white flex flex-col sm:flex-row gap-2">
+          {/* Mobile: Navigation buttons */}
           {allEntries.length > 1 && (
-            <div className="flex gap-2 justify-center">
+            <div className="flex gap-2 justify-center sm:hidden mb-2">
               <Button
                 variant="outline"
                 size="sm"
@@ -439,7 +444,7 @@ export function ViewEntryDialog({
 
           {/* Approve/Deny buttons - shown above on mobile */}
           {showApproveButton && onApprove && (
-            <div className="flex gap-2 w-full sm:hidden">
+            <div className="flex gap-2 w-full sm:hidden mb-2">
               <Button
                 variant={displayEntry.approvalStatus === 'approved' ? 'default' : 'outline'}
                 onClick={() => handleApprove('approved')}
@@ -474,13 +479,13 @@ export function ViewEntryDialog({
             </div>
           )}
 
-          {/* Action buttons */}
-          <div className="flex flex-col sm:flex-row justify-between gap-2 sm:gap-2">
-            <div className="grid grid-cols-2 gap-2 w-full">
+          {/* Action buttons - Mobile layout */}
+          <div className="flex flex-col gap-2 sm:hidden">
+            <div className="grid grid-cols-2 gap-2">
               <Link href={`/form?edit=${displayEntry.id}`}>
                 <Button
                   variant="outline"
-                  className="gap-2 w-full h-8 text-xs px-3"
+                  className="gap-2 h-8 text-xs px-3 w-full"
                 >
                   <Edit className="h-3 w-3" />
                   Edit
@@ -496,14 +501,70 @@ export function ViewEntryDialog({
                 Close
               </Button>
             </div>
-            
-            {showApproveButton && onApprove && (
-                <div className="hidden sm:flex gap-2 w-full sm:w-auto">
+          </div>
+
+          {/* Action buttons - Desktop layout */}
+          <div className="hidden sm:flex gap-2 justify-between items-center w-full">
+            {/* Left: Edit/Close */}
+            <div className="flex gap-2">
+              <Link href={`/form?edit=${displayEntry.id}`}>
+                <Button
+                  variant="outline"
+                  className="gap-2 h-8 text-xs px-3"
+                >
+                  <Edit className="h-3 w-3" />
+                  Edit
+                </Button>
+              </Link>
+              
+              <Button
+                onClick={() => handleOpenChange(false)}
+                variant="outline"
+                className="gap-2 h-8 text-xs px-3"
+              >
+                <X className="h-3 w-3" />
+                Close
+              </Button>
+            </div>
+
+            {/* Middle: Navigation */}
+            {allEntries.length > 1 && (
+              <div className="flex gap-2 items-center">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handlePrevious}
+                  disabled={currentIndex === 0}
+                  className="gap-1 h-8 text-xs"
+                >
+                  <ChevronLeft className="h-3 w-3" />
+                  Previous
+                </Button>
+                <span className="text-xs text-slate-600 whitespace-nowrap">
+                  {currentIndex + 1} of {allEntries.length}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleNext}
+                  disabled={currentIndex >= allEntries.length - 1}
+                  className="gap-1 h-8 text-xs"
+                >
+                  Next
+                  <ChevronRight className="h-3 w-3" />
+                </Button>
+              </div>
+            )}
+
+            {/* Right: Approve/Deny/Delete */}
+            <div className="flex gap-2">
+              {showApproveButton && onApprove && (
+                <>
                   <Button
                     variant={displayEntry.approvalStatus === 'approved' ? 'default' : 'outline'}
                     onClick={() => handleApprove('approved')}
                     disabled={isUpdatingApproval}
-                    className={`gap-2 flex-1 sm:flex-none ${
+                    className={`gap-2 h-8 text-xs ${
                       displayEntry.approvalStatus === 'approved'
                         ? 'bg-green-600 hover:bg-green-700 text-white'
                         : displayEntry.approvalStatus === 'denied'
@@ -519,7 +580,7 @@ export function ViewEntryDialog({
                     variant={displayEntry.approvalStatus === 'denied' ? 'default' : 'outline'}
                     onClick={() => handleApprove('denied')}
                     disabled={isUpdatingApproval}
-                    className={`gap-2 flex-1 sm:flex-none ${
+                    className={`gap-2 h-8 text-xs ${
                       displayEntry.approvalStatus === 'denied'
                         ? 'bg-red-600 hover:bg-red-700 text-white'
                         : displayEntry.approvalStatus === 'approved'
@@ -530,19 +591,20 @@ export function ViewEntryDialog({
                     <X className="h-4 w-4" />
                     Deny
                   </Button>
-                </div>
+                </>
               )}
 
               {onDelete && displayEntry.id && (
                 <Button
                   variant="outline"
                   onClick={handleDelete}
-                  className="hidden sm:flex gap-2 w-full sm:w-auto text-red-600 hover:bg-red-50 hover:text-red-700"
+                  className="gap-2 h-8 text-xs text-red-600 hover:bg-red-50 hover:text-red-700"
                 >
                   <Trash2 className="h-4 w-4" />
                   Delete
                 </Button>
               )}
+            </div>
           </div>
         </div>
       </DialogContent>

@@ -112,8 +112,8 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
         new ImageRun({
           data: imageData,
           transformation: {
-            width: 48,
-            height: 40,
+            width: 43,
+            height: 36,
           },
           type: 'png',
         }),
@@ -155,8 +155,8 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
                 left: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' },
                 right: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' },
               },
-              margins: { top: 0, bottom: 0, left: 0, right: 100 },
-              verticalAlign: 'center',
+              margins: { top: 100, bottom: 0, left: 0, right: 100 },
+              verticalAlign: 'top',
               children: [
                 new Paragraph({
                   children: logoParagraphChildren,

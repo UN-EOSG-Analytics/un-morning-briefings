@@ -167,16 +167,16 @@ export function ViewEntryDialog({
         
         {/* Header - Fixed at top */}
         <div className="flex-shrink-0 bg-white border-b border-slate-200 py-2 sm:py-3 sm:pt-6 px-3 sm:px-6">
-          <h2 className="text-base sm:text-2xl font-bold text-slate-900 mb-0 sm:mb-1 line-clamp-2">
+          <h2 className="text-lg sm:text-2xl font-bold text-slate-900 mb-0 sm:mb-1 line-clamp-2">
             {displayEntry.headline}
           </h2>
         </div>
         
         {/* Badges and AI Button - Fixed */}
-        <div className="flex-shrink-0 px-3 sm:px-6 py-2 border-b border-slate-200 flex gap-2 bg-white">
-          <div className="flex gap-2 flex-wrap items-start">
+        <div className="flex-shrink-0 px-3 sm:px-6 py-1 sm:py-2 border-b border-slate-200 flex gap-2 bg-white">
+          <div className="flex gap-1 sm:gap-2 flex-wrap items-start">
             {/* Date Badge */}
-            <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">
+            <span className="inline-flex items-center rounded-full bg-slate-100 px-1.5 py-0.5 text-xs font-medium text-slate-700">
               {new Date(displayEntry.date).toLocaleDateString('en-US', {
                 month: 'short',
                 day: 'numeric',
@@ -184,7 +184,7 @@ export function ViewEntryDialog({
               })}
             </span>
             {/* Priority Badge */}
-            <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${getPriorityBadgeClass(displayEntry.priority)}`}>
+            <span className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-xs font-medium ${getPriorityBadgeClass(displayEntry.priority)}`}>
               <span className={`h-1.5 w-1.5 rounded-full ${displayEntry.priority === 'sg-attention' ? 'bg-red-600' : 'bg-blue-600'}`} />
               {PRIORITIES.find(p => p.value === displayEntry.priority)?.label}
             </span>

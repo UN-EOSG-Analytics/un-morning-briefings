@@ -13,6 +13,7 @@ export interface MorningMeetingEntry {
   date: string; // Now includes both date and time
   entry: string;
   sourceUrl?: string;
+  sourceDate?: string; // Date from the source
   puNote?: string;
   author?: string;
   aiSummary?: string[] | null;

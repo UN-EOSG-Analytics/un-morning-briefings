@@ -37,6 +37,7 @@ export async function GET(request: NextRequest) {
         e.date,
         e.entry,
         e.source_url as "sourceUrl",
+        e.source_date as "sourceDate",
         e.pu_note as "puNote",
         e.author,
         e.status,
@@ -182,8 +183,8 @@ export async function POST(request: NextRequest) {
     await query(
       `INSERT INTO entries (
         id, category, priority, region, country, headline, date, entry,
-        source_url, pu_note, author, status, approval_status
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
+        source_url, source_date, pu_note, author, status, approval_status
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`,
       [
         id,
         data.category,
@@ -194,6 +195,7 @@ export async function POST(request: NextRequest) {
         data.date, // Store as string, no Date conversion
         entryContent,
         data.sourceUrl || null,
+        data.sourceDate || null,
         data.puNote || null,
         data.author || null,
         data.status || null,
@@ -234,6 +236,7 @@ export async function POST(request: NextRequest) {
         e.date,
         e.entry,
         e.source_url as "sourceUrl",
+        e.source_date as "sourceDate",
         e.pu_note as "puNote",
         e.author,
         e.status,

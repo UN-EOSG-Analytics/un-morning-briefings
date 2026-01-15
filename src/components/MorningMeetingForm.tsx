@@ -126,6 +126,7 @@ export function MorningMeetingForm({
     date: formatDateForInput(initialData?.date),
     entry: cleanEntry(initialData?.entry || ''),
     sourceUrl: initialData?.sourceUrl || '',
+    sourceDate: initialData?.sourceDate || '',
     puNote: initialData?.puNote || '',
     author: initialData?.author || 'Current User',
   });
@@ -418,6 +419,7 @@ export function MorningMeetingForm({
         date: new Date().toISOString().split('T')[0],
         entry: '',
         sourceUrl: '',
+        sourceDate: '',
         puNote: '',
         author: 'Current User',
       });
@@ -498,6 +500,7 @@ export function MorningMeetingForm({
         headline: result.headline || prev.headline,
         date: result.date || prev.date,
         entry: result.entry || prev.entry,
+        sourceDate: result.sourceDate || prev.sourceDate,
       }));
 
       setShowAutoFillDialog(false);
@@ -626,9 +629,9 @@ export function MorningMeetingForm({
                   Entry Details
                 </h2>
 
-                <div className="grid gap-3 sm:gap-4 grid-cols-1 md:grid-cols-2">
-                  {/* Headline */}
-                  <div className="space-y-2">
+                <div className="grid gap-3 sm:gap-4 grid-cols-4">
+                  {/* Headline - 3/4 width */}
+                  <div className="space-y-2 col-span-3">
                     <label className="text-sm font-medium text-slate-700">
                       Headline{' '}
                       <span className="text-red-500">*</span>
@@ -655,6 +658,20 @@ export function MorningMeetingForm({
                         {errors.headline}
                       </div>
                     )}
+                  </div>
+
+                  {/* Source Date - 1/4 width */}
+                  <div className="space-y-2 col-span-1">
+                    <label className="text-sm font-medium text-slate-700">
+                      Source Date <span className="text-xs text-slate-500">(optional)</span>
+                    </label>
+                    <input
+                      type="date"
+                      name="sourceDate"
+                      value={formData.sourceDate || ''}
+                      onChange={handleInputChange}
+                      className="w-full rounded border border-slate-300 bg-slate-50 px-3 py-2 text-sm outline-none transition focus:border-un-blue focus:ring-2 focus:ring-un-blue/15"
+                    />
                   </div>
                 </div>
 
@@ -819,7 +836,7 @@ export function MorningMeetingForm({
                   {/* Date */}
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-slate-700">
-                      Date <span className="text-red-500">*</span>
+                      Creation Date
                     </label>
                     <input
                       type="date"
@@ -843,7 +860,7 @@ export function MorningMeetingForm({
                   {/* Time */}
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-slate-700">
-                      Time <span className="text-red-500">*</span>
+                      Creation Time
                     </label>
                     <input
                       type="text"
@@ -946,7 +963,7 @@ export function MorningMeetingForm({
               />
             </div>
             <div className="text-xs text-slate-500 bg-slate-50 p-3 rounded border border-slate-200">
-              <strong>AI will extract:</strong> Category, Priority, Region, Country, Headline, Date, and Entry Content
+              <strong>AI will extract:</strong> Category, Priority, Region, Country, Headline, Source Date, Date, and Entry Content
             </div>
           </div>
 

@@ -28,6 +28,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         e.date,
         e.entry,
         e.source_url as "sourceUrl",
+        e.source_date as "sourceDate",
         e.pu_note as "puNote",
         e.author,
         e.status,
@@ -171,6 +172,10 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       updateFields.push(`source_url = $${paramCount++}`);
       updateValues.push(data.sourceUrl);
     }
+    if (data.sourceDate !== undefined) {
+      updateFields.push(`source_date = $${paramCount++}`);
+      updateValues.push(data.sourceDate);
+    }
     if (data.puNote !== undefined) {
       updateFields.push(`pu_note = $${paramCount++}`);
       updateValues.push(data.puNote);
@@ -226,6 +231,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         e.date,
         e.entry,
         e.source_url as "sourceUrl",
+        COALESCE(e.source_date, NULL) as "sourceDate",
         e.pu_note as "puNote",
         e.author,
         e.status,

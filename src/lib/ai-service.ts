@@ -9,7 +9,9 @@ interface AutoFillResult {
   region: string;
   country: string;
   headline: string;
+  date?: string;
   entry: string;
+  sourceDate?: string;
 }
 
 // Initialize Azure OpenAI client
@@ -47,6 +49,7 @@ Return JSON:
   "region": "best matching region from list",
   "country": "specific country name",
   "headline": "concise headline (max 120 chars)",
+  "sourceDate": "YYYY-MM-DD date when this news/briefing was published or dated, if available, otherwise null",
   "entry": "cleaned main content with logical paragraph breaks"
 }`;
 
@@ -69,7 +72,9 @@ Return JSON:
       region: parsed.region || '',
       country: parsed.country || '',
       headline: parsed.headline || '',
+      date: parsed.date,
       entry: entryHtml,
+      sourceDate: parsed.sourceDate || '',
     };
   } catch (error) {
     console.error('[AI SERVICE] Error details:', error);

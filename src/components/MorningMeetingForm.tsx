@@ -656,52 +656,6 @@ export function MorningMeetingForm({
                       </div>
                     )}
                   </div>
-
-                  {/* Date and Time */}
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    {/* Date */}
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-slate-700">
-                        Date <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="date"
-                        name="dateOnly"
-                        value={formData.date.split('T')[0] || ''}
-                        onChange={handleInputChange}
-                        className={`w-full rounded border px-3 py-2 text-sm outline-none transition ${
-                          errors.date
-                            ? 'border-red-500 bg-red-50 focus:border-red-500 focus:ring-2 focus:ring-red-500/15'
-                            : 'border-slate-300 bg-slate-50 focus:border-un-blue focus:ring-2 focus:ring-un-blue/15'
-                        }`}
-                      />
-                      {errors.date && (
-                        <div className="flex items-center gap-1 text-xs text-red-600">
-                          <AlertCircle className="h-3.5 w-3.5" />
-                          {errors.date}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Time */}
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-slate-700">
-                        Time <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        name="timeOnly"
-                        placeholder="HH:MM"
-                        value={(formData.date.split('T')[1] || '').slice(0, 5)}
-                        onChange={handleInputChange}
-                        className={`w-full rounded border px-3 py-2 text-sm outline-none transition ${
-                          errors.date
-                            ? 'border-red-500 bg-red-50 focus:border-red-500 focus:ring-2 focus:ring-red-500/15'
-                            : 'border-slate-300 bg-slate-50 focus:border-un-blue focus:ring-2 focus:ring-un-blue/15'
-                        }`}
-                      />
-                    </div>
-                  </div>
                 </div>
 
                 {/* Entry Content */}
@@ -850,18 +804,64 @@ export function MorningMeetingForm({
                 <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-700">
                   Metadata
                 </h2>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-700">Author</label>
-                  <input
-                    type="text"
-                    value={formData.author || 'Current User'}
-                    readOnly
-                    className="w-full rounded border border-slate-300 bg-slate-100 px-3 py-2 text-sm text-slate-600"
-                  />
-                  <div className="flex items-center gap-1 text-xs text-slate-500 mb-3 mt-1">
-                    <Info className="h-3.5 w-3.5" />
-                    Automatically populated from your account
+                <div className="grid grid-cols-3 gap-4">
+                  {/* Author */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-slate-700">Author</label>
+                    <input
+                      type="text"
+                      value={formData.author || 'Current User'}
+                      readOnly
+                      className="w-full rounded border border-slate-300 bg-slate-100 px-3 py-2 text-sm text-slate-600"
+                    />
                   </div>
+
+                  {/* Date */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-slate-700">
+                      Date <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="date"
+                      name="dateOnly"
+                      value={formData.date.split('T')[0] || ''}
+                      onChange={handleInputChange}
+                      className={`w-full rounded border px-3 py-2 text-sm outline-none transition ${
+                        errors.date
+                          ? 'border-red-500 bg-red-50 focus:border-red-500 focus:ring-2 focus:ring-red-500/15'
+                          : 'border-slate-300 bg-slate-50 focus:border-un-blue focus:ring-2 focus:ring-un-blue/15'
+                      }`}
+                    />
+                    {errors.date && (
+                      <div className="flex items-center gap-1 text-xs text-red-600">
+                        <AlertCircle className="h-3.5 w-3.5" />
+                        {errors.date}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Time */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-slate-700">
+                      Time <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="timeOnly"
+                      placeholder="HH:MM"
+                      value={(formData.date.split('T')[1] || '').slice(0, 5)}
+                      onChange={handleInputChange}
+                      className={`w-full rounded border px-3 py-2 text-sm outline-none transition ${
+                        errors.date
+                          ? 'border-red-500 bg-red-50 focus:border-red-500 focus:ring-2 focus:ring-red-500/15'
+                          : 'border-slate-300 bg-slate-50 focus:border-un-blue focus:ring-2 focus:ring-un-blue/15'
+                      }`}
+                    />
+                  </div>
+                </div>
+                <div className="flex items-center gap-1 text-xs text-slate-500 mt-2">
+                  <Info className="h-3.5 w-3.5" />
+                  Author automatically populated from your account
                 </div>
               </section>
             </form>

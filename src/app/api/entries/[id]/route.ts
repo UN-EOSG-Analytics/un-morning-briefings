@@ -31,8 +31,6 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         e.pu_note as "puNote",
         e.author,
         e.status,
-        e.created_at as "createdAt",
-        e.updated_at as "updatedAt",
         COALESCE(
           json_agg(
             json_build_object(
@@ -43,9 +41,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
               'blobUrl', i.blob_url,
               'width', i.width,
               'height', i.height,
-              'position', i.position,
-              'createdAt', i.created_at
-            ) ORDER BY i.position NULLS LAST, i.created_at
+              'position', i.position
+            ) ORDER BY i.position NULLS LAST
           ) FILTER (WHERE i.id IS NOT NULL),
           '[]'
         ) as images
@@ -164,7 +161,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     }
     if (data.date !== undefined) {
       updateFields.push(`date = $${paramCount++}`);
-      updateValues.push(new Date(data.date));
+      updateValues.push(data.date); // Store as string, no Date conversion
     }
     if (entryContent !== undefined) {
       updateFields.push(`entry = $${paramCount++}`);
@@ -187,8 +184,6 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       updateValues.push(data.status);
     }
 
-    updateFields.push(`updated_at = $${paramCount++}`);
-    updateValues.push(new Date());
     updateValues.push(id);
 
     if (updateFields.length > 1) {
@@ -203,8 +198,8 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       for (const img of uploadedImages) {
         await query(
           `INSERT INTO images (
-            id, entry_id, filename, mime_type, blob_url, width, height, position, created_at
-          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+            id, entry_id, filename, mime_type, blob_url, width, height, position
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
           [
             crypto.randomUUID(),
             id,
@@ -214,7 +209,6 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
             img.width || null,
             img.height || null,
             img.position || null,
-            new Date(),
           ]
         );
       }
@@ -235,8 +229,6 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         e.pu_note as "puNote",
         e.author,
         e.status,
-        e.created_at as "createdAt",
-        e.updated_at as "updatedAt",
         COALESCE(
           json_agg(
             json_build_object(
@@ -247,9 +239,8 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
               'blobUrl', i.blob_url,
               'width', i.width,
               'height', i.height,
-              'position', i.position,
-              'createdAt', i.created_at
-            ) ORDER BY i.position NULLS LAST, i.created_at
+              'position', i.position
+            ) ORDER BY i.position NULLS LAST
           ) FILTER (WHERE i.id IS NOT NULL),
           '[]'
         ) as images

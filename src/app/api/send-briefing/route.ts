@@ -4,6 +4,21 @@ import nodemailer from 'nodemailer';
 import * as fs from 'fs';
 import * as path from 'path';
 
+/**
+ * Format a date string (YYYY-MM-DD) to long format without timezone conversion
+ */
+function formatDateLong(dateStr: string): string {
+  const [year, month, day] = dateStr.split('-').map(Number);
+  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  
+  // Create date object without timezone issues (use UTC components)
+  const date = new Date(Date.UTC(year, month - 1, day));
+  const dayOfWeek = dayNames[date.getUTCDay()];
+  
+  return `${dayOfWeek}, ${monthNames[month - 1]} ${day}, ${year}`;
+}
+
 // Create a transporter using the configured SMTP server
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
@@ -50,12 +65,7 @@ export async function POST(request: NextRequest) {
     }
 
     const siteTitle = 'United Nations | Morning Briefings';
-    const formattedDate = new Date(briefingDate).toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
+    const formattedDate = formatDateLong(briefingDate);
 
     // Send email with attachment
     await transporter.sendMail({

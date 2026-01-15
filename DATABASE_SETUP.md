@@ -56,11 +56,11 @@ The application uses the `pu_morning_briefings` schema with two main tables:
 
 ### entries Table
 - Stores all morning briefing entries
-- Fields: id, category, priority, region, country, headline, date, entry (TEXT), source_url, pu_note, author, status, created_at, updated_at
+- Fields: id, category, priority, region, country, headline, date (TIMESTAMP with datetime), entry (TEXT), source_url, pu_note, author, status
 
 ### images Table
 - Stores image metadata and references to blob storage
-- Fields: id, entry_id, filename, mime_type, blob_url, width, height, position, created_at
+- Fields: id, entry_id, filename, mime_type, blob_url, width, height, position
 - Images are stored in blob storage (not in database)
 - Foreign key constraint with CASCADE delete when parent entry is deleted
 

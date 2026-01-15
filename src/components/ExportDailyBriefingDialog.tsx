@@ -15,6 +15,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { getSubmittedEntries } from '@/lib/storage';
+import { isWithinCutoffRange } from '@/lib/useEntriesFilter';
 import { Document, Paragraph, TextRun, HeadingLevel, AlignmentType, Packer, Table, TableRow, TableCell, BorderStyle, ImageRun, Header } from 'docx';
 import { saveAs } from 'file-saver';
 import { FileText, Calendar, CheckCircle2, Mail, Download} from 'lucide-react';
@@ -26,6 +27,38 @@ interface ExportDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
+
+/**
+ * Format a date string (YYYY-MM-DD) to long format without timezone conversion
+ * Example: "2026-01-15" → "Wednesday, January 15, 2026"
+ */
+const formatDateLong = (dateStr: string): string => {
+  const [year, month, day] = dateStr.split('-').map(Number);
+  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  
+  // Create date object without timezone issues (use UTC components)
+  const date = new Date(Date.UTC(year, month - 1, day));
+  const dayOfWeek = dayNames[date.getUTCDay()];
+  
+  return `${dayOfWeek}, ${monthNames[month - 1]} ${day}, ${year}`;
+};
+
+/**
+ * Get current datetime string without timezone conversion
+ */
+const getCurrentDateTime = (): string => {
+  const now = new Date();
+  const month = now.getMonth() + 1;
+  const day = now.getDate();
+  const year = now.getFullYear();
+  const hours = now.getHours();
+  const minutes = now.getMinutes();
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  const displayHours = hours % 12 || 12;
+  
+  return `${month}/${day}/${year}, ${displayHours}:${String(minutes).padStart(2, '0')} ${ampm}`;
+};
 
 const createSeparator = (
   length: number = 63,
@@ -53,6 +86,14 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
   const [isLoadingEntries, setIsLoadingEntries] = useState(false);
   const [includeImages, setIncludeImages] = useState(true);
 
+  // Unified function to get approved entries for a date using 8AM cutoff
+  const getApprovedEntriesForDate = useCallback(async (dateStr: string): Promise<MorningMeetingEntry[]> => {
+    const allEntries = await getSubmittedEntries();
+    return allEntries.filter((entry: MorningMeetingEntry) => {
+      return isWithinCutoffRange(entry.date, dateStr) && entry.approvalStatus === 'approved';
+    });
+  }, []);
+
   // Blur the date input when dialog opens to prevent auto-focus
   useEffect(() => {
     if (open && dateInputRef.current) {
@@ -74,11 +115,7 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
 
       setIsLoadingEntries(true);
       try {
-        const allEntries = await getSubmittedEntries();
-        const entriesForDate = allEntries.filter((entry: MorningMeetingEntry) => {
-          const entryDate = new Date(entry.date).toISOString().split('T')[0];
-          return entryDate === selectedDate && entry.approvalStatus === 'approved';
-        });
+        const entriesForDate = await getApprovedEntriesForDate(selectedDate);
         setApprovedEntries(entriesForDate);
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
@@ -93,7 +130,7 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
     if (open) {
       loadEntriesForDate();
     }
-  }, [selectedDate, open, session?.user, showError]);
+  }, [selectedDate, open, session?.user, showError, getApprovedEntriesForDate]);
 
   /**
    * Create a header section with UN logo and classification text
@@ -200,11 +237,7 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
   const handleExport = async () => {
     setIsExporting(true);
     try {
-      const allEntries = await getSubmittedEntries();
-      const entriesForDate = allEntries.filter((entry: MorningMeetingEntry) => {
-        const entryDate = new Date(entry.date).toISOString().split('T')[0];
-        return entryDate === selectedDate && entry.approvalStatus === 'approved';
-      });
+      const entriesForDate = await getApprovedEntriesForDate(selectedDate);
 
       if (entriesForDate.length === 0) {
         showInfo('No Approved Entries', 'No approved entries found for the selected date.');
@@ -383,12 +416,7 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
           spacing: { after: 400 },
           children: [
             new TextRun({
-              text: new Date(selectedDate).toLocaleDateString('en-US', {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-              }),
+              text: formatDateLong(selectedDate),
               size: 24,
               font: 'Roboto',
               color: '009edb',
@@ -546,7 +574,7 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
           spacing: { before: 400 },
           children: [
             new TextRun({
-              text: `Exported on ${new Date().toLocaleString('en-US')}`,
+              text: `Exported on ${getCurrentDateTime()}`,
               italics: true,
               font: 'Roboto',
             }),
@@ -733,12 +761,7 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
           spacing: { after: 400 },
           children: [
             new TextRun({
-              text: new Date(selectedDate).toLocaleDateString('en-US', {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-              }),
+              text: formatDateLong(selectedDate),
               size: 24,
               font: 'Roboto',
               color: '009edb',
@@ -882,7 +905,7 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
           spacing: { before: 400 },
           children: [
             new TextRun({
-              text: `Exported on ${new Date().toLocaleString('en-US')}`,
+              text: `Exported on ${getCurrentDateTime()}`,
               italics: true,
               font: 'Roboto',
             }),
@@ -957,7 +980,7 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
             Export Daily Briefing
           </DialogTitle>
           <DialogDescription className="text-left">
-          The exported document will include all entries for the selected date, organized by priority with full content and formatting.
+          The exported document will include all entries from the previous day at 8:00 AM until the selected day at 8:00 AM, organized by priority with full content and formatting.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4 px-4 sm:px-0 flex-1 overflow-y-auto flex flex-col">

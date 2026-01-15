@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { deleteEntry, getSubmittedEntries } from '@/lib/storage';
-import { Download, FileDown, List } from 'lucide-react';
+import { Download, FileDown, List, RefreshCw } from 'lucide-react';
 import { ExportDailyBriefingDialog } from './ExportDailyBriefingDialog';
 import { EntriesTable } from './EntriesTable';
 import { usePopup } from '@/lib/popup-context';
@@ -14,10 +14,24 @@ export function MorningMeetingList({ initialDateFilter }: { initialDateFilter?: 
   const { confirm: showConfirm, success: showSuccess, info: showInfo } = usePopup();
   const [entries, setEntries] = useState<MorningMeetingEntry[]>([]);
   const [showExportDialog, setShowExportDialog] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const loadEntries = async () => {
     const data = await getSubmittedEntries();
     setEntries(data);
+  };
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await loadEntries();
+      showSuccess('Refreshed', 'Table data refreshed successfully');
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to refresh data';
+      showInfo('Error', errorMessage);
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
   useEffect(() => {
@@ -89,6 +103,10 @@ export function MorningMeetingList({ initialDateFilter }: { initialDateFilter?: 
             </div>
           </div>
           <div className="flex flex-col sm:flex-row gap-2 sm:shrink-0">
+            <Button variant="outline" size="sm" onClick={handleRefresh} disabled={isRefreshing} className="w-full sm:w-auto justify-center">
+              <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+              <span className="sm:inline">Refresh</span>
+            </Button>
             <Button variant="outline" size="sm" onClick={() => setShowExportDialog(true)} className="w-full sm:w-auto justify-center">
               <FileDown className="h-4 w-4" />
               <span className="sm:inline">Export Daily Briefing</span>

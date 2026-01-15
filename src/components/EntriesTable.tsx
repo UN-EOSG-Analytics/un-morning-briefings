@@ -4,13 +4,13 @@ import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { MorningMeetingEntry, PRIORITIES, REGIONS, CATEGORIES } from '@/types/morning-meeting';
-import { formatDateResponsive, formatDateDesktop } from '@/lib/format-date';
+import { formatDateResponsive, formatDateDesktop, formatTime } from '@/lib/format-date';
 import { Trash2, Edit, Clock, Check, X } from 'lucide-react';
 import Link from 'next/link';
 import { ViewEntryDialog } from './ViewEntryDialog';
 import { SearchBar } from './SearchBar';
 import { ColumnFilter } from './ColumnFilter';
-import { useEntriesFilter, getPriorityBadgeClass, getRegionBadgeClass, formatCategoryForDisplay } from '@/lib/useEntriesFilter';
+import { useEntriesFilter, getPriorityBadgeClass, getRegionBadgeClass, formatCategoryForDisplay, getBriefingDate } from '@/lib/useEntriesFilter';
 
 interface EntriesTableProps {
   entries: MorningMeetingEntry[];
@@ -109,9 +109,9 @@ export function EntriesTable({
     callback();
   };
 
-  // Extract unique dates from entries
+  // Extract unique briefing dates from entries
   const uniqueDates = Array.from(
-    new Set(entries.map((entry) => new Date(entry.date).toISOString().split('T')[0]))
+    new Set(entries.map((entry) => getBriefingDate(entry.date)))
   ).sort().reverse();
 
   return (
@@ -133,11 +133,11 @@ export function EntriesTable({
                   onClick={() => handleSort('date')}
                 >
                   <div className="flex items-center gap-1 sm:gap-2">
-                    <span className="hidden sm:inline">Date {sortField === 'date' && (sortDirection === 'asc' ? '↑' : '↓')}</span>
+                    <span className="hidden sm:inline">Briefing Date {sortField === 'date' && (sortDirection === 'asc' ? '↑' : '↓')}</span>
                     <span className="sm:hidden">Date</span>
                     <div className="hidden sm:block">
                       <ColumnFilter
-                        columnName="Date"
+                        columnName="Briefing Date"
                         options={uniqueDates.map((date) =>
                           formatDateDesktop(date)
                         )}
@@ -150,10 +150,13 @@ export function EntriesTable({
                           if (label === 'all') {
                             setFilterDate('');
                           } else {
-                            // Parse the date label back to YYYY-MM-DD format
-                            const dateObj = new Date(label);
-                            const isoDate = dateObj.toISOString().split('T')[0];
-                            setFilterDate(isoDate);
+                            // Find the matching date from uniqueDates by comparing formatted strings
+                            const matchingDate = uniqueDates.find(
+                              (date) => formatDateDesktop(date) === label
+                            );
+                            if (matchingDate) {
+                              setFilterDate(matchingDate);
+                            }
                           }
                         }}
                       />
@@ -225,19 +228,38 @@ export function EntriesTable({
                   </td>
                 </tr>
               ) : (
-                sortedEntries.map((entry) => (
-                  <tr
-                    key={entry.id}
-                    className="border-b border-slate-100 hover:bg-slate-50 cursor-pointer"
-                    onClick={() => handleRowClick(entry)}
-                  >
+                sortedEntries.map((entry, idx) => {
+                  const currentBriefingDate = getBriefingDate(entry.date);
+                  const prevBriefingDate = idx > 0 ? getBriefingDate(sortedEntries[idx - 1].date) : null;
+                  const showSeparator = !prevBriefingDate || prevBriefingDate !== currentBriefingDate;
+                  
+                  return [
+                    showSeparator && (
+                      <tr key={`sep-${entry.id}`} className="bg-slate-100">
+                        <td colSpan={showApprovedColumn ? 7 : 6} className="px-4 py-2">
+                          <div className="flex items-center gap-2 text-xs font-semibold text-slate-600">
+                            <span className="text-un-blue">▼ Briefing for {formatDateDesktop(currentBriefingDate)}</span>
+                          </div>
+                        </td>
+                      </tr>
+                    ),
+                    <tr
+                      key={entry.id}
+                      className="border-b border-slate-100 hover:bg-slate-50 cursor-pointer"
+                      onClick={() => handleRowClick(entry)}
+                    >
                     <td className="whitespace-nowrap px-2 sm:px-4 py-3 text-sm text-slate-600">
-                      <span className="hidden sm:inline">
-                        {formatDateDesktop(entry.date)}
-                      </span>
-                      <span className="sm:hidden">
-                        {formatDateResponsive(entry.date).mobile}
-                      </span>
+                      <div className="flex flex-col gap-1">
+                        <span className="hidden sm:inline">
+                          {formatDateDesktop(entry.date)}
+                        </span>
+                        <span className="sm:hidden">
+                          {formatDateResponsive(entry.date).mobile}
+                        </span>
+                        <span className="text-xs text-slate-500">
+                          {formatTime(entry.date)}
+                        </span>
+                      </div>
                     </td>
                     <td className="max-w-md px-4 py-3 text-sm">
                       <div className="line-clamp-3 sm:line-clamp-2">{entry.headline}</div>
@@ -344,7 +366,8 @@ export function EntriesTable({
                       </div>
                     </td>
                   </tr>
-                ))
+                  ].filter(Boolean);
+                })
               )}
             </tbody>
           </table>

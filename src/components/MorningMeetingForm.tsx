@@ -91,31 +91,30 @@ export function MorningMeetingForm({
     return text.trim();
   };
 
-  // Format date to YYYY-MM-DD for input field
+  // Format date to YYYY-MM-DDTHH:MM format - extract literal string without any parsing
   const formatDateForInput = (dateValue: any): string => {
-    if (!dateValue) return new Date().toISOString().split('T')[0];
+    if (!dateValue) {
+      // Return current time as-is
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const hour = String(now.getHours()).padStart(2, '0');
+      const minute = String(now.getMinutes()).padStart(2, '0');
+      return `${year}-${month}-${day}T${hour}:${minute}`;
+    }
     
     if (typeof dateValue === 'string') {
-      // If it's already in YYYY-MM-DD format, return it
-      if (dateValue.match(/^\d{4}-\d{2}-\d{2}$/)) {
-        return dateValue;
-      }
-      // If it's ISO format (with time), extract just the date part
-      if (dateValue.includes('T')) {
-        return dateValue.split('T')[0];
-      }
-      // Try to parse and reformat
-      const parsed = new Date(dateValue);
-      if (!isNaN(parsed.getTime())) {
-        return parsed.toISOString().split('T')[0];
-      }
+      // Extract YYYY-MM-DDTHH:MM from the string exactly as stored
+      // This handles formats like:
+      // - "2026-01-15T13:30" (already correct)
+      // - "2026-01-15T13:30:00" (trim seconds)
+      // - "2026-01-15T13:30:00.000Z" (remove milliseconds and Z)
+      const match = dateValue.match(/(\d{4}-\d{2}-\d{2}T\d{2}:\d{2})/);
+      return match ? match[1] : '';
     }
     
-    if (dateValue instanceof Date) {
-      return dateValue.toISOString().split('T')[0];
-    }
-    
-    return new Date().toISOString().split('T')[0];
+    return '';
   };
 
   const [formData, setFormData] = useState<MorningMeetingEntry>({
@@ -256,13 +255,24 @@ export function MorningMeetingForm({
       e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
     ) => {
       const { name, value } = e.target;
-      setFormData((prev) => ({ ...prev, [name]: value }));
+      
+      // Handle date and time separately, then combine
+      if (name === 'dateOnly' || name === 'timeOnly') {
+        setFormData((prev) => {
+          const dateOnly = name === 'dateOnly' ? value : prev.date.split('T')[0];
+          const timeOnly = name === 'timeOnly' ? value : (prev.date.split('T')[1] || '00:00');
+          return { ...prev, date: `${dateOnly}T${timeOnly}` };
+        });
+      } else {
+        setFormData((prev) => ({ ...prev, [name]: value }));
+      }
 
-      // Clear error for this field
-      if (errors[name]) {
+      // Clear error for date field when either dateOnly or timeOnly changes
+      const errorField = (name === 'dateOnly' || name === 'timeOnly') ? 'date' : name;
+      if (errors[errorField]) {
         setErrors((prev) => {
           const newErrors = { ...prev };
-          delete newErrors[name];
+          delete newErrors[errorField];
           return newErrors;
         });
       }
@@ -647,28 +657,50 @@ export function MorningMeetingForm({
                     )}
                   </div>
 
-                  {/* Date */}
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-700">
-                      Date <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="date"
-                      name="date"
-                      value={formData.date}
-                      onChange={handleInputChange}
-                      className={`w-full rounded border px-3 py-2 text-sm outline-none transition ${
-                        errors.date
-                          ? 'border-red-500 bg-red-50 focus:border-red-500 focus:ring-2 focus:ring-red-500/15'
-                          : 'border-slate-300 bg-slate-50 focus:border-un-blue focus:ring-2 focus:ring-un-blue/15'
-                      }`}
-                    />
-                    {errors.date && (
-                      <div className="flex items-center gap-1 text-xs text-red-600">
-                        <AlertCircle className="h-3.5 w-3.5" />
-                        {errors.date}
-                      </div>
-                    )}
+                  {/* Date and Time */}
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    {/* Date */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-slate-700">
+                        Date <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="date"
+                        name="dateOnly"
+                        value={formData.date.split('T')[0] || ''}
+                        onChange={handleInputChange}
+                        className={`w-full rounded border px-3 py-2 text-sm outline-none transition ${
+                          errors.date
+                            ? 'border-red-500 bg-red-50 focus:border-red-500 focus:ring-2 focus:ring-red-500/15'
+                            : 'border-slate-300 bg-slate-50 focus:border-un-blue focus:ring-2 focus:ring-un-blue/15'
+                        }`}
+                      />
+                      {errors.date && (
+                        <div className="flex items-center gap-1 text-xs text-red-600">
+                          <AlertCircle className="h-3.5 w-3.5" />
+                          {errors.date}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Time */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-slate-700">
+                        Time <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        name="timeOnly"
+                        placeholder="HH:MM"
+                        value={(formData.date.split('T')[1] || '').slice(0, 5)}
+                        onChange={handleInputChange}
+                        className={`w-full rounded border px-3 py-2 text-sm outline-none transition ${
+                          errors.date
+                            ? 'border-red-500 bg-red-50 focus:border-red-500 focus:ring-2 focus:ring-red-500/15'
+                            : 'border-slate-300 bg-slate-50 focus:border-un-blue focus:ring-2 focus:ring-un-blue/15'
+                        }`}
+                      />
+                    </div>
                   </div>
                 </div>
 

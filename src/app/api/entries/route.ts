@@ -42,8 +42,6 @@ export async function GET(request: NextRequest) {
         e.status,
         e.ai_summary as "aiSummary",
         COALESCE(e.approval_status, CASE WHEN e.approved THEN 'approved' ELSE 'pending' END) as "approvalStatus",
-        e.created_at as "createdAt",
-        e.updated_at as "updatedAt",
         COALESCE(
           json_agg(
             json_build_object(
@@ -54,9 +52,8 @@ export async function GET(request: NextRequest) {
               'blobUrl', i.blob_url,
               'width', i.width,
               'height', i.height,
-              'position', i.position,
-              'createdAt', i.created_at
-            ) ORDER BY i.position NULLS LAST, i.created_at
+              'position', i.position
+            ) ORDER BY i.position NULLS LAST
           ) FILTER (WHERE i.id IS NOT NULL),
           '[]'
         ) as images
@@ -86,7 +83,7 @@ export async function GET(request: NextRequest) {
       sql += ` WHERE ${conditions.join(' AND ')}`;
     }
 
-    sql += ` GROUP BY e.id ORDER BY e.created_at DESC`;
+    sql += ` GROUP BY e.id ORDER BY e.date DESC`;
 
     console.log('GET /api/entries: Executing SQL with params:', { sql, params });
     const result = await query(sql, params);
@@ -181,11 +178,12 @@ export async function POST(request: NextRequest) {
     const now = new Date();
 
     // Insert entry
+    // Store date as-is without timezone conversion
     await query(
       `INSERT INTO entries (
         id, category, priority, region, country, headline, date, entry,
-        source_url, pu_note, author, status, approval_status, created_at, updated_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`,
+        source_url, pu_note, author, status, approval_status
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
       [
         id,
         data.category,
@@ -193,15 +191,13 @@ export async function POST(request: NextRequest) {
         data.region,
         data.country,
         data.headline,
-        new Date(data.date),
+        data.date, // Store as string, no Date conversion
         entryContent,
         data.sourceUrl || null,
         data.puNote || null,
         data.author || null,
         data.status || null,
         'pending',
-        now,
-        now,
       ]
     );
 
@@ -210,8 +206,8 @@ export async function POST(request: NextRequest) {
       for (const img of uploadedImages) {
         await query(
           `INSERT INTO images (
-            id, entry_id, filename, mime_type, blob_url, width, height, position, created_at
-          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+            id, entry_id, filename, mime_type, blob_url, width, height, position
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
           [
             crypto.randomUUID(),
             id,
@@ -221,7 +217,6 @@ export async function POST(request: NextRequest) {
             img.width || null,
             img.height || null,
             img.position !== undefined && img.position !== null ? img.position : null,
-            now,
           ]
         );
       }
@@ -243,8 +238,6 @@ export async function POST(request: NextRequest) {
         e.author,
         e.status,
         COALESCE(e.approval_status, CASE WHEN e.approved THEN 'approved' ELSE 'pending' END) as "approvalStatus",
-        e.created_at as "createdAt",
-        e.updated_at as "updatedAt",
         COALESCE(
           json_agg(
             json_build_object(
@@ -255,9 +248,8 @@ export async function POST(request: NextRequest) {
               'blobUrl', i.blob_url,
               'width', i.width,
               'height', i.height,
-              'position', i.position,
-              'createdAt', i.created_at
-            ) ORDER BY i.position NULLS LAST, i.created_at
+              'position', i.position
+            ) ORDER BY i.position NULLS LAST
           ) FILTER (WHERE i.id IS NOT NULL),
           '[]'
         ) as images
@@ -315,23 +307,28 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid approval status' }, { status: 400 });
     }
 
-    let updateQuery = 'UPDATE entries SET updated_at = $1';
-    const params: any[] = [now];
-    let paramIndex = 2;
+    let updateQuery = 'UPDATE entries SET';
+    const params: any[] = [];
+    let paramIndex = 1;
+    const updateParts: string[] = [];
 
     if (approvalStatus) {
-      updateQuery += `, approval_status = $${paramIndex}`;
+      updateParts.push(`approval_status = $${paramIndex}`);
       params.push(approvalStatus);
       paramIndex++;
     }
 
     if (aiSummary !== undefined) {
-      updateQuery += `, ai_summary = $${paramIndex}`;
+      updateParts.push(`ai_summary = $${paramIndex}`);
       params.push(aiSummary ? JSON.stringify(aiSummary) : null);
       paramIndex++;
     }
 
-    updateQuery += ` WHERE id = $${paramIndex}`;
+    if (updateParts.length === 0) {
+      return NextResponse.json({ error: 'No fields to update' }, { status: 400 });
+    }
+
+    updateQuery += ` ${updateParts.join(', ')} WHERE id = $${paramIndex}`;
     params.push(id);
 
     // Update entry
@@ -353,9 +350,7 @@ export async function PATCH(request: NextRequest) {
         author,
         status,
         ai_summary as "aiSummary",
-        COALESCE(approval_status, CASE WHEN approved THEN 'approved' ELSE 'pending' END) as "approvalStatus",
-        created_at as "createdAt",
-        updated_at as "updatedAt"
+        COALESCE(approval_status, CASE WHEN approved THEN 'approved' ELSE 'pending' END) as "approvalStatus"
       FROM entries
       WHERE id = $1`,
       [id]

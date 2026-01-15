@@ -93,7 +93,7 @@ export function MorningMeetingList({ initialDateFilter }: { initialDateFilter?: 
               <FileDown className="h-4 w-4" />
               <span className="sm:inline">Export Daily Briefing</span>
             </Button>
-            <Button variant="outline" size="sm" onClick={exportToJSON} className="w-full sm:w-auto justify-center">
+            <Button variant="outline" size="sm" onClick={exportToJSON} className="hidden w-full sm:w-auto justify-center">
               <Download className="h-4 w-4" />
               <span className="sm:inline">Export JSON</span>
             </Button>

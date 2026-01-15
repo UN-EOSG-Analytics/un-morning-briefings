@@ -6,8 +6,7 @@ import { Card } from '@/components/ui/card';
 import { PlusCircle, FileText, Archive, ArrowRight, Download } from 'lucide-react';
 import { useState } from 'react';
 import { ExportDailyBriefingDialog } from '@/components/ExportDailyBriefingDialog';
-import { getCurrentBriefingDate } from '@/lib/useEntriesFilter';
-
+import { getCurrentBriefingDate } from '@/lib/useEntriesFilter';import { formatDateDesktop } from '@/lib/format-date';
 export default function HomePage() {
   const [showExportDialog, setShowExportDialog] = useState(false);
 
@@ -81,7 +80,7 @@ export default function HomePage() {
                   <div className="flex flex-col flex-1">
                     <h2 className="text-lg font-semibold text-foreground">Current Briefing </h2>
                     <p className="text-xs text-slate-600">
-                      View today&apos;s briefing entries
+                    View briefing entries for {formatDateDesktop(currentBriefingDate)}
                     </p>
                   </div>
                 </div>
@@ -91,7 +90,7 @@ export default function HomePage() {
                   </div>
                   <h2 className="text-xl sm:text-2xl font-semibold text-foreground mt-4">Current Briefing</h2>
                   <p className="text-sm sm:text-base text-slate-600 mt-2">
-                    View and manage today&apos;s morning meeting briefing entries
+                    View briefing entries for the Morning Meeting on {formatDateDesktop(currentBriefingDate)}.
                   </p>
                 </div>
                 <Button className="hidden sm:flex w-full bg-slate-700 hover:bg-slate-700/90 mt-auto" size="lg">

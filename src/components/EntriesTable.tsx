@@ -49,7 +49,10 @@ export function EntriesTable({
     setFilterCategory,
     setFilterPriority,
     setFilterDate,
+    setSortField,
+    setSortDirection,
     handleSort,
+    handleResetFilters,
     sortedEntries,
   } = useEntriesFilter(entries, initialDateFilter);
 
@@ -116,11 +119,25 @@ export function EntriesTable({
 
   return (
     <>
-      {/* Search Bar */}
-      <SearchBar
-        searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
-      />
+      {/* Search Bar and Reset Button */}
+      <div className="flex items-center gap-2">
+        <SearchBar
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+        />
+        {(searchTerm || filterRegion !== 'all' || filterCategory !== 'all' || filterPriority !== 'all' || filterDate || sortField !== 'date' || sortDirection !== 'desc') && (
+          <button
+            onClick={() => {
+              handleResetFilters();
+              setSortField('date');
+              setSortDirection('desc');
+            }}
+            className="px-3 py-2 text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-md transition-all duration-200 whitespace-nowrap opacity-0 animate-[fadeIn_0.3s_ease-in_forwards]"
+          >
+            Reset Filters
+          </button>
+        )}
+      </div>
 
       {/* Table */}
       <Card className="border-slate-200 p-0 mt-4 overflow-hidden">
@@ -129,12 +146,21 @@ export function EntriesTable({
             <thead className="border-b border-slate-200 bg-slate-50">
               <tr>
                 <th
-                  className="rounded-tl-xl cursor-pointer px-2 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-700 hover:bg-slate-100"
-                  onClick={() => handleSort('date')}
+                  className="rounded-tl-xl px-2 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-700 min-w-12 sm:min-w-26"
                 >
                   <div className="flex items-center gap-1 sm:gap-2">
-                    <span className="hidden sm:inline">Briefing Date {sortField === 'date' && (sortDirection === 'asc' ? '↑' : '↓')}</span>
-                    <span className="sm:hidden">Date</span>
+                    <span
+                      className="hidden sm:inline cursor-pointer hover:bg-slate-100 rounded px-1 py-1 whitespace-nowrap"
+                      onClick={() => handleSort('date')}
+                    >
+                      Date {sortField === 'date' && (sortDirection === 'asc' ? '↑' : '↓')}
+                    </span>
+                    <span
+                      className="sm:hidden cursor-pointer hover:bg-slate-100 rounded px-1 py-1"
+                      onClick={() => handleSort('date')}
+                    >
+                      Date
+                    </span>
                     <div className="hidden sm:block">
                       <ColumnFilter
                         columnName="Briefing Date"
@@ -164,19 +190,25 @@ export function EntriesTable({
                   </div>
                 </th>
                 <th
-                  className="cursor-pointer px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-700 hover:bg-slate-100"
-                  onClick={() => handleSort('headline')}
+                  className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-700"
                 >
-                  <div className="flex items-center gap-2">
+                  <span
+                    className="cursor-pointer hover:bg-slate-100 rounded px-1 py-1 inline-block"
+                    onClick={() => handleSort('headline')}
+                  >
                     Headline {sortField === 'headline' && (sortDirection === 'asc' ? '↑' : '↓')}
-                  </div>
+                  </span>
                 </th>
                 <th
-                  className="hidden sm:table-cell cursor-pointer px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-700 hover:bg-slate-100"
-                  onClick={() => handleSort('region')}
+                  className="hidden sm:table-cell px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-700"
                 >
                   <div className="flex items-center gap-2">
-                    Region {sortField === 'region' && (sortDirection === 'asc' ? '↑' : '↓')}
+                    <span
+                      className="cursor-pointer hover:bg-slate-100 rounded px-1 py-1"
+                      onClick={() => handleSort('region')}
+                    >
+                      Region {sortField === 'region' && (sortDirection === 'asc' ? '↑' : '↓')}
+                    </span>
                     <ColumnFilter
                       columnName="Region"
                       options={REGIONS}

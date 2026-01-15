@@ -344,3 +344,13 @@ body::-webkit-scrollbar {
   box-shadow: none !important;
   --tw-ring-shadow: none !important;
 }
+
+/* Fade in animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

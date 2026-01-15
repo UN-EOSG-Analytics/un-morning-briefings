@@ -10,7 +10,7 @@ import { usePopup } from '@/lib/popup-context';
 import { formatDateResponsive } from '@/lib/format-date';
 import { Edit, Trash2, Check, X, Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 interface ViewEntryDialogProps {
   open: boolean;
@@ -36,6 +36,7 @@ export function ViewEntryDialog({
   const [isUpdatingApproval, setIsUpdatingApproval] = useState(false);
   const { warning: showWarning, success: showSuccess } = usePopup();
   const [currentIndex, setCurrentIndex] = useState(0);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const handleOpenChange = useCallback((newOpen: boolean) => {
     onOpenChange(newOpen);
@@ -76,6 +77,13 @@ export function ViewEntryDialog({
 
   // Get the current entry from allEntries if available
   const displayEntry = allEntries.length > 0 ? allEntries[currentIndex] : entry;
+
+  // Reset scroll position when entry changes
+  useEffect(() => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTop = 0;
+    }
+  }, [displayEntry?.id]);
 
   const handleApprove = useCallback(async (status: 'pending' | 'approved' | 'denied') => {
     if (!displayEntry?.id) return;
@@ -240,7 +248,7 @@ export function ViewEntryDialog({
         </div>
         
         {/* Scrollable content */}
-        <div className="flex-1 overflow-y-auto px-3 sm:px-6 py-1" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+        <div ref={scrollContainerRef} className="flex-1 overflow-y-auto px-3 sm:px-6 py-1" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
           <style>{`
             ::-webkit-scrollbar {
               display: none;

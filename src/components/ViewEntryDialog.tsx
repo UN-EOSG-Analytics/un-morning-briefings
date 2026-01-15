@@ -159,15 +159,15 @@ export function ViewEntryDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="!max-w-none w-full h-screen sm:w-[95vw] sm:h-[90vh] md:w-[85vw] md:h-[90vh] lg:w-[70vw] lg:h-[90vh] flex flex-col !p-0 rounded-none sm:rounded-lg overflow-hidden">
+      <DialogContent className="!max-w-none w-screen h-dvh sm:w-[95vw] sm:h-[90vh] md:w-[85vw] md:h-[90vh] lg:w-[70vw] lg:h-[90vh] flex flex-col !p-0 rounded-none sm:rounded-lg overflow-hidden fixed top-0 left-0 sm:top-1/2 sm:left-1/2 sm:translate-x-0 sm:translate-y-0 sm:translate-x-[-50%] sm:translate-y-[-50%]">
         {/* Hidden title for accessibility */}
         <DialogTitle className="sr-only">
           {displayEntry.headline}
         </DialogTitle>
         
         {/* Header - Fixed at top */}
-        <div className="flex-shrink-0 bg-white border-b border-slate-200 pt-3 pb-2 sm:pt-6 px-3 sm:px-6">
-          <h2 className="text-lg sm:text-2xl font-bold text-slate-900 mb-1 line-clamp-2">
+        <div className="flex-shrink-0 bg-white border-b border-slate-200 py-2 sm:py-3 sm:pt-6 px-3 sm:px-6">
+          <h2 className="text-base sm:text-2xl font-bold text-slate-900 mb-0 sm:mb-1 line-clamp-2">
             {displayEntry.headline}
           </h2>
         </div>

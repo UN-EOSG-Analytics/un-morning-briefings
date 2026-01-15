@@ -476,19 +476,29 @@ export function ViewEntryDialog({
           )}
 
           {/* Action buttons */}
-          <div className="flex flex-col-reverse sm:flex-row justify-between gap-3 sm:gap-2">
-            <div className="flex gap-2 flex-col sm:flex-row w-full sm:w-auto">
-              <Link href={`/form?edit=${displayEntry.id}`} className="w-full sm:w-auto">
+          <div className="flex flex-col sm:flex-row justify-between gap-2 sm:gap-2">
+            <div className="grid grid-cols-2 gap-2 w-full">
+              <Link href={`/form?edit=${displayEntry.id}`}>
                 <Button
                   variant="outline"
-                  className="gap-2 w-full sm:w-auto"
+                  className="gap-2 w-full h-10 px-3"
                 >
                   <Edit className="h-4 w-4" />
                   Edit
                 </Button>
               </Link>
               
-              {showApproveButton && onApprove && (
+              <Button
+                onClick={() => handleOpenChange(false)}
+                variant="outline"
+                className="gap-2 h-10 px-3"
+              >
+                <X className="h-4 w-4" />
+                Close
+              </Button>
+            </div>
+            
+            {showApproveButton && onApprove && (
                 <div className="hidden sm:flex gap-2 w-full sm:w-auto">
                   <Button
                     variant={displayEntry.approvalStatus === 'approved' ? 'default' : 'outline'}
@@ -534,15 +544,6 @@ export function ViewEntryDialog({
                   Delete
                 </Button>
               )}
-            </div>
-
-            <Button
-              onClick={() => handleOpenChange(false)}
-              variant="outline"
-              className="w-full sm:w-auto"
-            >
-              Close
-            </Button>
           </div>
         </div>
       </DialogContent>

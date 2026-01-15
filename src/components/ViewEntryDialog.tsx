@@ -160,24 +160,24 @@ export function ViewEntryDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="!max-w-280 w-screen h-dvh sm:w-[95vw] sm:h-[90vh] md:w-[85vw] md:h-[90vh] lg:w-[70vw] lg:h-[90vh] flex flex-col !p-0 rounded-none sm:rounded-lg overflow-hidden">
+      <DialogContent className="!max-w-280 w-screen h-dvh sm:w-[95vw] sm:h-[90vh] md:w-[85vw] md:h-[90vh] lg:w-[70vw] lg:h-[90vh] flex flex-col !p-0 rounded-none sm:rounded-lg overflow-hidden gap-0">
         {/* Hidden title for accessibility */}
         <DialogTitle className="sr-only">
           {displayEntry.headline}
         </DialogTitle>
         
         {/* Header - Fixed at top */}
-        <div className="flex-shrink-0 bg-white border-b border-slate-200 py-2 sm:py-3 sm:pt-6 px-3 sm:px-6">
+        <div className="mt-2 flex-shrink-0 bg-white border-b border-slate-200 py-2 sm:py-3 px-3 sm:px-6">
           <h2 className="text-lg sm:text-2xl font-bold text-slate-900 mb-0 sm:mb-1 line-clamp-2">
             {displayEntry.headline}
           </h2>
         </div>
         
         {/* Badges and AI Button - Fixed */}
-        <div className="flex-shrink-0 px-3 sm:px-6 py-0 sm:py-0 border-b border-slate-200 flex gap-0 bg-white">
-          <div className="flex gap-1 sm:gap-2 flex-wrap items-start">
+        <div className="flex-shrink-0 px-3 sm:px-6 py-2 sm:py-3 border-b border-slate-200 flex gap-2 sm:gap-3 items-center bg-white">
+          <div className="flex gap-1 sm:gap-2 flex-wrap items-center">
             {/* Date Badge */}
-            <span className="inline-flex items-center rounded-full bg-slate-100 px-1.5 py-0.5 text-xs font-medium text-slate-700">
+            <span className="inline-flex items-center rounded-full bg-slate-100 px-2 sm:px-2.5 py-1 sm:py-1.5 text-xs sm:text-sm font-medium text-slate-700">
               <span className="hidden sm:inline">
                 {formatDateResponsive(displayEntry.date).desktop}
               </span>
@@ -186,7 +186,7 @@ export function ViewEntryDialog({
               </span>
             </span>
             {/* Priority Badge */}
-            <span className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-xs font-medium ${getPriorityBadgeClass(displayEntry.priority)}`}>
+            <span className={`inline-flex items-center gap-1 rounded-full px-2 sm:px-2.5 py-1 sm:py-1.5 text-xs sm:text-sm font-medium ${getPriorityBadgeClass(displayEntry.priority)}`}>
               <span className={`h-1.5 w-1.5 rounded-full ${displayEntry.priority === 'sg-attention' ? 'bg-red-600' : 'bg-blue-600'}`} />
               {PRIORITIES.find(p => p.value === displayEntry.priority)?.label}
             </span>
@@ -196,7 +196,7 @@ export function ViewEntryDialog({
               size="sm"
               onClick={handleGenerateSummary}
               disabled={isGeneratingSummary}
-              className="bg-[#009edb] hover:bg-[#0080b8] text-white gap-1 text-xs sm:text-sm px-2 py-1 sm:px-3 sm:py-2 h-auto"
+              className="bg-[#009edb] hover:bg-[#0080b8] text-white gap-1 text-xs sm:text-sm px-2.5 py-1.5 sm:px-3 sm:py-2 h-auto"
             >
               <Sparkles className="h-3 w-3 sm:h-4 sm:w-4" />
               <span className="hidden sm:inline">{isGeneratingSummary ? 'Generating...' : 'Create Summary'}</span>
@@ -206,7 +206,7 @@ export function ViewEntryDialog({
         </div>
         
         {/* Scrollable content */}
-        <div className="flex-1 overflow-y-auto px-3 sm:px-6 py-2" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+        <div className="flex-1 overflow-y-auto px-3 sm:px-6 py-1" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
           <style>{`
             ::-webkit-scrollbar {
               display: none;
@@ -257,7 +257,7 @@ export function ViewEntryDialog({
           </div>
 
           {/* Entry content */}
-          <div className="mb-6">
+          <div className="mb-0">
             <div
               className="entry-content"
               dangerouslySetInnerHTML={{

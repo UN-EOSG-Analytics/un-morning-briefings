@@ -938,7 +938,7 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="w-screen h-dvh sm:max-w-md sm:h-auto !p-0 sm:!p-6 flex flex-col rounded-none sm:rounded-lg">
+      <DialogContent className="w-screen h-dvh sm:w-auto sm:max-w-md sm:h-auto !p-0 sm:!p-6 flex flex-col rounded-none sm:rounded-lg">
         <DialogHeader className="px-4 pt-4 sm:px-0 sm:pt-0">
           <DialogTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5 text-un-blue" />
@@ -948,7 +948,7 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
           The exported document will include all entries for the selected date, organized by priority with full content and formatting.
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-4 py-4 px-4 sm:px-0 flex-1 overflow-y-auto">
+        <div className="space-y-4 py-4 px-4 sm:px-0 flex-1 overflow-y-auto flex flex-col">
           <div className="space-y-2">
             <label className="text-sm font-medium text-foreground">
               Select Date
@@ -978,11 +978,11 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
             </label>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-2 flex-1 flex flex-col min-h-0">
             <label className="text-sm font-medium text-foreground">
               Approved Entries ({approvedEntries.length})
             </label>
-            <div className="max-h-48 overflow-y-auto rounded border border-slate-200 bg-slate-50 p-3">
+            <div className="flex-1 overflow-y-auto rounded border border-slate-200 bg-slate-50 p-3">
               {isLoadingEntries ? (
                 <p className="text-xs text-slate-500">Loading entries...</p>
               ) : approvedEntries.length === 0 ? (

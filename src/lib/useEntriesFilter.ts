@@ -276,6 +276,8 @@ export function useEntriesFilter(entries: any[], initialDateFilter?: string) {
     setFilterCategory,
     setFilterPriority,
     setFilterDate,
+    setSortField,
+    setSortDirection,
     // Handlers
     handleSort,
     handleResetFilters,

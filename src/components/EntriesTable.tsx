@@ -49,7 +49,10 @@ export function EntriesTable({
     setFilterCategory,
     setFilterPriority,
     setFilterDate,
+    setSortField,
+    setSortDirection,
     handleSort,
+    handleResetFilters,
     sortedEntries,
   } = useEntriesFilter(entries, initialDateFilter);
 
@@ -116,11 +119,25 @@ export function EntriesTable({
 
   return (
     <>
-      {/* Search Bar */}
-      <SearchBar
-        searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
-      />
+      {/* Search Bar and Reset Button */}
+      <div className="flex items-center gap-2">
+        <SearchBar
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+        />
+        {(searchTerm || filterRegion !== 'all' || filterCategory !== 'all' || filterPriority !== 'all' || filterDate || sortField !== 'date' || sortDirection !== 'desc') && (
+          <button
+            onClick={() => {
+              handleResetFilters();
+              setSortField('date');
+              setSortDirection('desc');
+            }}
+            className="px-3 py-2 text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-md transition-all duration-200 whitespace-nowrap opacity-0 animate-[fadeIn_0.3s_ease-in_forwards]"
+          >
+            Reset Filters
+          </button>
+        )}
+      </div>
 
       {/* Table */}
       <Card className="border-slate-200 p-0 mt-4 overflow-hidden">

@@ -412,10 +412,10 @@ export function ViewEntryDialog({
         </div>
 
         {/* Footer */}
-        <div className="border-t border-slate-200 pt-2 pb-2 sm:pt-4 sm:pb-4 px-3 sm:px-6 flex-shrink-0 bg-white flex flex-col sm:flex-row gap-2">
+        <div className="border-t border-slate-200 pt-1 pb-2 sm:pt-4 sm:pb-4 px-3 sm:px-6 flex-shrink-0 bg-white flex flex-col sm:flex-row gap-1">
           {/* Mobile: Navigation buttons */}
           {allEntries.length > 1 && (
-            <div className="flex gap-2 justify-center sm:hidden mb-2">
+            <div className="flex gap-2 justify-center sm:hidden mb-1">
               <Button
                 variant="outline"
                 size="sm"
@@ -444,7 +444,7 @@ export function ViewEntryDialog({
 
           {/* Approve/Deny buttons - shown above on mobile */}
           {showApproveButton && onApprove && (
-            <div className="flex gap-2 w-full sm:hidden mb-2">
+            <div className="flex gap-2 w-full sm:hidden mb-0">
               <Button
                 variant={displayEntry.approvalStatus === 'approved' ? 'default' : 'outline'}
                 onClick={() => handleApprove('approved')}

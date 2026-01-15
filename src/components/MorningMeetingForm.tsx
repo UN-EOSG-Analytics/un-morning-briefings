@@ -677,31 +677,39 @@ export function MorningMeetingForm({
                       Entry Content{' '}
                       <span className="text-red-500">*</span>
                     </label>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setUseRichText(!useRichText);
-                        setHasUserToggled(true);
-                      }}
-                      className={`inline-flex items-center gap-1.5 rounded px-2.5 py-1 text-xs font-medium transition ${
-                        useRichText
-                          ? 'bg-un-blue text-white'
-                          : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
-                      }`}
-                      title={useRichText ? 'Switch to plain text' : 'Switch to rich text editor'}
-                    >
-                      {useRichText ? (
-                        <>
-                          <Zap className="h-3.5 w-3.5" />
-                          Rich Text
-                        </>
-                      ) : (
-                        <>
-                          <Type className="h-3.5 w-3.5" />
-                          Plain Text
-                        </>
-                      )}
-                    </button>
+                    {/* Text Mode Toggle Switch */}
+                    <div className="inline-flex gap-1 rounded-lg border border-slate-300 bg-slate-100 p-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setUseRichText(false);
+                          setHasUserToggled(true);
+                        }}
+                        className={`inline-flex items-center gap-1.5 rounded px-3 py-1.5 text-xs font-medium transition ${
+                          !useRichText
+                            ? 'bg-white text-slate-900 shadow-sm border border-slate-200'
+                            : 'text-slate-600 hover:text-slate-700'
+                        }`}
+                      >
+                        <Type className="h-3.5 w-3.5" />
+                        Plain Text
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setUseRichText(true);
+                          setHasUserToggled(true);
+                        }}
+                        className={`inline-flex items-center gap-1.5 rounded px-3 py-1.5 text-xs font-medium transition ${
+                          useRichText
+                            ? 'bg-white text-slate-900 shadow-sm border border-slate-200'
+                            : 'text-slate-600 hover:text-slate-700'
+                        }`}
+                      >
+                        <Zap className="h-3.5 w-3.5" />
+                        Rich Text
+                      </button>
+                    </div>
                   </div>
                   
                   {useRichText === null ? (

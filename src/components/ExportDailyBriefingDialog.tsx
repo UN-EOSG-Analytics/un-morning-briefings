@@ -992,7 +992,7 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
             </label>
           </div>
 
-          <div className="space-y-2 flex-1 flex flex-col min-h-0">
+          <div className="space-y-2 flex-1 flex flex-col min-h-0 max-h-80">
             <label className="text-sm font-medium text-foreground">
               Approved Entries ({approvedEntries.length})
             </label>

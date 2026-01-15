@@ -7,8 +7,8 @@
     "Other UN Internal Document"
   ],
   "priorities": [
-    { "value": "sg-attention", "label": "For the SG's attention" },
-    { "value": "situational-awareness", "label": "Situational Awareness" }
+    { "value": "sg-attention", "label": "SG's attention" },
+    { "value": "situational-awareness", "label": "Sit. Awareness" }
   ],
   "regions": [
     "Africa - East",

@@ -336,3 +336,11 @@ body::-webkit-scrollbar {
 .ProseMirror a:hover {
   color: #0077a8;
 }
+
+/* Remove focus rings globally */
+*:focus,
+*:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+  --tw-ring-shadow: none !important;
+}

@@ -159,17 +159,16 @@ export function ViewEntryDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="!max-w-none w-full h-screen sm:w-[95vw] sm:h-[90vh] md:w-[85vw] md:h-[90vh] lg:w-[70vw] lg:h-[90vh] flex flex-col !pt-3 sm:!pt-6 sm:!pt-8 !pb-3 sm:!pb-6 rounded-none sm:rounded-lg">
-        <DialogHeader className="border-b border-slate-200 pb-2 pr-0 flex-shrink-0">
-          <div className="w-full px-3 sm:px-6">
-            <DialogTitle className="text-lg sm:text-2xl font-bold text-slate-900 mb-1 line-clamp-2">
-              {displayEntry.headline}
-            </DialogTitle>
-          </div>
-        </DialogHeader>
+      <DialogContent className="!max-w-none w-full h-screen sm:w-[95vw] sm:h-[90vh] md:w-[85vw] md:h-[90vh] lg:w-[70vw] lg:h-[90vh] flex flex-col !p-0 rounded-none sm:rounded-lg overflow-hidden">
+        {/* Header - Fixed at top */}
+        <div className="flex-shrink-0 bg-white border-b border-slate-200 pt-3 pb-2 px-3 sm:px-6">
+          <h2 className="text-lg sm:text-2xl font-bold text-slate-900 mb-1 line-clamp-2">
+            {displayEntry.headline}
+          </h2>
+        </div>
         
-        {/* AI Summary Button - Below heading */}
-        <div className="px-3 sm:px-6 py-2 border-b border-slate-200 flex gap-2">
+        {/* Badges and AI Button - Fixed */}
+        <div className="flex-shrink-0 px-3 sm:px-6 py-2 border-b border-slate-200 flex gap-2 bg-white">
           <div className="flex gap-2 flex-wrap items-start">
             {/* Date Badge */}
             <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">
@@ -200,7 +199,7 @@ export function ViewEntryDialog({
         </div>
         
         {/* Scrollable content */}
-        <div className="flex-1 overflow-y-auto px-3 sm:px-6" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+        <div className="flex-1 overflow-y-auto px-3 sm:px-6 py-2" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
           <style>{`
             ::-webkit-scrollbar {
               display: none;
@@ -408,7 +407,7 @@ export function ViewEntryDialog({
         </div>
 
         {/* Footer */}
-        <div className="border-t border-slate-200 pt-2 sm:pt-4 flex flex-col gap-2 px-3 sm:px-6 flex-shrink-0">
+        <div className="border-t border-slate-200 pt-2 pb-2 sm:pt-4 sm:pb-4 flex flex-col gap-2 px-3 sm:px-6 flex-shrink-0 bg-white">
           {/* Navigation buttons */}
           {allEntries.length > 1 && (
             <div className="flex gap-2 justify-center">

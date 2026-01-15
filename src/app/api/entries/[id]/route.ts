@@ -94,6 +94,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
     // Delete existing images from blob storage and database if new ones are provided
     if (images) {
+      const existingImagesResult = await query(
         `SELECT id, blob_url FROM images WHERE entry_id = $1`,
         [id]
       );

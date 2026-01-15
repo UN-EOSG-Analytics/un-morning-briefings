@@ -228,7 +228,7 @@ export function EntriesTable({
                 sortedEntries.map((entry, idx) => {
                   const currentBriefingDate = getBriefingDate(entry.date);
                   const prevBriefingDate = idx > 0 ? getBriefingDate(sortedEntries[idx - 1].date) : null;
-                  const showSeparator = prevBriefingDate && prevBriefingDate !== currentBriefingDate;
+                  const showSeparator = !prevBriefingDate || prevBriefingDate !== currentBriefingDate;
                   
                   return [
                     showSeparator && (

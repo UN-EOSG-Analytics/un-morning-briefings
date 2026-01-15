@@ -91,38 +91,30 @@ export function MorningMeetingForm({
     return text.trim();
   };
 
-  // Format date to YYYY-MM-DD and HH:MM separately
+  // Format date to YYYY-MM-DDTHH:MM format - extract literal string without any parsing
   const formatDateForInput = (dateValue: any): string => {
     if (!dateValue) {
-      // Return current date and time when creating new entry
+      // Return current time as-is
       const now = new Date();
-      const offset = now.getTimezoneOffset() * 60000;
-      return new Date(now.getTime() - offset).toISOString().slice(0, 16);
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const hour = String(now.getHours()).padStart(2, '0');
+      const minute = String(now.getMinutes()).padStart(2, '0');
+      return `${year}-${month}-${day}T${hour}:${minute}`;
     }
     
     if (typeof dateValue === 'string') {
-      // If it's already in YYYY-MM-DDTHH:MM format, return it
-      if (dateValue.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/)) {
-        return dateValue.slice(0, 16);
-      }
-      // If it's old YYYY-MM-DD format, keep just the date (don't add time when editing)
-      if (dateValue.match(/^\d{4}-\d{2}-\d{2}$/)) {
-        return dateValue;
-      }
-      // Try to parse ISO format
-      const parsed = new Date(dateValue);
-      if (!isNaN(parsed.getTime())) {
-        const offset = parsed.getTimezoneOffset() * 60000;
-        return new Date(parsed.getTime() - offset).toISOString().slice(0, 16);
-      }
+      // Extract YYYY-MM-DDTHH:MM from the string exactly as stored
+      // This handles formats like:
+      // - "2026-01-15T13:30" (already correct)
+      // - "2026-01-15T13:30:00" (trim seconds)
+      // - "2026-01-15T13:30:00.000Z" (remove milliseconds and Z)
+      const match = dateValue.match(/(\d{4}-\d{2}-\d{2}T\d{2}:\d{2})/);
+      return match ? match[1] : '';
     }
     
-    if (dateValue instanceof Date) {
-      const offset = dateValue.getTimezoneOffset() * 60000;
-      return new Date(dateValue.getTime() - offset).toISOString().slice(0, 16);
-    }
-    
-    return dateValue || '';
+    return '';
   };
 
   const [formData, setFormData] = useState<MorningMeetingEntry>({
@@ -697,9 +689,10 @@ export function MorningMeetingForm({
                         Time <span className="text-red-500">*</span>
                       </label>
                       <input
-                        type="time"
+                        type="text"
                         name="timeOnly"
-                        value={formData.date.split('T')[1] || ''}
+                        placeholder="HH:MM"
+                        value={(formData.date.split('T')[1] || '').slice(0, 5)}
                         onChange={handleInputChange}
                         className={`w-full rounded border px-3 py-2 text-sm outline-none transition ${
                           errors.date

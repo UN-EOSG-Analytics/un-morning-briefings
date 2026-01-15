@@ -6,12 +6,13 @@ import { Card } from '@/components/ui/card';
 import { PlusCircle, FileText, Archive, ArrowRight, Download } from 'lucide-react';
 import { useState } from 'react';
 import { ExportDailyBriefingDialog } from '@/components/ExportDailyBriefingDialog';
+import { getCurrentBriefingDate } from '@/lib/useEntriesFilter';
 
 export default function HomePage() {
   const [showExportDialog, setShowExportDialog] = useState(false);
 
-  // Get today's date in YYYY-MM-DD format
-  const today = new Date().toISOString().split('T')[0];
+  // Get current briefing date based on 8AM ET cutoff
+  const currentBriefingDate = getCurrentBriefingDate();
 
   return (
     <main className="bg-background flex flex-col">
@@ -70,7 +71,7 @@ export default function HomePage() {
           </Link>
 
           {/* Current Briefing Card */}
-          <Link href={`/list?date=${today}`} className="group">
+          <Link href={`/list?date=${currentBriefingDate}`} className="group">
             <Card className="border-slate-200 p-4 sm:p-8 hover:border-un-blue transition-colors h-full cursor-pointer sm:hover:shadow-md">
               <div className="flex flex-col sm:flex-col items-left text-left space-y-0 h-full sm:space-y-4">
                 <div className="flex sm:hidden gap-3 items-center">
@@ -78,7 +79,7 @@ export default function HomePage() {
                     <FileText className="h-8 w-8 text-white" />
                   </div>
                   <div className="flex flex-col flex-1">
-                    <h2 className="text-lg font-semibold text-foreground">Current Briefing</h2>
+                    <h2 className="text-lg font-semibold text-foreground">Current Briefing </h2>
                     <p className="text-xs text-slate-600">
                       View today&apos;s briefing entries
                     </p>

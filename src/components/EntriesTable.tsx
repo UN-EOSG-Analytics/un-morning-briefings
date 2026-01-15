@@ -109,9 +109,9 @@ export function EntriesTable({
     callback();
   };
 
-  // Extract unique dates from entries
+  // Extract unique briefing dates from entries
   const uniqueDates = Array.from(
-    new Set(entries.map((entry) => new Date(entry.date).toISOString().split('T')[0]))
+    new Set(entries.map((entry) => getBriefingDate(entry.date)))
   ).sort().reverse();
 
   return (
@@ -133,11 +133,11 @@ export function EntriesTable({
                   onClick={() => handleSort('date')}
                 >
                   <div className="flex items-center gap-1 sm:gap-2">
-                    <span className="hidden sm:inline">Date {sortField === 'date' && (sortDirection === 'asc' ? '↑' : '↓')}</span>
+                    <span className="hidden sm:inline">Briefing Date {sortField === 'date' && (sortDirection === 'asc' ? '↑' : '↓')}</span>
                     <span className="sm:hidden">Date</span>
                     <div className="hidden sm:block">
                       <ColumnFilter
-                        columnName="Date"
+                        columnName="Briefing Date"
                         options={uniqueDates.map((date) =>
                           formatDateDesktop(date)
                         )}
@@ -150,10 +150,13 @@ export function EntriesTable({
                           if (label === 'all') {
                             setFilterDate('');
                           } else {
-                            // Parse the date label back to YYYY-MM-DD format
-                            const dateObj = new Date(label);
-                            const isoDate = dateObj.toISOString().split('T')[0];
-                            setFilterDate(isoDate);
+                            // Find the matching date from uniqueDates by comparing formatted strings
+                            const matchingDate = uniqueDates.find(
+                              (date) => formatDateDesktop(date) === label
+                            );
+                            if (matchingDate) {
+                              setFilterDate(matchingDate);
+                            }
                           }
                         }}
                       />

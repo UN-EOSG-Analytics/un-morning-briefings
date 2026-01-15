@@ -3,73 +3,125 @@
 import { useState, useMemo } from 'react';
 
 /**
- * Get the 8AM cutoff range for a given date in Eastern Time
- * Returns UTC timestamps for entries from previous day 8AM ET to selected day 8AM ET
- * E.g., Jan 16 selected -> includes Jan 15 8AM ET to Jan 16 8AM ET
+ * Get the current briefing date based on the current time in ET
+ * 
+ * Logic: If current time is >= 8AM ET, we're working on tomorrow's briefing
+ *        If current time is < 8AM ET, we're working on today's briefing
+ * 
+ * Example: Jan 15 at 12:36 PM ET → working on Jan 16 briefing (since 12:36 >= 8AM)
+ * Example: Jan 15 at 7:00 AM ET → working on Jan 15 briefing (since 7:00 < 8AM)
  */
-export function getCutoffRange(dateStr: string): { start: Date; end: Date } {
-  // Parse the date string (assumes YYYY-MM-DD format)
-  const parts = dateStr.split('-');
-  const year = parseInt(parts[0]);
-  const month = parseInt(parts[1]) - 1; // Month is 0-indexed
-  const day = parseInt(parts[2]);
+export function getCurrentBriefingDate(): string {
+  const now = new Date();
   
-  // Create the end date: selected day at 8AM ET
-  const endDate = new Date(year, month, day, 8, 0, 0, 0);
+  // Get current time in ET timezone
+  const etFormatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/New_York',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    hour12: false,
+  });
   
-  // Create the start date: previous day at 8AM ET
-  const startDate = new Date(year, month, day - 1, 8, 0, 0, 0);
+  const parts = etFormatter.formatToParts(now);
+  const etYear = parseInt(parts.find(p => p.type === 'year')?.value || '0');
+  const etMonth = parseInt(parts.find(p => p.type === 'month')?.value || '0');
+  const etDay = parseInt(parts.find(p => p.type === 'day')?.value || '0');
+  const etHour = parseInt(parts.find(p => p.type === 'hour')?.value || '0');
   
-  // Get the offset between local time and ET
-  // Create a test date and see the offset
-  const testLocal = new Date(year, month, day, 12, 0, 0, 0);
-  const testUTC = new Date(testLocal.toLocaleString('en-US', { timeZone: 'UTC' }));
-  const testET = new Date(testLocal.toLocaleString('en-US', { timeZone: 'America/New_York' }));
+  const etDate = new Date(etYear, etMonth - 1, etDay);
   
-  // Calculate offset: difference between what UTC sees vs what ET sees
-  const offsetMs = testUTC.getTime() - testET.getTime();
-  
-  return {
-    start: new Date(startDate.getTime() + offsetMs),
-    end: new Date(endDate.getTime() + offsetMs),
-  };
-}
-
-/**
- * Get the briefing date for an entry based on 8AM cutoff
- * Returns the date string (YYYY-MM-DD) that this entry's briefing is for
- * E.g., an entry from Jan 14 at 10AM (after 8AM) belongs to briefing for Jan 15
- * But an entry from Jan 14 at 7AM (before 8AM) belongs to briefing for Jan 14
- */
-export function getBriefingDate(entryDate: string | Date): string {
-  const entry = new Date(entryDate);
-  const year = entry.getFullYear();
-  const month = String(entry.getMonth() + 1).padStart(2, '0');
-  const day = String(entry.getDate()).padStart(2, '0');
-  
-  // Get ET time
-  const etTime = new Date(entry.toLocaleString('en-US', { timeZone: 'America/New_York' }));
-  const etHours = etTime.getHours();
-  
-  // If after 8AM ET, belongs to NEXT day's briefing
-  // If before 8AM ET, belongs to CURRENT day's briefing
-  if (etHours >= 8) {
-    const nextDay = new Date(year, entry.getMonth(), entry.getDate() + 1);
-    const nextYear = nextDay.getFullYear();
-    const nextMonth = String(nextDay.getMonth() + 1).padStart(2, '0');
-    const nextDayNum = String(nextDay.getDate()).padStart(2, '0');
-    return `${nextYear}-${nextMonth}-${nextDayNum}`;
+  // If >= 8AM ET, working on tomorrow's briefing
+  // If < 8AM ET, working on today's briefing
+  if (etHour >= 8) {
+    etDate.setDate(etDate.getDate() + 1);
   }
+  
+  const year = etDate.getFullYear();
+  const month = String(etDate.getMonth() + 1).padStart(2, '0');
+  const day = String(etDate.getDate()).padStart(2, '0');
   
   return `${year}-${month}-${day}`;
 }
 
 /**
- * Check if an entry date falls within the 8AM cutoff range for a given date
+ * Get the 8AM cutoff range for a given briefing date in Eastern Time
+ * 
+ * Logic: Briefing for day X includes entries from day X-1 at 8AM ET to day X at 8AM ET
+ * 
+ * Example: getCutoffRange("2026-01-16") returns:
+ *   start: Jan 15, 2026 at 8:00 AM ET (in UTC)
+ *   end:   Jan 16, 2026 at 8:00 AM ET (in UTC)
  */
-export function isWithinCutoffRange(entryDate: string | Date, filterDate: string): boolean {
+export function getCutoffRange(briefingDateStr: string): { start: Date; end: Date } {
+  // Parse the briefing date (YYYY-MM-DD format)
+  const [year, month, day] = briefingDateStr.split('-').map(Number);
+  
+  // Create dates for the briefing day at 8AM and previous day at 8AM in ET
+  // We'll use Intl API to properly handle ET timezone
+  
+  // End time: briefing day at 8:00 AM ET
+  const endDateET = new Date(year, month - 1, day, 8, 0, 0, 0);
+  
+  // Start time: previous day at 8:00 AM ET
+  const startDateET = new Date(year, month - 1, day - 1, 8, 0, 0, 0);
+  
+  // Convert local dates to ET timezone properly
+  // Get ET offset at this specific date
+  const etOffsetMs = getETOffset(year, month, day);
+  
+  return {
+    start: new Date(startDateET.getTime() + etOffsetMs),
+    end: new Date(endDateET.getTime() + etOffsetMs),
+  };
+}
+
+/**
+ * Helper function to get ET offset from local time at a specific date
+ */
+function getETOffset(year: number, month: number, day: number): number {
+  const testLocal = new Date(year, month - 1, day, 12, 0, 0, 0);
+  const testUTC = new Date(testLocal.toLocaleString('en-US', { timeZone: 'UTC' }));
+  const testET = new Date(testLocal.toLocaleString('en-US', { timeZone: 'America/New_York' }));
+  return testUTC.getTime() - testET.getTime();
+}
+
+/**
+ * Get the briefing date for an entry based on 8AM cutoff
+ * 
+ * Logic:
+ *   - If entry time >= 8:00 AM: belongs to next day's briefing
+ *   - If entry time < 8:00 AM: belongs to current day's briefing
+ */
+export function getBriefingDate(entryDate: string | Date): string {
+  const date = new Date(entryDate);
+  const hour = date.getHours();
+  
+  // Create date for calculation
+  const briefingDate = new Date(date);
+  
+  // If 8 AM or later, it belongs to next day's briefing
+  if (hour >= 8) {
+    briefingDate.setDate(briefingDate.getDate() + 1);
+  }
+  
+  const year = briefingDate.getFullYear();
+  const month = String(briefingDate.getMonth() + 1).padStart(2, '0');
+  const day = String(briefingDate.getDate()).padStart(2, '0');
+  
+  return `${year}-${month}-${day}`;
+}
+
+/**
+ * Check if an entry date falls within the 8AM cutoff range for a given briefing date
+ * 
+ * Example: isWithinCutoffRange(entryDate, "2026-01-16") checks if entry is between
+ *          Jan 15 8AM ET and Jan 16 8AM ET
+ */
+export function isWithinCutoffRange(entryDate: string | Date, briefingDate: string): boolean {
   const entryTime = new Date(entryDate).getTime();
-  const { start, end } = getCutoffRange(filterDate);
+  const { start, end } = getCutoffRange(briefingDate);
   return entryTime >= start.getTime() && entryTime < end.getTime();
 }
 
@@ -85,7 +137,19 @@ export function useEntriesFilter(entries: any[], initialDateFilter?: string) {
   const [filterRegion, setFilterRegion] = useState<string>('all');
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [filterPriority, setFilterPriority] = useState<string>('all');
-  const [filterDate, setFilterDate] = useState<string>(initialDateFilter || '');
+  
+  // Convert initialDateFilter to briefing date format if provided
+  let briefingDateFilter = '';
+  if (initialDateFilter) {
+    // If it's already in YYYY-MM-DD format, use it as is
+    // If it's a full datetime, extract the date part
+    const dateStr = initialDateFilter.includes('T') 
+      ? initialDateFilter.split('T')[0]
+      : initialDateFilter;
+    briefingDateFilter = dateStr;
+  }
+  
+  const [filterDate, setFilterDate] = useState<string>(briefingDateFilter);
   const [sortField, setSortField] = useState<string>('date');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
 

@@ -10,7 +10,7 @@ import Link from 'next/link';
 import { ViewEntryDialog } from './ViewEntryDialog';
 import { SearchBar } from './SearchBar';
 import { ColumnFilter } from './ColumnFilter';
-import { useEntriesFilter, getPriorityBadgeClass, getRegionBadgeClass } from '@/lib/useEntriesFilter';
+import { useEntriesFilter, getPriorityBadgeClass, getRegionBadgeClass, formatCategoryForDisplay } from '@/lib/useEntriesFilter';
 
 interface EntriesTableProps {
   entries: MorningMeetingEntry[];
@@ -148,7 +148,7 @@ export function EntriesTable({
                     />
                   </div>
                 </th>
-                <th className="hidden sm:table-cell px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-700">
+                <th className="hidden sm:table-cell px-2 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-700">
                   <div className="flex items-center gap-2">
                     Category
                     <ColumnFilter
@@ -205,8 +205,10 @@ export function EntriesTable({
                         {PRIORITIES.find(p => p.value === entry.priority)?.label}
                       </span>
                     </td>
-                    <td className="hidden sm:table-cell whitespace-nowrap px-4 py-3 text-sm text-slate-600">
-                      {entry.category}
+                    <td className="hidden sm:table-cell whitespace-nowrap px-2 py-3 text-sm">
+                      <span className="inline-block rounded px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800">
+                        {formatCategoryForDisplay(entry.category)}
+                      </span>
                     </td>
                     {showApprovedColumn && (
                       <td className="hidden sm:table-cell whitespace-nowrap px-4 py-3">

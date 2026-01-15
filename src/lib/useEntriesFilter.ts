@@ -129,3 +129,10 @@ export function getRegionBadgeClass(region: string): string {
   };
   return regionColors[region] || 'bg-gray-100 text-gray-800';
 }
+
+export function formatCategoryForDisplay(category: string): string {
+  const categoryMap: Record<string, string> = {
+    'Meeting Note/Summary': 'Meeting Note',
+  };
+  return categoryMap[category] || category;
+}

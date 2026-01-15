@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { MorningMeetingEntry, PRIORITIES } from '@/types/morning-meeting';
 import { getPriorityBadgeClass } from '@/lib/useEntriesFilter';
 import { usePopup } from '@/lib/popup-context';
+import { formatDateResponsive } from '@/lib/format-date';
 import { Edit, Trash2, Check, X, Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useEffect, useCallback } from 'react';
@@ -177,11 +178,12 @@ export function ViewEntryDialog({
           <div className="flex gap-1 sm:gap-2 flex-wrap items-start">
             {/* Date Badge */}
             <span className="inline-flex items-center rounded-full bg-slate-100 px-1.5 py-0.5 text-xs font-medium text-slate-700">
-              {new Date(displayEntry.date).toLocaleDateString('en-US', {
-                month: 'short',
-                day: 'numeric',
-                year: 'numeric',
-              })}
+              <span className="hidden sm:inline">
+                {formatDateResponsive(displayEntry.date).desktop}
+              </span>
+              <span className="sm:hidden">
+                {formatDateResponsive(displayEntry.date).mobile}
+              </span>
             </span>
             {/* Priority Badge */}
             <span className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-xs font-medium ${getPriorityBadgeClass(displayEntry.priority)}`}>

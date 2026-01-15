@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { MorningMeetingEntry, PRIORITIES, REGIONS, CATEGORIES } from '@/types/morning-meeting';
+import { formatDateResponsive, formatDateDesktop } from '@/lib/format-date';
 import { Trash2, Edit, Clock, Check, X } from 'lucide-react';
 import Link from 'next/link';
 import { ViewEntryDialog } from './ViewEntryDialog';
@@ -90,19 +91,11 @@ export function EntriesTable({
                       <ColumnFilter
                         columnName="Date"
                         options={uniqueDates.map((date) =>
-                          new Date(date).toLocaleDateString('en-US', {
-                            month: 'short',
-                            day: 'numeric',
-                            year: 'numeric',
-                          })
+                          formatDateDesktop(date)
                         )}
                         selectedValue={
                           filterDate
-                            ? new Date(filterDate).toLocaleDateString('en-US', {
-                                month: 'short',
-                                day: 'numeric',
-                                year: 'numeric',
-                              })
+                            ? formatDateDesktop(filterDate)
                             : 'all'
                         }
                         onValueChange={(label) => {
@@ -191,10 +184,12 @@ export function EntriesTable({
                     onClick={() => handleRowClick(entry)}
                   >
                     <td className="whitespace-nowrap px-2 sm:px-4 py-3 text-sm text-slate-600">
-                      {new Date(entry.date).toLocaleDateString('en-US', {
-                        month: '2-digit',
-                        day: '2-digit',
-                      })}
+                      <span className="hidden sm:inline">
+                        {formatDateDesktop(entry.date)}
+                      </span>
+                      <span className="sm:hidden">
+                        {formatDateResponsive(entry.date).mobile}
+                      </span>
                     </td>
                     <td className="max-w-md px-4 py-3 text-sm">
                       <div className="line-clamp-3 sm:line-clamp-2">{entry.headline}</div>

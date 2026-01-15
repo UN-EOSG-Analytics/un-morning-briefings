@@ -2,7 +2,7 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -44,6 +44,7 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
   );
   const [isExporting, setIsExporting] = useState(false);
   const [isSendingEmail, setIsSendingEmail] = useState(false);
+  const dateInputRef = useRef<HTMLInputElement>(null);
   
   const handleOpenChange = useCallback((newOpen: boolean) => {
     onOpenChange(newOpen);
@@ -51,6 +52,17 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
   const [approvedEntries, setApprovedEntries] = useState<MorningMeetingEntry[]>([]);
   const [isLoadingEntries, setIsLoadingEntries] = useState(false);
   const [includeImages, setIncludeImages] = useState(true);
+
+  // Blur the date input when dialog opens to prevent auto-focus
+  useEffect(() => {
+    if (open && dateInputRef.current) {
+      // Use setTimeout to ensure it happens after the dialog fully opens
+      const timer = setTimeout(() => {
+        dateInputRef.current?.blur();
+      }, 0);
+      return () => clearTimeout(timer);
+    }
+  }, [open]);
 
   useEffect(() => {
     const loadEntriesForDate = async () => {
@@ -956,9 +968,11 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
             <div className="relative">
               <Calendar className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 pointer-events-none" />
               <input
+                ref={dateInputRef}
                 type="date"
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
+                autoFocus={false}
                 className="h-10 w-full rounded border border-slate-300 bg-white pl-10 pr-3 text-sm focus:border-un-blue focus:outline-none focus:ring-2 focus:ring-un-blue/20 appearance-none"
               />
             </div>

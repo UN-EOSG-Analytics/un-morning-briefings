@@ -633,7 +633,7 @@ export function MorningMeetingForm({
                       Headline{' '}
                       <span className="text-red-500">*</span>
                       <span className="ml-2 text-xs text-slate-500">
-                        ({formData.headline.length}/150)
+                        ({formData.headline.length}/300)
                       </span>
                     </label>
                     <input
@@ -642,7 +642,7 @@ export function MorningMeetingForm({
                       value={formData.headline}
                       onChange={handleInputChange}
                       placeholder="Enter a concise, descriptive headline..."
-                      maxLength={150}
+                      maxLength={300}
                       className={`w-full rounded border px-3 py-2 text-sm outline-none transition ${
                         errors.headline
                           ? 'border-red-500 bg-red-50 focus:border-red-500 focus:ring-2 focus:ring-red-500/15'

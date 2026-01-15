@@ -140,7 +140,7 @@ Each bullet should be:
 - One clear, complete sentence
 - Focused on the most critical information
 - Professional and suitable for UN leadership
-- Maximum 25 words each
+- Maximum 20 words each
 
 Return ONLY the bullet points, one per line, without bullet symbols or numbering.
 

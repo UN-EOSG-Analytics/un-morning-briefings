@@ -593,6 +593,7 @@ export function MorningMeetingForm({
                     options={REGIONS.map((region) => ({ value: region, label: region }))}
                     error={errors.region}
                     required={true}
+                    searchable={true}
                   />
 
                   {/* Country */}
@@ -604,6 +605,7 @@ export function MorningMeetingForm({
                     options={availableCountries.map((country) => ({ value: country, label: country }))}
                     error={errors.country}
                     required={true}
+                    searchable={true}
                   />
                 </div>
               </section>

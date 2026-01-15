@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback } from 'react';
+import { useCallback, useState, useMemo } from 'react';
 import {
   Select,
   SelectContent,
@@ -8,7 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Search, X } from 'lucide-react';
 
 interface SelectFieldProps {
   label?: string;
@@ -22,6 +22,7 @@ interface SelectFieldProps {
   triggerClassName?: string;
   disabled?: boolean;
   showLabel?: boolean;
+  searchable?: boolean;
 }
 
 export function SelectField({
@@ -36,10 +37,22 @@ export function SelectField({
   triggerClassName = '',
   disabled = false,
   showLabel = true,
+  searchable = false,
 }: SelectFieldProps) {
+  const [searchQuery, setSearchQuery] = useState('');
+
   const handleValueChange = useCallback((newValue: string) => {
     onValueChange(newValue);
+    setSearchQuery('');
   }, [onValueChange]);
+
+  const filteredOptions = useMemo(() => {
+    if (!searchQuery) return options;
+    return options.filter(option =>
+      option.label.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [options, searchQuery]);
+
   return (
     <div className={`space-y-2 ${className}`}>
       {label && showLabel && (
@@ -57,11 +70,38 @@ export function SelectField({
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
         <SelectContent>
-          {options.map((option) => (
-            <SelectItem key={option.value} value={option.value}>
-              {option.label}
-            </SelectItem>
-          ))}
+          {searchable && (
+            <div className="flex items-center gap-2 px-2 py-2 sticky top-0 bg-slate-50 border-b">
+              <Search className="h-4 w-4 text-slate-400 shrink-0" />
+              <input
+                type="text"
+                placeholder="Search..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="flex-1 outline-none bg-transparent text-sm placeholder-slate-400"
+                onClick={(e) => e.stopPropagation()}
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="text-slate-400 hover:text-slate-600 shrink-0"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+          )}
+          {filteredOptions.length > 0 ? (
+            filteredOptions.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))
+          ) : (
+            <div className="px-2 py-2 text-sm text-slate-500 text-center">
+              No results found
+            </div>
+          )}
         </SelectContent>
       </Select>
       {error && (

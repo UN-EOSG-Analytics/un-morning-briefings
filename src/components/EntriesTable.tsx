@@ -243,8 +243,8 @@ export function EntriesTable({
                         })()}
                       </td>
                     )}
-                    <td className="hidden sm:table-cell whitespace-nowrap px-4 py-3 text-right">
-                      <div className="flex justify-end gap-1">
+                    <td className="hidden sm:table-cell whitespace-nowrap px-2 py-3 text-right">
+                      <div className="flex justify-end gap-0">
                         <Link href={`/form?edit=${entry.id}`} onClick={(e) => e.stopPropagation()}>
                           <Button
                             variant="ghost"

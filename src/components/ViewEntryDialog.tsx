@@ -115,13 +115,31 @@ export function ViewEntryDialog({
     }
   }, [displayEntry, onApprove, showSuccess, showWarning]);
 
-  // Clear summary when entry changes or dialog closes
+  // Load saved AI summary when entry changes
   useEffect(() => {
-    setSummary(null);
+    if (displayEntry?.aiSummary) {
+      try {
+        // Handle both string (JSON) and array formats
+        const summary = typeof displayEntry.aiSummary === 'string' 
+          ? JSON.parse(displayEntry.aiSummary) 
+          : displayEntry.aiSummary;
+        
+        if (Array.isArray(summary)) {
+          setSummary(summary);
+        } else {
+          setSummary(null);
+        }
+      } catch (error) {
+        console.error('Error parsing AI summary:', error);
+        setSummary(null);
+      }
+    } else {
+      setSummary(null);
+    }
   }, [displayEntry?.id, open]);
 
   const handleGenerateSummary = async () => {
-    if (!displayEntry?.entry) return;
+    if (!displayEntry?.entry || !displayEntry?.id) return;
     
     setIsGeneratingSummary(true);
     
@@ -147,6 +165,22 @@ export function ViewEntryDialog({
       
       const data = await response.json();
       setSummary(data.summary);
+      
+      // Save summary to backend
+      try {
+        await fetch('/api/entries', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            id: displayEntry.id, 
+            aiSummary: data.summary 
+          }),
+        });
+      } catch (error) {
+        console.error('Error saving summary to backend:', error);
+        // Don't show error to user - summary was still generated, just not saved
+      }
+      
       showSuccess('Summary Generated', 'AI summary created successfully.');
     } catch (error) {
       console.error('Summary generation error:', error);
@@ -196,7 +230,7 @@ export function ViewEntryDialog({
               size="sm"
               onClick={handleGenerateSummary}
               disabled={isGeneratingSummary}
-              className="bg-[#009edb] hover:bg-[#0080b8] text-white gap-1 text-xs sm:text-sm px-2.5 py-1.5 sm:px-3 sm:py-2 h-auto"
+              className={`bg-[#009edb] hover:bg-[#0080b8] text-white gap-1 text-xs sm:text-sm px-2.5 py-1.5 sm:px-3 sm:py-2 h-auto ${summary ? 'opacity-50' : ''}`}
             >
               <Sparkles className="h-3 w-3 sm:h-4 sm:w-4" />
               <span className="hidden sm:inline">{isGeneratingSummary ? 'Generating...' : 'Create Summary'}</span>

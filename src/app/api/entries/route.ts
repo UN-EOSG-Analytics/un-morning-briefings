@@ -40,6 +40,7 @@ export async function GET(request: NextRequest) {
         e.pu_note as "puNote",
         e.author,
         e.status,
+        e.ai_summary as "aiSummary",
         COALESCE(e.approval_status, CASE WHEN e.approved THEN 'approved' ELSE 'pending' END) as "approvalStatus",
         e.created_at as "createdAt",
         e.updated_at as "updatedAt",
@@ -301,23 +302,40 @@ export async function PATCH(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { id, approvalStatus } = body;
+    const { id, approvalStatus, aiSummary } = body;
 
     if (!id) {
       return NextResponse.json({ error: 'Entry ID is required' }, { status: 400 });
     }
 
-    if (!approvalStatus || !['pending', 'approved', 'denied'].includes(approvalStatus)) {
+    const now = new Date().toISOString();
+
+    // Build update query based on what fields are provided
+    if (approvalStatus && !['pending', 'approved', 'denied'].includes(approvalStatus)) {
       return NextResponse.json({ error: 'Invalid approval status' }, { status: 400 });
     }
 
-    const now = new Date().toISOString();
+    let updateQuery = 'UPDATE entries SET updated_at = $1';
+    const params: any[] = [now];
+    let paramIndex = 2;
 
-    // Update entry approval status
-    await query(
-      `UPDATE entries SET approval_status = $1, updated_at = $2 WHERE id = $3`,
-      [approvalStatus, now, id]
-    );
+    if (approvalStatus) {
+      updateQuery += `, approval_status = $${paramIndex}`;
+      params.push(approvalStatus);
+      paramIndex++;
+    }
+
+    if (aiSummary !== undefined) {
+      updateQuery += `, ai_summary = $${paramIndex}`;
+      params.push(aiSummary ? JSON.stringify(aiSummary) : null);
+      paramIndex++;
+    }
+
+    updateQuery += ` WHERE id = $${paramIndex}`;
+    params.push(id);
+
+    // Update entry
+    await query(updateQuery, params);
 
     // Fetch updated entry
     const result = await query(
@@ -334,6 +352,7 @@ export async function PATCH(request: NextRequest) {
         pu_note as "puNote",
         author,
         status,
+        ai_summary as "aiSummary",
         COALESCE(approval_status, CASE WHEN approved THEN 'approved' ELSE 'pending' END) as "approvalStatus",
         created_at as "createdAt",
         updated_at as "updatedAt"

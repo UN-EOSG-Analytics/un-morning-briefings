@@ -835,7 +835,7 @@ export function MorningMeetingForm({
         </Card>
 
         {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-3 rounded-b bg-none px-4 sm:px-6 py-3 sm:py-4 text-sm">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-3 rounded-b bg-none py-3 sm:py-4 text-sm -mx-2 sm:-mx-4 px-2 sm:px-4">
           <div className="flex flex-col sm:flex-row gap-2 order-2 sm:order-1">
             <Button
               type="button"

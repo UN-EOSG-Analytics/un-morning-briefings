@@ -178,6 +178,7 @@ export async function POST(request: NextRequest) {
     const now = new Date();
 
     // Insert entry
+    // Store date as-is without timezone conversion
     await query(
       `INSERT INTO entries (
         id, category, priority, region, country, headline, date, entry,
@@ -190,7 +191,7 @@ export async function POST(request: NextRequest) {
         data.region,
         data.country,
         data.headline,
-        new Date(data.date),
+        data.date, // Store as string, no Date conversion
         entryContent,
         data.sourceUrl || null,
         data.puNote || null,

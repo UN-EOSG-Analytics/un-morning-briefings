@@ -161,7 +161,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     }
     if (data.date !== undefined) {
       updateFields.push(`date = $${paramCount++}`);
-      updateValues.push(new Date(data.date));
+      updateValues.push(data.date); // Store as string, no Date conversion
     }
     if (entryContent !== undefined) {
       updateFields.push(`entry = $${paramCount++}`);

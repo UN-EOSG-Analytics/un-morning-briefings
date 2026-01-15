@@ -1,52 +1,70 @@
 /**
+ * Parse a date string and extract components WITHOUT any timezone conversion.
+ * Returns the literal values from the string.
+ */
+function parseDateString(dateStr: string): { year: number; month: number; day: number; hour: number; minute: number } {
+  const match = dateStr.match(/(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
+  if (!match) {
+    const dateOnly = dateStr.match(/(\d{4})-(\d{2})-(\d{2})/);
+    if (dateOnly) {
+      return {
+        year: parseInt(dateOnly[1]),
+        month: parseInt(dateOnly[2]),
+        day: parseInt(dateOnly[3]),
+        hour: 0,
+        minute: 0,
+      };
+    }
+    return { year: 0, month: 0, day: 0, hour: 0, minute: 0 };
+  }
+  
+  return {
+    year: parseInt(match[1]),
+    month: parseInt(match[2]),
+    day: parseInt(match[3]),
+    hour: parseInt(match[4]),
+    minute: parseInt(match[5]),
+  };
+}
+
+const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+/**
  * Format date responsively for desktop and mobile
  * Desktop: "Jan 14, 2026"
  * Mobile: "01/14"
+ * 
+ * NO timezone conversion - uses literal string values
  */
 export function formatDateResponsive(date: string | Date): {
   desktop: string;
   mobile: string;
 } {
-  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  const dateStr = typeof date === 'string' ? date : date.toISOString();
+  const { year, month, day } = parseDateString(dateStr);
 
-  const desktop = dateObj.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    timeZone: 'America/New_York',
-  });
-
-  const mobile = dateObj.toLocaleDateString('en-US', {
-    month: '2-digit',
-    day: '2-digit',
-    timeZone: 'America/New_York',
-  });
+  const desktop = `${MONTH_NAMES[month - 1]} ${day}, ${year}`;
+  const mobile = `${String(month).padStart(2, '0')}/${String(day).padStart(2, '0')}`;
 
   return { desktop, mobile };
 }
 
 /**
- * Format date for desktop view only in Eastern Time: "Jan 14, 2026"
+ * Format date for desktop view: "Jan 14, 2026"
+ * NO timezone conversion - uses literal string values
  */
 export function formatDateDesktop(date: string | Date): string {
-  const dateObj = typeof date === 'string' ? new Date(date) : date;
-  return dateObj.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    timeZone: 'America/New_York',
-  });
+  const dateStr = typeof date === 'string' ? date : date.toISOString();
+  const { year, month, day } = parseDateString(dateStr);
+  return `${MONTH_NAMES[month - 1]} ${day}, ${year}`;
 }
 
 /**
- * Format time as HH:MM in Eastern Time (no seconds)
+ * Format time as HH:MM (no seconds)
+ * NO timezone conversion - uses literal string values
  */
 export function formatTime(date: string | Date): string {
-  const dateObj = typeof date === 'string' ? new Date(date) : date;
-  return dateObj.toLocaleTimeString('en-US', {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-    timeZone: 'America/New_York',
-  });
+  const dateStr = typeof date === 'string' ? date : date.toISOString();
+  const { hour, minute } = parseDateString(dateStr);
+  return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
 }

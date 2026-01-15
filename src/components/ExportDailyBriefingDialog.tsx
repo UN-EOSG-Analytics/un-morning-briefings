@@ -28,6 +28,38 @@ interface ExportDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
+/**
+ * Format a date string (YYYY-MM-DD) to long format without timezone conversion
+ * Example: "2026-01-15" → "Wednesday, January 15, 2026"
+ */
+const formatDateLong = (dateStr: string): string => {
+  const [year, month, day] = dateStr.split('-').map(Number);
+  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  
+  // Create date object without timezone issues (use UTC components)
+  const date = new Date(Date.UTC(year, month - 1, day));
+  const dayOfWeek = dayNames[date.getUTCDay()];
+  
+  return `${dayOfWeek}, ${monthNames[month - 1]} ${day}, ${year}`;
+};
+
+/**
+ * Get current datetime string without timezone conversion
+ */
+const getCurrentDateTime = (): string => {
+  const now = new Date();
+  const month = now.getMonth() + 1;
+  const day = now.getDate();
+  const year = now.getFullYear();
+  const hours = now.getHours();
+  const minutes = now.getMinutes();
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  const displayHours = hours % 12 || 12;
+  
+  return `${month}/${day}/${year}, ${displayHours}:${String(minutes).padStart(2, '0')} ${ampm}`;
+};
+
 const createSeparator = (
   length: number = 63,
   spacing: { before?: number; after?: number } = { after: 200 }
@@ -384,12 +416,7 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
           spacing: { after: 400 },
           children: [
             new TextRun({
-              text: new Date(selectedDate).toLocaleDateString('en-US', {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-              }),
+              text: formatDateLong(selectedDate),
               size: 24,
               font: 'Roboto',
               color: '009edb',
@@ -547,7 +574,7 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
           spacing: { before: 400 },
           children: [
             new TextRun({
-              text: `Exported on ${new Date().toLocaleString('en-US')}`,
+              text: `Exported on ${getCurrentDateTime()}`,
               italics: true,
               font: 'Roboto',
             }),
@@ -734,12 +761,7 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
           spacing: { after: 400 },
           children: [
             new TextRun({
-              text: new Date(selectedDate).toLocaleDateString('en-US', {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-              }),
+              text: formatDateLong(selectedDate),
               size: 24,
               font: 'Roboto',
               color: '009edb',
@@ -883,7 +905,7 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
           spacing: { before: 400 },
           children: [
             new TextRun({
-              text: `Exported on ${new Date().toLocaleString('en-US')}`,
+              text: `Exported on ${getCurrentDateTime()}`,
               italics: true,
               font: 'Roboto',
             }),

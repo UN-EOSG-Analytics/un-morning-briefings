@@ -121,11 +121,11 @@ export function getPriorityBadgeClass(priority: string): string {
 
 export function getRegionBadgeClass(region: string): string {
   const regionColors: Record<string, string> = {
-    'Africa': 'bg-yellow-100 text-yellow-800',
-    'Americas': 'bg-blue-100 text-blue-800',
-    'Asia and the Pacific': 'bg-green-100 text-green-800',
-    'Europe': 'bg-purple-100 text-purple-800',
-    'Middle East': 'bg-pink-100 text-pink-800',
+    'Africa': 'bg-gray-100 text-gray-800',
+    'Americas': 'bg-gray-100 text-gray-800',
+    'Asia and the Pacific': 'bg-gray-100 text-gray-800',
+    'Europe': 'bg-gray-100 text-gray-800',
+    'Middle East': 'bg-gray-100 text-gray-800',
   };
   return regionColors[region] || 'bg-gray-100 text-gray-800';
 }

@@ -15,9 +15,7 @@ CREATE TABLE
         source_url TEXT,
         pu_note TEXT,
         author TEXT NOT NULL DEFAULT 'Anonymous',
-        status TEXT NOT NULL DEFAULT 'submitted',
-        created_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP(3) NOT NULL
+        status TEXT NOT NULL DEFAULT 'submitted'
     );
 
 -- Create indices for entries table
@@ -36,7 +34,6 @@ CREATE TABLE
         width INTEGER,
         height INTEGER,
         position INTEGER,
-        created_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
         CONSTRAINT fk_images_entry_id FOREIGN KEY (entry_id) REFERENCES pu_morning_briefings.entries (id) ON UPDATE CASCADE ON DELETE CASCADE
     );
 

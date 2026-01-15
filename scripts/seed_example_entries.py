@@ -294,8 +294,8 @@ try:
         
         insert_query = sql.SQL(
             '''INSERT INTO pu_morning_briefings.entries 
-            (id, category, priority, region, country, headline, date, entry, source_url, pu_note, author, status, approved, updated_at)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'''
+            (id, category, priority, region, country, headline, date, entry, source_url, pu_note, author, status, approved)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'''
         )
         
         entry_id = str(uuid.uuid4())

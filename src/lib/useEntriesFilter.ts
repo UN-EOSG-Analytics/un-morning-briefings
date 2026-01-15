@@ -3,6 +3,77 @@
 import { useState, useMemo } from 'react';
 
 /**
+ * Get the 8AM cutoff range for a given date in Eastern Time
+ * Returns UTC timestamps for entries from previous day 8AM ET to selected day 8AM ET
+ * E.g., Jan 16 selected -> includes Jan 15 8AM ET to Jan 16 8AM ET
+ */
+export function getCutoffRange(dateStr: string): { start: Date; end: Date } {
+  // Parse the date string (assumes YYYY-MM-DD format)
+  const parts = dateStr.split('-');
+  const year = parseInt(parts[0]);
+  const month = parseInt(parts[1]) - 1; // Month is 0-indexed
+  const day = parseInt(parts[2]);
+  
+  // Create the end date: selected day at 8AM ET
+  const endDate = new Date(year, month, day, 8, 0, 0, 0);
+  
+  // Create the start date: previous day at 8AM ET
+  const startDate = new Date(year, month, day - 1, 8, 0, 0, 0);
+  
+  // Get the offset between local time and ET
+  // Create a test date and see the offset
+  const testLocal = new Date(year, month, day, 12, 0, 0, 0);
+  const testUTC = new Date(testLocal.toLocaleString('en-US', { timeZone: 'UTC' }));
+  const testET = new Date(testLocal.toLocaleString('en-US', { timeZone: 'America/New_York' }));
+  
+  // Calculate offset: difference between what UTC sees vs what ET sees
+  const offsetMs = testUTC.getTime() - testET.getTime();
+  
+  return {
+    start: new Date(startDate.getTime() + offsetMs),
+    end: new Date(endDate.getTime() + offsetMs),
+  };
+}
+
+/**
+ * Get the briefing date for an entry based on 8AM cutoff
+ * Returns the date string (YYYY-MM-DD) that this entry's briefing is for
+ * E.g., an entry from Jan 14 at 10AM (after 8AM) belongs to briefing for Jan 15
+ * But an entry from Jan 14 at 7AM (before 8AM) belongs to briefing for Jan 14
+ */
+export function getBriefingDate(entryDate: string | Date): string {
+  const entry = new Date(entryDate);
+  const year = entry.getFullYear();
+  const month = String(entry.getMonth() + 1).padStart(2, '0');
+  const day = String(entry.getDate()).padStart(2, '0');
+  
+  // Get ET time
+  const etTime = new Date(entry.toLocaleString('en-US', { timeZone: 'America/New_York' }));
+  const etHours = etTime.getHours();
+  
+  // If after 8AM ET, belongs to NEXT day's briefing
+  // If before 8AM ET, belongs to CURRENT day's briefing
+  if (etHours >= 8) {
+    const nextDay = new Date(year, entry.getMonth(), entry.getDate() + 1);
+    const nextYear = nextDay.getFullYear();
+    const nextMonth = String(nextDay.getMonth() + 1).padStart(2, '0');
+    const nextDayNum = String(nextDay.getDate()).padStart(2, '0');
+    return `${nextYear}-${nextMonth}-${nextDayNum}`;
+  }
+  
+  return `${year}-${month}-${day}`;
+}
+
+/**
+ * Check if an entry date falls within the 8AM cutoff range for a given date
+ */
+export function isWithinCutoffRange(entryDate: string | Date, filterDate: string): boolean {
+  const entryTime = new Date(entryDate).getTime();
+  const { start, end } = getCutoffRange(filterDate);
+  return entryTime >= start.getTime() && entryTime < end.getTime();
+}
+
+/**
  * Shared filtering and sorting state for entry lists
  * Used by both MorningMeetingList and DraftsPage to avoid code duplication
  * 
@@ -35,8 +106,7 @@ export function useEntriesFilter(entries: any[], initialDateFilter?: string) {
       
       let matchesDate = true;
       if (filterDate) {
-        const entryDate = new Date(entry.date).toISOString().split('T')[0];
-        matchesDate = entryDate === filterDate;
+        matchesDate = isWithinCutoffRange(entry.date, filterDate);
       }
 
       return matchesSearch && matchesRegion && matchesCategory && matchesPriority && matchesDate;

@@ -9,8 +9,6 @@ CREATE TABLE IF NOT EXISTS pu_morning_briefings.users (
     email_verified BOOLEAN DEFAULT FALSE,
     verification_token VARCHAR(255),
     verification_token_expires TIMESTAMP,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT email_format CHECK (email LIKE '%@un.org')
 );
 

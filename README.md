@@ -170,7 +170,7 @@ Fetch morning briefing entries with optional filters
     "id": "uuid",
     "headline": "Entry headline",
     "entry": "Entry content",
-    "date": "2026-01-12",
+    "date": "2026-01-12T10:30:00",
     "category": "category-name",
     "priority": "sg-attention|situational-awareness",
     "region": "region-name",
@@ -179,9 +179,7 @@ Fetch morning briefing entries with optional filters
     "puNote": "Political unit note",
     "status": "draft|submitted",
     "approved": false,
-    "images": [],
-    "createdAt": "2026-01-12T00:00:00Z",
-    "updatedAt": "2026-01-12T00:00:00Z"
+    "images": []
   }
 ]
 ```

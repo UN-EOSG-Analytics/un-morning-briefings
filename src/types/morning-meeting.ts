@@ -10,7 +10,7 @@ export interface MorningMeetingEntry {
   region: string;
   country: string;
   headline: string;
-  date: string;
+  date: string; // Now includes both date and time
   entry: string;
   sourceUrl?: string;
   puNote?: string;
@@ -21,8 +21,6 @@ export interface MorningMeetingEntry {
     position: number | null;
     mimeType: string;
   }>;
-  createdAt?: Date;
-  updatedAt?: Date;
   status?: 'draft' | 'submitted';
   approvalStatus?: ApprovalStatus;
   approved?: boolean; // For backwards compatibility

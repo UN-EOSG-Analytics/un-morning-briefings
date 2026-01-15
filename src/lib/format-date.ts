@@ -13,18 +13,20 @@ export function formatDateResponsive(date: string | Date): {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
+    timeZone: 'America/New_York',
   });
 
   const mobile = dateObj.toLocaleDateString('en-US', {
     month: '2-digit',
     day: '2-digit',
+    timeZone: 'America/New_York',
   });
 
   return { desktop, mobile };
 }
 
 /**
- * Format date for desktop view only: "Jan 14, 2026"
+ * Format date for desktop view only in Eastern Time: "Jan 14, 2026"
  */
 export function formatDateDesktop(date: string | Date): string {
   const dateObj = typeof date === 'string' ? new Date(date) : date;
@@ -32,16 +34,19 @@ export function formatDateDesktop(date: string | Date): string {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
+    timeZone: 'America/New_York',
   });
 }
 
 /**
- * Format date for mobile view only: "01/14"
+ * Format time as HH:MM in Eastern Time (no seconds)
  */
-export function formatDateMobile(date: string | Date): string {
+export function formatTime(date: string | Date): string {
   const dateObj = typeof date === 'string' ? new Date(date) : date;
-  return dateObj.toLocaleDateString('en-US', {
-    month: '2-digit',
-    day: '2-digit',
+  return dateObj.toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+    timeZone: 'America/New_York',
   });
 }

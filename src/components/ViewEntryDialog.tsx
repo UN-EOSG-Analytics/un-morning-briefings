@@ -174,7 +174,7 @@ export function ViewEntryDialog({
         </div>
         
         {/* Badges and AI Button - Fixed */}
-        <div className="flex-shrink-0 px-3 sm:px-6 py-1 sm:py-2 border-b border-slate-200 flex gap-2 bg-white">
+        <div className="flex-shrink-0 px-3 sm:px-6 py-0 sm:py-0 border-b border-slate-200 flex gap-0 bg-white">
           <div className="flex gap-1 sm:gap-2 flex-wrap items-start">
             {/* Date Badge */}
             <span className="inline-flex items-center rounded-full bg-slate-100 px-1.5 py-0.5 text-xs font-medium text-slate-700">
@@ -196,7 +196,7 @@ export function ViewEntryDialog({
               size="sm"
               onClick={handleGenerateSummary}
               disabled={isGeneratingSummary}
-              className="bg-[#009edb] hover:bg-[#0080b8] text-white gap-1 text-xs sm:text-sm px-2 py-0.5 sm:px-3 sm:py-2 h-auto"
+              className="bg-[#009edb] hover:bg-[#0080b8] text-white gap-1 text-xs sm:text-sm px-2 py-1 sm:px-3 sm:py-2 h-auto"
             >
               <Sparkles className="h-3 w-3 sm:h-4 sm:w-4" />
               <span className="hidden sm:inline">{isGeneratingSummary ? 'Generating...' : 'Create Summary'}</span>

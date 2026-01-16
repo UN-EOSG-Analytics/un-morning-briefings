@@ -86,11 +86,11 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
   const [isLoadingEntries, setIsLoadingEntries] = useState(false);
   const [includeImages, setIncludeImages] = useState(true);
 
-  // Unified function to get approved entries for a date using 8AM cutoff
+  // Unified function to get all entries for a date using 8AM cutoff (regardless of approval status)
   const getApprovedEntriesForDate = useCallback(async (dateStr: string): Promise<MorningMeetingEntry[]> => {
     const allEntries = await getSubmittedEntries();
     return allEntries.filter((entry: MorningMeetingEntry) => {
-      return isWithinCutoffRange(entry.date, dateStr) && entry.approvalStatus === 'approved';
+      return isWithinCutoffRange(entry.date, dateStr);
     });
   }, []);
 

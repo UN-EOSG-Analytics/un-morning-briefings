@@ -72,12 +72,12 @@ export function MorningMeetingList({ initialDateFilter }: { initialDateFilter?: 
   };
 
   const exportToJSON = () => {
-    const approvedEntries = entries.filter((entry) => entry.approvalStatus === 'approved');
-    if (approvedEntries.length === 0) {
-      showInfo('No Approved Entries', 'There are no approved entries to export.');
+    const entriesToExport = entries;
+    if (entriesToExport.length === 0) {
+      showInfo('No Entries', 'There are no entries to export.');
       return;
     }
-    const dataStr = JSON.stringify(approvedEntries, null, 2);
+    const dataStr = JSON.stringify(entriesToExport, null, 2);
     const dataBlob = new Blob([dataStr], { type: 'application/json' });
     const url = URL.createObjectURL(dataBlob);
     const link = document.createElement('a');

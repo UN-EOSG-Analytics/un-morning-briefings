@@ -71,6 +71,11 @@ export function MorningMeetingList({ initialDateFilter }: { initialDateFilter?: 
     }
   };
 
+  const handlePostpone = async () => {
+    // Refresh the data to reorder entries
+    await loadEntries();
+  };
+
   const exportToJSON = () => {
     const entriesToExport = entries;
     if (entriesToExport.length === 0) {
@@ -124,6 +129,7 @@ export function MorningMeetingList({ initialDateFilter }: { initialDateFilter?: 
         entries={entries}
         onDelete={handleDelete}
         onToggleApproval={handleToggleApproval}
+        onPostpone={handlePostpone}
         showApprovedColumn={true}
         emptyMessage="No entries found."
         resultLabel="entries"

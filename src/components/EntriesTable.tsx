@@ -16,6 +16,7 @@ interface EntriesTableProps {
   entries: MorningMeetingEntry[];
   onDelete: (id: string) => void;
   onToggleApproval?: (entry: MorningMeetingEntry) => void;
+  onPostpone?: () => void;
   showApprovedColumn?: boolean;
   emptyMessage?: string;
   resultLabel?: string;
@@ -26,6 +27,7 @@ export function EntriesTable({
   entries,
   onDelete,
   onToggleApproval,
+  onPostpone,
   showApprovedColumn = false,
   emptyMessage = 'No entries found.',
   resultLabel = 'entries',
@@ -116,6 +118,11 @@ export function EntriesTable({
         currentDate.setDate(currentDate.getDate() + 1);
         updatedEntry.date = currentDate.toISOString();
         updatedEntry.approvalStatus = 'pending';
+      }
+
+      // Trigger refresh to reorder entries
+      if (onPostpone) {
+        onPostpone();
       }
     } catch (error) {
       console.error('Error postponing entry:', error);
@@ -464,6 +471,7 @@ export function EntriesTable({
         entry={selectedEntry}
         onDelete={onDelete}
         onApprove={onToggleApproval}
+        onPostpone={onPostpone}
         showApproveButton={showApprovedColumn}
         allEntries={sortedEntries}
       />

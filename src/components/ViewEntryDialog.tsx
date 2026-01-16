@@ -18,6 +18,7 @@ interface ViewEntryDialogProps {
   entry: (MorningMeetingEntry & { [key: string]: any }) | null;
   onDelete?: (id: string) => void;
   onApprove?: (entry: any) => void;
+  onPostpone?: () => void;
   showApproveButton?: boolean;
   allEntries?: MorningMeetingEntry[];
 }
@@ -28,6 +29,7 @@ export function ViewEntryDialog({
   entry,
   onDelete,
   onApprove,
+  onPostpone,
   showApproveButton = false,
   allEntries = [],
 }: ViewEntryDialogProps) {
@@ -149,13 +151,18 @@ export function ViewEntryDialog({
         newDate.setDate(newDate.getDate() + 1);
         onApprove({ ...displayEntry, date: newDate.toISOString(), approvalStatus: 'pending' });
       }
+
+      // Trigger refresh to reorder entries
+      if (onPostpone) {
+        onPostpone();
+      }
     } catch (error) {
       console.error('Postpone error:', error);
       showWarning('Postpone Failed', 'Failed to postpone entry. Please try again.');
     } finally {
       setIsUpdatingApproval(false);
     }
-  }, [displayEntry, onApprove, showSuccess, showWarning]);
+  }, [displayEntry, onApprove, onPostpone, showSuccess, showWarning]);
 
   // Load saved AI summary when entry changes
   useEffect(() => {

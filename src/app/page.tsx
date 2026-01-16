@@ -31,7 +31,7 @@ export default function HomePage() {
             size="lg"
           >
             <Download className="mr-2 h-4 w-4" />
-            <span className="hidden sm:inline">Export Today&apos;s Morning Briefing</span>
+            <span className="hidden sm:inline">Export Morning Briefing</span>
             <span className="sm:hidden">Export Briefing</span>
           </Button>
         </div>

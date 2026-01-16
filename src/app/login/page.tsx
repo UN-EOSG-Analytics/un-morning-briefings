@@ -321,7 +321,7 @@ function LoginPageContent() {
 
             <div className="mt-8 text-center text-xs text-slate-500">
               <p>© {new Date().getFullYear()} United Nations</p>
-              <p className="mt-1">Political Affairs Unit - Executive Office of the Secretary-General</p>
+              <p className="mt-1">Executive Office of the Secretary-General</p>
             </div>
           </div>
         ) : (
@@ -425,7 +425,7 @@ function LoginPageContent() {
           {/* Footer */}
           <div className="mt-8 text-center text-xs text-slate-500">
             <p>© {new Date().getFullYear()} United Nations</p>
-            <p className="mt-1">Political Affairs Unit - Executive Office of the Secretary-General</p>
+            <p className="mt-1">Executive Office of the Secretary-General</p>
           </div>
         </div>
         )}

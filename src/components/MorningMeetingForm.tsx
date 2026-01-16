@@ -630,8 +630,8 @@ export function MorningMeetingForm({
                 </h2>
 
                 <div className="grid gap-3 sm:gap-4 grid-cols-4">
-                  {/* Headline - 3/4 width */}
-                  <div className="space-y-2 col-span-3">
+                  {/* Headline - Full width */}
+                  <div className="space-y-2 col-span-4">
                     <label className="text-sm font-medium text-slate-700">
                       Headline{' '}
                       <span className="text-red-500">*</span>
@@ -658,20 +658,6 @@ export function MorningMeetingForm({
                         {errors.headline}
                       </div>
                     )}
-                  </div>
-
-                  {/* Source Date - 1/4 width */}
-                  <div className="space-y-2 col-span-1">
-                    <label className="text-sm font-medium text-slate-700">
-                      Source Date <span className="text-xs text-slate-500">(optional)</span>
-                    </label>
-                    <input
-                      type="date"
-                      name="sourceDate"
-                      value={formData.sourceDate || ''}
-                      onChange={handleInputChange}
-                      className="w-full rounded border border-slate-300 bg-slate-50 px-3 py-2 text-sm outline-none transition focus:border-un-blue focus:ring-2 focus:ring-un-blue/15"
-                    />
                   </div>
                 </div>
 
@@ -768,19 +754,34 @@ export function MorningMeetingForm({
                   )}
                 </div>
 
-                {/* Source URL */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-700">
-                    Source URL <span className="text-xs text-slate-500">(optional)</span>
-                  </label>
-                  <input
-                    type="url"
-                    name="sourceUrl"
-                    value={formData.sourceUrl || ''}
-                    onChange={handleInputChange}
-                    placeholder="https://..."
-                    className="w-full rounded border border-slate-300 bg-slate-50 px-3 py-2 text-sm outline-none transition focus:border-un-blue focus:ring-2 focus:ring-un-blue/15"
-                  />
+                {/* Source URL and Date */}
+                <div className="grid gap-3 sm:gap-4 grid-cols-2">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-slate-700">
+                      Source URL <span className="text-xs text-slate-500">(optional)</span>
+                    </label>
+                    <input
+                      type="url"
+                      name="sourceUrl"
+                      value={formData.sourceUrl || ''}
+                      onChange={handleInputChange}
+                      placeholder="https://..."
+                      className="w-full rounded border border-slate-300 bg-slate-50 px-3 py-2 text-sm outline-none transition focus:border-un-blue focus:ring-2 focus:ring-un-blue/15"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-slate-700">
+                      Source Date <span className="text-xs text-slate-500">(optional)</span>
+                    </label>
+                    <input
+                      type="date"
+                      name="sourceDate"
+                      value={formData.sourceDate || ''}
+                      onChange={handleInputChange}
+                      className="w-full rounded border border-slate-300 bg-slate-50 px-3 py-2 text-sm outline-none transition focus:border-un-blue focus:ring-2 focus:ring-un-blue/15"
+                    />
+                  </div>
                 </div>
 
                 {/* PU Note */}

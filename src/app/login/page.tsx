@@ -69,8 +69,7 @@ function LoginPageContent() {
       if (result?.error) {
         setError('Invalid email or password. Please check your credentials and try again.');
       } else if (result?.ok) {
-        router.push('/');
-        router.refresh();
+        window.location.href = 'https://briefings.eosg.dev/';
       }
     } catch {
       setError('An error occurred. Please try again.');

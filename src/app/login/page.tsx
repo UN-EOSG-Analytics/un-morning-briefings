@@ -60,6 +60,7 @@ function LoginPageContent() {
     setIsLoading(true);
 
     try {
+      const callbackUrl = searchParams.get('callbackUrl') || '/';
       const result = await signIn('credentials', {
         email,
         password,
@@ -69,7 +70,7 @@ function LoginPageContent() {
       if (result?.error) {
         setError('Invalid email or password. Please check your credentials and try again.');
       } else if (result?.ok) {
-        router.push('/');
+        router.push(callbackUrl);
         router.refresh();
       }
     } catch {

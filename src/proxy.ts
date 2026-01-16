@@ -1,6 +1,6 @@
 import { withAuth } from 'next-auth/middleware';
 
-export const middleware = withAuth({
+export const proxy = withAuth({
   pages: {
     signIn: '/login',
   },

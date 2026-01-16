@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
         e.author,
         e.status,
         e.ai_summary as "aiSummary",
-        COALESCE(e.approval_status, CASE WHEN e.approved THEN 'approved' ELSE 'pending' END) as "approvalStatus",
+        e.approval_status as "approvalStatus",
         COALESCE(
           json_agg(
             json_build_object(
@@ -58,8 +58,8 @@ export async function GET(request: NextRequest) {
           ) FILTER (WHERE i.id IS NOT NULL),
           '[]'
         ) as images
-      FROM entries e
-      LEFT JOIN images i ON e.id = i.entry_id
+      FROM pu_morning_briefings.entries e
+      LEFT JOIN pu_morning_briefings.images i ON e.id = i.entry_id
     `;
 
     const params: any[] = [];
@@ -181,7 +181,7 @@ export async function POST(request: NextRequest) {
     // Insert entry
     // Store date as-is without timezone conversion
     await query(
-      `INSERT INTO entries (
+      `INSERT INTO pu_morning_briefings.entries (
         id, category, priority, region, country, headline, date, entry,
         source_url, source_date, pu_note, author, status, approval_status
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`,
@@ -207,7 +207,7 @@ export async function POST(request: NextRequest) {
     if (uploadedImages.length > 0) {
       for (const img of uploadedImages) {
         await query(
-          `INSERT INTO images (
+          `INSERT INTO pu_morning_briefings.images (
             id, entry_id, filename, mime_type, blob_url, width, height, position
           ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
           [
@@ -240,7 +240,7 @@ export async function POST(request: NextRequest) {
         e.pu_note as "puNote",
         e.author,
         e.status,
-        COALESCE(e.approval_status, CASE WHEN e.approved THEN 'approved' ELSE 'pending' END) as "approvalStatus",
+        COALESCE(e.approval_status, 'pending') as "approvalStatus",
         COALESCE(
           json_agg(
             json_build_object(
@@ -256,8 +256,8 @@ export async function POST(request: NextRequest) {
           ) FILTER (WHERE i.id IS NOT NULL),
           '[]'
         ) as images
-      FROM entries e
-      LEFT JOIN images i ON e.id = i.entry_id
+      FROM pu_morning_briefings.entries e
+      LEFT JOIN pu_morning_briefings.images i ON e.id = i.entry_id
       WHERE e.id = $1
       GROUP BY e.id`,
       [id]
@@ -297,7 +297,7 @@ export async function PATCH(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { id, approvalStatus, aiSummary } = body;
+    const { id, approvalStatus, aiSummary, action } = body;
 
     if (!id) {
       return NextResponse.json({ error: 'Entry ID is required' }, { status: 400 });
@@ -306,25 +306,34 @@ export async function PATCH(request: NextRequest) {
     const now = new Date().toISOString();
 
     // Build update query based on what fields are provided
-    if (approvalStatus && !['pending', 'approved', 'denied'].includes(approvalStatus)) {
+    if (approvalStatus && !['pending', 'discussed', 'left-out'].includes(approvalStatus)) {
       return NextResponse.json({ error: 'Invalid approval status' }, { status: 400 });
     }
 
-    let updateQuery = 'UPDATE entries SET';
+    let updateQuery = 'UPDATE pu_morning_briefings.entries SET';
     const params: any[] = [];
     let paramIndex = 1;
     const updateParts: string[] = [];
 
-    if (approvalStatus) {
+    // Handle postpone action: set status to pending and advance date by 1 day
+    if (action === 'postpone') {
       updateParts.push(`approval_status = $${paramIndex}`);
-      params.push(approvalStatus);
+      params.push('pending');
       paramIndex++;
-    }
+      
+      updateParts.push(`date = (date + INTERVAL '1 day')`);
+    } else {
+      if (approvalStatus) {
+        updateParts.push(`approval_status = $${paramIndex}`);
+        params.push(approvalStatus);
+        paramIndex++;
+      }
 
-    if (aiSummary !== undefined) {
-      updateParts.push(`ai_summary = $${paramIndex}`);
-      params.push(aiSummary ? JSON.stringify(aiSummary) : null);
-      paramIndex++;
+      if (aiSummary !== undefined) {
+        updateParts.push(`ai_summary = $${paramIndex}`);
+        params.push(aiSummary ? JSON.stringify(aiSummary) : null);
+        paramIndex++;
+      }
     }
 
     if (updateParts.length === 0) {
@@ -353,8 +362,8 @@ export async function PATCH(request: NextRequest) {
         author,
         status,
         ai_summary as "aiSummary",
-        COALESCE(approval_status, CASE WHEN approved THEN 'approved' ELSE 'pending' END) as "approvalStatus"
-      FROM entries
+        COALESCE(approval_status, 'pending') as "approvalStatus"
+      FROM pu_morning_briefings.entries
       WHERE id = $1`,
       [id]
     );

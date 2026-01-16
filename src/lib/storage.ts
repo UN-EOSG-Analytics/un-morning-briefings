@@ -172,24 +172,37 @@ export async function deleteEntry(id: string): Promise<void> {
 
 export async function updateEntry(id: string, updatedEntry: Partial<MorningMeetingEntry>): Promise<any> {
   try {
-    const { images, updatedHtml } = updatedEntry.entry 
-      ? extractImagesFromHtml(updatedEntry.entry)
-      : { images: [], updatedHtml: '' };
+    // Remove fields that shouldn't be sent to the API
+    const { id: entryId, approved, images: existingImages, ...cleanEntry } = updatedEntry as any;
+    
+    const body: any = { ...cleanEntry };
+    
+    // Only process and include entry if it's being updated
+    if (cleanEntry.entry !== undefined) {
+      const { images, updatedHtml } = extractImagesFromHtml(cleanEntry.entry);
+      body.entry = updatedHtml;
+      if (images.length > 0) {
+        body.images = images;
+      }
+    } else {
+      // If entry is not being updated, remove it from the body to avoid sending undefined
+      delete body.entry;
+    }
+
+    console.log('updateEntry - Sending body:', JSON.stringify(body, null, 2));
 
     const response = await fetch(`/api/entries/${id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        ...updatedEntry,
-        entry: updatedHtml || updatedEntry.entry,
-        images: images.length > 0 ? images : undefined,
-      }),
+      body: JSON.stringify(body),
     });
 
     if (!response.ok) {
-      throw new Error('Failed to update entry');
+      const errorData = await response.json().catch(() => ({}));
+      console.error('API Error:', response.status, errorData);
+      throw new Error(`Failed to update entry: ${response.status}`);
     }
 
     return await response.json();

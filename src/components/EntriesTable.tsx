@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { MorningMeetingEntry, PRIORITIES, REGIONS, CATEGORIES } from '@/types/morning-meeting';
 import { formatDateResponsive, formatDateDesktop, formatTime } from '@/lib/format-date';
-import { Trash2, Edit, Clock, Check, X } from 'lucide-react';
+import { Trash2, Edit, Clock, Check, X, FastForward } from 'lucide-react';
 import Link from 'next/link';
 import { ViewEntryDialog } from './ViewEntryDialog';
 import { SearchBar } from './SearchBar';
@@ -85,6 +85,40 @@ export function EntriesTable({
       }
     } catch (error) {
       console.error('Error updating status:', error);
+    } finally {
+      setUpdatingStatus(null);
+      setOpenStatusDropdown(null);
+    }
+  };
+
+  const handlePostpone = async (entryId: string) => {
+    setUpdatingStatus(entryId);
+    try {
+      const response = await fetch(`/api/entries`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id: entryId, action: 'postpone' }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('API Error:', response.status, errorData);
+        throw new Error(`Failed to postpone entry: ${response.status}`);
+      }
+
+      // Update the entry in the list
+      const updatedEntry = entries.find(e => e.id === entryId);
+      if (updatedEntry) {
+        // Advance date by 1 day
+        const currentDate = new Date(updatedEntry.date);
+        currentDate.setDate(currentDate.getDate() + 1);
+        updatedEntry.date = currentDate.toISOString();
+        updatedEntry.approvalStatus = 'pending';
+      }
+    } catch (error) {
+      console.error('Error postponing entry:', error);
     } finally {
       setUpdatingStatus(null);
       setOpenStatusDropdown(null);
@@ -324,17 +358,17 @@ export function EntriesTable({
                                 icon: Clock,
                                 label: 'Pending'
                               },
-                              approved: {
+                              discussed: {
                                 bg: 'bg-green-50',
                                 text: 'text-green-700',
                                 icon: Check,
-                                label: 'Approved'
+                                label: 'Discussed'
                               },
-                              denied: {
+                              'left-out': {
                                 bg: 'bg-red-50',
                                 text: 'text-red-700',
                                 icon: X,
-                                label: 'Denied'
+                                label: 'Left out'
                               }
                             };
                             const config = badgeConfig[status as keyof typeof badgeConfig] || badgeConfig.pending;
@@ -351,7 +385,7 @@ export function EntriesTable({
                                 </button>
                                 {openStatusDropdown === entry.id && (
                                   <div className="absolute top-full mt-1.5 left-0 z-50 bg-white border border-slate-200 rounded-lg shadow-lg py-1 w-max">
-                                    {['pending', 'approved', 'denied'].filter(s => s !== status).map((statusOption) => {
+                                    {['pending', 'discussed', 'left-out'].filter(s => s !== status).map((statusOption) => {
                                       const statusConfig = badgeConfig[statusOption as keyof typeof badgeConfig];
                                       const StatusIcon = statusConfig.icon;
                                       return (
@@ -368,6 +402,18 @@ export function EntriesTable({
                                         </button>
                                       );
                                     })}
+                                    {status !== 'discussed' && (
+                                      <button
+                                        onClick={() => handlePostpone(entry.id)}
+                                        disabled={updatingStatus === entry.id}
+                                        className="block w-full px-3 py-2 hover:bg-slate-50 transition-colors disabled:opacity-50 border-t border-slate-100"
+                                      >
+                                        <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium bg-blue-50 text-blue-700">
+                                          <FastForward className="h-3.5 w-3.5" />
+                                          Postpone
+                                        </span>
+                                      </button>
+                                    )}
                                   </div>
                                 )}
                               </>

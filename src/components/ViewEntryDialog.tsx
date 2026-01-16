@@ -8,7 +8,7 @@ import { MorningMeetingEntry, PRIORITIES } from '@/types/morning-meeting';
 import { getPriorityBadgeClass } from '@/lib/useEntriesFilter';
 import { usePopup } from '@/lib/popup-context';
 import { formatDateResponsive } from '@/lib/format-date';
-import { Edit, Trash2, Check, X, Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Edit, Trash2, Check, X, Sparkles, ChevronLeft, ChevronRight, FastForward } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useEffect, useCallback, useRef } from 'react';
 
@@ -85,7 +85,7 @@ export function ViewEntryDialog({
     }
   }, [displayEntry?.id]);
 
-  const handleApprove = useCallback(async (status: 'pending' | 'approved' | 'denied') => {
+  const handleApprove = useCallback(async (status: 'pending' | 'discussed' | 'left-out') => {
     if (!displayEntry?.id) return;
     
     setIsUpdatingApproval(true);
@@ -101,8 +101,8 @@ export function ViewEntryDialog({
       }
 
       const statusLabels = {
-        approved: 'Approved',
-        denied: 'Denied',
+        discussed: 'Discussed',
+        'left-out': 'Left out',
         pending: 'Pending'
       };
 
@@ -118,6 +118,40 @@ export function ViewEntryDialog({
     } catch (error) {
       console.error('Approval update error:', error);
       showWarning('Update Failed', 'Failed to update approval status. Please try again.');
+    } finally {
+      setIsUpdatingApproval(false);
+    }
+  }, [displayEntry, onApprove, showSuccess, showWarning]);
+
+  const handlePostpone = useCallback(async () => {
+    if (!displayEntry?.id) return;
+    
+    setIsUpdatingApproval(true);
+    try {
+      const response = await fetch('/api/entries', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: displayEntry.id, action: 'postpone' }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to postpone entry');
+      }
+
+      showSuccess(
+        'Postponed',
+        'Entry has been postponed to the next day and set to pending'
+      );
+
+      // Update the entry with new date and status
+      if (onApprove) {
+        const newDate = new Date(displayEntry.date);
+        newDate.setDate(newDate.getDate() + 1);
+        onApprove({ ...displayEntry, date: newDate.toISOString(), approvalStatus: 'pending' });
+      }
+    } catch (error) {
+      console.error('Postpone error:', error);
+      showWarning('Postpone Failed', 'Failed to postpone entry. Please try again.');
     } finally {
       setIsUpdatingApproval(false);
     }
@@ -490,36 +524,48 @@ export function ViewEntryDialog({
           {showApproveButton && onApprove && (
             <div className="flex gap-2 w-full sm:hidden mb-0">
               <Button
-                variant={displayEntry.approvalStatus === 'approved' ? 'default' : 'outline'}
-                onClick={() => handleApprove('approved')}
+                variant={displayEntry.approvalStatus === 'discussed' ? 'default' : 'outline'}
+                onClick={() => handleApprove('discussed')}
                 disabled={isUpdatingApproval}
                 className={`gap-1 flex-1 h-8 text-xs ${
-                  displayEntry.approvalStatus === 'approved'
+                  displayEntry.approvalStatus === 'discussed'
                     ? 'bg-green-600 hover:bg-green-700 text-white'
-                    : displayEntry.approvalStatus === 'denied'
+                    : displayEntry.approvalStatus === 'left-out'
                     ? 'opacity-50 text-green-600 hover:opacity-100 hover:bg-green-50 hover:text-green-700'
                     : 'text-green-600 hover:bg-green-50 hover:text-green-700'
                 }`}
               >
                 <Check className="h-3 w-3" />
-                Approve
+                Discussed
               </Button>
               
               <Button
-                variant={displayEntry.approvalStatus === 'denied' ? 'default' : 'outline'}
-                onClick={() => handleApprove('denied')}
+                variant={displayEntry.approvalStatus === 'left-out' ? 'default' : 'outline'}
+                onClick={() => handleApprove('left-out')}
                 disabled={isUpdatingApproval}
                 className={`gap-1 flex-1 h-8 text-xs ${
-                  displayEntry.approvalStatus === 'denied'
+                  displayEntry.approvalStatus === 'left-out'
                     ? 'bg-red-600 hover:bg-red-700 text-white'
-                    : displayEntry.approvalStatus === 'approved'
+                    : displayEntry.approvalStatus === 'discussed'
                     ? 'opacity-50 text-red-600 hover:opacity-100 hover:bg-red-50 hover:text-red-700'
                     : 'text-red-600 hover:bg-red-50 hover:text-red-700'
                 }`}
               >
                 <X className="h-3 w-3" />
-                Deny
+                Left out
               </Button>
+              
+              {displayEntry.approvalStatus !== 'discussed' && (
+                <Button
+                  variant="outline"
+                  onClick={() => handlePostpone()}
+                  disabled={isUpdatingApproval}
+                  className="gap-1 flex-1 h-8 text-xs text-blue-600 hover:bg-blue-50 hover:text-blue-700"
+                >
+                  <FastForward className="h-3 w-3" />
+                  Postpone
+                </Button>
+              )}
             </div>
           )}
 
@@ -605,36 +651,48 @@ export function ViewEntryDialog({
               {showApproveButton && onApprove && (
                 <>
                   <Button
-                    variant={displayEntry.approvalStatus === 'approved' ? 'default' : 'outline'}
-                    onClick={() => handleApprove('approved')}
+                    variant={displayEntry.approvalStatus === 'discussed' ? 'default' : 'outline'}
+                    onClick={() => handleApprove('discussed')}
                     disabled={isUpdatingApproval}
                     className={`gap-2 h-8 text-xs ${
-                      displayEntry.approvalStatus === 'approved'
+                      displayEntry.approvalStatus === 'discussed'
                         ? 'bg-green-600 hover:bg-green-700 text-white'
-                        : displayEntry.approvalStatus === 'denied'
+                        : displayEntry.approvalStatus === 'left-out'
                         ? 'opacity-50 text-green-600 hover:opacity-100 hover:bg-green-50 hover:text-green-700'
                         : 'text-green-600 hover:bg-green-50 hover:text-green-700'
                     }`}
                   >
                     <Check className="h-4 w-4" />
-                    Approve
+                    Discussed
                   </Button>
                   
                   <Button
-                    variant={displayEntry.approvalStatus === 'denied' ? 'default' : 'outline'}
-                    onClick={() => handleApprove('denied')}
+                    variant={displayEntry.approvalStatus === 'left-out' ? 'default' : 'outline'}
+                    onClick={() => handleApprove('left-out')}
                     disabled={isUpdatingApproval}
                     className={`gap-2 h-8 text-xs ${
-                      displayEntry.approvalStatus === 'denied'
+                      displayEntry.approvalStatus === 'left-out'
                         ? 'bg-red-600 hover:bg-red-700 text-white'
-                        : displayEntry.approvalStatus === 'approved'
+                        : displayEntry.approvalStatus === 'discussed'
                         ? 'opacity-50 text-red-600 hover:opacity-100 hover:bg-red-50 hover:text-red-700'
                         : 'text-red-600 hover:bg-red-50 hover:text-red-700'
                     }`}
                   >
                     <X className="h-4 w-4" />
-                    Deny
+                    Left out
                   </Button>
+                  
+                  {displayEntry.approvalStatus !== 'discussed' && (
+                    <Button
+                      variant="outline"
+                      onClick={() => handlePostpone()}
+                      disabled={isUpdatingApproval}
+                      className="gap-2 h-8 text-xs text-blue-600 hover:bg-blue-50 hover:text-blue-700"
+                    >
+                      <FastForward className="h-4 w-4" />
+                      Postpone
+                    </Button>
+                  )}
                 </>
               )}
 

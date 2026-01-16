@@ -1,6 +1,6 @@
 import labels from '@/lib/labels.json';
 
-export type ApprovalStatus = 'pending' | 'approved' | 'denied';
+export type ApprovalStatus = 'pending' | 'discussed' | 'left-out';
 
 // Morning Meeting Form Types
 export interface MorningMeetingEntry {
@@ -24,7 +24,6 @@ export interface MorningMeetingEntry {
   }>;
   status?: 'draft' | 'submitted';
   approvalStatus?: ApprovalStatus;
-  approved?: boolean; // For backwards compatibility
 }
 
 export interface FormFieldError {

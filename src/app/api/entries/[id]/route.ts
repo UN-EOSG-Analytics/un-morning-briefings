@@ -32,6 +32,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         e.pu_note as "puNote",
         e.author,
         e.status,
+        e.approval_status as "approvalStatus",
+        e.ai_summary as "aiSummary",
         COALESCE(
           json_agg(
             json_build_object(
@@ -47,8 +49,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
           ) FILTER (WHERE i.id IS NOT NULL),
           '[]'
         ) as images
-      FROM entries e
-      LEFT JOIN images i ON e.id = i.entry_id
+      FROM pu_morning_briefings.entries e
+      LEFT JOIN pu_morning_briefings.images i ON e.id = i.entry_id
       WHERE e.id = $1
       GROUP BY e.id`,
       [id]
@@ -93,10 +95,14 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     const body = await request.json();
     const { entry: entryContent, images, ...data } = body;
 
+    console.log('PUT /api/entries/[id] - Entry ID:', id);
+    console.log('PUT /api/entries/[id] - Body keys:', Object.keys(body));
+    console.log('PUT /api/entries/[id] - Data:', JSON.stringify(data, null, 2));
+
     // Delete existing images from blob storage and database if new ones are provided
     if (images) {
       const existingImagesResult = await query(
-        `SELECT id, blob_url FROM images WHERE entry_id = $1`,
+        `SELECT id, blob_url FROM pu_morning_briefings.images WHERE entry_id = $1`,
         [id]
       );
 
@@ -110,7 +116,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       }
 
       // Delete from database
-      await query(`DELETE FROM images WHERE entry_id = $1`, [id]);
+      await query(`DELETE FROM pu_morning_briefings.images WHERE entry_id = $1`, [id]);
     }
 
     // Upload new images to blob storage
@@ -174,7 +180,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     }
     if (data.sourceDate !== undefined) {
       updateFields.push(`source_date = $${paramCount++}`);
-      updateValues.push(data.sourceDate);
+      updateValues.push(data.sourceDate || null); // Convert empty string to null
     }
     if (data.puNote !== undefined) {
       updateFields.push(`pu_note = $${paramCount++}`);
@@ -188,12 +194,20 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       updateFields.push(`status = $${paramCount++}`);
       updateValues.push(data.status);
     }
+    if (data.approvalStatus !== undefined) {
+      updateFields.push(`approval_status = $${paramCount++}`);
+      updateValues.push(data.approvalStatus);
+    }
+    if (data.aiSummary !== undefined) {
+      updateFields.push(`ai_summary = $${paramCount++}`);
+      updateValues.push(data.aiSummary ? JSON.stringify(data.aiSummary) : null);
+    }
 
     updateValues.push(id);
 
-    if (updateFields.length > 1) {
+    if (updateFields.length > 0) {
       await query(
-        `UPDATE entries SET ${updateFields.join(', ')} WHERE id = $${paramCount}`,
+        `UPDATE pu_morning_briefings.entries SET ${updateFields.join(', ')} WHERE id = $${paramCount}`,
         updateValues
       );
     }
@@ -202,7 +216,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     if (uploadedImages.length > 0) {
       for (const img of uploadedImages) {
         await query(
-          `INSERT INTO images (
+          `INSERT INTO pu_morning_briefings.images (
             id, entry_id, filename, mime_type, blob_url, width, height, position
           ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
           [
@@ -235,6 +249,8 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         e.pu_note as "puNote",
         e.author,
         e.status,
+        e.approval_status as "approvalStatus",
+        e.ai_summary as "aiSummary",
         COALESCE(
           json_agg(
             json_build_object(
@@ -250,8 +266,8 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
           ) FILTER (WHERE i.id IS NOT NULL),
           '[]'
         ) as images
-      FROM entries e
-      LEFT JOIN images i ON e.id = i.entry_id
+      FROM pu_morning_briefings.entries e
+      LEFT JOIN pu_morning_briefings.images i ON e.id = i.entry_id
       WHERE e.id = $1
       GROUP BY e.id`,
       [id]
@@ -272,7 +288,13 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     return NextResponse.json(entry);
   } catch (error) {
     console.error('Error updating entry:', error);
-    return NextResponse.json({ error: 'Failed to update entry' }, { status: 500 });
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    return NextResponse.json({ 
+      error: 'Failed to update entry', 
+      details: errorMessage,
+      stack: error instanceof Error ? error.stack : undefined
+    }, { status: 500 });
   }
 }
 

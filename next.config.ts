@@ -6,6 +6,11 @@ const nextConfig: NextConfig = {
     images: {
         unoptimized: false
     },
+    // Add caching headers for better performance
+    onDemandEntries: {
+        maxInactiveAge: 60 * 1000, // 60 seconds
+        pagesBufferLength: 5,
+    }
 }
 
 export default nextConfig

@@ -251,7 +251,8 @@ export async function getEntryById(id: string): Promise<any> {
 export async function getDraftEntries(author: string): Promise<any[]> {
   try {
     console.log('getDraftEntries: Fetching drafts for author:', author);
-    const response = await fetch(`/api/entries?status=draft&author=${encodeURIComponent(author)}`);
+    // Use noConvert=true to skip expensive image conversion for list view
+    const response = await fetch(`/api/entries?status=draft&author=${encodeURIComponent(author)}&noConvert=true`);
     
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
@@ -279,7 +280,8 @@ export async function getDraftEntries(author: string): Promise<any[]> {
 export async function getSubmittedEntries(): Promise<any[]> {
   try {
     console.log('getSubmittedEntries: Fetching submitted entries');
-    const response = await fetch('/api/entries?status=submitted');
+    // Use noConvert=true to skip expensive image conversion for list view
+    const response = await fetch('/api/entries?status=submitted&noConvert=true');
     
     console.log('getSubmittedEntries: Response status:', response.status, response.statusText);
     console.log('getSubmittedEntries: Content-Type:', response.headers.get('content-type'));

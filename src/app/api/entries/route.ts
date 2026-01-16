@@ -23,8 +23,9 @@ export async function GET(request: NextRequest) {
     const date = searchParams.get('date');
     const status = searchParams.get('status');
     const author = searchParams.get('author');
+    const noConvert = searchParams.get('noConvert') === 'true'; // Skip image conversion for list views
 
-    console.log('GET /api/entries: Params -', { date, status, author });
+    console.log('GET /api/entries: Params -', { date, status, author, noConvert });
 
     let sql = `
       SELECT 
@@ -89,6 +90,16 @@ export async function GET(request: NextRequest) {
     console.log('GET /api/entries: Executing SQL with params:', { sql, params });
     const result = await query(sql, params);
     console.log('GET /api/entries: Query returned', result.rows.length, 'rows');
+    
+    // Skip image conversion for list views (performance optimization)
+    if (noConvert) {
+      console.log('GET /api/entries: Skipping image conversion (noConvert=true)');
+      return NextResponse.json(result.rows, { 
+        headers: {
+          'Cache-Control': 'private, max-age=5', // 5 second cache
+        }
+      });
+    }
     
     // Convert blob URLs to data URLs for private blob storage
     for (const entry of result.rows) {

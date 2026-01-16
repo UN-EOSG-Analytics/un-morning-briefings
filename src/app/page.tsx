@@ -90,7 +90,7 @@ export default function HomePage() {
                   </div>
                   <h2 className="text-xl sm:text-2xl font-semibold text-foreground mt-4">Current Briefing</h2>
                   <p className="text-sm sm:text-base text-slate-600 mt-2">
-                    View briefing entries for the Morning Meeting on {formatDateDesktop(currentBriefingDate)}.
+                    View briefing entries for the Morning Meeting on <span className="font-semibold">{formatDateDesktop(currentBriefingDate)}</span>.
                   </p>
                 </div>
                 <Button className="hidden sm:flex w-full bg-slate-700 hover:bg-slate-700/90 mt-auto" size="lg">

@@ -42,6 +42,17 @@ Regions: ${regionList}
 Content:
 ${content}
 
+FORMATTING INSTRUCTIONS FOR "entry" FIELD:
+- Use clear paragraph breaks to separate distinct ideas
+- Use **bold text** to emphasize important terms, figures, or key concepts (e.g., **5,000 people affected**)
+- Use bullet points (each on a new line starting with "- ") for lists of items, impacts, or key points
+- Use numbered lists (each on a new line starting with "1. ", "2. ", etc.) for sequential steps or recommendations
+- Use quotation blocks (lines starting with "> ") to highlight direct quotes or critical statements
+- Lead with a strong opening sentence summarizing the main issue
+- Separate major sections with blank lines
+- Keep paragraphs focused and concise (2-4 sentences max)
+- Use natural formatting that makes the content easily scannable and well-organized
+
 Return JSON:
 {
   "category": "best matching category from list",
@@ -50,7 +61,7 @@ Return JSON:
   "country": "specific country name",
   "headline": "concise headline (max 120 chars)",
   "sourceDate": "YYYY-MM-DD date when this news/briefing was published or dated, if available, otherwise null",
-  "entry": "cleaned main content with logical paragraph breaks"
+  "entry": "well-formatted content with paragraph breaks, bold text (**text**), bullet points, quotations (> text), and logical structure"
 }`;
 
   try {
@@ -87,36 +98,84 @@ Return JSON:
 
 /**
  * Convert plain text to TipTap HTML format
- * Handles paragraph breaks, multiple spaces, and basic structure
+ * Handles paragraph breaks, bullet points, numbered lists, bold text, and quotations
  */
 function plainTextToTipTapHtml(text: string): string {
   if (!text) return '<p></p>';
   
-  // Split by double newlines (paragraph breaks)
-  const paragraphs = text
-    .split(/\n\n+/)
-    .map(para => para.trim())
-    .filter(para => para.length > 0);
+  const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
   
-  // Wrap each paragraph in <p> tags and escape special HTML chars
-  const htmlParagraphs = paragraphs
-    .map(para => {
-      // Escape HTML special characters
-      const escaped = para
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
-      
-      // Replace single newlines with <br> for line breaks within paragraphs
-      const withLineBreaks = escaped.replace(/\n/g, '<br>');
-      
-      return `<p>${withLineBreaks}</p>`;
-    })
-    .join('');
+  let html = '';
+  let i = 0;
   
-  return htmlParagraphs || '<p></p>';
+  while (i < lines.length) {
+    const line = lines[i];
+    
+    // Check for quotation block
+    if (line.match(/^>\s+/)) {
+      const quoteLines = [];
+      while (i < lines.length && lines[i].match(/^>\s+/)) {
+        const content = lines[i].replace(/^>\s+/, '');
+        quoteLines.push(formatLineWithBold(content));
+        i++;
+      }
+      html += '<blockquote>' + quoteLines.map(item => `<p>${item}</p>`).join('') + '</blockquote>';
+      continue;
+    }
+    
+    // Check for bullet point list
+    if (line.match(/^[-•*]\s+/)) {
+      const listItems = [];
+      while (i < lines.length && lines[i].match(/^[-•*]\s+/)) {
+        const content = lines[i].replace(/^[-•*]\s+/, '');
+        listItems.push(formatLineWithBold(content));
+        i++;
+      }
+      html += '<ul>' + listItems.map(item => `<li><p>${item}</p></li>`).join('') + '</ul>';
+      continue;
+    }
+    
+    // Check for numbered list
+    if (line.match(/^\d+\.\s+/)) {
+      const listItems = [];
+      while (i < lines.length && lines[i].match(/^\d+\.\s+/)) {
+        const content = lines[i].replace(/^\d+\.\s+/, '');
+        listItems.push(formatLineWithBold(content));
+        i++;
+      }
+      html += '<ol>' + listItems.map(item => `<li><p>${item}</p></li>`).join('') + '</ol>';
+      continue;
+    }
+    
+    // Regular paragraph
+    const formatted = formatLineWithBold(line);
+    html += `<p>${formatted}</p>`;
+    i++;
+  }
+  
+  return html || '<p></p>';
+}
+
+/**
+ * Format line with bold text support
+ * Converts **text** to <strong>text</strong>
+ */
+function formatLineWithBold(text: string): string {
+  const escaped = escapeHtml(text);
+  // Replace **text** with <strong>text</strong>
+  return escaped.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+}
+
+/**
+ * Escape HTML special characters
+ */
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 /**

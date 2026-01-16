@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { MorningMeetingEntry, PRIORITIES, REGIONS, CATEGORIES } from '@/types/morning-meeting';
-import { formatDateResponsive, formatDateDesktop, formatTime } from '@/lib/format-date';
+import { formatDateResponsive, formatDateDesktop, formatDateWithWeekday, formatTime } from '@/lib/format-date';
 import { Trash2, Edit, Clock, Check, X, FastForward } from 'lucide-react';
 import Link from 'next/link';
 import { ViewEntryDialog } from './ViewEntryDialog';
@@ -311,7 +311,7 @@ export function EntriesTable({
                       <tr key={`sep-${entry.id}`} className="bg-slate-100">
                         <td colSpan={showApprovedColumn ? 7 : 6} className="px-4 py-2">
                           <div className="flex items-center gap-2 text-xs font-semibold text-slate-600">
-                            <span className="text-un-blue">▼ Briefing for {formatDateDesktop(currentBriefingDate)}</span>
+                            <span className="text-un-blue">▼ Briefing for {formatDateWithWeekday(currentBriefingDate)}</span>
                           </div>
                         </td>
                       </tr>

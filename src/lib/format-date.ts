@@ -28,6 +28,7 @@ function parseDateString(dateStr: string): { year: number; month: number; day: n
 }
 
 const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const WEEKDAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 /**
  * Format date responsively for desktop and mobile
@@ -57,6 +58,21 @@ export function formatDateDesktop(date: string | Date): string {
   const dateStr = typeof date === 'string' ? date : date.toISOString();
   const { year, month, day } = parseDateString(dateStr);
   return `${MONTH_NAMES[month - 1]} ${day}, ${year}`;
+}
+
+/**
+ * Format date with weekday: "Monday, Jan 14, 2026"
+ * NO timezone conversion - uses literal string values
+ */
+export function formatDateWithWeekday(date: string | Date): string {
+  const dateStr = typeof date === 'string' ? date : date.toISOString();
+  const { year, month, day } = parseDateString(dateStr);
+  
+  // Create a Date object to get the day of the week
+  const dateObj = new Date(year, month - 1, day);
+  const weekday = WEEKDAY_NAMES[dateObj.getDay()];
+  
+  return `${weekday}, ${MONTH_NAMES[month - 1]} ${day}, ${year}`;
 }
 
 /**

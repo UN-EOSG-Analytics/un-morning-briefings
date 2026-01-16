@@ -52,6 +52,7 @@ function dateToMinutes(year: number, month: number, day: number, hour: number, m
  * 
  * Logic: If current time is >= 8AM, we're working on tomorrow's briefing
  *        If current time is < 8AM, we're working on today's briefing
+ *        Weekends (Saturday/Sunday) are skipped - Friday 8AM to Monday 8AM counts for Monday
  */
 export function getCurrentBriefingDate(): string {
   const now = new Date();
@@ -59,6 +60,7 @@ export function getCurrentBriefingDate(): string {
   const month = now.getMonth() + 1;
   const day = now.getDate();
   const hour = now.getHours();
+  const dayOfWeek = now.getDay(); // 0 = Sunday, 6 = Saturday
   
   let briefingDay = day;
   let briefingMonth = month;
@@ -79,6 +81,27 @@ export function getCurrentBriefingDate(): string {
     }
   }
   
+  // Skip weekends: if the briefing date is Saturday or Sunday, move to Monday
+  const briefingDate = new Date(briefingYear, briefingMonth - 1, briefingDay);
+  const briefingDayOfWeek = briefingDate.getDay();
+  
+  if (briefingDayOfWeek === 6) { // Saturday -> Monday
+    briefingDay += 2;
+  } else if (briefingDayOfWeek === 0) { // Sunday -> Monday
+    briefingDay += 1;
+  }
+  
+  // Handle month overflow after weekend adjustment
+  const daysInMonth = new Date(briefingYear, briefingMonth, 0).getDate();
+  if (briefingDay > daysInMonth) {
+    briefingDay -= daysInMonth;
+    briefingMonth += 1;
+    if (briefingMonth > 12) {
+      briefingMonth = 1;
+      briefingYear += 1;
+    }
+  }
+  
   return `${briefingYear}-${String(briefingMonth).padStart(2, '0')}-${String(briefingDay).padStart(2, '0')}`;
 }
 
@@ -89,9 +112,11 @@ export function getCurrentBriefingDate(): string {
  * Logic:
  *   - If entry time >= 8:00 AM: belongs to next day's briefing
  *   - If entry time < 8:00 AM: belongs to same day's briefing
+ *   - Weekends (Saturday/Sunday) are skipped - entries on Friday 8AM+ go to Monday
  * 
  * Example: Entry "2026-01-15T13:30" → 13:30 >= 8:00 → briefing for Jan 16
  * Example: Entry "2026-01-15T05:00" → 05:00 < 8:00 → briefing for Jan 15
+ * Example: Friday entry after 8AM → Monday briefing
  */
 export function getBriefingDate(entryDate: string | Date): string {
   // Convert Date to string if needed
@@ -115,6 +140,27 @@ export function getBriefingDate(entryDate: string | Date): string {
         briefingMonth = 1;
         briefingYear += 1;
       }
+    }
+  }
+  
+  // Skip weekends: if the briefing date is Saturday or Sunday, move to Monday
+  const briefingDate = new Date(briefingYear, briefingMonth - 1, briefingDay);
+  const briefingDayOfWeek = briefingDate.getDay();
+  
+  if (briefingDayOfWeek === 6) { // Saturday -> Monday
+    briefingDay += 2;
+  } else if (briefingDayOfWeek === 0) { // Sunday -> Monday
+    briefingDay += 1;
+  }
+  
+  // Handle month overflow after weekend adjustment
+  const daysInMonth = new Date(briefingYear, briefingMonth, 0).getDate();
+  if (briefingDay > daysInMonth) {
+    briefingDay -= daysInMonth;
+    briefingMonth += 1;
+    if (briefingMonth > 12) {
+      briefingMonth = 1;
+      briefingYear += 1;
     }
   }
   

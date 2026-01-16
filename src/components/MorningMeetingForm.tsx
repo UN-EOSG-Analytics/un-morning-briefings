@@ -31,6 +31,7 @@ import {
   Zap,
   Type,
   Sparkles,
+  ChevronDown,
 } from 'lucide-react';
 import { usePopup } from '@/lib/popup-context';
 
@@ -135,6 +136,7 @@ export function MorningMeetingForm({
   const [showPuNote, setShowPuNote] = useState(false);
   const [draftSaved, setDraftSaved] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showMetadata, setShowMetadata] = useState(false);
   
   // Initialize available countries - show all if no region selected, or filter by region
   const [availableCountries, setAvailableCountries] = useState<string[]>(() => {
@@ -818,69 +820,86 @@ export function MorningMeetingForm({
               </section>
 
               {/* Metadata Section */}
-              <section className="space-y-4">
-                <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-700">
-                  Metadata
-                </h2>
-                <div className="grid grid-cols-3 gap-4">
-                  {/* Author */}
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-700">Author</label>
-                    <input
-                      type="text"
-                      value={formData.author || 'Current User'}
-                      readOnly
-                      className="w-full rounded border border-slate-300 bg-slate-100 px-3 py-2 text-sm text-slate-600"
-                    />
-                  </div>
+              <section className="pt-4 sm:pt-6">
+                <button
+                  type="button"
+                  onClick={() => setShowMetadata(!showMetadata)}
+                  className="flex items-center gap-2 p-2 -m-2 hover:bg-slate-50 rounded transition"
+                >
+                  <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-700">
+                    Metadata
+                  </h2>
+                  <ChevronDown
+                    className={`h-4 w-4 text-slate-600 transition-transform ${
+                      showMetadata ? 'rotate-180' : ''
+                    }`}
+                  />
+                </button>
+                
+                {showMetadata && (
+                  <div className="grid grid-cols-3 gap-4 mt-4">
+                    {/* Author */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-slate-700">Author</label>
+                      <input
+                        type="text"
+                        value={formData.author || 'Current User'}
+                        readOnly
+                        className="w-full rounded border border-slate-300 bg-slate-100 px-3 py-2 text-sm text-slate-600"
+                      />
+                    </div>
 
-                  {/* Date */}
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-700">
-                      Creation Date
-                    </label>
-                    <input
-                      type="date"
-                      name="dateOnly"
-                      value={formData.date.split('T')[0] || ''}
-                      onChange={handleInputChange}
-                      className={`w-full rounded border px-3 py-2 text-sm outline-none transition ${
-                        errors.date
-                          ? 'border-red-500 bg-red-50 focus:border-red-500 focus:ring-2 focus:ring-red-500/15'
-                          : 'border-slate-300 bg-slate-50 focus:border-un-blue focus:ring-2 focus:ring-un-blue/15'
-                      }`}
-                    />
-                    {errors.date && (
-                      <div className="flex items-center gap-1 text-xs text-red-600">
-                        <AlertCircle className="h-3.5 w-3.5" />
-                        {errors.date}
-                      </div>
-                    )}
-                  </div>
+                    {/* Date */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-slate-700">
+                        Creation Date
+                      </label>
+                      <input
+                        type="date"
+                        name="dateOnly"
+                        value={formData.date.split('T')[0] || ''}
+                        onChange={handleInputChange}
+                        className={`w-full rounded border px-3 py-2 text-sm outline-none transition ${
+                          errors.date
+                            ? 'border-red-500 bg-red-50 focus:border-red-500 focus:ring-2 focus:ring-red-500/15'
+                            : 'border-slate-300 bg-slate-50 focus:border-un-blue focus:ring-2 focus:ring-un-blue/15'
+                        }`}
+                      />
+                      {errors.date && (
+                        <div className="flex items-center gap-1 text-xs text-red-600">
+                          <AlertCircle className="h-3.5 w-3.5" />
+                          {errors.date}
+                        </div>
+                      )}
+                    </div>
 
-                  {/* Time */}
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-700">
-                      Creation Time
-                    </label>
-                    <input
-                      type="text"
-                      name="timeOnly"
-                      placeholder="HH:MM"
-                      value={(formData.date.split('T')[1] || '').slice(0, 5)}
-                      onChange={handleInputChange}
-                      className={`w-full rounded border px-3 py-2 text-sm outline-none transition ${
-                        errors.date
-                          ? 'border-red-500 bg-red-50 focus:border-red-500 focus:ring-2 focus:ring-red-500/15'
-                          : 'border-slate-300 bg-slate-50 focus:border-un-blue focus:ring-2 focus:ring-un-blue/15'
-                      }`}
-                    />
+                    {/* Time */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-slate-700">
+                        Creation Time
+                      </label>
+                      <input
+                        type="text"
+                        name="timeOnly"
+                        placeholder="HH:MM"
+                        value={(formData.date.split('T')[1] || '').slice(0, 5)}
+                        onChange={handleInputChange}
+                        className={`w-full rounded border px-3 py-2 text-sm outline-none transition ${
+                          errors.date
+                            ? 'border-red-500 bg-red-50 focus:border-red-500 focus:ring-2 focus:ring-red-500/15'
+                            : 'border-slate-300 bg-slate-50 focus:border-un-blue focus:ring-2 focus:ring-un-blue/15'
+                        }`}
+                      />
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-center gap-1 text-xs text-slate-500 mt-2">
-                  <Info className="h-3.5 w-3.5" />
-                  Author automatically populated from your account
-                </div>
+                )}
+                
+                {showMetadata && (
+                  <div className="flex items-center gap-1 text-xs text-slate-500 mt-3">
+                    <Info className="h-3.5 w-3.5" />
+                    Author automatically populated from your account
+                  </div>
+                )}
               </section>
             </form>
           </CardContent>

@@ -257,8 +257,8 @@ export function ViewEntryDialog({
         </div>
         
         {/* Badges and AI Button - Fixed */}
-        <div className="flex-shrink-0 px-3 sm:px-6 py-2 sm:py-3 border-b border-slate-200 flex gap-2 sm:gap-3 items-center bg-white">
-          <div className="flex gap-1 sm:gap-2 flex-wrap items-center">
+        <div className="flex-shrink-0 px-3 sm:px-6 py-2 sm:py-3 border-b border-slate-200 flex gap-2 sm:gap-3 items-stretch bg-white">
+          <div className="flex gap-1 sm:gap-2 flex-wrap items-center flex-1">
             {/* Date Badge */}
             <span className="inline-flex items-center rounded-full bg-slate-100 px-2 sm:px-2.5 py-1 sm:py-1.5 text-xs sm:text-sm font-medium text-slate-700">
               <span className="hidden sm:inline">
@@ -273,19 +273,33 @@ export function ViewEntryDialog({
               <span className={`h-1.5 w-1.5 rounded-full ${displayEntry.priority === 'sg-attention' ? 'bg-red-600' : 'bg-blue-600'}`} />
               {PRIORITIES.find(p => p.value === displayEntry.priority)?.label}
             </span>
+            {/* Region Badge */}
+            <span className="inline-flex items-center rounded-full bg-slate-100 px-2 sm:px-2.5 py-1 sm:py-1.5 text-xs sm:text-sm font-medium text-slate-700">
+              {displayEntry.region}
+            </span>
+            {/* Country Badge */}
+            <span className="inline-flex items-center rounded-full bg-slate-100 px-2 sm:px-2.5 py-1 sm:py-1.5 text-xs sm:text-sm font-medium text-slate-700">
+              {displayEntry.country}
+            </span>
+            {/* Category Badge */}
+            <span className="inline-flex items-center rounded-full bg-slate-100 px-2 sm:px-2.5 py-1 sm:py-1.5 text-xs sm:text-sm font-medium text-slate-700">
+              {displayEntry.category}
+            </span>
+            {/* Author Badge */}
+            <span className="inline-flex items-center rounded-full bg-slate-100 px-2 sm:px-2.5 py-1 sm:py-1.5 text-xs sm:text-sm font-medium text-slate-700">
+              {displayEntry.author || 'N/A'}
+            </span>
           </div>
-          <div className="ml-auto">
-            <Button
-              size="sm"
-              onClick={handleGenerateSummary}
-              disabled={isGeneratingSummary}
-              className={`bg-[#009edb] hover:bg-[#0080b8] text-white gap-1 text-xs sm:text-sm px-2.5 py-1.5 sm:px-3 sm:py-2 h-auto ${summary ? 'opacity-50' : ''}`}
-            >
-              <Sparkles className="h-3 w-3 sm:h-4 sm:w-4" />
-              <span className="hidden sm:inline">{isGeneratingSummary ? 'Generating...' : 'Create Summary'}</span>
-              <span className="sm:hidden">{isGeneratingSummary ? '...' : 'AI'}</span>
-            </Button>
-          </div>
+          <Button
+            size="sm"
+            onClick={handleGenerateSummary}
+            disabled={isGeneratingSummary}
+            className={`bg-[#009edb] hover:bg-[#0080b8] text-white gap-1 text-xs sm:text-sm px-2.5 sm:px-3 shrink-0 h-full flex items-center justify-center ${summary ? 'opacity-50' : ''}`}
+          >
+            <Sparkles className="h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="hidden sm:inline">{isGeneratingSummary ? 'Generating...' : 'Create Summary'}</span>
+            <span className="sm:hidden">{isGeneratingSummary ? '...' : 'AI'}</span>
+          </Button>
         </div>
         
         {/* Scrollable content */}
@@ -316,29 +330,8 @@ export function ViewEntryDialog({
             </div>
           )}
           
-          {/* Entry metadata */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-2 sm:gap-x-4 gap-y-1 mb-2 py-1.5 sm:py-4 border-b border-slate-200">
-            <div>
-              <div className="text-xs sm:text-sm font-semibold text-slate-500 uppercase tracking-wide">Region</div>
-              <div className="text-xs sm:text-base text-slate-900 line-clamp-2">{displayEntry.region}</div>
-            </div>
-
-            <div>
-              <div className="text-xs sm:text-sm font-semibold text-slate-500 uppercase tracking-wide">Country</div>
-              <div className="text-xs sm:text-base text-slate-900 line-clamp-2">{displayEntry.country}</div>
-            </div>
-
-            <div>
-              <div className="text-xs sm:text-sm font-semibold text-slate-500 uppercase tracking-wide">Category</div>
-              <div className="text-xs sm:text-base text-slate-900 line-clamp-2">{displayEntry.category}</div>
-            </div>
-
-            <div>
-              <div className="text-xs sm:text-sm font-semibold text-slate-500 uppercase tracking-wide">Author</div>
-              <div className="text-xs sm:text-base text-slate-900 line-clamp-2">{displayEntry.author || 'N/A'}</div>
-            </div>
-          </div>
-
+          {/* Entry metadata - REMOVED, now in badges */}
+          
           {/* Entry content */}
           <div className="mb-0">
             <div

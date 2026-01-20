@@ -4,6 +4,7 @@ import { Roboto } from "next/font/google";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { PopupProvider } from "@/lib/popup-context";
+import { UnsavedChangesProvider } from "@/lib/unsaved-changes-context";
 import { PopupContainer } from "@/components/Popup";
 import { AuthProvider } from "@/components/AuthProvider";
 import "./globals.css";
@@ -42,12 +43,14 @@ export default function RootLayout({
       <body className="flex flex-col min-h-screen">
         <AuthProvider>
           <PopupProvider>
-            <Navbar />
-            <div className="pt-16 flex-1">
-              {children}
-            </div>
-            <Footer />
-            <PopupContainer />
+            <UnsavedChangesProvider>
+              <Navbar />
+              <div className="pt-16 flex-1">
+                {children}
+              </div>
+              <Footer />
+              <PopupContainer />
+            </UnsavedChangesProvider>
           </PopupProvider>
         </AuthProvider>
         <GoogleAnalytics gaId="G-XYZ" />

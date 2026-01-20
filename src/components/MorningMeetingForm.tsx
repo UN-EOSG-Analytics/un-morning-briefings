@@ -35,6 +35,7 @@ import {
   ChevronDown,
 } from 'lucide-react';
 import { usePopup } from '@/lib/popup-context';
+import { useUnsavedChanges } from '@/lib/unsaved-changes-context';
 
 // Get countries list from labels.json with proper typing, sorted alphabetically
 const COUNTRIES: string[] = ((labelsData as Record<string, any>).countries || []).sort();
@@ -167,6 +168,10 @@ export function MorningMeetingForm({
   const [isAutoFilling, setIsAutoFilling] = useState(false);
   const { data: session } = useSession();
   const { warning: showWarning, success: showSuccess } = usePopup();
+  const { setHasUnsavedChanges } = useUnsavedChanges();
+
+  // Track if form has been modified
+  const [initialFormData] = useState(formData);
 
   // Autofill form with current user's information
   useEffect(() => {
@@ -200,6 +205,26 @@ export function MorningMeetingForm({
     
     return () => mediaQuery.removeEventListener('change', handleMediaChange);
   }, [hasUserToggled]);
+
+  // Track unsaved changes
+  useEffect(() => {
+    const hasChanges = JSON.stringify(formData) !== JSON.stringify(initialFormData);
+    setHasUnsavedChanges(hasChanges);
+  }, [formData, initialFormData, setHasUnsavedChanges]);
+
+  // Add beforeunload handler to warn about unsaved changes
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      const hasChanges = JSON.stringify(formData) !== JSON.stringify(initialFormData);
+      if (hasChanges) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [formData, initialFormData]);
 
   // No coordination needed - region and country are independent
 
@@ -307,6 +332,7 @@ export function MorningMeetingForm({
       setIsSubmitting(true);
       try {
         await onSubmit(formData);
+        setHasUnsavedChanges(false);
       } finally {
         setIsSubmitting(false);
       }
@@ -318,6 +344,7 @@ export function MorningMeetingForm({
       try {
         setIsSubmitting(true);
         await onSaveDraft(formData);
+        setHasUnsavedChanges(false);
         setDraftSaved(true);
         setTimeout(() => setDraftSaved(false), 3000);
       } catch (error) {
@@ -353,6 +380,7 @@ export function MorningMeetingForm({
       });
       setErrors({});
       setShowPuNote(false);
+      setHasUnsavedChanges(false);
       setDraftSaved(false);
     }
   };
@@ -364,6 +392,7 @@ export function MorningMeetingForm({
     );
     
     if (confirmed) {
+      setHasUnsavedChanges(false);
       if (onCancel) {
         onCancel();
       } else {

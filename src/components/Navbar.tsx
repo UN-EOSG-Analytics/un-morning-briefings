@@ -5,9 +5,11 @@ import Link from 'next/link';
 import { Menu, X, Home, PlusCircle, List, FileEdit, LogOut, User, Users, Settings } from 'lucide-react';
 import { useState } from 'react';
 import { signOut, useSession } from 'next-auth/react';
+import { useRouter, usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import NavButton from './NavButton';
 import { SettingsDialog } from './SettingsDialog';
+import { useUnsavedChanges } from '@/lib/unsaved-changes-context';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,6 +23,9 @@ export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const { data: session } = useSession();
+  const router = useRouter();
+  const pathname = usePathname();
+  const { confirmNavigation } = useUnsavedChanges();
 
   const userName = session?.user?.firstName && session?.user?.lastName
     ? `${session.user.firstName} ${session.user.lastName}`
@@ -29,12 +34,41 @@ export function Navbar() {
   const userTeam = session?.user?.team || 'Political Unit (EOSG)';
   const userEmail = session?.user?.email || '';
 
+  const handleMobileNavigation = async (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+    if (pathname === href) {
+      setIsOpen(false);
+      return;
+    }
+
+    e.preventDefault();
+    
+    const confirmed = await confirmNavigation();
+    if (confirmed) {
+      setIsOpen(false);
+      router.push(href);
+    }
+  };
+
+  const handleLogoClick = async (e: React.MouseEvent<HTMLAnchorElement>) => {
+    if (pathname === '/') {
+      return;
+    }
+
+    e.preventDefault();
+    
+    const confirmed = await confirmNavigation();
+    if (confirmed) {
+      router.push('/');
+    }
+  };
+
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 border-b border-slate-200 bg-white">
+    <>
+      <nav className="fixed top-0 left-0 right-0 z-50 border-b border-slate-200 bg-white">
       <div className="flex h-16 items-center justify-between px-4 sm:px-6 w-full max-w-6xl mx-auto">
         {/* Logo */}
         <div className="flex items-center gap-2">
-        <Link href="/" className="flex items-center gap-2 sm:gap-3">
+        <Link href="/" onClick={handleLogoClick} className="flex items-center gap-2 sm:gap-3">
           <Image
             src="/images/UN_Logo_Stacked_Colour_English.svg"
             alt="UN Logo"
@@ -153,58 +187,64 @@ export function Navbar() {
             </DropdownMenu>
           )}
 
+          {/* Hamburger Menu */}
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className="rounded p-2 hover:bg-slate-100"
+            className="p-2"
             aria-label="Toggle menu"
           >
-          {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </button>
+            {isOpen ? (
+              <X className="h-5 w-5 text-slate-600" />
+            ) : (
+              <Menu className="h-5 w-5 text-slate-600" />
+            )}
+          </button>
         </div>
       </div>
 
-      {/* Mobile Menu */}
-      {session && isOpen && (
-        <div className="border-t border-slate-200 bg-white md:hidden">
-          <div className="flex flex-col space-y-1 px-4 py-3">
-            <Link
-              href="/"
-              onClick={() => setIsOpen(false)}
-              className="flex items-center gap-2 rounded px-3 py-2 text-sm hover:bg-slate-50"
-            >
-              <Home className="h-4 w-4 text-slate-600" />
-              <span>Home</span>
-            </Link>
-            <Link
-              href="/list"
-              onClick={() => setIsOpen(false)}
-              className="flex items-center gap-2 rounded px-3 py-2 text-sm hover:bg-slate-50"
-            >
-              <List className="h-4 w-4 text-slate-600" />
-              <span>View Entries</span>
-            </Link>
-            <Link
-              href="/drafts"
-              onClick={() => setIsOpen(false)}
-              className="flex items-center gap-2 rounded px-3 py-2 text-sm hover:bg-slate-50"
-            >
-              <FileEdit className="h-4 w-4 text-slate-600" />
-              <span>My Drafts</span>
-            </Link>
-            <Link
-              href="/form"
-              onClick={() => setIsOpen(false)}
-              className="flex items-center gap-2 rounded bg-un-blue px-3 py-2 text-sm text-white hover:bg-un-blue/95"
-            >
-              <PlusCircle className="h-4 w-4" />
-              <span>New Entry</span>
-            </Link>
+      {/* Mobile Menu Content */}
+      {isOpen && session && (
+          <div className="absolute top-16 left-0 right-0 bg-white border-b border-slate-200 md:hidden">
+            <div className="space-y-1 p-4">
+              <Link
+                href="/"
+                onClick={(e) => handleMobileNavigation(e, '/')}
+                className="flex items-center gap-2 rounded px-3 py-2 text-sm hover:bg-slate-50"
+              >
+                <Home className="h-4 w-4 text-slate-600" />
+                <span>Home</span>
+              </Link>
+              <Link
+                href="/list"
+                onClick={(e) => handleMobileNavigation(e, '/list')}
+                className="flex items-center gap-2 rounded px-3 py-2 text-sm hover:bg-slate-50"
+              >
+                <List className="h-4 w-4 text-slate-600" />
+                <span>View Entries</span>
+              </Link>
+              <Link
+                href="/drafts"
+                onClick={(e) => handleMobileNavigation(e, '/drafts')}
+                className="flex items-center gap-2 rounded px-3 py-2 text-sm hover:bg-slate-50"
+              >
+                <FileEdit className="h-4 w-4 text-slate-600" />
+                <span>My Drafts</span>
+              </Link>
+              <Link
+                href="/form"
+                onClick={(e) => handleMobileNavigation(e, '/form')}
+                className="flex items-center gap-2 rounded bg-un-blue px-3 py-2 text-sm text-white hover:bg-un-blue/95"
+              >
+                <PlusCircle className="h-4 w-4" />
+                <span>New Entry</span>
+              </Link>
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </nav>
 
       {/* Settings Dialog */}
       <SettingsDialog open={showSettings} onOpenChange={setShowSettings} />
-    </nav>
+    </>
   );
 }

@@ -1,13 +1,13 @@
 import { createAzure } from '@ai-sdk/azure';
 import { generateText } from 'ai';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { CATEGORIES, PRIORITIES, REGIONS, COUNTRIES_BY_REGION } from '@/types/morning-meeting';
+import { CATEGORIES, PRIORITIES, REGIONS, COUNTRIES } from '@/types/morning-meeting';
 
 interface AutoFillResult {
   category: string;
   priority: 'sg-attention' | 'situational-awareness';
   region: string;
-  country: string;
+  country: string | string[];
   headline: string;
   date?: string;
   entry: string;
@@ -32,36 +32,41 @@ export async function autoFillFromContent(content: string): Promise<AutoFillResu
   const categoryList = CATEGORIES.join(', ');
   const priorityList = PRIORITIES.map(p => p.value).join(', ');
   const regionList = REGIONS.join(', ');
+  const countryList = COUNTRIES.join(', ');
   
-  const prompt = `Analyze this news/briefing content and extract structured information. Return ONLY valid JSON with no markdown formatting.
+  const prompt = `Create a JSON object to auto-fill the fields of a UN Morning Meeting briefing entry based on the provided content, which will be pasted from a news source
+
+Content: ${content}
+
+COUNTRY SELECTION (STRICT):
+- Extract ONLY countries explicitly mentioned in the content (use the name from the provided country list)
+- If ONE country is mentioned, return as a string (e.g., "France")
+- If MULTIPLE countries are mentioned and involved in the topic, return as an array (e.g., ["France", "Germany"])
+- If no specific country is mentioned, return empty string
+- Do NOT infer or assume countries based on context
+
+FORMATTING INSTRUCTIONS FOR "entry" FIELD:
+- Preserve all facts and statements exactly as presented in content
+- Use clear paragraph breaks to separate distinct ideas from the original text
+- Use **bold text** to emphasize terms/figures/concepts
+- Use bullet points for items/impacts/key points -only if there are several, do not overuse bullet points
+- Use numbered lists only for sequential information
+- Use quotation blocks (lines starting with "> ") for direct quotes
 
 Categories: ${categoryList}
 Priorities: ${priorityList}
 Regions: ${regionList}
+Countries: ${countryList}
 
-Content:
-${content}
-
-FORMATTING INSTRUCTIONS FOR "entry" FIELD:
-- Use clear paragraph breaks to separate distinct ideas
-- Use **bold text** to emphasize important terms, figures, or key concepts (e.g., **5,000 people affected**)
-- Use bullet points (each on a new line starting with "- ") for lists of items, impacts, or key points
-- Use numbered lists (each on a new line starting with "1. ", "2. ", etc.) for sequential steps or recommendations
-- Use quotation blocks (lines starting with "> ") to highlight direct quotes or critical statements
-- Lead with a strong opening sentence summarizing the main issue
-- Separate major sections with blank lines
-- Keep paragraphs focused and concise (2-4 sentences max)
-- Use natural formatting that makes the content easily scannable and well-organized
-
-Return JSON:
+Now, return the JSON:
 {
-  "category": "best matching category from list",
-  "priority": "sg-attention or situational-awareness",
-  "region": "best matching region from list",
-  "country": "specific country name",
-  "headline": "concise headline (max 120 chars)",
-  "sourceDate": "YYYY-MM-DD date when this news/briefing was published or dated, if available, otherwise null",
-  "entry": "well-formatted content with paragraph breaks, bold text (**text**), bullet points, quotations (> text), and logical structure"
+  "category": "best matching category from list - ONLY if clearly supported by content",
+  "priority": "sg-attention or situational-awareness - ONLY if explicitly indicated in content",
+  "region": "best matching region from list - ONLY if content explicitly relates to this region",
+  "country": "best matching countries from list, or left empty if no countries involved",
+  "headline": "concise headline (max 300 chars) - derived directly from content, not invented",
+  "sourceDate": "YYYY-MM-DD if explicitly stated in content, otherwise null",
+  "entry": "reorganized content with formatting as defined above"
 }`;
 
   try {

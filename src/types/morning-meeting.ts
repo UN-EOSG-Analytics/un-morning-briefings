@@ -33,4 +33,4 @@ export interface FormFieldError {
 export const CATEGORIES = labels.categories;
 export const PRIORITIES = labels.priorities;
 export const REGIONS = labels.regions;
-export const COUNTRIES_BY_REGION = labels.countriesByRegion as Record<string, string[]>;
+export const COUNTRIES = labels.countries;

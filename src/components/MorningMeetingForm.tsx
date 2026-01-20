@@ -403,13 +403,23 @@ export function MorningMeetingForm({
 
       const result = await response.json();
 
+      // Normalize country to always be an array for the MultiSelectField
+      let normalizedCountry: string[] = [];
+      if (result.country) {
+        if (Array.isArray(result.country)) {
+          normalizedCountry = result.country;
+        } else if (typeof result.country === 'string') {
+          normalizedCountry = [result.country];
+        }
+      }
+
       // Update form with AI results (countries are now independent of region)
       setFormData((prev) => ({
         ...prev,
         category: result.category || prev.category,
         priority: result.priority || prev.priority,
         region: result.region || prev.region,
-        country: result.country || prev.country,
+        country: normalizedCountry.length > 0 ? normalizedCountry : prev.country,
         headline: result.headline || prev.headline,
         date: result.date || prev.date,
         entry: result.entry || prev.entry,

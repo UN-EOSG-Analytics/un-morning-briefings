@@ -1,12 +1,12 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useState, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { getSubmittedEntries } from '@/lib/storage';
 import { isWithinCutoffRange } from '@/lib/useEntriesFilter';
 import { Button } from '@/components/ui/button';
-import { FileDown } from 'lucide-react';
+import { FileDown, X } from 'lucide-react';
 import { Document, Paragraph, TextRun, HeadingLevel, AlignmentType, Packer, Table, TableRow, TableCell, BorderStyle, ImageRun, Header } from 'docx';
 import { saveAs } from 'file-saver';
 import { parseHtmlContent } from '@/lib/html-to-docx';
@@ -465,6 +465,8 @@ function BriefingContent() {
   const [entries, setEntries] = useState<MorningMeetingEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeSection, setActiveSection] = useState<string>('');
+  const [fullScreenImage, setFullScreenImage] = useState<string | null>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const loadEntries = async () => {
@@ -558,6 +560,28 @@ function BriefingContent() {
     return () => observer.disconnect();
   }, [sortedRegions]);
 
+  // Add click handlers to images for full screen view
+  useEffect(() => {
+    const handleImageClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'IMG') {
+        const img = target as HTMLImageElement;
+        setFullScreenImage(img.src);
+      }
+    };
+
+    const contentElement = contentRef.current;
+    if (contentElement) {
+      contentElement.addEventListener('click', handleImageClick);
+    }
+
+    return () => {
+      if (contentElement) {
+        contentElement.removeEventListener('click', handleImageClick);
+      }
+    };
+  }, [entries]);
+
   const scrollToSection = (regionId: string) => {
     const element = document.getElementById(regionId);
     if (element) {
@@ -583,6 +607,28 @@ function BriefingContent() {
 
   return (
     <div className="min-h-screen bg-white print:bg-white">
+      {/* Full Screen Image Lightbox */}
+      {fullScreenImage && (
+        <div 
+          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4 print:hidden"
+          onClick={() => setFullScreenImage(null)}
+        >
+          <button
+            onClick={() => setFullScreenImage(null)}
+            className="absolute top-4 right-4 text-white hover:text-slate-300 transition-colors"
+            aria-label="Close full screen image"
+          >
+            <X className="h-8 w-8" />
+          </button>
+          <img 
+            src={fullScreenImage} 
+            alt="Full screen view" 
+            className="max-w-full max-h-full object-contain"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
+
       {/* Export Button - Hidden when printing */}
       <div className="fixed top-4 right-4 z-50 print:hidden">
         <Button 
@@ -637,7 +683,7 @@ function BriefingContent() {
       </div>
 
       {/* Document Container */}
-      <div className="mx-auto max-w-5xl px-8 sm:px-12 py-12 sm:py-16">
+      <div ref={contentRef} className="mx-auto max-w-5xl px-8 sm:px-12 py-12 sm:py-16">
         {/* Header */}
         <div className="mb-8 sm:mb-10 flex flex-col sm:flex-row items-start sm:items-start justify-between gap-4 sm:gap-0 pb-6 sm:pb-8">
           <img src="/images/UN_Logo_Black.png" alt="UN Logo" className="h-8 sm:h-10" />
@@ -662,7 +708,7 @@ function BriefingContent() {
             {sortedRegions.map((region) => (
               <div key={region} id={`region-${region}`} className="space-y-6 scroll-mt-24">
                 {/* Region Header */}
-                <h2 className="text-2xl font-bold text-un-blue tracking-tight">
+                <h2 className="sticky top-0 z-30 bg-white py-3 text-2xl font-bold text-un-blue tracking-tight border-b-2 border-un-blue print:static print:border-none">
                   {region}
                 </h2>
 
@@ -677,7 +723,7 @@ function BriefingContent() {
                     <div key={country} className="space-y-5">
                       {/* Country Header */}
                       {country !== '' && (
-                        <h3 className="text-xl font-bold text-slate-900 tracking-tight">
+                        <h3 className="sticky top-16 z-20 bg-white py-2.5 text-xl font-bold text-slate-900 tracking-tight border-b border-slate-300 print:static print:border-none">
                           {country}
                         </h3>
                       )}
@@ -687,7 +733,7 @@ function BriefingContent() {
                         {entriesByRegionAndCountry[region][country].map((entry, index) => (
                           <div key={entry.id} className="space-y-2.5">
                             {/* Headline */}
-                            <h4 className="text-lg font-bold text-slate-900 leading-snug">
+                            <h4 className="sticky top-28 z-10 bg-white py-2 text-lg font-bold text-slate-900 leading-snug border-b border-slate-200 print:static print:border-none">
                               {entry.headline}
                             </h4>
 
@@ -701,7 +747,7 @@ function BriefingContent() {
                             {/* Content */}
                             {entry.entry && (
                               <div 
-                                className="text-base text-slate-900 leading-relaxed [&>p]:mb-3 [&>ul]:mb-3 [&>ul]:ml-6 [&>ul>li]:mb-1.5 [&>blockquote]:border-l-4 [&>blockquote]:border-slate-300 [&>blockquote]:pl-4 [&>blockquote]:italic [&>blockquote]:my-3 [&_strong]:font-semibold"
+                                className="text-base text-slate-900 leading-relaxed [&>p]:mb-3 [&>ul]:mb-3 [&>ul]:ml-6 [&>ul>li]:mb-1.5 [&>blockquote]:border-l-4 [&>blockquote]:border-slate-300 [&>blockquote]:pl-4 [&>blockquote]:italic [&>blockquote]:my-3 [&_strong]:font-semibold [&_img]:cursor-pointer [&_img]:hover:opacity-80 [&_img]:transition-opacity"
                                 dangerouslySetInnerHTML={{ __html: entry.entry }}
                               />
                             )}

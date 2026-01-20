@@ -40,12 +40,18 @@ export function Navbar() {
       return;
     }
 
-    e.preventDefault();
-    
-    const confirmed = await confirmNavigation();
-    if (confirmed) {
+    // Only check for unsaved changes when leaving the form page
+    if (pathname === '/form') {
+      e.preventDefault();
+      
+      const confirmed = await confirmNavigation();
+      if (confirmed) {
+        setIsOpen(false);
+        router.push(href);
+      }
+    } else {
+      // For non-form pages, navigate normally
       setIsOpen(false);
-      router.push(href);
     }
   };
 
@@ -54,12 +60,16 @@ export function Navbar() {
       return;
     }
 
-    e.preventDefault();
-    
-    const confirmed = await confirmNavigation();
-    if (confirmed) {
-      router.push('/');
+    // Only check for unsaved changes when leaving the form page
+    if (pathname === '/form') {
+      e.preventDefault();
+      
+      const confirmed = await confirmNavigation();
+      if (confirmed) {
+        router.push('/');
+      }
     }
+    // For non-form pages, navigate normally (default Link behavior)
   };
 
   return (

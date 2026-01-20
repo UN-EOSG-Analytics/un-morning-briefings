@@ -23,14 +23,22 @@ export default function NavButton({ href, children, className = '', onClick }: N
       return;
     }
 
-    e.preventDefault();
-    
-    const confirmed = await confirmNavigation();
-    if (confirmed) {
+    // Only check for unsaved changes when leaving the form page
+    if (pathname === '/form') {
+      e.preventDefault();
+      
+      const confirmed = await confirmNavigation();
+      if (confirmed) {
+        if (onClick) {
+          onClick();
+        }
+        router.push(href);
+      }
+    } else {
+      // For non-form pages, navigate normally
       if (onClick) {
         onClick();
       }
-      router.push(href);
     }
   };
 

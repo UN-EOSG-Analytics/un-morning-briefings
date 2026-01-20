@@ -269,14 +269,24 @@ const buildDocumentChildren = (
     if (!acc[entry.region]) {
       acc[entry.region] = {};
     }
-    // Handle both single country (string) and multiple countries (array)
-    const countries = Array.isArray(entry.country) ? entry.country : [entry.country];
-    countries.forEach(country => {
-      if (!acc[entry.region][country]) {
-        acc[entry.region][country] = [];
+    
+    // Handle entries without countries
+    if (!entry.country || entry.country === '' || (Array.isArray(entry.country) && entry.country.length === 0)) {
+      // Store entries without countries under empty string key
+      if (!acc[entry.region]['']) {
+        acc[entry.region][''] = [];
       }
-      acc[entry.region][country].push(entry);
-    });
+      acc[entry.region][''].push(entry);
+    } else {
+      // Handle both single country (string) and multiple countries (array)
+      const countries = Array.isArray(entry.country) ? entry.country : [entry.country];
+      countries.forEach(country => {
+        if (!acc[entry.region][country]) {
+          acc[entry.region][country] = [];
+        }
+        acc[entry.region][country].push(entry);
+      });
+    }
     return acc;
   }, {} as Record<string, Record<string, MorningMeetingEntry[]>>);
 
@@ -336,25 +346,39 @@ const buildDocumentChildren = (
       })
     );
 
-    // Get countries for this region and sort them
-    const countries = Object.keys(entriesByRegionAndCountry[region]).sort();
+    // Get countries for this region and sort them (put empty country last)
+    const countries = Object.keys(entriesByRegionAndCountry[region]).sort((a, b) => {
+      if (a === '') return 1;
+      if (b === '') return -1;
+      return a.localeCompare(b);
+    });
 
     // Add entries grouped by country
     countries.forEach((country) => {
-      // Country header
-      children.push(
-        new Paragraph({
-          children: [
-            new TextRun({
-              text: country,
-              bold: true,
-              size: 24,
-              font: 'Roboto',
-            }),
-          ],
-          spacing: { before: 300, after: 200 },
-        })
-      );
+      // Add country header only if country is not empty
+      if (country !== '') {
+        children.push(
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: country,
+                bold: true,
+                size: 24,
+                font: 'Roboto',
+              }),
+            ],
+            spacing: { before: 300, after: 200 },
+          })
+        );
+      } else {
+        // Add spacing before entries without country
+        children.push(
+          new Paragraph({
+            spacing: { before: 200, after: 100 },
+            children: [new TextRun('')],
+          })
+        );
+      }
 
       // Add all entries for this country
       entriesByRegionAndCountry[region][country].forEach((entry: MorningMeetingEntry, index: number) => {

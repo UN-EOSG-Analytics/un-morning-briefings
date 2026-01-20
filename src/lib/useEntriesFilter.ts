@@ -246,8 +246,8 @@ export function useEntriesFilter(entries: any[], initialDateFilter?: string) {
     return entries.filter((entry) => {
       const countryMatch = 
         Array.isArray(entry.country) 
-          ? entry.country.some((c: string) => c?.toLowerCase().includes(searchTerm.toLowerCase()))
-          : entry.country?.toLowerCase().includes(searchTerm.toLowerCase());
+          ? entry.country.some((c: string) => c && c.toLowerCase().includes(searchTerm.toLowerCase()))
+          : entry.country && entry.country.toLowerCase().includes(searchTerm.toLowerCase());
 
       const matchesSearch =
         searchTerm === '' ||

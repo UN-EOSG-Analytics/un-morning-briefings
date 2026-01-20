@@ -271,11 +271,6 @@ export function MorningMeetingForm({
       newErrors.region = 'Region is required';
     }
 
-    const countries = Array.isArray(formData.country) ? formData.country : (formData.country ? [formData.country] : []);
-    if (countries.length === 0) {
-      newErrors.country = 'At least one country is required';
-    }
-
     if (!formData.headline.trim()) {
       newErrors.headline = 'Headline is required';
     }
@@ -451,9 +446,9 @@ export function MorningMeetingForm({
                   <FileText className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
                 </div>
                 <div className="min-w-0">
-                  <CardTitle className="text-lg sm:text-2xl">Morning Briefing Entry Form</CardTitle>
+                  <CardTitle className="text-lg sm:text-2xl">Morning Meeting Form</CardTitle>
                   <CardDescription className="text-xs sm:text-sm">
-                    Political Unit (EOSG) • Data Management System
+                    Submit a new entry to be used in the next Morning Meeting Update
                   </CardDescription>
                 </div>
               </div>
@@ -530,12 +525,12 @@ export function MorningMeetingForm({
                   {/* Country */}
                   <MultiSelectField
                     label="Country/Countries"
-                    placeholder="Select countries..."
+                    placeholder="Select countries (optional)..."
                     value={Array.isArray(formData.country) ? formData.country : (formData.country ? [formData.country] : [])}
                     onValueChange={handleCountryChange}
                     options={availableCountries.map((country) => ({ value: country, label: country }))}
                     error={errors.country}
-                    required={true}
+                    required={false}
                     searchable={true}
                   />
                 </div>

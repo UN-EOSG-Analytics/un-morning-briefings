@@ -63,7 +63,7 @@ export default function DraftsPage() {
             </div>
             <div>
               <h1 className="text-2xl font-semibold text-foreground">My Drafts</h1>
-              <p className="text-sm text-slate-600">View and manage your draft entries</p>
+              <p className="text-sm text-slate-600">View and manage your unsubmitted draft entries</p>
             </div>
           </div>
         </div>

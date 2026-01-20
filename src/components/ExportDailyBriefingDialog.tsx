@@ -269,10 +269,14 @@ const buildDocumentChildren = (
     if (!acc[entry.region]) {
       acc[entry.region] = {};
     }
-    if (!acc[entry.region][entry.country]) {
-      acc[entry.region][entry.country] = [];
-    }
-    acc[entry.region][entry.country].push(entry);
+    // Handle both single country (string) and multiple countries (array)
+    const countries = Array.isArray(entry.country) ? entry.country : [entry.country];
+    countries.forEach(country => {
+      if (!acc[entry.region][country]) {
+        acc[entry.region][country] = [];
+      }
+      acc[entry.region][country].push(entry);
+    });
     return acc;
   }, {} as Record<string, Record<string, MorningMeetingEntry[]>>);
 

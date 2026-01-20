@@ -4,6 +4,31 @@ import { blobStorage } from '@/lib/blob-storage';
 import { convertImageReferencesServerSide } from '@/lib/image-conversion';
 import { checkAuth } from '@/lib/auth-helper';
 
+// Helper function to serialize country field for database storage
+function serializeCountry(country: string | string[]): string {
+  if (Array.isArray(country)) {
+    return JSON.stringify(country);
+  }
+  return country;
+}
+
+// Helper function to parse country field from database
+function parseCountry(country: string): string | string[] {
+  if (!country) return country;
+  // Try to parse as JSON array
+  if (country.startsWith('[')) {
+    try {
+      const parsed = JSON.parse(country);
+      if (Array.isArray(parsed)) {
+        return parsed;
+      }
+    } catch (e) {
+      // Not valid JSON, return as is
+    }
+  }
+  return country;
+}
+
 /**
  * GET /api/entries/[id]
  * Fetch a single entry by ID with image conversion
@@ -160,7 +185,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     }
     if (data.country !== undefined) {
       updateFields.push(`country = $${paramCount++}`);
-      updateValues.push(data.country);
+      updateValues.push(serializeCountry(data.country));
     }
     if (data.headline !== undefined) {
       updateFields.push(`headline = $${paramCount++}`);
@@ -273,7 +298,10 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       [id]
     );
 
-    const entry = result.rows[0];
+    const entry = {
+      ...result.rows[0],
+      country: parseCountry(result.rows[0].country)
+    };
     
     // Convert blob URLs to data URLs for private blob storage
     if (entry.images && entry.images.length > 0) {

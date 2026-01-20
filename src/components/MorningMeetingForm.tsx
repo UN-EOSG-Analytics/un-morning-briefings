@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { SelectField } from '@/components/SelectField';
+import { MultiSelectField } from '@/components/MultiSelectField';
 import { RichTextEditor } from '@/components/RichTextEditor';
 import {
   MorningMeetingEntry,
@@ -16,8 +17,8 @@ import {
   CATEGORIES,
   PRIORITIES,
   REGIONS,
-  COUNTRIES_BY_REGION,
 } from '@/types/morning-meeting';
+import labelsData from '@/lib/labels.json';
 import {
   FileText,
   AlertCircle,
@@ -34,6 +35,9 @@ import {
   ChevronDown,
 } from 'lucide-react';
 import { usePopup } from '@/lib/popup-context';
+
+// Get countries list from labels.json with proper typing, sorted alphabetically
+const COUNTRIES: string[] = ((labelsData as Record<string, any>).countries || []).sort();
 
 interface MorningMeetingFormProps {
   onSubmit?: (data: MorningMeetingEntry) => Promise<void>;
@@ -118,11 +122,26 @@ export function MorningMeetingForm({
     return '';
   };
 
+  // Helper function to parse country field which might be JSON string or array
+  const parseCountryField = (country: any): string[] => {
+    if (!country) return [];
+    if (Array.isArray(country)) return country;
+    if (typeof country === 'string' && country.startsWith('[')) {
+      try {
+        const parsed = JSON.parse(country);
+        return Array.isArray(parsed) ? parsed : [country];
+      } catch {
+        return [country];
+      }
+    }
+    return [country];
+  };
+
   const [formData, setFormData] = useState<MorningMeetingEntry>({
     category: initialData?.category || '',
     priority: initialData?.priority || '',
     region: initialData?.region || '',
-    country: initialData?.country || '',
+    country: parseCountryField(initialData?.country),
     headline: initialData?.headline || '',
     date: formatDateForInput(initialData?.date),
     entry: cleanEntry(initialData?.entry || ''),
@@ -138,23 +157,8 @@ export function MorningMeetingForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showMetadata, setShowMetadata] = useState(false);
   
-  // Initialize available countries - show all if no region selected, or filter by region
-  const [availableCountries, setAvailableCountries] = useState<string[]>(() => {
-    const initialRegion = initialData?.region;
-    if (initialRegion && COUNTRIES_BY_REGION[initialRegion]) {
-      const countries = COUNTRIES_BY_REGION[initialRegion];
-      if (initialData?.country && !countries.includes(initialData.country)) {
-        return [initialData.country, ...countries];
-      }
-      return countries;
-    }
-    // If no initial region, show all countries sorted
-    const allCountries = new Set<string>();
-    Object.values(COUNTRIES_BY_REGION).forEach((countries) => {
-      countries.forEach((country) => allCountries.add(country));
-    });
-    return Array.from(allCountries).sort();
-  });
+  // Use full countries list from labels.json - no filtering by region
+  const [availableCountries] = useState<string[]>(COUNTRIES);
   
   const [useRichText, setUseRichText] = useState<boolean | null>(null);
   const [hasUserToggled, setHasUserToggled] = useState(false);
@@ -197,61 +201,7 @@ export function MorningMeetingForm({
     return () => mediaQuery.removeEventListener('change', handleMediaChange);
   }, [hasUserToggled]);
 
-  // Initialize available countries from initialData region on mount
-  useEffect(() => {
-    if (initialData?.region && COUNTRIES_BY_REGION[initialData.region]) {
-      const countries = COUNTRIES_BY_REGION[initialData.region];
-      // Ensure existing country is included even if not in the region list
-      if (initialData?.country && !countries.includes(initialData.country)) {
-        setAvailableCountries([initialData.country, ...countries]);
-      } else {
-        setAvailableCountries(countries);
-      }
-    }
-  }, [initialData?.region, initialData?.country]);
-
-  // Update available countries when region changes
-  useEffect(() => {
-    if (formData.region && COUNTRIES_BY_REGION[formData.region]) {
-      // If region is selected, show only countries from that region
-      const countries = COUNTRIES_BY_REGION[formData.region];
-      // Ensure existing country is included
-      if (formData.country && !countries.includes(formData.country)) {
-        setAvailableCountries([formData.country, ...countries]);
-      } else {
-        setAvailableCountries(countries);
-      }
-    } else {
-      // If no region selected, show all countries
-      const allCountries = new Set<string>();
-      Object.values(COUNTRIES_BY_REGION).forEach((countries) => {
-        countries.forEach((country) => allCountries.add(country));
-      });
-      const sortedCountries = Array.from(allCountries).sort();
-      setAvailableCountries(sortedCountries);
-    }
-  }, [formData.region, formData.country]);
-
-  // Update country if it's not available in the new region
-  useEffect(() => {
-    if (
-      formData.country &&
-      availableCountries.length > 0 &&
-      !availableCountries.includes(formData.country)
-    ) {
-      setFormData((prev) => ({ ...prev, country: '' }));
-    }
-  }, [availableCountries, formData.country]);
-
-  // Helper function to find region that contains a country
-  const findRegionForCountry = (country: string): string | null => {
-    for (const [region, countries] of Object.entries(COUNTRIES_BY_REGION)) {
-      if (countries.includes(country)) {
-        return region;
-      }
-    }
-    return null;
-  };
+  // No coordination needed - region and country are independent
 
   const handleInputChange = useCallback(
     (
@@ -285,41 +235,6 @@ export function MorningMeetingForm({
 
   const handleSelectChange = useCallback(
     (name: string, value: string) => {
-      // If selecting a country without a region, auto-set the region
-      if (name === 'country' && value && !formData.region) {
-        const region = findRegionForCountry(value);
-        if (region) {
-          setFormData((prev) => ({ ...prev, [name]: value, region }));
-          // Clear errors for both fields
-          if (errors.country || errors.region) {
-            setErrors((prev) => {
-              const newErrors = { ...prev };
-              delete newErrors.country;
-              delete newErrors.region;
-              return newErrors;
-            });
-          }
-          return;
-        }
-      }
-
-      // If changing region, reset country if it's not in the new region
-      if (name === 'region' && value && formData.country) {
-        const regionCountries = COUNTRIES_BY_REGION[value];
-        if (regionCountries && !regionCountries.includes(formData.country)) {
-          setFormData((prev) => ({ ...prev, [name]: value, country: '' }));
-          if (errors.country || errors.region) {
-            setErrors((prev) => {
-              const newErrors = { ...prev };
-              delete newErrors.country;
-              delete newErrors.region;
-              return newErrors;
-            });
-          }
-          return;
-        }
-      }
-
       setFormData((prev) => ({ ...prev, [name]: value }));
 
       // Clear error for this field
@@ -331,7 +246,22 @@ export function MorningMeetingForm({
         });
       }
     },
-    [errors, formData.region, formData.country]
+    [errors]
+  );
+
+  const handleCountryChange = useCallback(
+    (value: string[]) => {
+      setFormData((prev) => ({ ...prev, country: value }));
+
+      if (errors.country) {
+        setErrors((prev) => {
+          const newErrors = { ...prev };
+          delete newErrors.country;
+          return newErrors;
+        });
+      }
+    },
+    [errors]
   );
 
   const validateForm = useCallback((): boolean => {
@@ -341,8 +271,9 @@ export function MorningMeetingForm({
       newErrors.region = 'Region is required';
     }
 
-    if (!formData.country) {
-      newErrors.country = 'Country is required';
+    const countries = Array.isArray(formData.country) ? formData.country : (formData.country ? [formData.country] : []);
+    if (countries.length === 0) {
+      newErrors.country = 'At least one country is required';
     }
 
     if (!formData.headline.trim()) {
@@ -416,7 +347,7 @@ export function MorningMeetingForm({
         category: '',
         priority: 'situational-awareness',
         region: '',
-        country: '',
+        country: [],
         headline: '',
         date: new Date().toISOString().split('T')[0],
         entry: '',
@@ -477,22 +408,7 @@ export function MorningMeetingForm({
 
       const result = await response.json();
 
-      // Update available countries BEFORE setting form data
-      // This ensures the country dropdown is populated when we set the country value
-      if (result.region && COUNTRIES_BY_REGION[result.region]) {
-        const regionCountries = COUNTRIES_BY_REGION[result.region];
-        // If country is not in the region list, add it anyway (like existing logic does)
-        if (result.country && !regionCountries.includes(result.country)) {
-          setAvailableCountries([result.country, ...regionCountries]);
-        } else {
-          setAvailableCountries(regionCountries);
-        }
-      } else if (result.country) {
-        // If region not found but country exists, still show the country
-        setAvailableCountries([result.country]);
-      }
-
-      // Update form with AI results
+      // Update form with AI results (countries are now independent of region)
       setFormData((prev) => ({
         ...prev,
         category: result.category || prev.category,
@@ -612,11 +528,11 @@ export function MorningMeetingForm({
                   />
 
                   {/* Country */}
-                  <SelectField
-                    label="Country"
-                    placeholder="Select country..."
-                    value={formData.country}
-                    onValueChange={(value) => handleSelectChange('country', value)}
+                  <MultiSelectField
+                    label="Country/Countries"
+                    placeholder="Select countries..."
+                    value={Array.isArray(formData.country) ? formData.country : (formData.country ? [formData.country] : [])}
+                    onValueChange={handleCountryChange}
                     options={availableCountries.map((country) => ({ value: country, label: country }))}
                     error={errors.country}
                     required={true}

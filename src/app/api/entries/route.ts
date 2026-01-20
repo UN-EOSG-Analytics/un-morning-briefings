@@ -6,6 +6,31 @@ import { blobStorage } from '@/lib/blob-storage';
 import { convertImageReferencesServerSide } from '@/lib/image-conversion';
 import { checkAuth } from '@/lib/auth-helper';
 
+// Helper function to serialize country field for database storage
+function serializeCountry(country: string | string[]): string {
+  if (Array.isArray(country)) {
+    return JSON.stringify(country);
+  }
+  return country;
+}
+
+// Helper function to parse country field from database
+function parseCountry(country: string): string | string[] {
+  if (!country) return country;
+  // Try to parse as JSON array
+  if (country.startsWith('[')) {
+    try {
+      const parsed = JSON.parse(country);
+      if (Array.isArray(parsed)) {
+        return parsed;
+      }
+    } catch (e) {
+      // Not valid JSON, return as is
+    }
+  }
+  return country;
+}
+
 /**
  * GET /api/entries
  * Fetch entries with optional filters for date, status, and author
@@ -91,10 +116,16 @@ export async function GET(request: NextRequest) {
     const result = await query(sql, params);
     console.log('GET /api/entries: Query returned', result.rows.length, 'rows');
     
+    // Parse country field for all entries
+    const entries = result.rows.map(row => ({
+      ...row,
+      country: parseCountry(row.country)
+    }));
+    
     // Skip image conversion for list views (performance optimization)
     if (noConvert) {
       console.log('GET /api/entries: Skipping image conversion (noConvert=true)');
-      return NextResponse.json(result.rows, { 
+      return NextResponse.json(entries, { 
         headers: {
           'Cache-Control': 'private, max-age=5', // 5 second cache
         }
@@ -102,7 +133,7 @@ export async function GET(request: NextRequest) {
     }
     
     // Convert blob URLs to data URLs for private blob storage
-    for (const entry of result.rows) {
+    for (const entry of entries) {
       if (entry.images && entry.images.length > 0) {
         console.log(`GET /api/entries: Processing ${entry.images.length} images for entry ${entry.id}`);
         entry.entry = await convertImageReferencesServerSide(
@@ -114,7 +145,7 @@ export async function GET(request: NextRequest) {
       }
     }
     
-    return NextResponse.json(result.rows);
+    return NextResponse.json(entries);
   } catch (error) {
     console.error('Error fetching entries:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -201,7 +232,7 @@ export async function POST(request: NextRequest) {
         data.category,
         data.priority,
         data.region,
-        data.country,
+        serializeCountry(data.country),
         data.headline,
         data.date, // Store as string, no Date conversion
         entryContent,
@@ -274,7 +305,10 @@ export async function POST(request: NextRequest) {
       [id]
     );
 
-    const createdEntry = result.rows[0];
+    const createdEntry = {
+      ...result.rows[0],
+      country: parseCountry(result.rows[0].country)
+    };
     createdEntry.entry = await convertImageReferencesServerSide(
         createdEntry.entry,
         createdEntry.images,

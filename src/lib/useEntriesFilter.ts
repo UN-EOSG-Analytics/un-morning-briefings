@@ -244,10 +244,15 @@ export function useEntriesFilter(entries: any[], initialDateFilter?: string) {
    */
   const filteredEntries = useMemo(() => {
     return entries.filter((entry) => {
+      const countryMatch = 
+        Array.isArray(entry.country) 
+          ? entry.country.some((c: string) => c?.toLowerCase().includes(searchTerm.toLowerCase()))
+          : entry.country?.toLowerCase().includes(searchTerm.toLowerCase());
+
       const matchesSearch =
         searchTerm === '' ||
         entry.headline?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        entry.country?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        countryMatch ||
         entry.entry?.toLowerCase().includes(searchTerm.toLowerCase());
 
       const matchesRegion = filterRegion === 'all' || entry.region === filterRegion;

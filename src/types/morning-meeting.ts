@@ -8,7 +8,7 @@ export interface MorningMeetingEntry {
   category: string;
   priority: 'sg-attention' | 'situational-awareness' | '';
   region: string;
-  country: string;
+  country: string | string[]; // Support both single and multiple countries
   headline: string;
   date: string; // Now includes both date and time
   entry: string;

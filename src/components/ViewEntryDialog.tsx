@@ -277,10 +277,12 @@ export function ViewEntryDialog({
             <span className="inline-flex items-center rounded-full bg-slate-100 px-2 sm:px-2.5 py-1 sm:py-1.5 text-xs sm:text-sm font-medium text-slate-700">
               {displayEntry.region}
             </span>
-            {/* Country Badge */}
-            <span className="inline-flex items-center rounded-full bg-slate-100 px-2 sm:px-2.5 py-1 sm:py-1.5 text-xs sm:text-sm font-medium text-slate-700">
-              {displayEntry.country}
-            </span>
+            {/* Country Badge(s) */}
+            {(Array.isArray(displayEntry.country) ? displayEntry.country : [displayEntry.country]).map((country, idx) => (
+              <span key={idx} className="inline-flex items-center rounded-full bg-slate-100 px-2 sm:px-2.5 py-1 sm:py-1.5 text-xs sm:text-sm font-medium text-slate-700">
+                {country}
+              </span>
+            ))}
             {/* Category Badge */}
             <span className="inline-flex items-center rounded-full bg-slate-100 px-2 sm:px-2.5 py-1 sm:py-1.5 text-xs sm:text-sm font-medium text-slate-700">
               {displayEntry.category}

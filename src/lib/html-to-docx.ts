@@ -14,6 +14,17 @@ function base64ToBuffer(dataUrl: string): Buffer {
 }
 
 /**
+ * Detect image type from data URL or buffer
+ */
+function getImageType(dataUrl: string): 'png' | 'gif' | 'jpg' | 'bmp' {
+  if (dataUrl.includes('image/png')) return 'png';
+  if (dataUrl.includes('image/gif')) return 'gif';
+  if (dataUrl.includes('image/bmp')) return 'bmp';
+  // Default to jpg for jpeg, jpg, or unknown
+  return 'jpg';
+}
+
+/**
  * Extract dimensions from PNG image data
  * PNG header format: bytes 16-20 contain width (big-endian), bytes 20-24 contain height (big-endian)
  * @param buffer - Buffer containing PNG image data
@@ -45,6 +56,99 @@ function getPNGDimensions(buffer: Buffer): { width: number; height: number } | n
 }
 
 /**
+ * Extract dimensions from JPEG image data
+ * JPEG stores dimensions in SOF0/SOF2 markers (0xFFC0 or 0xFFC2)
+ * @param buffer - Buffer containing JPEG image data
+ * @returns Object with width and height, or null if cannot be determined
+ */
+function getJPEGDimensions(buffer: Buffer): { width: number; height: number } | null {
+  try {
+    if (buffer.length < 2) return null;
+    
+    // Check JPEG signature (SOI marker)
+    if (buffer[0] !== 0xFF || buffer[1] !== 0xD8) return null;
+    
+    let offset = 2;
+    while (offset < buffer.length - 1) {
+      // Find marker
+      if (buffer[offset] !== 0xFF) {
+        offset++;
+        continue;
+      }
+      
+      const marker = buffer[offset + 1];
+      
+      // SOF0, SOF1, SOF2 markers contain dimensions
+      if (marker === 0xC0 || marker === 0xC1 || marker === 0xC2) {
+        // Skip marker (2 bytes) + length (2 bytes) + precision (1 byte)
+        const height = buffer.readUInt16BE(offset + 5);
+        const width = buffer.readUInt16BE(offset + 7);
+        
+        if (width > 0 && height > 0) {
+          return { width, height };
+        }
+      }
+      
+      // Skip to next marker
+      if (marker === 0xD8 || marker === 0xD9 || marker === 0x01 || (marker >= 0xD0 && marker <= 0xD7)) {
+        // Standalone markers without length
+        offset += 2;
+      } else {
+        // Read segment length and skip
+        const segmentLength = buffer.readUInt16BE(offset + 2);
+        offset += 2 + segmentLength;
+      }
+    }
+  } catch (error) {
+    console.error('Error extracting JPEG dimensions:', error);
+  }
+  return null;
+}
+
+/**
+ * Extract dimensions from GIF image data
+ * GIF stores dimensions at bytes 6-9 (little-endian)
+ */
+function getGIFDimensions(buffer: Buffer): { width: number; height: number } | null {
+  try {
+    if (buffer.length < 10) return null;
+    
+    // Check GIF signature
+    const sig = buffer.slice(0, 6).toString('ascii');
+    if (sig !== 'GIF87a' && sig !== 'GIF89a') return null;
+    
+    const width = buffer.readUInt16LE(6);
+    const height = buffer.readUInt16LE(8);
+    
+    if (width > 0 && height > 0) {
+      return { width, height };
+    }
+  } catch (error) {
+    console.error('Error extracting GIF dimensions:', error);
+  }
+  return null;
+}
+
+/**
+ * Extract dimensions from any supported image buffer
+ */
+function getImageDimensions(buffer: Buffer): { width: number; height: number } | null {
+  // Try PNG first
+  const pngDims = getPNGDimensions(buffer);
+  if (pngDims) return pngDims;
+  
+  // Try JPEG
+  const jpegDims = getJPEGDimensions(buffer);
+  if (jpegDims) return jpegDims;
+  
+  // Try GIF
+  const gifDims = getGIFDimensions(buffer);
+  if (gifDims) return gifDims;
+  
+  return null;
+}
+
+/**
  * Calculate image dimensions preserving aspect ratio
  * @param dataWidth - Optional width attribute
  * @param dataHeight - Optional height attribute
@@ -58,18 +162,15 @@ function calculateImageDimensions(
   buffer?: Buffer,
   maxWidth: number = 500
 ): { width: number; height: number } {
-  const width = maxWidth;
-  let height = 375; // Default aspect ratio fallback
-  
-  // Try to get dimensions from PNG header first
   let origWidth: number | undefined;
   let origHeight: number | undefined;
   
+  // Try to get dimensions from image buffer first (most accurate)
   if (buffer) {
-    const pngDims = getPNGDimensions(buffer);
-    if (pngDims) {
-      origWidth = pngDims.width;
-      origHeight = pngDims.height;
+    const dims = getImageDimensions(buffer);
+    if (dims) {
+      origWidth = dims.width;
+      origHeight = dims.height;
     }
   }
   
@@ -81,13 +182,20 @@ function calculateImageDimensions(
     origHeight = parseInt(dataHeight);
   }
   
-  // Calculate proportional dimensions
+  // Calculate proportional dimensions preserving aspect ratio
   if (origWidth && origHeight && origWidth > 0 && origHeight > 0) {
+    // If image is smaller than maxWidth, use original size
+    if (origWidth <= maxWidth) {
+      return { width: origWidth, height: origHeight };
+    }
+    // Scale down to maxWidth while preserving aspect ratio
     const aspectRatio = origWidth / origHeight;
-    height = Math.round(width / aspectRatio);
+    const scaledHeight = Math.round(maxWidth / aspectRatio);
+    return { width: maxWidth, height: scaledHeight };
   }
   
-  return { width, height };
+  // Default fallback (4:3 aspect ratio)
+  return { width: maxWidth, height: Math.round(maxWidth * 0.75) };
 }
 
 /**
@@ -152,15 +260,16 @@ function parseHtmlContentServer(html: string): Paragraph[] {
         try {
           const buffer = base64ToBuffer(dataUrl);
           const dims = calculateImageDimensions(dataWidth, dataHeight, buffer, 500);
+          const imageType = getImageType(dataUrl);
           
           paraRuns.push(
             new ImageRun({
               data: buffer as unknown as Uint8Array,
-              type: 'png',
+              type: imageType,
               transformation: { width: dims.width, height: dims.height },
             })
           );
-          console.log('Server parser: Successfully embedded data URL image');
+          console.log('Server parser: Successfully embedded data URL image, type:', imageType, 'dims:', dims);
         } catch (error) {
           console.error('Server parser: Error processing data URL image:', error);
           paraRuns.push(new TextRun({ text: '[Image]', color: '0563C1', underline: {}, font: 'Roboto' }));
@@ -334,36 +443,27 @@ function parseHtmlContentClient(html: string): Paragraph[] {
       const alt = element.getAttribute('alt') || 'Image';
       const dataWidth = element.getAttribute('data-width');
       const dataHeight = element.getAttribute('data-height');
-      const width = 500;
-      let height = 375;
-      
-      // Use stored dimensions if available and preserve aspect ratio
-      if (dataWidth && dataHeight) {
-        const origWidth = parseInt(dataWidth);
-        const origHeight = parseInt(dataHeight);
-        if (origWidth && origHeight) {
-          const aspectRatio = origWidth / origHeight;
-          height = Math.round(width / aspectRatio);
-        }
-      }
 
-      console.log('Client parser: Processing img tag:', { src: src?.substring(0, 50), alt, width, height });
+      console.log('Client parser: Processing img tag:', { src: src?.substring(0, 50), alt });
 
       if (src) {
         try {
           if (src.startsWith('data:image')) {
             // Convert base64 image to buffer and embed
             const buffer = base64ToBuffer(src);
-            console.log('Client parser: Embedding data URL image, buffer size:', buffer.length);
+            const dims = calculateImageDimensions(dataWidth, dataHeight, buffer, 500);
+            const imageType = getImageType(src);
+            
+            console.log('Client parser: Embedding data URL image, type:', imageType, 'dims:', dims);
             paragraphs.push(
               new Paragraph({
                 children: [
                   new ImageRun({
                     data: buffer as unknown as Uint8Array,
-                    type: 'png',
+                    type: imageType,
                     transformation: {
-                      width,
-                      height,
+                      width: dims.width,
+                      height: dims.height,
                     },
                   }),
                 ],
@@ -455,12 +555,13 @@ function extractTextRuns(element: Element): any[] {
               const dataHeight = el.getAttribute('data-height');
               
               const dims = calculateImageDimensions(dataWidth, dataHeight, buffer, 300);
+              const imageType = getImageType(src);
               
-              console.log('Embedding inline image, buffer size:', buffer.length, 'dimensions:', dims);
+              console.log('Embedding inline image, type:', imageType, 'dimensions:', dims);
               runs.push(
                 new ImageRun({
                   data: buffer as unknown as Uint8Array,
-                  type: 'png',
+                  type: imageType,
                   transformation: { width: dims.width, height: dims.height },
                 })
               );

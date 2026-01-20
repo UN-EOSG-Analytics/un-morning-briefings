@@ -401,11 +401,11 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
         // Title
         new Paragraph({
           heading: HeadingLevel.HEADING_1,
-          alignment: AlignmentType.LEFT,
-          spacing: { after: 200 },
+          alignment: AlignmentType.CENTER,
+          spacing: { after: 100 },
           children: [
             new TextRun({
-              text: 'Daily Morning Meeting Briefing',
+              text: 'Morning Meeting Update',
               bold: true,
               size: 32,
               font: 'Roboto',
@@ -415,7 +415,7 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
         }),
         // Date
         new Paragraph({
-          alignment: AlignmentType.LEFT,
+          alignment: AlignmentType.CENTER,
           spacing: { after: 400 },
           children: [
             new TextRun({
@@ -556,22 +556,81 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
 
             // PU Note if available
             if (entry.puNote) {
-              children.push(
-                new Paragraph({
-                  children: [
-                    new TextRun({
-                      text: 'PU Note: ',
-                      bold: true,
-                      font: 'Roboto',
-                    }),
-                    new TextRun({
-                      text: entry.puNote,
-                      font: 'Roboto',
-                    }),
-                  ],
-                  spacing: { after: 100 },
-                })
-              );
+              try {
+                // Parse PU Note as HTML to support rich text formatting
+                const puNoteElements = parseHtmlContent(entry.puNote);
+                // Add "PU Note: " prefix to the first paragraph
+                if (puNoteElements.length > 0) {
+                  const firstPara = puNoteElements[0];
+                  const prefixRun = new TextRun({
+                    text: 'PU Note: ',
+                    bold: true,
+                    italics: true,
+                    font: 'Roboto',
+                  });
+                  // Make all runs italic
+                  const modifiedChildren = (firstPara as any).root?.[0]?.root || [];
+                  const italicChildren = modifiedChildren.map((child: any) => {
+                    if (child.constructor.name === 'TextRun') {
+                      return new TextRun({
+                        ...(child as any).root?.[0]?.root || {},
+                        italics: true,
+                      });
+                    }
+                    return child;
+                  });
+                  children.push(
+                    new Paragraph({
+                      children: [prefixRun, ...italicChildren],
+                      spacing: { after: 100 },
+                    })
+                  );
+                  // Add remaining paragraphs with italic formatting
+                  for (let i = 1; i < puNoteElements.length; i++) {
+                    children.push(puNoteElements[i]);
+                  }
+                } else {
+                  // Fallback if parsing returns no elements
+                  children.push(
+                    new Paragraph({
+                      children: [
+                        new TextRun({
+                          text: 'PU Note: ',
+                          bold: true,
+                          italics: true,
+                          font: 'Roboto',
+                        }),
+                        new TextRun({
+                          text: entry.puNote,
+                          italics: true,
+                          font: 'Roboto',
+                        }),
+                      ],
+                      spacing: { after: 100 },
+                    })
+                  );
+                }
+              } catch {
+                // Fallback to plain text if parsing fails
+                children.push(
+                  new Paragraph({
+                    children: [
+                      new TextRun({
+                        text: 'PU Note: ',
+                        bold: true,
+                        italics: true,
+                        font: 'Roboto',
+                      }),
+                      new TextRun({
+                        text: entry.puNote,
+                        italics: true,
+                        font: 'Roboto',
+                      }),
+                    ],
+                    spacing: { after: 100 },
+                  })
+                );
+              }
             }
 
             // Separator between entries (but not after the last entry in the country)
@@ -622,10 +681,19 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
 
       // Generate and download
       const blob = await Packer.toBlob(doc);
-      saveAs(
-        blob,
-        `Morning-Briefing-${selectedDate}.docx`
-      );
+      
+      // Format filename: MM YYMMDD DayOfWeek DD MonthName
+      // e.g., "MM 251212 Friday 12 December.docx" for 2025-12-12
+      const [year, month, day] = selectedDate.split('-').map(Number);
+      const date = new Date(Date.UTC(year, month - 1, day));
+      const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+      const dayOfWeek = dayNames[date.getUTCDay()];
+      const monthName = monthNames[month - 1];
+      const yymmdd = `${String(year).slice(2)}${String(month).padStart(2, '0')}${String(day).padStart(2, '0')}`;
+      const filename = `MM ${yymmdd} ${dayOfWeek} ${day} ${monthName}.docx`;
+      
+      saveAs(blob, filename);
 
       showSuccess('Export Successful', 'Daily briefing exported successfully!');
       handleOpenChange(false);
@@ -763,11 +831,11 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
       const children: any[] = [
         new Paragraph({
           heading: HeadingLevel.HEADING_1,
-          alignment: AlignmentType.LEFT,
-          spacing: { after: 200 },
+          alignment: AlignmentType.CENTER,
+          spacing: { after: 100 },
           children: [
             new TextRun({
-              text: 'Daily Morning Meeting Briefing',
+              text: 'Morning Meeting Update',
               bold: true,
               size: 32,
               font: 'Roboto',
@@ -776,7 +844,7 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
           ],
         }),
         new Paragraph({
-          alignment: AlignmentType.LEFT,
+          alignment: AlignmentType.CENTER,
           spacing: { after: 400 },
           children: [
             new TextRun({
@@ -896,22 +964,81 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
           }
 
           if (entry.puNote) {
-            children.push(
-              new Paragraph({
-                children: [
-                  new TextRun({
-                    text: 'PU Note: ',
-                    bold: true,
-                    font: 'Roboto',
-                  }),
-                  new TextRun({
-                    text: entry.puNote,
-                    font: 'Roboto',
-                  }),
-                ],
-                spacing: { after: 100 },
-              })
-            );
+            try {
+              // Parse PU Note as HTML to support rich text formatting
+              const puNoteElements = parseHtmlContent(entry.puNote);
+              // Add "PU Note: " prefix to the first paragraph
+              if (puNoteElements.length > 0) {
+                const firstPara = puNoteElements[0];
+                const prefixRun = new TextRun({
+                  text: 'PU Note: ',
+                  bold: true,
+                  italics: true,
+                  font: 'Roboto',
+                });
+                // Make all runs italic
+                const modifiedChildren = (firstPara as any).root?.[0]?.root || [];
+                const italicChildren = modifiedChildren.map((child: any) => {
+                  if (child.constructor.name === 'TextRun') {
+                    return new TextRun({
+                      ...(child as any).root?.[0]?.root || {},
+                      italics: true,
+                    });
+                  }
+                  return child;
+                });
+                children.push(
+                  new Paragraph({
+                    children: [prefixRun, ...italicChildren],
+                    spacing: { after: 100 },
+                  })
+                );
+                // Add remaining paragraphs with italic formatting
+                for (let i = 1; i < puNoteElements.length; i++) {
+                  children.push(puNoteElements[i]);
+                }
+              } else {
+                // Fallback if parsing returns no elements
+                children.push(
+                  new Paragraph({
+                    children: [
+                      new TextRun({
+                        text: 'PU Note: ',
+                        bold: true,
+                        italics: true,
+                        font: 'Roboto',
+                      }),
+                      new TextRun({
+                        text: entry.puNote,
+                        italics: true,
+                        font: 'Roboto',
+                      }),
+                    ],
+                    spacing: { after: 100 },
+                  })
+                );
+              }
+            } catch {
+              // Fallback to plain text if parsing fails
+              children.push(
+                new Paragraph({
+                  children: [
+                    new TextRun({
+                      text: 'PU Note: ',
+                      bold: true,
+                      italics: true,
+                      font: 'Roboto',
+                    }),
+                    new TextRun({
+                      text: entry.puNote,
+                      italics: true,
+                      font: 'Roboto',
+                    }),
+                  ],
+                  spacing: { after: 100 },
+                })
+              );
+            }
           }
 
           children.push(createSeparator());
@@ -965,12 +1092,22 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
       const docxBlob = `data:application/vnd.openxmlformats-officedocument.wordprocessingml.document;base64,${base64Data}`;
 
       // Send via API
+      // Format filename: MM YYMMDD DayOfWeek DD MonthName
+      const [year, month, day] = selectedDate.split('-').map(Number);
+      const date = new Date(Date.UTC(year, month - 1, day));
+      const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+      const dayOfWeek = dayNames[date.getUTCDay()];
+      const monthName = monthNames[month - 1];
+      const yymmdd = `${String(year).slice(2)}${String(month).padStart(2, '0')}${String(day).padStart(2, '0')}`;
+      const emailFilename = `MM ${yymmdd} ${dayOfWeek} ${day} ${monthName}.docx`;
+      
       const response = await fetch('/api/send-briefing', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           docxBlob,
-          fileName: `Morning-Briefing-${selectedDate}.docx`,
+          fileName: emailFilename,
           briefingDate: selectedDate,
         }),
       });

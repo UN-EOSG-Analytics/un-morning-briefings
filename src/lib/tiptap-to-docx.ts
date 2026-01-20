@@ -239,6 +239,13 @@ function extractTextRuns(content: any[]): any[] {
           case 'underline':
             run.underline = { type: UnderlineType.SINGLE };
             break;
+          case 'highlight':
+            // Use yellow highlight color (same as typical editors)
+            run.shading = {
+              type: 'clear',
+              fill: 'FFFF00',
+            };
+            break;
         }
       }
 

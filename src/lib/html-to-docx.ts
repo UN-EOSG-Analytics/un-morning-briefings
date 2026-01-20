@@ -443,6 +443,9 @@ function extractTextRuns(element: Element): any[] {
         case 'a':
           runs.push(new TextRun({ text: el.textContent || '', color: '0563C1', underline: {}, font: 'Roboto' }));
           break;
+        case 'mark':
+          runs.push(new TextRun({ text: el.textContent || '', shading: { type: 'clear', fill: 'FFFF00' }, font: 'Roboto' }));
+          break;
         case 'img': {
           const src = el.getAttribute('src');
           if (src && src.startsWith('data:image')) {

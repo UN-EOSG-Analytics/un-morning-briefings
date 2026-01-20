@@ -52,12 +52,14 @@ Preserve all facts, wording, and quotes exactly as in the source content
 Do not add, remove, paraphrase, or reinterpret any information
 Do not include commentary, explanations, or summaries outside the content
 Do not include empty HTML tags
+
 SECTION STRUCTURE:
 Each thematic section must start with:
 <p><strong>Section Title:</strong></p>
 Immediately after a section title:
 Use a <ul> if the section contains multiple points
 Use a single <p> only if there is one standalone statement
+The majority of the text should be written text, not bullet point lists. use them wisely.
 LISTS:
 Bullet points must always follow this exact structure:
 <ul> <li><p>Bullet text here.</p></li> </ul>
@@ -73,8 +75,7 @@ Clearly emphasized terms already implied by the content
 Do not overuse <strong>
 QUOTES:
 Direct quotes must be wrapped in:
-<blockquote> <p>"Exact quote here."</p> </blockquote>
-If multiple quotes belong together, include them in the same <blockquote>, each in its own <p>
+<blockquote> <p>"Exact quote here."</p> </blockquote> and should be in their own, seperate line. Do not put them in bullet point lists and don't include every single quote but 2-3 key quotes relevant to the content.
 PROHIBITED:
 Markdown syntax (e.g. bold, > quote, - bullets)
 Mixed formatting styles
@@ -107,9 +108,6 @@ Now, return the JSON:
     const jsonText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
     const parsed = JSON.parse(jsonText);
     
-    // Convert extracted entry to TipTap HTML format
-    const entryHtml = plainTextToTipTapHtml(parsed.entry || content);
-    
     return {
       category: parsed.category || '',
       priority: parsed.priority || 'situational-awareness',
@@ -117,7 +115,7 @@ Now, return the JSON:
       country: parsed.country || '',
       headline: parsed.headline || '',
       date: parsed.date,
-      entry: entryHtml,
+      entry: parsed.entry || content,
       sourceDate: parsed.sourceDate || '',
     };
   } catch (error) {
@@ -127,88 +125,6 @@ Now, return the JSON:
     }
     throw new Error('Failed to process content with AI');
   }
-}
-
-/**
- * Convert plain text to TipTap HTML format
- * Handles paragraph breaks, bullet points, numbered lists, bold text, and quotations
- */
-function plainTextToTipTapHtml(text: string): string {
-  if (!text) return '<p></p>';
-  
-  const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
-  
-  let html = '';
-  let i = 0;
-  
-  while (i < lines.length) {
-    const line = lines[i];
-    
-    // Check for quotation block
-    if (line.match(/^>\s+/)) {
-      const quoteLines = [];
-      while (i < lines.length && lines[i].match(/^>\s+/)) {
-        const content = lines[i].replace(/^>\s+/, '');
-        quoteLines.push(formatLineWithBold(content));
-        i++;
-      }
-      html += '<blockquote>' + quoteLines.map(item => `<p>${item}</p>`).join('') + '</blockquote>';
-      continue;
-    }
-    
-    // Check for bullet point list
-    if (line.match(/^[-•*]\s+/)) {
-      const listItems = [];
-      while (i < lines.length && lines[i].match(/^[-•*]\s+/)) {
-        const content = lines[i].replace(/^[-•*]\s+/, '');
-        listItems.push(formatLineWithBold(content));
-        i++;
-      }
-      html += '<ul>' + listItems.map(item => `<li><p>${item}</p></li>`).join('') + '</ul>';
-      continue;
-    }
-    
-    // Check for numbered list
-    if (line.match(/^\d+\.\s+/)) {
-      const listItems = [];
-      while (i < lines.length && lines[i].match(/^\d+\.\s+/)) {
-        const content = lines[i].replace(/^\d+\.\s+/, '');
-        listItems.push(formatLineWithBold(content));
-        i++;
-      }
-      html += '<ol>' + listItems.map(item => `<li><p>${item}</p></li>`).join('') + '</ol>';
-      continue;
-    }
-    
-    // Regular paragraph
-    const formatted = formatLineWithBold(line);
-    html += `<p>${formatted}</p>`;
-    i++;
-  }
-  
-  return html || '<p></p>';
-}
-
-/**
- * Format line with bold text support
- * Converts **text** to <strong>text</strong>
- */
-function formatLineWithBold(text: string): string {
-  const escaped = escapeHtml(text);
-  // Replace **text** with <strong>text</strong>
-  return escaped.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-}
-
-/**
- * Escape HTML special characters
- */
-function escapeHtml(text: string): string {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
 }
 
 /**
@@ -235,6 +151,7 @@ Each bullet should be:
 - Focused on the most critical information
 - Professional and suitable for UN leadership
 - Maximum 20 words each
+- Do not invent any additional information or interpret / analyze the content
 
 Return ONLY the bullet points, one per line, without bullet symbols or numbering.
 
@@ -406,8 +323,7 @@ ${plainText}`;
     });
     
     // Convert reformulated text to TipTap HTML format
-    let reformulatedHtml = plainTextToTipTapHtml(reformulatedText.trim());
-    
+    let reformulatedHtml = reformulatedText.trim();    
     // Re-insert images at their placeholder positions
     images.forEach((img, index) => {
       const placeholder = `[IMAGE_PLACEHOLDER_${index}]`;

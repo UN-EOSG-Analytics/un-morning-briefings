@@ -69,6 +69,426 @@ const createSeparator = (
     spacing,
   });
 
+/**
+ * Format filename: MM YYMMDD DayOfWeek DD MonthName
+ * e.g., "MM 251212 Friday 12 December.docx" for 2025-12-12
+ */
+const formatExportFilename = (dateStr: string): string => {
+  const [year, month, day] = dateStr.split('-').map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  const dayOfWeek = dayNames[date.getUTCDay()];
+  const monthName = monthNames[month - 1];
+  const yymmdd = `${String(year).slice(2)}${String(month).padStart(2, '0')}${String(day).padStart(2, '0')}`;
+  return `MM ${yymmdd} ${dayOfWeek} ${day} ${monthName}.docx`;
+};
+
+/**
+ * Process images in entries - downloads from blob storage and converts to data URLs
+ */
+const processEntriesImages = async (
+  entries: MorningMeetingEntry[],
+  includeImages: boolean
+): Promise<MorningMeetingEntry[]> => {
+  const processedEntries = [...entries];
+  
+  for (const entry of processedEntries) {
+    let html = entry.entry;
+    
+    // Skip image processing if includeImages is false
+    if (!includeImages) {
+      html = html.replace(/<img[^>]*>/gi, '');
+      entry.entry = html;
+      continue;
+    }
+    
+    // Process tracked images (uploaded via the editor)
+    if (entry.images && entry.images.length > 0) {
+      for (const img of entry.images) {
+        try {
+          if (img.position === null || img.position === undefined) {
+            continue;
+          }
+          
+          const ref = `image-ref://img-${img.position}`;
+          
+          if (!html.includes(ref)) {
+            continue;
+          }
+          
+          const response = await fetch(`/api/images/${img.id}`);
+          if (!response.ok) {
+            html = html.replace(new RegExp(`<img[^>]*src=["']${ref}["'][^>]*>`, 'gi'), '');
+            continue;
+          }
+          
+          const arrayBuffer = await response.arrayBuffer();
+          const base64Data = btoa(
+            new Uint8Array(arrayBuffer).reduce(
+              (data, byte) => data + String.fromCharCode(byte),
+              ''
+            )
+          );
+          const dataUrl = `data:${img.mimeType};base64,${base64Data}`;
+          
+          const searchPattern = new RegExp(`src=["']${ref.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}["']`, 'gi');
+          html = html.replace(searchPattern, `src="${dataUrl}"`);
+        } catch (error) {
+          console.error(`Error downloading image ${img.id}:`, error);
+          const ref = `image-ref://img-${img.position}`;
+          html = html.replace(new RegExp(`<img[^>]*src=["']${ref}["'][^>]*>`, 'gi'), '');
+        }
+      }
+    }
+    
+    // Download and convert external image URLs to data URLs
+    const externalImgRegex = /<img[^>]*src=["']?(https?:\/\/[^"'\s>]+)["']?([^>]*)>/gi;
+    let match;
+    const replacements: Array<{from: string, to: string}> = [];
+    
+    while ((match = externalImgRegex.exec(html)) !== null) {
+      const fullTag = match[0];
+      const imageUrl = match[1];
+      const restOfTag = match[2];
+      
+      try {
+        const response = await fetch(imageUrl, { mode: 'cors' });
+        if (!response.ok) {
+          continue;
+        }
+        
+        const blob = await response.blob();
+        const arrayBuffer = await blob.arrayBuffer();
+        const base64Data = btoa(
+          new Uint8Array(arrayBuffer).reduce(
+            (data, byte) => data + String.fromCharCode(byte),
+            ''
+          )
+        );
+        
+        const mimeType = blob.type || response.headers.get('content-type') || 'image/png';
+        const dataUrl = `data:${mimeType};base64,${base64Data}`;
+        
+        const newTag = `<img src="${dataUrl}"${restOfTag}>`;
+        replacements.push({ from: fullTag, to: newTag });
+      } catch (error) {
+        console.error('Error downloading external image:', imageUrl, error);
+      }
+    }
+    
+    for (const { from, to } of replacements) {
+      html = html.replace(from, to);
+    }
+    
+    entry.entry = html;
+  }
+  
+  return processedEntries;
+};
+
+/**
+ * Build PU Note paragraph with italic formatting and rich text support
+ */
+const buildPuNoteParagraph = (puNote: string): Paragraph[] => {
+  const paragraphs: Paragraph[] = [];
+  
+  try {
+    const puNoteElements = parseHtmlContent(puNote);
+    if (puNoteElements.length > 0) {
+      const firstPara = puNoteElements[0];
+      const prefixRun = new TextRun({
+        text: 'PU Note: ',
+        bold: true,
+        italics: true,
+        font: 'Roboto',
+      });
+      const modifiedChildren = (firstPara as any).root?.[0]?.root || [];
+      const italicChildren = modifiedChildren.map((child: any) => {
+        if (child.constructor.name === 'TextRun') {
+          return new TextRun({
+            ...(child as any).root?.[0]?.root || {},
+            italics: true,
+          });
+        }
+        return child;
+      });
+      paragraphs.push(
+        new Paragraph({
+          children: [prefixRun, ...italicChildren],
+          spacing: { after: 100 },
+        })
+      );
+      for (let i = 1; i < puNoteElements.length; i++) {
+        paragraphs.push(puNoteElements[i]);
+      }
+    } else {
+      paragraphs.push(createPlainPuNoteParagraph(puNote));
+    }
+  } catch {
+    paragraphs.push(createPlainPuNoteParagraph(puNote));
+  }
+  
+  return paragraphs;
+};
+
+const createPlainPuNoteParagraph = (puNote: string): Paragraph =>
+  new Paragraph({
+    children: [
+      new TextRun({
+        text: 'PU Note: ',
+        bold: true,
+        italics: true,
+        font: 'Roboto',
+      }),
+      new TextRun({
+        text: puNote,
+        italics: true,
+        font: 'Roboto',
+      }),
+    ],
+    spacing: { after: 100 },
+  });
+
+/**
+ * Build document children (paragraphs) from entries
+ */
+const buildDocumentChildren = (
+  entries: MorningMeetingEntry[],
+  selectedDate: string
+): Paragraph[] => {
+  // Sort by priority (SG Attention first)
+  const sortedEntries = [...entries].sort((a, b) => {
+    if (a.priority === 'sg-attention' && b.priority !== 'sg-attention') return -1;
+    if (a.priority !== 'sg-attention' && b.priority === 'sg-attention') return 1;
+    return 0;
+  });
+
+  // Group entries by region and country
+  const entriesByRegionAndCountry = sortedEntries.reduce((acc, entry) => {
+    if (!acc[entry.region]) {
+      acc[entry.region] = {};
+    }
+    if (!acc[entry.region][entry.country]) {
+      acc[entry.region][entry.country] = [];
+    }
+    acc[entry.region][entry.country].push(entry);
+    return acc;
+  }, {} as Record<string, Record<string, MorningMeetingEntry[]>>);
+
+  const sortedRegions = Object.keys(entriesByRegionAndCountry).sort();
+
+  // Build document children
+  const children: any[] = [
+    // Title
+    new Paragraph({
+      heading: HeadingLevel.HEADING_1,
+      alignment: AlignmentType.CENTER,
+      spacing: { after: 100 },
+      children: [
+        new TextRun({
+          text: 'Morning Meeting Update',
+          bold: true,
+          size: 32,
+          font: 'Roboto',
+          color: '009edb',
+        }),
+      ],
+    }),
+    // Date
+    new Paragraph({
+      alignment: AlignmentType.CENTER,
+      spacing: { after: 400 },
+      children: [
+        new TextRun({
+          text: formatDateLong(selectedDate),
+          size: 24,
+          font: 'Roboto',
+          color: '009edb',
+        }),
+      ],
+    }),
+    // Separator
+    createSeparator(),
+  ];
+
+  // Add entries grouped by region and country
+  sortedRegions.forEach((region) => {
+    // Add region header
+    children.push(
+      new Paragraph({
+        heading: HeadingLevel.HEADING_2,
+        alignment: AlignmentType.LEFT,
+        spacing: { before: 300, after: 200 },
+        children: [
+          new TextRun({
+            text: region,
+            bold: true,
+            size: 24,
+            font: 'Roboto',
+            color: '009edb',
+          }),
+        ],
+      })
+    );
+
+    // Get countries for this region and sort them
+    const countries = Object.keys(entriesByRegionAndCountry[region]).sort();
+
+    // Add entries grouped by country
+    countries.forEach((country) => {
+      // Country header
+      children.push(
+        new Paragraph({
+          children: [
+            new TextRun({
+              text: country,
+              bold: true,
+              size: 24,
+              font: 'Roboto',
+            }),
+          ],
+          spacing: { before: 300, after: 200 },
+        })
+      );
+
+      // Add all entries for this country
+      entriesByRegionAndCountry[region][country].forEach((entry: MorningMeetingEntry, index: number) => {
+        // Headline
+        children.push(
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: entry.headline,
+                bold: true,
+                size: 22,
+                font: 'Roboto',
+              }),
+            ],
+            spacing: { after: 100 },
+          })
+        );
+
+        // Priority and Category
+        children.push(
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: entry.priority === 'sg-attention' ? 'SG Attention' : 'Situational Awareness',
+                italics: true,
+                size: 20,
+                font: 'Roboto',
+              }),
+              new TextRun({
+                text: ` | ${entry.category}`,
+                italics: true,
+                size: 20,
+                font: 'Roboto',
+              })
+            ],
+            spacing: { after: 150 },
+          })
+        );
+
+        // Content
+        if (entry.entry) {
+          try {
+            const contentElements = parseHtmlContent(entry.entry);
+            children.push(...contentElements);
+          } catch {
+            children.push(
+              new Paragraph({
+                children: [new TextRun({ text: entry.entry, font: 'Roboto' })],
+                spacing: { after: 100 },
+              })
+            );
+          }
+        }
+
+        // Source URL
+        if (entry.sourceUrl) {
+          children.push(
+            new Paragraph({
+              children: [
+                new TextRun({ text: 'Source: ', italics: true, font: 'Roboto' }),
+                new TextRun({ text: entry.sourceUrl, italics: true, font: 'Roboto' }),
+              ],
+              spacing: { after: 100 },
+            })
+          );
+        }
+
+        // PU Note
+        if (entry.puNote) {
+          children.push(...buildPuNoteParagraph(entry.puNote));
+        }
+
+        // Separator between entries (but not after the last entry in the country)
+        const countryEntries = entriesByRegionAndCountry[region][country];
+        if (index < countryEntries.length - 1) {
+          children.push(createSeparator(40, { before: 200, after: 200 }));
+        }
+      });
+
+      // Separator after country section
+      children.push(createSeparator());
+    });
+  });
+
+  // Footer
+  children.push(
+    new Paragraph({
+      alignment: AlignmentType.CENTER,
+      spacing: { before: 400 },
+      children: [
+        new TextRun({
+          text: `Exported on ${getCurrentDateTime()}`,
+          italics: true,
+          font: 'Roboto',
+        }),
+      ],
+    })
+  );
+
+  return children;
+};
+
+/**
+ * Generate the complete document blob
+ */
+const generateDocumentBlob = async (
+  entries: MorningMeetingEntry[],
+  selectedDate: string,
+  includeImages: boolean,
+  createDocumentHeader: () => Promise<Table>
+): Promise<Blob> => {
+  // Process images in entries
+  const processedEntries = await processEntriesImages(entries, includeImages);
+  
+  // Build document content
+  const children = buildDocumentChildren(processedEntries, selectedDate);
+  
+  // Create header
+  const headerTable = await createDocumentHeader();
+  
+  // Create document
+  const doc = new Document({
+    sections: [
+      {
+        properties: { page: {} },
+        headers: {
+          default: new Header({
+            children: [headerTable],
+          }),
+        },
+        children,
+      },
+    ],
+  });
+
+  return Packer.toBlob(doc);
+};
+
 export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogProps) {
   const { data: session } = useSession();
   const { info: showInfo, success: showSuccess, error: showError } = usePopup();
@@ -245,455 +665,16 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
         return;
       }
 
-      // Get header
-      await createDocumentHeader();
-
-      // Restore images in HTML for each entry by downloading from blob storage
-      for (const entry of entriesForDate) {
-        let html = entry.entry;
-        
-        // Skip image processing if includeImages is false
-        if (!includeImages) {
-          // Remove all image tags from HTML
-          html = html.replace(/<img[^>]*>/gi, '');
-          entry.entry = html;
-          continue;
-        }
-        
-        console.log('Processing entry:', entry.id, 'with', entry.images?.length || 0, 'tracked images');
-        
-        // Only process if there are tracked images (uploaded via the editor)
-        // External URLs will remain as-is in the HTML
-        if (entry.images && entry.images.length > 0) {
-          console.log('HTML before image processing:', html.substring(0, 500));
-          
-          for (const img of entry.images) {
-            try {
-              // Skip if position is null (shouldn't happen with properly uploaded images)
-              if (img.position === null || img.position === undefined) {
-                console.warn(`Image ${img.id} has null position, skipping`);
-                continue;
-              }
-              
-              const ref = `image-ref://img-${img.position}`;
-              
-              if (!html.includes(ref)) {
-                console.warn(`Reference ${ref} not found in HTML`);
-                continue;
-              }
-              
-              // Download image from blob storage via API endpoint
-              const response = await fetch(`/api/images/${img.id}`);
-              if (!response.ok) {
-                console.error(`Failed to fetch image ${img.id} from API, status:`, response.status);
-                html = html.replace(new RegExp(`<img[^>]*src=["']${ref}["'][^>]*>`, 'gi'), '');
-                continue;
-              }
-              
-              const arrayBuffer = await response.arrayBuffer();
-              const base64Data = btoa(
-                new Uint8Array(arrayBuffer).reduce(
-                  (data, byte) => data + String.fromCharCode(byte),
-                  ''
-                )
-              );
-              const dataUrl = `data:${img.mimeType};base64,${base64Data}`;
-              
-              console.log('Created data URL for image', img.position, 'length:', dataUrl.length, 'mimeType:', img.mimeType);
-              
-              // Replace the src attribute in img tags - handles both single and double quotes
-              const searchPattern = new RegExp(`src=["']${ref.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}["']`, 'gi');
-              const beforeLength = html.length;
-              html = html.replace(searchPattern, `src="${dataUrl}"`);
-              const afterLength = html.length;
-              
-              console.log('Replacement made:', beforeLength !== afterLength);
-            } catch (error) {
-              console.error(`Error downloading image ${img.id} from blob storage:`, error);
-              const ref = `image-ref://img-${img.position}`;
-              html = html.replace(new RegExp(`<img[^>]*src=["']${ref}["'][^>]*>`, 'gi'), '');
-            }
-          }
-          
-          console.log('Final HTML for entry', entry.id, 'contains data:image URLs?', html.includes('data:image'));
-        } else {
-          console.log('Entry has no tracked images, checking for external URLs');
-        }
-        
-        // Download and convert external image URLs to data URLs
-        const externalImgRegex = /<img[^>]*src=["']?(https?:\/\/[^"'\s>]+)["']?([^>]*)>/gi;
-        let match;
-        const replacements: Array<{from: string, to: string}> = [];
-        
-        while ((match = externalImgRegex.exec(html)) !== null) {
-          const fullTag = match[0];
-          const imageUrl = match[1];
-          const restOfTag = match[2];
-          
-          console.log('Found external image URL:', imageUrl);
-          
-          try {
-            // Download the external image
-            const response = await fetch(imageUrl, { mode: 'cors' });
-            if (!response.ok) {
-              console.warn('Failed to download external image:', response.status);
-              continue;
-            }
-            
-            const blob = await response.blob();
-            
-            // Convert to base64 data URL
-            const arrayBuffer = await blob.arrayBuffer();
-            const base64Data = btoa(
-              new Uint8Array(arrayBuffer).reduce(
-                (data, byte) => data + String.fromCharCode(byte),
-                ''
-              )
-            );
-            
-            // Determine mime type from blob or response
-            const mimeType = blob.type || response.headers.get('content-type') || 'image/png';
-            const dataUrl = `data:${mimeType};base64,${base64Data}`;
-            
-            console.log('Converted external image to data URL, length:', dataUrl.length);
-            
-            // Prepare replacement
-            const newTag = `<img src="${dataUrl}"${restOfTag}>`;
-            replacements.push({ from: fullTag, to: newTag });
-          } catch (error) {
-            console.error('Error downloading external image:', imageUrl, error);
-            // Leave the URL as-is if download fails
-          }
-        }
-        
-        // Apply all replacements
-        for (const { from, to } of replacements) {
-          html = html.replace(from, to);
-        }
-        
-        console.log('Final HTML contains', replacements.length, 'converted external images');
-        entry.entry = html;
-      }
-
-      // Sort by priority (SG Attention first)
-      const sortedEntries = [...entriesForDate].sort((a, b) => {
-        if (a.priority === 'sg-attention' && b.priority !== 'sg-attention') return -1;
-        if (a.priority !== 'sg-attention' && b.priority === 'sg-attention') return 1;
-        return 0;
-      });
-
-      // Group entries by region and country
-      const entriesByRegionAndCountry = sortedEntries.reduce((acc, entry) => {
-        if (!acc[entry.region]) {
-          acc[entry.region] = {};
-        }
-        if (!acc[entry.region][entry.country]) {
-          acc[entry.region][entry.country] = [];
-        }
-        acc[entry.region][entry.country].push(entry);
-        return acc;
-      }, {} as Record<string, Record<string, typeof sortedEntries>>);
-
-      const sortedRegions = Object.keys(entriesByRegionAndCountry).sort();
-
-      // Build document children
-      const children: any[] = [
-        // Title
-        new Paragraph({
-          heading: HeadingLevel.HEADING_1,
-          alignment: AlignmentType.CENTER,
-          spacing: { after: 100 },
-          children: [
-            new TextRun({
-              text: 'Morning Meeting Update',
-              bold: true,
-              size: 32,
-              font: 'Roboto',
-              color: '009edb',
-            }),
-          ],
-        }),
-        // Date
-        new Paragraph({
-          alignment: AlignmentType.CENTER,
-          spacing: { after: 400 },
-          children: [
-            new TextRun({
-              text: formatDateLong(selectedDate),
-              size: 24,
-              font: 'Roboto',
-              color: '009edb',
-            }),
-          ],
-        }),
-        // Summary count
-
-        // Separator
-        createSeparator(),
-      ];
-
-      // Add entries grouped by region and country
-      sortedRegions.forEach((region) => {
-        // Add region header
-        children.push(
-          new Paragraph({
-            heading: HeadingLevel.HEADING_2,
-            alignment: AlignmentType.LEFT,
-            spacing: { before: 300, after: 200 },
-            children: [
-              new TextRun({
-                text: region,
-                bold: true,
-                size: 24,
-                font: 'Roboto',
-                color: '009edb',
-              }),
-            ],
-          })
-        );
-
-        // Get countries for this region and sort them
-        const countries = Object.keys(entriesByRegionAndCountry[region]).sort();
-
-        // Add entries grouped by country
-        countries.forEach((country) => {
-          // Country header (shown once per country)
-          children.push(
-            new Paragraph({
-              children: [
-                new TextRun({
-                  text: country,
-                  bold: true,
-                  size: 24,
-                  font: 'Roboto',
-                }),
-              ],
-              spacing: { before: 300, after: 200 },
-            })
-          );
-
-          // Add all entries for this country
-          entriesByRegionAndCountry[region][country].forEach((entry: MorningMeetingEntry, index: number) => {
-            // Headline with priority and category
-            children.push(
-              new Paragraph({
-                children: [
-                  new TextRun({
-                    text: entry.headline,
-                    bold: true,
-                    size: 22,
-                    font: 'Roboto',
-                  }),
-                ],
-                spacing: { after: 100 },
-              })
-            );
-
-            // Priority and Category on next line
-            children.push(
-              new Paragraph({
-                children: [
-                  new TextRun({
-                    text: entry.priority === 'sg-attention'
-                      ? 'SG Attention'
-                      : 'Situational Awareness',
-                    italics: true,
-                    size: 20,
-                    font: 'Roboto',
-                  }),
-                  new TextRun({
-                    text: ` | ${entry.category}`,
-                    italics: true,
-                    size: 20,
-                    font: 'Roboto',
-                  })
-                ],
-                spacing: { after: 150 },
-              })
-            );
-
-            // Content - parse TipTap JSON
-            if (entry.entry) {
-              try {
-                const contentElements = parseHtmlContent(entry.entry);
-                children.push(...contentElements);
-              } catch {
-                // Fallback to plain text if parsing fails
-                children.push(
-                  new Paragraph({
-                    children: [
-                      new TextRun({
-                        text: entry.entry,
-                        font: 'Roboto',
-                      }),
-                    ],
-                    spacing: { after: 100 },
-                  })
-                );
-              }
-            }
-
-            // Source URL if available
-            if (entry.sourceUrl) {
-              children.push(
-                new Paragraph({
-                  children: [
-                    new TextRun({
-                      text: 'Source: ',
-                      italics: true,
-                      font: 'Roboto',
-                    }),
-                    new TextRun({
-                      text: entry.sourceUrl,
-                      italics: true,
-                      font: 'Roboto',
-                    }),
-                  ],
-                  spacing: { after: 100 },
-                })
-              );
-            }
-
-            // PU Note if available
-            if (entry.puNote) {
-              try {
-                // Parse PU Note as HTML to support rich text formatting
-                const puNoteElements = parseHtmlContent(entry.puNote);
-                // Add "PU Note: " prefix to the first paragraph
-                if (puNoteElements.length > 0) {
-                  const firstPara = puNoteElements[0];
-                  const prefixRun = new TextRun({
-                    text: 'PU Note: ',
-                    bold: true,
-                    italics: true,
-                    font: 'Roboto',
-                  });
-                  // Make all runs italic
-                  const modifiedChildren = (firstPara as any).root?.[0]?.root || [];
-                  const italicChildren = modifiedChildren.map((child: any) => {
-                    if (child.constructor.name === 'TextRun') {
-                      return new TextRun({
-                        ...(child as any).root?.[0]?.root || {},
-                        italics: true,
-                      });
-                    }
-                    return child;
-                  });
-                  children.push(
-                    new Paragraph({
-                      children: [prefixRun, ...italicChildren],
-                      spacing: { after: 100 },
-                    })
-                  );
-                  // Add remaining paragraphs with italic formatting
-                  for (let i = 1; i < puNoteElements.length; i++) {
-                    children.push(puNoteElements[i]);
-                  }
-                } else {
-                  // Fallback if parsing returns no elements
-                  children.push(
-                    new Paragraph({
-                      children: [
-                        new TextRun({
-                          text: 'PU Note: ',
-                          bold: true,
-                          italics: true,
-                          font: 'Roboto',
-                        }),
-                        new TextRun({
-                          text: entry.puNote,
-                          italics: true,
-                          font: 'Roboto',
-                        }),
-                      ],
-                      spacing: { after: 100 },
-                    })
-                  );
-                }
-              } catch {
-                // Fallback to plain text if parsing fails
-                children.push(
-                  new Paragraph({
-                    children: [
-                      new TextRun({
-                        text: 'PU Note: ',
-                        bold: true,
-                        italics: true,
-                        font: 'Roboto',
-                      }),
-                      new TextRun({
-                        text: entry.puNote,
-                        italics: true,
-                        font: 'Roboto',
-                      }),
-                    ],
-                    spacing: { after: 100 },
-                  })
-                );
-              }
-            }
-
-            // Separator between entries (but not after the last entry in the country)
-            const countryEntries = entriesByRegionAndCountry[region][country];
-            if (index < countryEntries.length - 1) {
-              children.push(createSeparator(40, { before: 200, after: 200 }));
-            }
-          });
-
-          // Separator after country section
-          children.push(createSeparator());
-        });
-      });
-
-      // Footer
-      children.push(
-        new Paragraph({
-          alignment: AlignmentType.CENTER,
-          spacing: { before: 400 },
-          children: [
-            new TextRun({
-              text: `Exported on ${getCurrentDateTime()}`,
-              italics: true,
-              font: 'Roboto',
-            }),
-          ],
-        })
+      // Generate document blob using shared function
+      const blob = await generateDocumentBlob(
+        entriesForDate,
+        selectedDate,
+        includeImages,
+        createDocumentHeader
       );
-
-      // Create document with header
-      const headerTable = await createDocumentHeader();
       
-      const doc = new Document({
-        sections: [
-          {
-            properties: {
-              page: {},
-            },
-            headers: {
-              default: new Header({
-                children: [headerTable],
-              }),
-            },
-            children,
-          },
-        ],
-      });
-
-      // Generate and download
-      const blob = await Packer.toBlob(doc);
-      
-      // Format filename: MM YYMMDD DayOfWeek DD MonthName
-      // e.g., "MM 251212 Friday 12 December.docx" for 2025-12-12
-      const [year, month, day] = selectedDate.split('-').map(Number);
-      const date = new Date(Date.UTC(year, month - 1, day));
-      const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-      const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-      const dayOfWeek = dayNames[date.getUTCDay()];
-      const monthName = monthNames[month - 1];
-      const yymmdd = `${String(year).slice(2)}${String(month).padStart(2, '0')}${String(day).padStart(2, '0')}`;
-      const filename = `MM ${yymmdd} ${dayOfWeek} ${day} ${monthName}.docx`;
-      
-      saveAs(blob, filename);
+      // Save file with formatted filename
+      saveAs(blob, formatExportFilename(selectedDate));
 
       showSuccess('Export Successful', 'Daily briefing exported successfully!');
       handleOpenChange(false);
@@ -718,370 +699,15 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
 
     setIsSendingEmail(true);
     try {
-      // First, generate the document blob (reusing the same logic as export)
-      // Process entries for images
-      const entriesForDate = [...approvedEntries];
-      
-      for (const entry of entriesForDate) {
-        let html = entry.entry;
-        
-        if (!includeImages) {
-          html = html.replace(/<img[^>]*>/gi, '');
-          entry.entry = html;
-          continue;
-        }
-        
-        if (entry.images && entry.images.length > 0) {
-          for (const img of entry.images) {
-            try {
-              if (img.position === null || img.position === undefined) {
-                continue;
-              }
-              
-              const ref = `image-ref://img-${img.position}`;
-              
-              if (!html.includes(ref)) {
-                continue;
-              }
-              
-              const response = await fetch(`/api/images/${img.id}`);
-              if (!response.ok) {
-                html = html.replace(new RegExp(`<img[^>]*src=["']${ref}["'][^>]*>`, 'gi'), '');
-                continue;
-              }
-              
-              const arrayBuffer = await response.arrayBuffer();
-              const base64Data = btoa(
-                new Uint8Array(arrayBuffer).reduce(
-                  (data, byte) => data + String.fromCharCode(byte),
-                  ''
-                )
-              );
-              const dataUrl = `data:${img.mimeType};base64,${base64Data}`;
-              
-              const searchPattern = new RegExp(`src=["']${ref.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}["']`, 'gi');
-              html = html.replace(searchPattern, `src="${dataUrl}"`);
-            } catch (error) {
-              console.error(`Error downloading image ${img.id}:`, error);
-              const ref = `image-ref://img-${img.position}`;
-              html = html.replace(new RegExp(`<img[^>]*src=["']${ref}["'][^>]*>`, 'gi'), '');
-            }
-          }
-        }
-        
-        const externalImgRegex = /<img[^>]*src=["']?(https?:\/\/[^"'\s>]+)["']?([^>]*)>/gi;
-        let match;
-        const replacements: Array<{from: string, to: string}> = [];
-        
-        while ((match = externalImgRegex.exec(html)) !== null) {
-          const fullTag = match[0];
-          const imageUrl = match[1];
-          const restOfTag = match[2];
-          
-          try {
-            const response = await fetch(imageUrl, { mode: 'cors' });
-            if (!response.ok) {
-              continue;
-            }
-            
-            const blob = await response.blob();
-            const arrayBuffer = await blob.arrayBuffer();
-            const base64Data = btoa(
-              new Uint8Array(arrayBuffer).reduce(
-                (data, byte) => data + String.fromCharCode(byte),
-                ''
-              )
-            );
-            
-            const mimeType = blob.type || response.headers.get('content-type') || 'image/png';
-            const dataUrl = `data:${mimeType};base64,${base64Data}`;
-            
-            const newTag = `<img src="${dataUrl}"${restOfTag}>`;
-            replacements.push({ from: fullTag, to: newTag });
-          } catch (error) {
-            console.error('Error downloading external image:', imageUrl, error);
-          }
-        }
-        
-        for (const { from, to } of replacements) {
-          html = html.replace(from, to);
-        }
-        
-        entry.entry = html;
-      }
-
-      // Sort and organize entries
-      const sortedEntries = [...entriesForDate].sort((a, b) => {
-        if (a.priority === 'sg-attention' && b.priority !== 'sg-attention') return -1;
-        if (a.priority !== 'sg-attention' && b.priority === 'sg-attention') return 1;
-        return 0;
-      });
-
-      const entriesByRegion = sortedEntries.reduce((acc, entry) => {
-        if (!acc[entry.region]) {
-          acc[entry.region] = [];
-        }
-        acc[entry.region].push(entry);
-        return acc;
-      }, {} as Record<string, typeof sortedEntries>);
-
-      const sortedRegions = Object.keys(entriesByRegion).sort();
-
-      // Build document
-      const children: any[] = [
-        new Paragraph({
-          heading: HeadingLevel.HEADING_1,
-          alignment: AlignmentType.CENTER,
-          spacing: { after: 100 },
-          children: [
-            new TextRun({
-              text: 'Morning Meeting Update',
-              bold: true,
-              size: 32,
-              font: 'Roboto',
-              color: '009edb',
-            }),
-          ],
-        }),
-        new Paragraph({
-          alignment: AlignmentType.CENTER,
-          spacing: { after: 400 },
-          children: [
-            new TextRun({
-              text: formatDateLong(selectedDate),
-              size: 24,
-              font: 'Roboto',
-              color: '009edb',
-            }),
-          ],
-        }),
-        createSeparator(),
-      ];
-
-      sortedRegions.forEach((region) => {
-        children.push(
-          new Paragraph({
-            heading: HeadingLevel.HEADING_2,
-            alignment: AlignmentType.LEFT,
-            spacing: { before: 300, after: 200 },
-            children: [
-              new TextRun({
-                text: region,
-                bold: true,
-                size: 24,
-                font: 'Roboto',
-                color: '009edb',
-              }),
-            ],
-          })
-        );
-
-        entriesByRegion[region].forEach((entry: MorningMeetingEntry) => {
-          children.push(
-            new Paragraph({
-              children: [
-                new TextRun({
-                  text: `${entry.country}`,
-                  bold: true,
-                  size: 24,
-                  font: 'Roboto',
-                }),
-              ],
-              spacing: { before: 300, after: 100 },
-            })
-          );
-          children.push(
-            new Paragraph({
-              children: [
-                new TextRun({
-                  text: entry.priority === 'sg-attention'
-                    ? 'SG Attention'
-                    : 'Situational Awareness',
-                  italics: true,
-                  font: 'Roboto',
-                }),
-                new TextRun({
-                  text: ` | Category: ${entry.category}`,
-                  italics: true,
-                  font: 'Roboto',
-                })
-              ],
-              spacing: { after: 100 },
-            })
-          );
-
-          children.push(
-            new Paragraph({
-              children: [
-                new TextRun({
-                  text: entry.headline,
-                  bold: true,
-                  size: 22,
-                  font: 'Roboto',
-                }),
-              ],
-              spacing: { after: 150 },
-            })
-          );
-
-          if (entry.entry) {
-            try {
-              const contentElements = parseHtmlContent(entry.entry);
-              children.push(...contentElements);
-            } catch {
-              children.push(
-                new Paragraph({
-                  children: [
-                    new TextRun({
-                      text: entry.entry,
-                      font: 'Roboto',
-                    }),
-                  ],
-                  spacing: { after: 100 },
-                })
-              );
-            }
-          }
-
-          if (entry.sourceUrl) {
-            children.push(
-              new Paragraph({
-                children: [
-                  new TextRun({
-                    text: 'Source: ',
-                    italics: true,
-                    font: 'Roboto',
-                  }),
-                  new TextRun({
-                    text: entry.sourceUrl,
-                    italics: true,
-                    font: 'Roboto',
-                  }),
-                ],
-                spacing: { after: 100 },
-              })
-            );
-          }
-
-          if (entry.puNote) {
-            try {
-              // Parse PU Note as HTML to support rich text formatting
-              const puNoteElements = parseHtmlContent(entry.puNote);
-              // Add "PU Note: " prefix to the first paragraph
-              if (puNoteElements.length > 0) {
-                const firstPara = puNoteElements[0];
-                const prefixRun = new TextRun({
-                  text: 'PU Note: ',
-                  bold: true,
-                  italics: true,
-                  font: 'Roboto',
-                });
-                // Make all runs italic
-                const modifiedChildren = (firstPara as any).root?.[0]?.root || [];
-                const italicChildren = modifiedChildren.map((child: any) => {
-                  if (child.constructor.name === 'TextRun') {
-                    return new TextRun({
-                      ...(child as any).root?.[0]?.root || {},
-                      italics: true,
-                    });
-                  }
-                  return child;
-                });
-                children.push(
-                  new Paragraph({
-                    children: [prefixRun, ...italicChildren],
-                    spacing: { after: 100 },
-                  })
-                );
-                // Add remaining paragraphs with italic formatting
-                for (let i = 1; i < puNoteElements.length; i++) {
-                  children.push(puNoteElements[i]);
-                }
-              } else {
-                // Fallback if parsing returns no elements
-                children.push(
-                  new Paragraph({
-                    children: [
-                      new TextRun({
-                        text: 'PU Note: ',
-                        bold: true,
-                        italics: true,
-                        font: 'Roboto',
-                      }),
-                      new TextRun({
-                        text: entry.puNote,
-                        italics: true,
-                        font: 'Roboto',
-                      }),
-                    ],
-                    spacing: { after: 100 },
-                  })
-                );
-              }
-            } catch {
-              // Fallback to plain text if parsing fails
-              children.push(
-                new Paragraph({
-                  children: [
-                    new TextRun({
-                      text: 'PU Note: ',
-                      bold: true,
-                      italics: true,
-                      font: 'Roboto',
-                    }),
-                    new TextRun({
-                      text: entry.puNote,
-                      italics: true,
-                      font: 'Roboto',
-                    }),
-                  ],
-                  spacing: { after: 100 },
-                })
-              );
-            }
-          }
-
-          children.push(createSeparator());
-        });
-      });
-
-      children.push(
-        new Paragraph({
-          alignment: AlignmentType.CENTER,
-          spacing: { before: 400 },
-          children: [
-            new TextRun({
-              text: `Exported on ${getCurrentDateTime()}`,
-              italics: true,
-              font: 'Roboto',
-            }),
-          ],
-        })
+      // Generate document blob using shared function
+      const blob = await generateDocumentBlob(
+        [...approvedEntries],
+        selectedDate,
+        includeImages,
+        createDocumentHeader
       );
-
-      // Get header
-      const headerTable = await createDocumentHeader();
-
-      const doc = new Document({
-        sections: [
-          {
-            properties: {
-              page: {},
-            },
-            headers: {
-              default: new Header({
-                children: [headerTable],
-              }),
-            },
-            children,
-          },
-        ],
-      });
-
-      // Generate blob
-      const blob = await Packer.toBlob(doc);
       
-      // Convert blob to base64
+      // Convert blob to base64 for API
       const arrayBuffer = await blob.arrayBuffer();
       const base64Data = btoa(
         new Uint8Array(arrayBuffer).reduce(
@@ -1091,23 +717,13 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
       );
       const docxBlob = `data:application/vnd.openxmlformats-officedocument.wordprocessingml.document;base64,${base64Data}`;
 
-      // Send via API
-      // Format filename: MM YYMMDD DayOfWeek DD MonthName
-      const [year, month, day] = selectedDate.split('-').map(Number);
-      const date = new Date(Date.UTC(year, month - 1, day));
-      const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-      const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-      const dayOfWeek = dayNames[date.getUTCDay()];
-      const monthName = monthNames[month - 1];
-      const yymmdd = `${String(year).slice(2)}${String(month).padStart(2, '0')}${String(day).padStart(2, '0')}`;
-      const emailFilename = `MM ${yymmdd} ${dayOfWeek} ${day} ${monthName}.docx`;
-      
+      // Send via API with formatted filename
       const response = await fetch('/api/send-briefing', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           docxBlob,
-          fileName: emailFilename,
+          fileName: formatExportFilename(selectedDate),
           briefingDate: selectedDate,
         }),
       });

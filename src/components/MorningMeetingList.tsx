@@ -4,8 +4,9 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { deleteEntry, getSubmittedEntries } from '@/lib/storage';
-import { Download, FileDown, List, RefreshCw } from 'lucide-react';
+import { Download, FileDown, FileText, List, RefreshCw } from 'lucide-react';
 import { ExportDailyBriefingDialog } from './ExportDailyBriefingDialog';
+import { BriefingModeDialog } from './BriefingModeDialog';
 import { EntriesTable } from './EntriesTable';
 import { usePopup } from '@/lib/popup-context';
 import type { MorningMeetingEntry } from '@/types/morning-meeting';
@@ -14,6 +15,7 @@ export function MorningMeetingList({ initialDateFilter }: { initialDateFilter?: 
   const { confirm: showConfirm, success: showSuccess, info: showInfo } = usePopup();
   const [entries, setEntries] = useState<MorningMeetingEntry[]>([]);
   const [showExportDialog, setShowExportDialog] = useState(false);
+  const [showBriefingDialog, setShowBriefingDialog] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const loadEntries = async () => {
@@ -108,15 +110,19 @@ export function MorningMeetingList({ initialDateFilter }: { initialDateFilter?: 
             </div>
           </div>
           <div className="flex flex-col sm:flex-row gap-2 sm:shrink-0">
-            <Button variant="outline" size="sm" onClick={handleRefresh} disabled={isRefreshing} className="w-full sm:w-auto justify-center">
+            <Button variant="outline" size="sm" onClick={handleRefresh} disabled={isRefreshing} className="w-full sm:w-auto justify-center sm:h-10 sm:px-6">
               <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
               <span className="sm:inline">Refresh</span>
             </Button>
-            <Button variant="outline" size="sm" onClick={() => setShowExportDialog(true)} className="w-full sm:w-auto justify-center">
+            <Button variant="outline" size="sm" onClick={() => setShowBriefingDialog(true)} className="w-full sm:w-auto justify-center sm:h-10 sm:px-6">
+              <FileText className="h-4 w-4" />
+              <span className="sm:inline">View Briefing</span>
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setShowExportDialog(true)} className="w-full sm:w-auto justify-center sm:h-10 sm:px-6">
               <FileDown className="h-4 w-4" />
               <span className="sm:inline">Export Daily Briefing</span>
             </Button>
-            <Button variant="outline" size="sm" onClick={exportToJSON} className="hidden w-full sm:w-auto justify-center">
+            <Button variant="outline" size="sm" onClick={exportToJSON} className="hidden w-full sm:w-auto justify-center sm:h-10 sm:px-6">
               <Download className="h-4 w-4" />
               <span className="sm:inline">Export JSON</span>
             </Button>
@@ -134,6 +140,12 @@ export function MorningMeetingList({ initialDateFilter }: { initialDateFilter?: 
         emptyMessage="No entries found."
         resultLabel="entries"
         initialDateFilter={initialDateFilter}
+      />
+
+      {/* Briefing Mode Dialog */}
+      <BriefingModeDialog
+        open={showBriefingDialog}
+        onOpenChange={setShowBriefingDialog}
       />
 
       {/* Export Dialog */}

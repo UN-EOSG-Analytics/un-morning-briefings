@@ -19,7 +19,7 @@ export default function HomePage() {
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 sm:gap-6 mb-8 sm:mb-12">
           <div className="text-left px-2 sm:px-0">
             <h1 className="text-3xl sm:text-4xl font-bold text-foreground mb-1">
-              Morning Meeting Briefings
+              Morning Meeting Update
             </h1>
             <p className="hidden sm:block text-base sm:text-lg text-slate-600">
               Create and manage daily briefing entries

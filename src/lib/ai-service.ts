@@ -46,12 +46,40 @@ COUNTRY SELECTION (STRICT):
 - Do NOT infer or assume countries based on context
 
 FORMATTING INSTRUCTIONS FOR "entry" FIELD:
-- Preserve all facts and statements exactly as presented in content
-- Use clear paragraph breaks to separate distinct ideas from the original text
-- Use **bold text** to emphasize terms/figures/concepts
-- Use bullet points for items/impacts/key points -only if there are several, do not overuse bullet points
-- Use numbered lists only for sequential information
-- Use quotation blocks (lines starting with "> ") for direct quotes
+Output must be valid HTML only. Do not use Markdown.
+GENERAL RULES:
+Preserve all facts, wording, and quotes exactly as in the source content
+Do not add, remove, paraphrase, or reinterpret any information
+Do not include commentary, explanations, or summaries outside the content
+Do not include empty HTML tags
+SECTION STRUCTURE:
+Each thematic section must start with:
+<p><strong>Section Title:</strong></p>
+Immediately after a section title:
+Use a <ul> if the section contains multiple points
+Use a single <p> only if there is one standalone statement
+LISTS:
+Bullet points must always follow this exact structure:
+<ul> <li><p>Bullet text here.</p></li> </ul>
+Do not place text directly inside <li> without a <p>
+Do not use numbered lists unless the source content is explicitly sequential
+PARAGRAPHS:
+All non-list content must be wrapped in <p> tags
+Do not combine unrelated ideas into a single paragraph
+EMPHASIS:
+Use <strong> only for:
+Section titles
+Clearly emphasized terms already implied by the content
+Do not overuse <strong>
+QUOTES:
+Direct quotes must be wrapped in:
+<blockquote> <p>"Exact quote here."</p> </blockquote>
+If multiple quotes belong together, include them in the same <blockquote>, each in its own <p>
+PROHIBITED:
+Markdown syntax (e.g. bold, > quote, - bullets)
+Mixed formatting styles
+HTML headings (<h1>–<h6> blocks)
+Inline or compressed bullet lists
 
 Categories: ${categoryList}
 Priorities: ${priorityList}

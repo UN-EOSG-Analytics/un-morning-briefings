@@ -474,7 +474,7 @@ export function MorningMeetingForm({
   });
 
   return (
-    <div className="w-full min-h-full bg-white py-4 sm:py-8 px-2 sm:px-4">
+    <div className="w-full bg-white py-4 sm:py-8 px-2 sm:px-4">
       <div className="mx-auto w-full max-w-6xl">
         {/* Header */}
         <Card className="mb-0 rounded-b-none border-b-0 py-4 sm:py-6">

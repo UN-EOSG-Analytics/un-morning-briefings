@@ -564,7 +564,7 @@ export function MorningMeetingForm({
                   {/* Country */}
                   <MultiSelectField
                     label="Country/Countries"
-                    placeholder="Select countries (optional)..."
+                    placeholder="Select countries..."
                     value={Array.isArray(formData.country) ? formData.country : (formData.country ? [formData.country] : [])}
                     onValueChange={handleCountryChange}
                     options={availableCountries.map((country) => ({ value: country, label: country }))}

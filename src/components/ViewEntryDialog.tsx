@@ -470,9 +470,10 @@ export function ViewEntryDialog({
               <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">
                 PU Notes
               </div>
-              <div className="text-xs sm:text-sm text-slate-700 break-words whitespace-pre-wrap">
-                {displayEntry.puNote}
-              </div>
+              <div 
+                className="text-xs sm:text-sm text-slate-700 break-words entry-content"
+                dangerouslySetInnerHTML={{ __html: displayEntry.puNote }}
+              />
             </div>
           )}
 

@@ -766,13 +766,15 @@ export function MorningMeetingForm({
                     </label>
                   </div>
                   {showPuNote && (
-                    <textarea
-                      name="puNote"
-                      value={formData.puNote || ''}
-                      onChange={handleInputChange}
+                    <RichTextEditor
+                      content={formData.puNote || ''}
+                      onChange={(value) => {
+                        setFormData((prev) => ({ ...prev, puNote: value }));
+                        setHasUnsavedChanges(true);
+                      }}
                       placeholder="Add Political Unit note or comment..."
-                      rows={3}
-                      className="w-full rounded border border-slate-300 bg-slate-50 px-3 py-2 text-sm outline-none transition focus:border-un-blue focus:ring-2 focus:ring-un-blue/15"
+                      minHeight="min-h-[120px]"
+                      minimalMode={true}
                     />
                   )}
                 </div>

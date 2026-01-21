@@ -40,6 +40,7 @@ interface RichTextEditorProps {
   placeholder?: string;
   error?: boolean;
   minHeight?: string;
+  minimalMode?: boolean;
 }
 
 export function RichTextEditor({
@@ -47,6 +48,7 @@ export function RichTextEditor({
   onChange,
   error = false,
   minHeight = 'min-h-[200px]',
+  minimalMode = false,
 }: RichTextEditorProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { warning: showWarning, success: showSuccess } = usePopup();
@@ -361,20 +363,24 @@ export function RichTextEditor({
             ? 'border-red-500 bg-red-50'
             : 'border-slate-300 bg-slate-50'
         }`}>
-          <div className="flex flex-wrap items-center gap-1 justify-between">
-          {/* Fullscreen Toggle */}
-          <Button
-            type="button"
-            size="sm"
-            variant={isFullscreen ? 'default' : 'outline'}
-            onClick={() => setIsFullscreen(!isFullscreen)}
-            className="h-8 w-8 p-0"
-            title={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
-          >
-            {isFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
-          </Button>
+          <div className="flex flex-wrap items-center gap-1">
+          {!minimalMode && (
+            <>
+              {/* Fullscreen Toggle */}
+              <Button
+                type="button"
+                size="sm"
+                variant={isFullscreen ? 'default' : 'outline'}
+                onClick={() => setIsFullscreen(!isFullscreen)}
+                className="h-8 w-8 p-0"
+                title={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
+              >
+                {isFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
+              </Button>
 
-          <div className="h-6 w-px bg-slate-300" />
+              <div className="h-6 w-px bg-slate-300" />
+            </>
+          )}
           {/* Text Formatting */}
           <Button
             type="button"
@@ -387,27 +393,31 @@ export function RichTextEditor({
             <Bold className="h-4 w-4" />
           </Button>
 
-          <Button
-            type="button"
-            size="sm"
-            variant={editor.isActive('italic') ? 'default' : 'outline'}
-            onClick={() => editor.chain().focus().toggleItalic().run()}
-            className="h-8 w-8 p-0"
-            title="Italic (Ctrl+I)"
-          >
-            <Italic className="h-4 w-4" />
-          </Button>
+          {!minimalMode && (
+            <>
+              <Button
+                type="button"
+                size="sm"
+                variant={editor.isActive('italic') ? 'default' : 'outline'}
+                onClick={() => editor.chain().focus().toggleItalic().run()}
+                className="h-8 w-8 p-0"
+                title="Italic (Ctrl+I)"
+              >
+                <Italic className="h-4 w-4" />
+              </Button>
 
-          <Button
-            type="button"
-            size="sm"
-            variant={editor.isActive('strike') ? 'default' : 'outline'}
-            onClick={() => editor.chain().focus().toggleStrike().run()}
-            className="h-8 w-8 p-0"
-            title="Strikethrough"
-          >
-            <Strikethrough className="h-4 w-4" />
-          </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant={editor.isActive('strike') ? 'default' : 'outline'}
+                onClick={() => editor.chain().focus().toggleStrike().run()}
+                className="h-8 w-8 p-0"
+                title="Strikethrough"
+              >
+                <Strikethrough className="h-4 w-4" />
+              </Button>
+            </>
+          )}
 
           {/* Highlight */}
           <Button
@@ -421,264 +431,272 @@ export function RichTextEditor({
             <div className="h-2 w-6 rounded bg-yellow-300" />
           </Button>
 
-          {/* Comment Mark */}
-          <Button
-            type="button"
-            size="sm"
-            variant={editor.isActive('comment') ? 'default' : 'outline'}
-            onClick={() => {
-              const comment = prompt('Add a comment/note:');
-              if (comment) {
-                editor.chain().focus().toggleMark('comment', { comment }).run();
-              }
-            }}
-            className="h-8 w-8 p-0"
-            title="Add comment to selected text"
-          >
-            <MessageCircle className="h-4 w-4" />
-          </Button>
+          {!minimalMode && (
+            <>
+              {/* Comment Mark */}
+              <Button
+                type="button"
+                size="sm"
+                variant={editor.isActive('comment') ? 'default' : 'outline'}
+                onClick={() => {
+                  const comment = prompt('Add a comment/note:');
+                  if (comment) {
+                    editor.chain().focus().toggleMark('comment', { comment }).run();
+                  }
+                }}
+                className="h-8 w-8 p-0"
+                title="Add comment to selected text"
+              >
+                <MessageCircle className="h-4 w-4" />
+              </Button>
+            </>
+          )}
 
-          <div className="h-6 w-px bg-slate-300" />
+          {!minimalMode && (
+            <>
+              <div className="h-6 w-px bg-slate-300" />
 
-          {/* Headings */}
-          <Button
-            type="button"
-            size="sm"
-            variant={editor.isActive('heading', { level: 2 }) ? 'default' : 'outline'}
-            onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-            className="h-8 w-8 p-0"
-            title="Heading 2"
-          >
-            <Heading2 className="h-4 w-4" />
-          </Button>
+              {/* Headings */}
+              <Button
+                type="button"
+                size="sm"
+                variant={editor.isActive('heading', { level: 2 }) ? 'default' : 'outline'}
+                onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+                className="h-8 w-8 p-0"
+                title="Heading 2"
+              >
+                <Heading2 className="h-4 w-4" />
+              </Button>
 
-          <Button
-            type="button"
-            size="sm"
-            variant={editor.isActive('heading', { level: 3 }) ? 'default' : 'outline'}
-            onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-            className="h-8 w-8 p-0"
-            title="Heading 3"
-          >
-            <Heading3 className="h-4 w-4" />
-          </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant={editor.isActive('heading', { level: 3 }) ? 'default' : 'outline'}
+                onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
+                className="h-8 w-8 p-0"
+                title="Heading 3"
+              >
+                <Heading3 className="h-4 w-4" />
+              </Button>
 
-          <div className="h-6 w-px bg-slate-300" />
+              <div className="h-6 w-px bg-slate-300" />
 
-          {/* Lists */}
-          <Button
-            type="button"
-            size="sm"
-            variant={editor.isActive('bulletList') ? 'default' : 'outline'}
-            onClick={() => editor.chain().focus().toggleBulletList().run()}
-            className="h-8 w-8 p-0"
-            title="Bullet List"
-          >
-            <List className="h-4 w-4" />
-          </Button>
+              {/* Lists */}
+              <Button
+                type="button"
+                size="sm"
+                variant={editor.isActive('bulletList') ? 'default' : 'outline'}
+                onClick={() => editor.chain().focus().toggleBulletList().run()}
+                className="h-8 w-8 p-0"
+                title="Bullet List"
+              >
+                <List className="h-4 w-4" />
+              </Button>
 
-          <Button
-            type="button"
-            size="sm"
-            variant={editor.isActive('orderedList') ? 'default' : 'outline'}
-            onClick={() => editor.chain().focus().toggleOrderedList().run()}
-            className="h-8 w-8 p-0"
-            title="Ordered List"
-          >
-            <ListOrdered className="h-4 w-4" />
-          </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant={editor.isActive('orderedList') ? 'default' : 'outline'}
+                onClick={() => editor.chain().focus().toggleOrderedList().run()}
+                className="h-8 w-8 p-0"
+                title="Ordered List"
+              >
+                <ListOrdered className="h-4 w-4" />
+              </Button>
 
-          <div className="h-6 w-px bg-slate-300" />
+              <div className="h-6 w-px bg-slate-300" />
 
-          {/* Block Elements */}
-          <Button
-            type="button"
-            size="sm"
-            variant={editor.isActive('blockquote') ? 'default' : 'outline'}
-            onClick={() => editor.chain().focus().toggleBlockquote().run()}
-            className="h-8 w-8 p-0"
-            title="Blockquote"
-          >
-            <Quote className="h-4 w-4" />
-          </Button>
+              {/* Block Elements */}
+              <Button
+                type="button"
+                size="sm"
+                variant={editor.isActive('blockquote') ? 'default' : 'outline'}
+                onClick={() => editor.chain().focus().toggleBlockquote().run()}
+                className="h-8 w-8 p-0"
+                title="Blockquote"
+              >
+                <Quote className="h-4 w-4" />
+              </Button>
 
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            onClick={() => editor.chain().focus().setHorizontalRule().run()}
-            className="h-8 w-8 p-0"
-            title="Horizontal Line"
-          >
-            <Minus className="h-4 w-4" />
-          </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => editor.chain().focus().setHorizontalRule().run()}
+                className="h-8 w-8 p-0"
+                title="Horizontal Line"
+              >
+                <Minus className="h-4 w-4" />
+              </Button>
 
-          <div className="h-6 w-px bg-slate-300" />
+              <div className="h-6 w-px bg-slate-300" />
 
-          {/* Alignment */}
-          <Button
-            type="button"
-            size="sm"
-            variant={editor.isActive({ textAlign: 'left' }) ? 'default' : 'outline'}
-            onClick={() => editor.chain().focus().setTextAlign('left').run()}
-            className="h-8 w-8 p-0"
-            title="Align Left"
-          >
-            <AlignLeft className="h-4 w-4" />
-          </Button>
+              {/* Alignment */}
+              <Button
+                type="button"
+                size="sm"
+                variant={editor.isActive({ textAlign: 'left' }) ? 'default' : 'outline'}
+                onClick={() => editor.chain().focus().setTextAlign('left').run()}
+                className="h-8 w-8 p-0"
+                title="Align Left"
+              >
+                <AlignLeft className="h-4 w-4" />
+              </Button>
 
-          <Button
-            type="button"
-            size="sm"
-            variant={editor.isActive({ textAlign: 'center' }) ? 'default' : 'outline'}
-            onClick={() => editor.chain().focus().setTextAlign('center').run()}
-            className="h-8 w-8 p-0"
-            title="Align Center"
-          >
-            <AlignCenter className="h-4 w-4" />
-          </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant={editor.isActive({ textAlign: 'center' }) ? 'default' : 'outline'}
+                onClick={() => editor.chain().focus().setTextAlign('center').run()}
+                className="h-8 w-8 p-0"
+                title="Align Center"
+              >
+                <AlignCenter className="h-4 w-4" />
+              </Button>
 
-          <Button
-            type="button"
-            size="sm"
-            variant={editor.isActive({ textAlign: 'right' }) ? 'default' : 'outline'}
-            onClick={() => editor.chain().focus().setTextAlign('right').run()}
-            className="h-8 w-8 p-0"
-            title="Align Right"
-          >
-            <AlignRight className="h-4 w-4" />
-          </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant={editor.isActive({ textAlign: 'right' }) ? 'default' : 'outline'}
+                onClick={() => editor.chain().focus().setTextAlign('right').run()}
+                className="h-8 w-8 p-0"
+                title="Align Right"
+              >
+                <AlignRight className="h-4 w-4" />
+              </Button>
 
-          <div className="h-6 w-px bg-slate-300" />
+              <div className="h-6 w-px bg-slate-300" />
 
-          {/* Link */}
-          <Button
-            type="button"
-            size="sm"
-            variant={editor.isActive('link') ? 'default' : 'outline'}
-            onClick={() => {
-              const url = window.prompt('URL:');
-              if (url) {
-                editor.chain().focus().toggleLink({ href: url }).run();
-              }
-            }}
-            className="h-8 w-8 p-0"
-            title="Add Link"
-          >
-            <LinkIcon className="h-4 w-4" />
-          </Button>
+              {/* Link */}
+              <Button
+                type="button"
+                size="sm"
+                variant={editor.isActive('link') ? 'default' : 'outline'}
+                onClick={() => {
+                  const url = window.prompt('URL:');
+                  if (url) {
+                    editor.chain().focus().toggleLink({ href: url }).run();
+                  }
+                }}
+                className="h-8 w-8 p-0"
+                title="Add Link"
+              >
+                <LinkIcon className="h-4 w-4" />
+              </Button>
 
-          {/* Image Upload */}
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            onClick={handleImageUpload}
-            className="h-8 w-8 p-0"
-            title="Upload Image"
-          >
-            <ImagePlus className="h-4 w-4" />
-          </Button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            onChange={handleFileChange}
-            className="hidden"
-          />
+              {/* Image Upload */}
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={handleImageUpload}
+                className="h-8 w-8 p-0"
+                title="Upload Image"
+              >
+                <ImagePlus className="h-4 w-4" />
+              </Button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                className="hidden"
+              />
 
-          {/* Image Sizing */}
-          <select
-            onChange={(e) => {
-              const size = e.target.value;
-              if (size === 'default') {
-                e.target.value = 'default';
-                return;
-              }
-              
-              let width: string | undefined;
-              
-              switch (size) {
-                case 'small':
-                  width = '250px';
-                  break;
-                case 'medium':
-                  width = '400px';
-                  break;
-                case 'large':
-                  width = '600px';
-                  break;
-                case 'full':
-                  width = '100%';
-                  break;
-              }
+              {/* Image Sizing */}
+              <select
+                onChange={(e) => {
+                  const size = e.target.value;
+                  if (size === 'default') {
+                    e.target.value = 'default';
+                    return;
+                  }
+                  
+                  let width: string | undefined;
+                  
+                  switch (size) {
+                    case 'small':
+                      width = '250px';
+                      break;
+                    case 'medium':
+                      width = '400px';
+                      break;
+                    case 'large':
+                      width = '600px';
+                      break;
+                    case 'full':
+                      width = '100%';
+                      break;
+                  }
 
-              if (width) {
-                editor
-                  .chain()
-                  .focus()
-                  .updateAttributes('image', { width })
-                  .run();
-              }
-              e.target.value = 'default';
-            }}
-            className="h-8 rounded border border-slate-300 bg-white px-2 py-1 text-xs"
-            title="Image Size (select an image first)"
-            defaultValue="default"
-          >
-            <option value="default" disabled>
-              Image Size
-            </option>
-            <option value="small">Small (250px)</option>
-            <option value="medium">Medium (400px)</option>
-            <option value="large">Large (600px)</option>
-            <option value="full">Full Width</option>
-          </select>
+                  if (width) {
+                    editor
+                      .chain()
+                      .focus()
+                      .updateAttributes('image', { width })
+                      .run();
+                  }
+                  e.target.value = 'default';
+                }}
+                className="h-8 rounded border border-slate-300 bg-white px-2 py-1 text-xs"
+                title="Image Size (select an image first)"
+                defaultValue="default"
+              >
+                <option value="default" disabled>
+                  Image Size
+                </option>
+                <option value="small">Small (250px)</option>
+                <option value="medium">Medium (400px)</option>
+                <option value="large">Large (600px)</option>
+                <option value="full">Full Width</option>
+              </select>
 
-          <div className="h-6 w-px bg-slate-300" />
+              <div className="h-6 w-px bg-slate-300" />
 
-          {/* Undo/Redo */}
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            onClick={() => editor.chain().focus().undo().run()}
-            className="h-8 w-8 p-0"
-            disabled={!editor.can().undo()}
-            title="Undo"
-          >
-            <Undo2 className="h-4 w-4" />
-          </Button>
+              {/* Undo/Redo */}
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => editor.chain().focus().undo().run()}
+                className="h-8 w-8 p-0"
+                disabled={!editor.can().undo()}
+                title="Undo"
+              >
+                <Undo2 className="h-4 w-4" />
+              </Button>
 
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            onClick={() => editor.chain().focus().redo().run()}
-            className="h-8 w-8 p-0"
-            disabled={!editor.can().redo()}
-            title="Redo"
-          >
-            <Redo2 className="h-4 w-4" />
-          </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => editor.chain().focus().redo().run()}
+                className="h-8 w-8 p-0"
+                disabled={!editor.can().redo()}
+                title="Redo"
+              >
+                <Redo2 className="h-4 w-4" />
+              </Button>
 
-          <div className="h-6 w-px bg-slate-300" />
+              <div className="h-6 w-px bg-slate-300" />
 
-          {/* Regenerate Button */}
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            onClick={handleReformulate}
-            disabled={isReformulating}
-            className="h-8 px-2 gap-1"
-            title="Reformulate content to be concise and professional"
-          >
-            <Wand2 className="h-4 w-4" />
-            <span className="text-xs hidden sm:inline">
-              {isReformulating ? 'Reformulating...' : 'Regenerate'}
-            </span>
-          </Button>
+              {/* Regenerate Button */}
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={handleReformulate}
+                disabled={isReformulating}
+                className="h-8 px-2 gap-1"
+                title="Reformulate content to be concise and professional"
+              >
+                <Wand2 className="h-4 w-4" />
+                <span className="text-xs hidden sm:inline">
+                  {isReformulating ? 'Reformulating...' : 'Regenerate'}
+                </span>
+              </Button>
+            </>
+          )}
         </div>
         </div>
       </div>

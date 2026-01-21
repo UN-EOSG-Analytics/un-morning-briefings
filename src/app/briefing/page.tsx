@@ -643,28 +643,6 @@ function BriefingContent() {
         </div>
       )}
 
-      {/* Export Button - Hidden when printing */}
-      <div className="fixed top-20 right-4 z-50 print:hidden">
-        <Button 
-          onClick={async () => {
-            // Generate and download Word document
-            const blob = await generateBriefingDocument(entries, dateParam);
-            const [year, month, day] = dateParam.split('-').map(Number);
-            const date = new Date(Date.UTC(year, month - 1, day));
-            const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-            const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-            const dayOfWeek = dayNames[date.getUTCDay()];
-            const monthName = monthNames[month - 1];
-            const yymmdd = `${String(year).slice(2)}${String(month).padStart(2, '0')}${String(day).padStart(2, '0')}`;
-            const filename = `MM ${yymmdd} ${dayOfWeek} ${day} ${monthName}.docx`;
-            saveAs(blob, filename);
-          }}
-          className="bg-un-blue hover:bg-un-blue/90 shadow-none"
-        >
-          <FileDown className="h-4 w-4" />
-          Export to Word
-        </Button>
-      </div>
 
       {/* Agenda Sidebar - Hidden on mobile and when printing */}
       <div className="hidden lg:block fixed left-4 top-20 w-56 print:hidden">

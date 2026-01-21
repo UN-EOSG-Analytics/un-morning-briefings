@@ -363,7 +363,7 @@ export function RichTextEditor({
             ? 'border-red-500 bg-red-50'
             : 'border-slate-300 bg-slate-50'
         }`}>
-          <div className="flex flex-wrap items-center gap-1">
+          <div className={`flex flex-wrap items-center gap-1${!minimalMode ? ' justify-between' : ''}`}> 
           {!minimalMode && (
             <>
               {/* Fullscreen Toggle */}

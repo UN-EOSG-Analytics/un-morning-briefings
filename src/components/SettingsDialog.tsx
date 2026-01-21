@@ -11,6 +11,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { usePopup } from '@/lib/popup-context';
 
 interface SettingsDialogProps {
@@ -31,6 +32,10 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   const [isCreatingBackup, setIsCreatingBackup] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Email workflow settings
+  const [emailTime, setEmailTime] = useState('09:00');
+  const [emailAddress, setEmailAddress] = useState('');
 
 
   const handleDeleteAccount = async () => {
@@ -202,21 +207,27 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[600px] h-[420px] flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Settings className="h-5 w-5" />
-            Account Settings
+            Settings
           </DialogTitle>
           <DialogDescription>
-            Manage your account preferences and settings
+            Manage your account, data, and email preferences
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6 py-4">
-          {/* Account Information */}
-          <div className="space-y-2">
-            <h3 className="text-sm font-semibold text-slate-900">Account Information</h3>
+        <Tabs defaultValue="account" className="w-full flex flex-col flex-1 min-h-0">
+          <TabsList className="grid w-full grid-cols-3 flex-shrink-0">
+            <TabsTrigger value="account">Account</TabsTrigger>
+            <TabsTrigger value="data">Data Management</TabsTrigger>
+            <TabsTrigger value="email">E-Mail Workflow</TabsTrigger>
+          </TabsList>
+
+          {/* Account Tab */}
+          <TabsContent value="account" className="space-y-4 mt-4 overflow-y-auto flex-1">
+            {/* Account Information */}
             <div className="bg-slate-50 rounded-lg p-4 space-y-3">
               <div>
                 <p className="text-xs text-slate-600">Email</p>
@@ -301,43 +312,8 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                 <p className="text-sm font-medium">{session?.user?.team}</p>
               </div>
             </div>
-          </div>
 
-          {/* Backup Section */}
-          <div className="space-y-2">
-            <h3 className="text-sm font-semibold text-slate-900">Data Management</h3>
-            <div className="grid grid-cols-2 gap-2">
-              <Button
-                variant="outline"
-                onClick={handleCreateBackup}
-                disabled={isCreatingBackup}
-              >
-                <Download className="h-4 w-4 mr-2" />
-                {isCreatingBackup ? 'Creating...' : 'Backup'}
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={isImporting}
-              >
-                <Upload className="h-4 w-4 mr-2" />
-                {isImporting ? 'Importing...' : 'Import'}
-              </Button>
-            </div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="application/json,.json"
-              onChange={handleImportBackup}
-              className="hidden"
-            />
-            <p className="text-xs text-slate-600">
-              Download all entries as JSON backup or import a backup file to restore entries.
-            </p>
-          </div>
-
-          {/* Delete Account Section */}
-          <div className="space-y-2">            
+            {/* Delete Account Section */}
             {!showDeleteConfirm ? (
               <Button
                 variant="outline"
@@ -390,8 +366,92 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                 </div>
               </div>
             )}
-          </div>
-        </div>
+          </TabsContent>
+
+          {/* Data Management Tab */}
+          <TabsContent value="data" className="space-y-4 mt-4 overflow-y-auto flex-1">
+            <div className="bg-slate-50 rounded-lg p-4 space-y-4">
+              <div>
+                <h3 className="text-sm font-semibold text-slate-900 mb-3">Backup & Restore</h3>
+                <div className="grid grid-cols-1 gap-2 mb-2">
+                  <Button
+                    variant="outline"
+                    onClick={handleCreateBackup}
+                    disabled={isCreatingBackup}
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    {isCreatingBackup ? 'Creating...' : 'Download Backup'}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isImporting}
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    {isImporting ? 'Importing...' : 'Import Backup'}
+                  </Button>
+                </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="application/json,.json"
+                  onChange={handleImportBackup}
+                  className="hidden"
+                />
+                <p className="text-xs text-slate-600">
+                  Download all entries as JSON backup or import a backup file to restore entries.
+                </p>
+              </div>
+            </div>
+          </TabsContent>
+
+          {/* E-Mail Workflow Tab */}
+          <TabsContent value="email" className="space-y-4 mt-4 overflow-y-auto flex-1">
+            <div className="bg-slate-50 rounded-lg p-4 space-y-4">
+              <div>
+                <h3 className="text-sm font-semibold text-slate-900 mb-3">Scheduled Briefing</h3>
+                <p className="text-xs text-slate-600 mb-3">
+                  Configure automatic daily briefing emails.
+                </p>
+                
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-xs text-slate-600 block mb-1">
+                      Send Time
+                    </label>
+                    <input
+                      type="time"
+                      value={emailTime}
+                      onChange={(e) => setEmailTime(e.target.value)}
+                      className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-un-blue focus:outline-none focus:ring-2 focus:ring-un-blue/20"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs text-slate-600 block mb-1">
+                      Recipient Email Address
+                    </label>
+                    <input
+                      type="email"
+                      value={emailAddress}
+                      onChange={(e) => setEmailAddress(e.target.value)}
+                      placeholder="recipient@un.org"
+                      className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-un-blue focus:outline-none focus:ring-2 focus:ring-un-blue/20"
+                    />
+                  </div>
+
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    disabled
+                  >
+                    Save Email Settings
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
       </DialogContent>
     </Dialog>
   );

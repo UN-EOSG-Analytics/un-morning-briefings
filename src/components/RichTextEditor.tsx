@@ -218,12 +218,18 @@ export function RichTextEditor({
         const img = new window.Image();
         img.onload = () => {
           console.log('Image loaded with dimensions:', img.width, img.height);
-          editor.chain().focus().setImage({ 
-            src: url,
-            alt: file.name || 'uploaded image',
-            'data-width': String(img.width),
-            'data-height': String(img.height),
-          }).run();
+          editor
+            .chain()
+            .focus()
+            .setImage({ 
+              src: url,
+              alt: file.name || 'uploaded image',
+            })
+            .updateAttributes('image', {
+              'data-width': String(img.width),
+              'data-height': String(img.height),
+            })
+            .run();
         };
         img.onerror = () => {
           console.error('Failed to load image for dimensions');

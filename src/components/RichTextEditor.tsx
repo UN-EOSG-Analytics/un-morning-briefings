@@ -218,7 +218,9 @@ export function RichTextEditor({
           console.log('Image loaded with dimensions:', img.width, img.height);
           editor.chain().focus().setImage({ 
             src: url,
-            alt: `${img.width}x${img.height}`,
+            alt: file.name || 'uploaded image',
+            'data-width': String(img.width),
+            'data-height': String(img.height),
           }).run();
         };
         img.onerror = () => {

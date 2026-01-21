@@ -250,9 +250,9 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
             img.filename,
             img.mimeType,
             img.blobUrl,
-            img.width || null,
-            img.height || null,
-            img.position || null,
+            img.width ?? null,
+            img.height ?? null,
+            img.position ?? null,
           ]
         );
       }

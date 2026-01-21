@@ -258,9 +258,9 @@ export async function POST(request: NextRequest) {
             img.filename,
             img.mimeType,
             img.blobUrl,
-            img.width || null,
-            img.height || null,
-            img.position !== undefined && img.position !== null ? img.position : null,
+            img.width ?? null,
+            img.height ?? null,
+            img.position ?? null,
           ]
         );
       }

@@ -97,11 +97,11 @@ function FormContent() {
   };
 
   if (isLoading) {
-    return <main className="flex items-center justify-center py-12">Loading...</main>;
+    return <main className="flex-1 flex items-center justify-center py-12">Loading...</main>;
   }
 
   return (
-    <main>
+    <main className="flex-1">
       <MorningMeetingForm 
         onSubmit={handleSubmit}
         onSaveDraft={handleSaveDraft}

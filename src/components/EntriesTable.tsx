@@ -5,8 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { MorningMeetingEntry, PRIORITIES, REGIONS, CATEGORIES } from '@/types/morning-meeting';
 import { formatDateResponsive, formatDateDesktop, formatDateWithWeekday, formatTime } from '@/lib/format-date';
-import { Trash2, Edit, Clock, Check, X, FastForward } from 'lucide-react';
+import { Trash2, Edit, Clock, Check, X, FastForward, FileDown, FileText } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { ViewEntryDialog } from './ViewEntryDialog';
 import { SearchBar } from './SearchBar';
 import { ColumnFilter } from './ColumnFilter';
@@ -33,10 +34,12 @@ export function EntriesTable({
   resultLabel = 'entries',
   initialDateFilter,
 }: EntriesTableProps) {
+  const router = useRouter();
   const [selectedEntry, setSelectedEntry] = useState<MorningMeetingEntry | null>(null);
   const [showViewDialog, setShowViewDialog] = useState(false);
   const [openStatusDropdown, setOpenStatusDropdown] = useState<string | null>(null);
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
+  const [exportingDate, setExportingDate] = useState<string | null>(null);
 
   const {
     searchTerm,
@@ -310,8 +313,32 @@ export function EntriesTable({
                     showSeparator && (
                       <tr key={`sep-${entry.id}`} className="bg-slate-100">
                         <td colSpan={showApprovedColumn ? 7 : 6} className="px-4 py-2">
-                          <div className="flex items-center gap-2 text-xs font-semibold text-slate-600">
-                            <span className="text-un-blue">▼ Briefing for {formatDateWithWeekday(currentBriefingDate)}</span>
+                          <div className="flex items-center gap-4">
+                            <span className="text-xs font-semibold text-un-blue">▼ Briefing for {formatDateWithWeekday(currentBriefingDate)}</span>
+                            <div className="flex gap-1.5 ml-auto" onClick={(e) => e.stopPropagation()}>
+                              <button
+                                onClick={() => router.push(`/briefing?date=${currentBriefingDate}`)}
+                                className="p-1 text-slate-600 hover:text-un-blue transition-colors"
+                                title="View briefing"
+                              >
+                                <FileText className="h-4 w-4" />
+                              </button>
+                              <button
+                                onClick={async () => {
+                                  setExportingDate(currentBriefingDate);
+                                  try {
+                                    router.push(`/briefing?date=${currentBriefingDate}&export=true`);
+                                  } finally {
+                                    setExportingDate(null);
+                                  }
+                                }}
+                                disabled={exportingDate === currentBriefingDate}
+                                className="p-1 text-slate-600 hover:text-un-blue transition-colors disabled:opacity-50"
+                                title="Export to Word"
+                              >
+                                <FileDown className="h-4 w-4" />
+                              </button>
+                            </div>
                           </div>
                         </td>
                       </tr>

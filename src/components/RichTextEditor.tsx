@@ -237,53 +237,6 @@ export function RichTextEditor({
     e.target.value = '';
   };
 
-  /**
-   * Extract full sentences touched by selection for context-aware regeneration
-   * Returns the complete sentences that contain the selection, preserving all whitespace
-   */
-  const getFullSentenceContext = (text: string, selStart: number, selEnd: number) => {
-    // Find sentence boundaries (., !, ?) with optional whitespace
-    const sentenceEnders = /[.!?]+[\s]*/g;
-    
-    let sentenceStart = 0;
-    let sentenceEnd = text.length;
-    
-    // Find the start of the sentence containing the selection
-    // Look backward from selection start
-    const textBeforeSelection = text.substring(0, selStart);
-    const matches = [...textBeforeSelection.matchAll(sentenceEnders)];
-    if (matches.length > 0) {
-      const lastMatch = matches[matches.length - 1];
-      sentenceStart = (lastMatch.index ?? 0) + lastMatch[0].length;
-    }
-    
-    // Find the end of the sentence containing the selection
-    // Look forward from selection end
-    const textAfterSelection = text.substring(selEnd);
-    const nextMatch = textAfterSelection.match(sentenceEnders);
-    if (nextMatch && nextMatch.index !== undefined) {
-      sentenceEnd = selEnd + nextMatch.index + nextMatch[0].length;
-    }
-    
-    // Extract the full sentence(s) that contain the selection
-    const fullSentence = text.substring(sentenceStart, sentenceEnd);
-    
-    // Calculate relative positions within the sentence
-    const relativeStart = selStart - sentenceStart;
-    const relativeEnd = selEnd - sentenceStart;
-    
-    return {
-      fullSentence,
-      sentenceStart,
-      sentenceEnd,
-      relativeStart,
-      relativeEnd,
-      beforeText: fullSentence.substring(0, relativeStart),
-      selectedText: fullSentence.substring(relativeStart, relativeEnd),
-      afterText: fullSentence.substring(relativeEnd),
-    };
-  };
-
   const handleReformulate = async () => {
     if (!editor) return;
 
@@ -293,8 +246,8 @@ export function RichTextEditor({
     setIsReformulating(true);
     try {
       if (hasSelection) {
-        // Get the selected text with exact whitespace preservation
-        const selectedText = editor.state.doc.textBetween(from, to, '\n');
+        // Get the selected text - use paragraph separator for multi-paragraph selections
+        const selectedText = editor.state.doc.textBetween(from, to, '\n\n', '\n');
         
         if (!selectedText.trim()) {
           showWarning('No Text Selected', 'Please select text to regenerate');
@@ -302,18 +255,7 @@ export function RichTextEditor({
           return;
         }
 
-        // Get full plain text to find sentence boundaries
-        const fullText = editor.getText();
-        
-        // Calculate the actual character position in plain text
-        const textBeforeSelection = editor.state.doc.textBetween(0, from, '\n');
-        const selStart = textBeforeSelection.length;
-        const selEnd = selStart + selectedText.length;
-        
-        // Get the full sentence context
-        const context = getFullSentenceContext(fullText, selStart, selEnd);
-        
-        // Send the full sentence to AI but indicate what part should be reformulated
+        // Send the selected text directly to AI for reformulation
         const response = await fetch('/api/reformulate', {
           method: 'POST',
           headers: {
@@ -321,9 +263,9 @@ export function RichTextEditor({
           },
           body: JSON.stringify({
             mode: 'selection',
-            fullSentence: context.fullSentence,
-            selectionStart: context.relativeStart,
-            selectionEnd: context.relativeEnd,
+            fullSentence: selectedText,
+            selectionStart: 0,
+            selectionEnd: selectedText.length,
           }),
         });
 
@@ -331,7 +273,7 @@ export function RichTextEditor({
           const error = await response.json();
           const errorMessage = error.error || 'Failed to regenerate text';
           
-          if (errorMessage.includes('GEMINI_API_KEY') || errorMessage.includes('not configured')) {
+          if (errorMessage.includes('AZURE_OPENAI_API_KEY') || errorMessage.includes('not configured')) {
             showWarning('AI Usage not enabled', 'Please wait for Update');
           } else {
             showWarning('Regeneration Failed', errorMessage);
@@ -346,28 +288,16 @@ export function RichTextEditor({
         const selectionFrom = from;
         const selectionTo = to;
         
-        // Replace the selected text using a single command chain
-        // This ensures atomic operation and proper position tracking
-        const success = editor
+        // Replace the selected text using deleteRange and insertContentAt
+        // This preserves proper TipTap formatting
+        editor
           .chain()
           .focus()
-          .command(({ tr }) => {
-            // Delete the selection
-            tr.delete(selectionFrom, selectionTo);
-            // Insert the new text at the deletion point
-            tr.insertText(reformulatedText, selectionFrom);
-            return true;
-          })
+          .deleteRange({ from: selectionFrom, to: selectionTo })
+          .insertContentAt(selectionFrom, reformulatedText)
           .run();
         
-        if (!success) {
-          showWarning('Replacement Failed', 'Could not replace the selected text');
-          return;
-        }
-        
         // Calculate the new end position for selection
-        // Since we deleted and inserted at the same position, 
-        // the new end is: start + length of new text
         const newEnd = selectionFrom + reformulatedText.length;
         
         // Wait a tick for the editor to update, then select the new text

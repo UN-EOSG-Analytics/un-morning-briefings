@@ -202,8 +202,34 @@ export async function reformulateSelection(
   const beforeText = fullSentence.substring(0, selectionStart);
   const selectedText = fullSentence.substring(selectionStart, selectionEnd);
   const afterText = fullSentence.substring(selectionEnd);
+  
+  // Check if we're reformulating the entire text (no context)
+  const isFullText = selectionStart === 0 && selectionEnd === fullSentence.length;
+  
+  let prompt: string;
+  
+  if (isFullText) {
+    // Direct reformulation without context markers
+    prompt = `Reformulate this UN briefing text to be more concise and professional.
 
-  const prompt = `Reformulate the selected portion of this UN briefing text to be more concise and professional.
+Text to reformulate:
+"${selectedText}"
+
+Guidelines:
+- Make it concise, clear, and professional
+- Maintain all key facts and information
+- Use formal UN briefing tone
+- Preserve any paragraph breaks if present (output multiple paragraphs separated by double newlines)
+
+CRITICAL: Output ONLY your rewritten version of the text. Do not include:
+- Quotes around your answer
+- Explanations or comments
+- Introductory phrases like "Here is..."
+
+Your reformulated text:`;
+  } else {
+    // Reformulation with context
+    prompt = `Reformulate the selected portion of this UN briefing text to be more concise and professional.
 
 Full sentence(s):
 "${beforeText}<<<START SELECTION>>>${selectedText}<<<END SELECTION>>>${afterText}"
@@ -218,13 +244,17 @@ CRITICAL: Output ONLY your rewritten version of the selected text. Do not includ
 - The selection markers
 
 Your reformulated text:`;
+  }
 
   try {
+    // Calculate appropriate token limit based on input length
+    const estimatedTokens = Math.max(800, Math.ceil(selectedText.length / 2));
+    
     const { text: reformulatedText } = await generateText({
       model: azure('gpt-4o'),
       prompt,
       temperature: 0.7,
-      maxOutputTokens: 400,
+      maxOutputTokens: estimatedTokens,
     });
     
     // Clean up response
@@ -247,9 +277,9 @@ Your reformulated text:`;
       }
     }
     
-    // If empty or suspiciously long, return original
-    if (!cleanedText || cleanedText.length > selectedText.length * 3) {
-      console.warn('[AI SERVICE] AI response invalid, using original text');
+    // If empty, return original
+    if (!cleanedText) {
+      console.warn('[AI SERVICE] AI response empty, using original text');
       return selectedText;
     }
     
@@ -323,7 +353,31 @@ ${plainText}`;
     });
     
     // Convert reformulated text to TipTap HTML format
-    let reformulatedHtml = reformulatedText.trim();    
+    let reformulatedHtml = reformulatedText.trim();
+    
+    // Convert plain text paragraphs to proper TipTap HTML
+    // Split by double newlines (paragraph breaks) or single newlines
+    const paragraphs = reformulatedHtml
+      .split(/\n\n+/)
+      .map(p => p.trim())
+      .filter(p => p.length > 0);
+    
+    // Convert each paragraph to proper HTML
+    reformulatedHtml = paragraphs
+      .map(paragraph => {
+        // Check if this is already HTML
+        if (paragraph.startsWith('<') && paragraph.endsWith('>')) {
+          return paragraph;
+        }
+        // Check if it's an image placeholder - don't wrap in <p>
+        if (/^\[IMAGE_PLACEHOLDER_\d+\]$/.test(paragraph)) {
+          return paragraph;
+        }
+        // Wrap plain text in <p> tags
+        return `<p>${paragraph}</p>`;
+      })
+      .join('');
+    
     // Re-insert images at their placeholder positions
     images.forEach((img, index) => {
       const placeholder = `[IMAGE_PLACEHOLDER_${index}]`;

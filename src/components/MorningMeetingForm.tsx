@@ -591,18 +591,27 @@ export function MorningMeetingForm({
                         ({formData.headline.length}/300)
                       </span>
                     </label>
-                    <input
-                      type="text"
+                    <textarea
                       name="headline"
                       value={formData.headline}
                       onChange={handleInputChange}
                       placeholder="Enter a concise, descriptive headline..."
                       maxLength={300}
-                      className={`w-full rounded border px-3 py-2 text-sm outline-none transition ${
+                      rows={1}
+                      className={`w-full rounded border px-3 py-2 text-sm outline-none transition resize-none overflow-hidden ${
                         errors.headline
                           ? 'border-red-500 bg-red-50 focus:border-red-500 focus:ring-2 focus:ring-red-500/15'
                           : 'border-slate-300 bg-slate-50 focus:border-un-blue focus:ring-2 focus:ring-un-blue/15'
                       }`}
+                      style={{
+                        minHeight: '2.5rem',
+                        maxHeight: '10rem',
+                      }}
+                      onInput={(e) => {
+                        const target = e.target as HTMLTextAreaElement;
+                        target.style.height = 'auto';
+                        target.style.height = Math.min(target.scrollHeight, 160) + 'px';
+                      }}
                     />
                     {errors.headline && (
                       <div className="flex items-center gap-1 text-xs text-red-600">

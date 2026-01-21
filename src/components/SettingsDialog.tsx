@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useSession, signOut } from 'next-auth/react';
-import { Settings, Trash2, AlertTriangle, Check, X } from 'lucide-react';
+import { Settings, Trash2, AlertTriangle, Check, X, Download, Upload } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -11,6 +11,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { usePopup } from '@/lib/popup-context';
 
 interface SettingsDialogProps {
   open: boolean;
@@ -19,6 +20,7 @@ interface SettingsDialogProps {
 
 export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   const { data: session, update: updateSession } = useSession();
+  const { success: showSuccess, warning: showWarning } = usePopup();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState('');
@@ -26,6 +28,9 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   const [firstName, setFirstName] = useState(session?.user?.firstName || '');
   const [lastName, setLastName] = useState(session?.user?.lastName || '');
   const [isSavingName, setIsSavingName] = useState(false);
+  const [isCreatingBackup, setIsCreatingBackup] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
 
   const handleDeleteAccount = async () => {
@@ -94,6 +99,104 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
       setIsSavingName(false);
+    }
+  };
+
+  const handleCreateBackup = async () => {
+    setIsCreatingBackup(true);
+    setError('');
+
+    try {
+      const response = await fetch('/api/entries');
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch entries');
+      }
+
+      const data = await response.json();
+
+      // Create backup object with metadata
+      const backup = {
+        version: '1.0',
+        timestamp: new Date().toISOString(),
+        user: session?.user?.email,
+        entries: Array.isArray(data) ? data : [],
+      };
+
+      // Convert to JSON string
+      const jsonString = JSON.stringify(backup, null, 2);
+      
+      // Create blob and download
+      const blob = new Blob([jsonString], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `un-briefings-backup-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create backup');
+    } finally {
+      setIsCreatingBackup(false);
+    }
+  };
+
+  const handleImportBackup = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsImporting(true);
+    setError('');
+
+    try {
+      // Read the file
+      const fileContent = await file.text();
+      const backup = JSON.parse(fileContent);
+
+      // Validate backup structure
+      if (!backup.entries || !Array.isArray(backup.entries)) {
+        throw new Error('Invalid backup file format');
+      }
+
+      // Send to API for import
+      const response = await fetch('/api/entries/import', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ entries: backup.entries }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to import entries');
+      }
+
+      // Show success message
+      showSuccess(
+        'Import Successful',
+        `Imported ${result.imported} entries. ${result.skipped} duplicates were skipped.`
+      );
+      
+      // Close dialog after successful import
+      setTimeout(() => {
+        onOpenChange(false);
+      }, 1000);
+      
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Failed to import backup';
+      setError(errorMsg);
+      showWarning('Import Failed', errorMsg);
+    } finally {
+      setIsImporting(false);
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
 
@@ -198,6 +301,39 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                 <p className="text-sm font-medium">{session?.user?.team}</p>
               </div>
             </div>
+          </div>
+
+          {/* Backup Section */}
+          <div className="space-y-2">
+            <h3 className="text-sm font-semibold text-slate-900">Data Management</h3>
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                variant="outline"
+                onClick={handleCreateBackup}
+                disabled={isCreatingBackup}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                {isCreatingBackup ? 'Creating...' : 'Backup'}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isImporting}
+              >
+                <Upload className="h-4 w-4 mr-2" />
+                {isImporting ? 'Importing...' : 'Import'}
+              </Button>
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="application/json,.json"
+              onChange={handleImportBackup}
+              className="hidden"
+            />
+            <p className="text-xs text-slate-600">
+              Download all entries as JSON backup or import a backup file to restore entries.
+            </p>
           </div>
 
           {/* Delete Account Section */}

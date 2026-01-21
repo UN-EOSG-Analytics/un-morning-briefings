@@ -466,6 +466,7 @@ function BriefingContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [activeSection, setActiveSection] = useState<string>('');
   const [fullScreenImage, setFullScreenImage] = useState<string | null>(null);
+  const [scrollPercentage, setScrollPercentage] = useState(0);
   const contentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -559,6 +560,19 @@ function BriefingContent() {
 
     return () => observer.disconnect();
   }, [sortedRegions]);
+
+  // Track scroll position for percentage display
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollTop = window.scrollY;
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      const scrollPercent = docHeight > 0 ? Math.round((scrollTop / docHeight) * 100) : 0;
+      setScrollPercentage(scrollPercent);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Add click handlers to images for full screen view
   useEffect(() => {
@@ -656,7 +670,9 @@ function BriefingContent() {
       <div className="hidden lg:block fixed left-4 top-20 w-56 print:hidden">
         <div className="sticky top-20 max-h-[calc(100vh-8rem)] overflow-y-auto">
           <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 shadow-sm">
-            <h3 className="text-sm font-bold text-slate-900 mb-3 uppercase tracking-wide">Contents</h3>
+            <h3 className="text-sm font-bold text-slate-900 mb-3 uppercase tracking-wide">
+              Contents <span className="text-xs opacity-75">({scrollPercentage}%)</span>
+            </h3>
             <nav className="space-y-1">
               {sortedRegions.map((region) => {
                 const regionId = `region-${region}`;

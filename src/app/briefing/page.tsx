@@ -630,7 +630,7 @@ function BriefingContent() {
       )}
 
       {/* Export Button - Hidden when printing */}
-      <div className="fixed top-4 right-4 z-50 print:hidden">
+      <div className="fixed top-20 right-4 z-50 print:hidden">
         <Button 
           onClick={async () => {
             // Generate and download Word document
@@ -653,8 +653,8 @@ function BriefingContent() {
       </div>
 
       {/* Agenda Sidebar - Hidden on mobile and when printing */}
-      <div className="hidden lg:block fixed left-4 top-24 w-56 print:hidden">
-        <div className="sticky top-24 max-h-[calc(100vh-8rem)] overflow-y-auto">
+      <div className="hidden lg:block fixed left-4 top-20 w-56 print:hidden">
+        <div className="sticky top-20 max-h-[calc(100vh-8rem)] overflow-y-auto">
           <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 shadow-sm">
             <h3 className="text-sm font-bold text-slate-900 mb-3 uppercase tracking-wide">Contents</h3>
             <nav className="space-y-1">

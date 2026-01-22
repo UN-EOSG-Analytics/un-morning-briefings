@@ -79,6 +79,36 @@ const formatDateLong = (dateStr: string): string => {
 };
 
 /**
+ * Format a source date (ISO or YYYY-MM-DD format) to readable format
+ * Example: "2026-01-20T05:00:00.000Z" or "2026-01-20" → "January 20, 2026"
+ */
+const formatSourceDate = (dateStr: string): string => {
+  const monthNames = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ];
+
+  // Extract YYYY-MM-DD from ISO format or direct date string
+  const dateMatch = dateStr.match(/(\d{4})-(\d{2})-(\d{2})/);
+  if (!dateMatch) return dateStr;
+
+  const [, year, month, day] = dateMatch;
+  const monthNum = parseInt(month, 10) - 1;
+
+  return `${monthNames[monthNum]} ${parseInt(day, 10)}, ${year}`;
+};
+
+/**
  * Get current datetime string without timezone conversion
  */
 const getCurrentDateTime = (): string => {
@@ -352,15 +382,15 @@ const buildDocumentChildren = (
         acc[entry.region][""].push(entry);
       } else {
         // Handle both single country (string) and multiple countries (array)
+        // Only group by first country to avoid duplicates
         const countries = Array.isArray(entry.country)
           ? entry.country
           : [entry.country];
-        countries.forEach((country) => {
-          if (!acc[entry.region][country]) {
-            acc[entry.region][country] = [];
-          }
-          acc[entry.region][country].push(entry);
-        });
+        const firstCountry = countries[0];
+        if (!acc[entry.region][firstCountry]) {
+          acc[entry.region][firstCountry] = [];
+        }
+        acc[entry.region][firstCountry].push(entry);
       }
       return acc;
     },
@@ -436,11 +466,17 @@ const buildDocumentChildren = (
     countries.forEach((country) => {
       // Add country header only if country is not empty
       if (country !== "") {
+        // Get all countries for entries in this group
+        const entriesInGroup = entriesByRegionAndCountry[region][country];
+        const allCountries = entriesInGroup.length > 0 && entriesInGroup[0].country
+          ? (Array.isArray(entriesInGroup[0].country) ? entriesInGroup[0].country.join(" / ") : entriesInGroup[0].country)
+          : country;
+        
         children.push(
           new Paragraph({
             children: [
               new TextRun({
-                text: country,
+                text: allCountries,
                 bold: true,
                 size: 24,
                 font: "Roboto",
@@ -518,22 +554,49 @@ const buildDocumentChildren = (
             }
           }
 
-          // Source URL
-          if (entry.sourceUrl) {
+          // Source URL and Date
+          if (entry.sourceUrl || entry.sourceDate) {
+            const sourceChildren: TextRun[] = [
+              new TextRun({
+                text: "Source: ",
+                italics: true,
+                font: "Roboto",
+              }),
+            ];
+            
+            if (entry.sourceUrl) {
+              sourceChildren.push(
+                new TextRun({
+                  text: entry.sourceUrl,
+                  italics: true,
+                  font: "Roboto",
+                }),
+              );
+            }
+            
+            if (entry.sourceUrl && entry.sourceDate) {
+              sourceChildren.push(
+                new TextRun({
+                  text: " | ",
+                  italics: true,
+                  font: "Roboto",
+                }),
+              );
+            }
+            
+            if (entry.sourceDate) {
+              sourceChildren.push(
+                new TextRun({
+                  text: formatSourceDate(entry.sourceDate),
+                  italics: true,
+                  font: "Roboto",
+                }),
+              );
+            }
+            
             children.push(
               new Paragraph({
-                children: [
-                  new TextRun({
-                    text: "Source: ",
-                    italics: true,
-                    font: "Roboto",
-                  }),
-                  new TextRun({
-                    text: entry.sourceUrl,
-                    italics: true,
-                    font: "Roboto",
-                  }),
-                ],
+                children: sourceChildren,
                 spacing: { after: 100 },
               }),
             );

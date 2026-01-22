@@ -62,6 +62,36 @@ const formatDateLong = (dateStr: string): string => {
 };
 
 /**
+ * Format a source date (ISO or YYYY-MM-DD format) to readable format
+ * Example: "2026-01-20T05:00:00.000Z" or "2026-01-20" → "January 20, 2026"
+ */
+const formatSourceDate = (dateStr: string): string => {
+  const monthNames = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ];
+
+  // Extract YYYY-MM-DD from ISO format or direct date string
+  const dateMatch = dateStr.match(/(\d{4})-(\d{2})-(\d{2})/);
+  if (!dateMatch) return dateStr;
+
+  const [, year, month, day] = dateMatch;
+  const monthNum = parseInt(month, 10) - 1;
+
+  return `${monthNames[monthNum]} ${parseInt(day, 10)}, ${year}`;
+};
+
+/**
  * Get current datetime string without timezone conversion
  */
 const getCurrentDateTime = (): string => {
@@ -458,17 +488,17 @@ const generateBriefingDocument = async (
             }
           }
 
-          if (entry.sourceUrl) {
+          if (entry.sourceDate) {
             children.push(
               new Paragraph({
                 children: [
                   new TextRun({
-                    text: "Source: ",
+                    text: "Source Date: ",
                     italics: true,
                     font: "Roboto",
                   }),
                   new TextRun({
-                    text: entry.sourceUrl,
+                    text: formatSourceDate(entry.sourceDate),
                     italics: true,
                     font: "Roboto",
                   }),
@@ -869,10 +899,12 @@ function BriefingContent() {
                                 />
                               )}
 
-                              {/* Source URL */}
-                              {entry.sourceUrl && (
+                              {/* Source URL and Date */}
+                              {(entry.sourceUrl || entry.sourceDate) && (
                                 <p className="text-sm leading-relaxed break-all text-slate-600 italic">
                                   Source: {entry.sourceUrl}
+                                  {entry.sourceUrl && entry.sourceDate && " | "}
+                                  {entry.sourceDate && formatSourceDate(entry.sourceDate)}
                                 </p>
                               )}
 

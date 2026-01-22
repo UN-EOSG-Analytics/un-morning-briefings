@@ -621,15 +621,15 @@ function BriefingContent() {
         acc[entry.region][""].push(entry);
       } else {
         // Handle both single country (string) and multiple countries (array)
-        // Only group by first country to avoid duplicates
+        // Group by full country constellation to separate different combinations
         const countries = Array.isArray(entry.country)
           ? entry.country
           : [entry.country];
-        const firstCountry = countries[0];
-        if (!acc[entry.region][firstCountry]) {
-          acc[entry.region][firstCountry] = [];
+        const countryKey = countries.join(" / ");
+        if (!acc[entry.region][countryKey]) {
+          acc[entry.region][countryKey] = [];
         }
-        acc[entry.region][firstCountry].push(entry);
+        acc[entry.region][countryKey].push(entry)
       }
       return acc;
     },
@@ -856,19 +856,11 @@ function BriefingContent() {
                   .map((country) => (
                     <div key={country} className="space-y-5">
                       {/* Country Header */}
-                      {country !== "" && (() => {
-                        // Get all countries for entries in this group
-                        const entriesInGroup = entriesByRegionAndCountry[region][country];
-                        const allCountries = entriesInGroup.length > 0 && entriesInGroup[0].country
-                          ? (Array.isArray(entriesInGroup[0].country) ? entriesInGroup[0].country.join(" / ") : entriesInGroup[0].country)
-                          : country;
-                        
-                        return (
-                          <h3 className="sticky top-16 z-20 border-b border-slate-300 bg-white py-2.5 text-xl font-bold tracking-tight text-slate-900 print:static print:border-none">
-                            {allCountries}
-                          </h3>
-                        );
-                      })()}
+                      {country !== "" && (
+                        <h3 className="sticky top-16 z-20 border-b border-slate-300 bg-white py-2.5 text-xl font-bold tracking-tight text-slate-900 print:static print:border-none">
+                          {country}
+                        </h3>
+                      )}
 
                       {/* Entries for Country */}
                       <div className="space-y-5">

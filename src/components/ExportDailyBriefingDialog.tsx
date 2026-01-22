@@ -382,15 +382,15 @@ const buildDocumentChildren = (
         acc[entry.region][""].push(entry);
       } else {
         // Handle both single country (string) and multiple countries (array)
-        // Only group by first country to avoid duplicates
+        // Group by full country constellation to separate different combinations
         const countries = Array.isArray(entry.country)
           ? entry.country
           : [entry.country];
-        const firstCountry = countries[0];
-        if (!acc[entry.region][firstCountry]) {
-          acc[entry.region][firstCountry] = [];
+        const countryKey = countries.join(" / ");
+        if (!acc[entry.region][countryKey]) {
+          acc[entry.region][countryKey] = [];
         }
-        acc[entry.region][firstCountry].push(entry);
+        acc[entry.region][countryKey].push(entry)
       }
       return acc;
     },
@@ -466,17 +466,11 @@ const buildDocumentChildren = (
     countries.forEach((country) => {
       // Add country header only if country is not empty
       if (country !== "") {
-        // Get all countries for entries in this group
-        const entriesInGroup = entriesByRegionAndCountry[region][country];
-        const allCountries = entriesInGroup.length > 0 && entriesInGroup[0].country
-          ? (Array.isArray(entriesInGroup[0].country) ? entriesInGroup[0].country.join(" / ") : entriesInGroup[0].country)
-          : country;
-        
         children.push(
           new Paragraph({
             children: [
               new TextRun({
-                text: allCountries,
+                text: country,
                 bold: true,
                 size: 24,
                 font: "Roboto",

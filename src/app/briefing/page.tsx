@@ -301,12 +301,12 @@ const generateBriefingDocument = async (
         const countries = Array.isArray(entry.country)
           ? entry.country
           : [entry.country];
-        countries.forEach((country) => {
-          if (!acc[entry.region][country]) {
-            acc[entry.region][country] = [];
-          }
-          acc[entry.region][country].push(entry);
-        });
+        // Only group by first country to avoid duplicates
+        const firstCountry = countries[0];
+        if (!acc[entry.region][firstCountry]) {
+          acc[entry.region][firstCountry] = [];
+        }
+        acc[entry.region][firstCountry].push(entry);
       }
       return acc;
     },
@@ -375,11 +375,17 @@ const generateBriefingDocument = async (
 
     countries.forEach((country) => {
       if (country !== "") {
+        // Get all countries for entries in this group
+        const entriesInGroup = entriesByRegionAndCountry[region][country];
+        const allCountries = entriesInGroup.length > 0 && entriesInGroup[0].country
+          ? (Array.isArray(entriesInGroup[0].country) ? entriesInGroup[0].country.join(" / ") : entriesInGroup[0].country)
+          : country;
+        
         children.push(
           new Paragraph({
             children: [
               new TextRun({
-                text: country,
+                text: allCountries,
                 bold: true,
                 size: 24,
                 font: "Roboto",
@@ -585,15 +591,15 @@ function BriefingContent() {
         acc[entry.region][""].push(entry);
       } else {
         // Handle both single country (string) and multiple countries (array)
+        // Only group by first country to avoid duplicates
         const countries = Array.isArray(entry.country)
           ? entry.country
           : [entry.country];
-        countries.forEach((country) => {
-          if (!acc[entry.region][country]) {
-            acc[entry.region][country] = [];
-          }
-          acc[entry.region][country].push(entry);
-        });
+        const firstCountry = countries[0];
+        if (!acc[entry.region][firstCountry]) {
+          acc[entry.region][firstCountry] = [];
+        }
+        acc[entry.region][firstCountry].push(entry);
       }
       return acc;
     },
@@ -820,11 +826,19 @@ function BriefingContent() {
                   .map((country) => (
                     <div key={country} className="space-y-5">
                       {/* Country Header */}
-                      {country !== "" && (
-                        <h3 className="sticky top-16 z-20 border-b border-slate-300 bg-white py-2.5 text-xl font-bold tracking-tight text-slate-900 print:static print:border-none">
-                          {country}
-                        </h3>
-                      )}
+                      {country !== "" && (() => {
+                        // Get all countries for entries in this group
+                        const entriesInGroup = entriesByRegionAndCountry[region][country];
+                        const allCountries = entriesInGroup.length > 0 && entriesInGroup[0].country
+                          ? (Array.isArray(entriesInGroup[0].country) ? entriesInGroup[0].country.join(" / ") : entriesInGroup[0].country)
+                          : country;
+                        
+                        return (
+                          <h3 className="sticky top-16 z-20 border-b border-slate-300 bg-white py-2.5 text-xl font-bold tracking-tight text-slate-900 print:static print:border-none">
+                            {allCountries}
+                          </h3>
+                        );
+                      })()}
 
                       {/* Entries for Country */}
                       <div className="space-y-5">

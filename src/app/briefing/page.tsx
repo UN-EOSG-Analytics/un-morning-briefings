@@ -676,8 +676,16 @@ function BriefingContent() {
         </div>
       </div>
 
+      {/* Progress Bar - Visible on smaller screens when sidebar is hidden */}
+      <div className="lg:hidden fixed left-0 top-16 bottom-0 w-1.5 bg-slate-200 print:hidden z-40">
+        <div 
+          className="w-full bg-un-blue transition-all duration-300"
+          style={{ height: `${scrollPercentage}%` }}
+        />
+      </div>
+
       {/* Document Container */}
-      <div ref={contentRef} className="mx-auto max-w-5xl px-8 sm:px-12 py-12 sm:py-16">
+      <div ref={contentRef} className="mx-auto max-w-5xl lg:max-w-3xl px-8 sm:px-12 lg:ml-80 lg:mr-8 py-12 sm:py-16">
         {/* Header */}
         <div className="mb-8 sm:mb-10 flex flex-col sm:flex-row items-start sm:items-start justify-between gap-4 sm:gap-0 pb-6 sm:pb-8">
           <img src="/images/UN_Logo_Black.png" alt="UN Logo" className="h-8 sm:h-10" />

@@ -251,9 +251,37 @@ export function ViewEntryDialog({
         
         {/* Header - Fixed at top */}
         <div className="mt-2 flex-shrink-0 bg-white border-b border-slate-200 py-2 sm:py-3 px-3 sm:px-6">
-          <h2 className="text-lg sm:text-2xl font-bold text-slate-900 mb-0 sm:mb-1 line-clamp-2">
-            {displayEntry.headline}
-          </h2>
+          <div className="flex items-center justify-between gap-2 mb-1">
+            <h2 className="text-lg sm:text-2xl font-bold text-slate-900 mb-0 line-clamp-2 flex-1">
+              {displayEntry.headline}
+            </h2>
+            {/* Progress indicator - Show on iPad and smaller when viewing multiple entries */}
+            {allEntries.length > 1 && (
+              <div className="flex lg:hidden items-center gap-2 shrink-0">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handlePrevious}
+                  disabled={currentIndex === 0}
+                  className="h-7 w-7 p-0"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <span className="text-xs text-slate-600 whitespace-nowrap font-medium">
+                  {currentIndex + 1}/{allEntries.length}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleNext}
+                  disabled={currentIndex >= allEntries.length - 1}
+                  className="h-7 w-7 p-0"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+          </div>
         </div>
         
         {/* Badges and AI Button - Fixed */}
@@ -497,9 +525,9 @@ export function ViewEntryDialog({
 
         {/* Footer */}
         <div className="border-t border-slate-200 pt-1 pb-2 sm:pt-4 sm:pb-4 px-3 sm:px-6 flex-shrink-0 bg-white flex flex-col sm:flex-row gap-1">
-          {/* Mobile: Navigation buttons */}
+          {/* Mobile: Navigation buttons - Hidden on medium and below, shown on large screens in center */}
           {allEntries.length > 1 && (
-            <div className="flex gap-2 justify-center sm:hidden mb-1">
+            <div className="hidden lg:flex gap-2 justify-center mb-1">
               <Button
                 variant="outline"
                 size="sm"
@@ -623,9 +651,9 @@ export function ViewEntryDialog({
               </Button>
             </div>
 
-            {/* Middle: Navigation */}
+            {/* Middle: Navigation - Only show on large screens, hidden on iPad */}
             {allEntries.length > 1 && (
-              <div className="flex gap-2 items-center">
+              <div className="hidden lg:flex gap-2 items-center">
                 <Button
                   variant="outline"
                   size="sm"

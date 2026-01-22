@@ -89,7 +89,7 @@ export function Navbar() {
           />
         </Link>
         {session && (
-          <span className="hidden sm:flex ml-2 border border-slate-300 bg-slate-100 text-slate-700 text-xs font-semibold px-2 py-1 rounded-full items-center gap-1.5">
+          <span className="hidden lg:flex ml-2 border border-slate-300 bg-slate-100 text-slate-700 text-xs font-semibold px-2 py-1 rounded-full items-center gap-1.5">
             <Users className="h-3 w-3" />
             {userTeam}
           </span>

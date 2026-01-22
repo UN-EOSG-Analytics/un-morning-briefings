@@ -292,7 +292,7 @@ export function ViewEntryDialog({
             </h2>
             {/* Progress indicator - Show on iPad and smaller when viewing multiple entries */}
             {allEntries.length > 1 && (
-              <div className="flex shrink-0 items-center gap-2 lg:hidden">
+              <div className="flex lg:hidden items-center gap-2 shrink-0">
                 <Button
                   variant="ghost"
                   size="sm"
@@ -302,7 +302,7 @@ export function ViewEntryDialog({
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
-                <span className="text-xs font-medium whitespace-nowrap text-slate-600">
+                <span className="text-xs text-slate-600 whitespace-nowrap font-medium">
                   {currentIndex + 1}/{allEntries.length}
                 </span>
                 <Button
@@ -583,10 +583,10 @@ export function ViewEntryDialog({
         </div>
 
         {/* Footer */}
-        <div className="flex flex-shrink-0 flex-col gap-1 border-t border-slate-200 bg-white px-3 pt-1 pb-2 sm:flex-row sm:px-6 sm:pt-4 sm:pb-4">
+        <div className="border-t border-slate-200 pt-1 pb-2 sm:pt-4 sm:pb-4 px-3 sm:px-6 flex-shrink-0 bg-white flex flex-col sm:flex-row gap-1">
           {/* Mobile: Navigation buttons - Hidden on medium and below, shown on large screens in center */}
           {allEntries.length > 1 && (
-            <div className="mb-1 hidden justify-center gap-2 lg:flex">
+            <div className="hidden lg:flex gap-2 justify-center mb-1">
               <Button
                 variant="outline"
                 size="sm"
@@ -613,9 +613,9 @@ export function ViewEntryDialog({
             </div>
           )}
 
-          {/* Approve/Deny buttons - shown above on mobile */}
+          {/* Approve/Deny buttons - shown on mobile and small screens */}
           {showApproveButton && onApprove && (
-            <div className="mb-0 flex w-full gap-2 sm:hidden">
+            <div className="flex gap-2 w-full sm:hidden mb-0">
               <Button
                 variant={
                   displayEntry.approvalStatus === "discussed"
@@ -670,8 +670,8 @@ export function ViewEntryDialog({
             </div>
           )}
 
-          {/* Action buttons - Mobile layout */}
-          <div className="flex flex-col gap-2 sm:hidden">
+          {/* Action buttons - Mobile/tablet layout */}
+          <div className="flex flex-col gap-2 lg:hidden">
             <div className="grid grid-cols-2 gap-2">
               <Link href={`/form?edit=${displayEntry.id}`}>
                 <Button
@@ -695,7 +695,7 @@ export function ViewEntryDialog({
           </div>
 
           {/* Action buttons - Desktop layout */}
-          <div className="hidden w-full items-center justify-between gap-2 sm:flex">
+          <div className="hidden sm:flex gap-2 justify-between items-center w-full">
             {/* Left: Edit/Close */}
             <div className="flex gap-2">
               <Link href={`/form?edit=${displayEntry.id}`}>

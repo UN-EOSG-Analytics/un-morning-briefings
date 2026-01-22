@@ -392,7 +392,7 @@ export function RichTextEditor({
           }`}
         >
           <div
-            className={`flex flex-wrap items-center gap-1${!minimalMode ? "justify-between" : ""}`}
+            className={`flex flex-wrap items-center gap-1 ${!minimalMode ? "justify-between" : ""}`}
           >
             {!minimalMode && (
               <>

@@ -778,7 +778,7 @@ export function MorningMeetingForm({
                 </div>
 
                 {/* Source URL and Date */}
-                <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-slate-700">
                       Source URL{" "}
@@ -863,7 +863,7 @@ export function MorningMeetingForm({
                 </button>
 
                 {showMetadata && (
-                  <div className="mt-4 grid grid-cols-3 gap-4">
+                  <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
                     {/* Author */}
                     <div className="space-y-2">
                       <label className="text-sm font-medium text-slate-700">

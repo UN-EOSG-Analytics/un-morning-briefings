@@ -159,11 +159,32 @@ function PopupItem({ popup }: PopupItemProps) {
 export function PopupContainer() {
   const { popups } = usePopup();
 
+  // Separate confirm popups from other popups
+  const confirmPopups = popups.filter((p) => p.type === "confirm");
+  const otherPopups = popups.filter((p) => p.type !== "confirm");
+
   return (
-    <div className="pointer-events-auto fixed right-4 bottom-4 z-[9999] hidden max-w-md flex-col space-y-3 sm:flex">
-      {popups.map((popup) => (
-        <PopupItem key={popup.id} popup={popup} />
-      ))}
-    </div>
+    <>
+      {/* Desktop popups (bottom-right, hidden on mobile except confirms) */}
+      <div className="pointer-events-auto fixed right-4 bottom-4 z-[9999] hidden max-w-md flex-col space-y-3 sm:flex">
+        {otherPopups.map((popup) => (
+          <PopupItem key={popup.id} popup={popup} />
+        ))}
+        {confirmPopups.map((popup) => (
+          <PopupItem key={popup.id} popup={popup} />
+        ))}
+      </div>
+
+      {/* Mobile confirm popups (center screen with backdrop) */}
+      {confirmPopups.length > 0 && (
+        <div className="pointer-events-auto fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 p-4 sm:hidden">
+          <div className="max-w-sm space-y-3">
+            {confirmPopups.map((popup) => (
+              <PopupItem key={popup.id} popup={popup} />
+            ))}
+          </div>
+        </div>
+      )}
+    </>
   );
 }

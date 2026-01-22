@@ -611,6 +611,111 @@ const generateDocumentBlob = async (
   return Packer.toBlob(doc);
 };
 
+/**
+ * Create a header section with UN logo and classification text
+ */
+export const createDocumentHeader = async (): Promise<Table> => {
+  // Load UN logo from public folder
+  let logoParagraphChildren: (ImageRun | TextRun)[] = [];
+
+  try {
+    const response = await fetch("/images/UN_Logo_Black.png");
+    const blob = await response.blob();
+    const arrayBuffer = await blob.arrayBuffer();
+    const imageData = new Uint8Array(arrayBuffer);
+
+    logoParagraphChildren = [
+      new ImageRun({
+        data: imageData,
+        transformation: {
+          width: 43,
+          height: 36,
+        },
+        type: "png",
+      }),
+    ];
+  } catch (error) {
+    console.error("Failed to load UN logo:", error);
+    // Fallback to text if image fails to load
+    logoParagraphChildren = [
+      new TextRun({
+        text: "[UN Logo]",
+        size: 16,
+        color: "666666",
+        font: "Roboto",
+      }),
+    ];
+  }
+
+  // Create a table-based header with logo on left and classification on right
+  const headerTable = new Table({
+    width: { size: 100, type: "pct" },
+    borders: {
+      top: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+      bottom: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+      left: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+      right: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+      insideHorizontal: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+      insideVertical: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+    },
+    rows: [
+      new TableRow({
+        height: { value: 720, rule: "atLeast" },
+        children: [
+          // Left cell with logo
+          new TableCell({
+            width: { size: 50, type: "pct" },
+            borders: {
+              top: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+              bottom: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+              left: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+              right: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+            },
+            margins: { top: 100, bottom: 0, left: 0, right: 100 },
+            verticalAlign: "top",
+            children: [
+              new Paragraph({
+                children: logoParagraphChildren,
+              }),
+            ],
+          }),
+          // Right cell with classification
+          new TableCell({
+            width: { size: 50, type: "pct" },
+            borders: {
+              top: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+              bottom: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+              left: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+              right: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+            },
+            margins: { top: 0, bottom: 0, left: 100, right: 0 },
+            verticalAlign: "center",
+            children: [
+              new Paragraph({
+                alignment: AlignmentType.RIGHT,
+                children: [
+                  new TextRun({
+                    text: "INTERNAL | NOT FOR FURTHER DISTRIBUTION",
+                    bold: false,
+                    size: 18,
+                    color: "000000",
+                    font: "Roboto",
+                  }),
+                ],
+              }),
+            ],
+          }),
+        ],
+      }),
+    ],
+  });
+
+  return headerTable;
+};
+
+// Export the document generation function for use in other components
+export { generateDocumentBlob, formatExportFilename };
+
 export function ExportDailyBriefingDialog({
   open,
   onOpenChange,
@@ -687,108 +792,6 @@ export function ExportDailyBriefingDialog({
       loadEntriesForDate();
     }
   }, [selectedDate, open, session?.user, showError, getApprovedEntriesForDate]);
-
-  /**
-   * Create a header section with UN logo and classification text
-   */
-  const createDocumentHeader = async (): Promise<Table> => {
-    // Load UN logo from public folder
-    let logoParagraphChildren: (ImageRun | TextRun)[] = [];
-
-    try {
-      const response = await fetch("/images/UN_Logo_Black.png");
-      const blob = await response.blob();
-      const arrayBuffer = await blob.arrayBuffer();
-      const imageData = new Uint8Array(arrayBuffer);
-
-      logoParagraphChildren = [
-        new ImageRun({
-          data: imageData,
-          transformation: {
-            width: 43,
-            height: 36,
-          },
-          type: "png",
-        }),
-      ];
-    } catch (error) {
-      console.error("Failed to load UN logo:", error);
-      // Fallback to text if image fails to load
-      logoParagraphChildren = [
-        new TextRun({
-          text: "[UN Logo]",
-          size: 16,
-          color: "666666",
-          font: "Roboto",
-        }),
-      ];
-    }
-
-    // Create a table-based header with logo on left and classification on right
-    const headerTable = new Table({
-      width: { size: 100, type: "pct" },
-      borders: {
-        top: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
-        bottom: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
-        left: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
-        right: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
-        insideHorizontal: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
-        insideVertical: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
-      },
-      rows: [
-        new TableRow({
-          height: { value: 720, rule: "atLeast" },
-          children: [
-            // Left cell with logo
-            new TableCell({
-              width: { size: 50, type: "pct" },
-              borders: {
-                top: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
-                bottom: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
-                left: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
-                right: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
-              },
-              margins: { top: 100, bottom: 0, left: 0, right: 100 },
-              verticalAlign: "top",
-              children: [
-                new Paragraph({
-                  children: logoParagraphChildren,
-                }),
-              ],
-            }),
-            // Right cell with classification
-            new TableCell({
-              width: { size: 50, type: "pct" },
-              borders: {
-                top: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
-                bottom: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
-                left: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
-                right: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
-              },
-              margins: { top: 0, bottom: 0, left: 100, right: 0 },
-              verticalAlign: "center",
-              children: [
-                new Paragraph({
-                  alignment: AlignmentType.RIGHT,
-                  children: [
-                    new TextRun({
-                      text: "INTERNAL | NOT FOR FURTHER DISTRIBUTION",
-                      bold: false,
-                      size: 18,
-                      color: "000000",
-                      font: "Roboto",
-                    }),
-                  ],
-                }),
-              ],
-            }),
-          ],
-        }),
-      ],
-    });
-
-    return headerTable;
-  };
 
   const handleExport = async () => {
     setIsExporting(true);

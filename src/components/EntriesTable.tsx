@@ -36,7 +36,14 @@ import {
   getRegionBadgeClass,
   formatCategoryForDisplay,
   getBriefingDate,
+  isWithinCutoffRange,
 } from "@/lib/useEntriesFilter";
+import {
+  generateDocumentBlob,
+  formatExportFilename,
+  createDocumentHeader,
+} from "@/components/ExportDailyBriefingDialog";
+import { saveAs } from "file-saver";
 
 interface EntriesTableProps {
   entries: MorningMeetingEntry[];
@@ -390,9 +397,20 @@ export function EntriesTable({
                                 onClick={async () => {
                                   setExportingDate(currentBriefingDate);
                                   try {
-                                    router.push(
-                                      `/briefing?date=${currentBriefingDate}&export=true`,
+                                    // Filter entries for this briefing date
+                                    const entriesForDate = entries.filter(
+                                      (e) => isWithinCutoffRange(e.date, currentBriefingDate)
                                     );
+                                    // Generate and download the document
+                                    const blob = await generateDocumentBlob(
+                                      entriesForDate,
+                                      currentBriefingDate,
+                                      true, // includeImages
+                                      createDocumentHeader
+                                    );
+                                    saveAs(blob, formatExportFilename(currentBriefingDate));
+                                  } catch (error) {
+                                    console.error("Error exporting briefing:", error);
                                   } finally {
                                     setExportingDate(null);
                                   }

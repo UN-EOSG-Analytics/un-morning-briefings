@@ -1,10 +1,11 @@
 [project]
-name = "un-website-boilerplate"
+name = "un-morning-briefings"
 version = "0.1.0"
-description = "UN Website Boilerplate"
+description = "UN Morning Briefings"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "ipykernel>=7.1.0",
+    "openai>=2.15.0",
     "pandas>=2.3.3",
 ]

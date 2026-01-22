@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { useSession } from 'next-auth/react';
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
+import { useState, useEffect, useCallback, useRef } from "react";
+import { useSession } from "next-auth/react";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -13,15 +13,28 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '@/components/ui/dialog';
-import { getSubmittedEntries } from '@/lib/storage';
-import { isWithinCutoffRange } from '@/lib/useEntriesFilter';
-import { Document, Paragraph, TextRun, HeadingLevel, AlignmentType, Packer, Table, TableRow, TableCell, BorderStyle, ImageRun, Header } from 'docx';
-import { saveAs } from 'file-saver';
-import { FileText, Calendar, CheckCircle2, Mail, Download} from 'lucide-react';
-import { parseHtmlContent } from '@/lib/html-to-docx';
-import { usePopup } from '@/lib/popup-context';
-import type { MorningMeetingEntry } from '@/types/morning-meeting';
+} from "@/components/ui/dialog";
+import { getSubmittedEntries } from "@/lib/storage";
+import { isWithinCutoffRange } from "@/lib/useEntriesFilter";
+import {
+  Document,
+  Paragraph,
+  TextRun,
+  HeadingLevel,
+  AlignmentType,
+  Packer,
+  Table,
+  TableRow,
+  TableCell,
+  BorderStyle,
+  ImageRun,
+  Header,
+} from "docx";
+import { saveAs } from "file-saver";
+import { FileText, Calendar, CheckCircle2, Mail, Download } from "lucide-react";
+import { parseHtmlContent } from "@/lib/html-to-docx";
+import { usePopup } from "@/lib/popup-context";
+import type { MorningMeetingEntry } from "@/types/morning-meeting";
 
 interface ExportDialogProps {
   open: boolean;
@@ -33,14 +46,35 @@ interface ExportDialogProps {
  * Example: "2026-01-15" → "Wednesday, January 15, 2026"
  */
 const formatDateLong = (dateStr: string): string => {
-  const [year, month, day] = dateStr.split('-').map(Number);
-  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-  
+  const [year, month, day] = dateStr.split("-").map(Number);
+  const monthNames = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ];
+  const dayNames = [
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+  ];
+
   // Create date object without timezone issues (use UTC components)
   const date = new Date(Date.UTC(year, month - 1, day));
   const dayOfWeek = dayNames[date.getUTCDay()];
-  
+
   return `${dayOfWeek}, ${monthNames[month - 1]} ${day}, ${year}`;
 };
 
@@ -54,18 +88,18 @@ const getCurrentDateTime = (): string => {
   const year = now.getFullYear();
   const hours = now.getHours();
   const minutes = now.getMinutes();
-  const ampm = hours >= 12 ? 'PM' : 'AM';
+  const ampm = hours >= 12 ? "PM" : "AM";
   const displayHours = hours % 12 || 12;
-  
-  return `${month}/${day}/${year}, ${displayHours}:${String(minutes).padStart(2, '0')} ${ampm}`;
+
+  return `${month}/${day}/${year}, ${displayHours}:${String(minutes).padStart(2, "0")} ${ampm}`;
 };
 
 const createSeparator = (
   length: number = 63,
-  spacing: { before?: number; after?: number } = { after: 200 }
+  spacing: { before?: number; after?: number } = { after: 200 },
 ): Paragraph =>
   new Paragraph({
-    text: '─'.repeat(length),
+    text: "─".repeat(length),
     spacing,
   });
 
@@ -74,13 +108,34 @@ const createSeparator = (
  * e.g., "MM 251212 Friday 12 December.docx" for 2025-12-12
  */
 const formatExportFilename = (dateStr: string): string => {
-  const [year, month, day] = dateStr.split('-').map(Number);
+  const [year, month, day] = dateStr.split("-").map(Number);
   const date = new Date(Date.UTC(year, month - 1, day));
-  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  const dayNames = [
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+  ];
+  const monthNames = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ];
   const dayOfWeek = dayNames[date.getUTCDay()];
   const monthName = monthNames[month - 1];
-  const yymmdd = `${String(year).slice(2)}${String(month).padStart(2, '0')}${String(day).padStart(2, '0')}`;
+  const yymmdd = `${String(year).slice(2)}${String(month).padStart(2, "0")}${String(day).padStart(2, "0")}`;
   return `MM ${yymmdd} ${dayOfWeek} ${day} ${monthName}.docx`;
 };
 
@@ -89,20 +144,20 @@ const formatExportFilename = (dateStr: string): string => {
  */
 const processEntriesImages = async (
   entries: MorningMeetingEntry[],
-  includeImages: boolean
+  includeImages: boolean,
 ): Promise<MorningMeetingEntry[]> => {
   const processedEntries = [...entries];
-  
+
   for (const entry of processedEntries) {
     let html = entry.entry;
-    
+
     // Skip image processing if includeImages is false
     if (!includeImages) {
-      html = html.replace(/<img[^>]*>/gi, '');
+      html = html.replace(/<img[^>]*>/gi, "");
       entry.entry = html;
       continue;
     }
-    
+
     // Process tracked images (uploaded via the editor)
     if (entry.images && entry.images.length > 0) {
       for (const img of entry.images) {
@@ -110,80 +165,91 @@ const processEntriesImages = async (
           if (img.position === null || img.position === undefined) {
             continue;
           }
-          
+
           const ref = `image-ref://img-${img.position}`;
-          
+
           if (!html.includes(ref)) {
             continue;
           }
-          
+
           const response = await fetch(`/api/images/${img.id}`);
           if (!response.ok) {
-            html = html.replace(new RegExp(`<img[^>]*src=["']${ref}["'][^>]*>`, 'gi'), '');
+            html = html.replace(
+              new RegExp(`<img[^>]*src=["']${ref}["'][^>]*>`, "gi"),
+              "",
+            );
             continue;
           }
-          
+
           const arrayBuffer = await response.arrayBuffer();
           const base64Data = btoa(
             new Uint8Array(arrayBuffer).reduce(
               (data, byte) => data + String.fromCharCode(byte),
-              ''
-            )
+              "",
+            ),
           );
           const dataUrl = `data:${img.mimeType};base64,${base64Data}`;
-          
-          const searchPattern = new RegExp(`src=["']${ref.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}["']`, 'gi');
+
+          const searchPattern = new RegExp(
+            `src=["']${ref.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}["']`,
+            "gi",
+          );
           html = html.replace(searchPattern, `src="${dataUrl}"`);
         } catch (error) {
           console.error(`Error downloading image ${img.id}:`, error);
           const ref = `image-ref://img-${img.position}`;
-          html = html.replace(new RegExp(`<img[^>]*src=["']${ref}["'][^>]*>`, 'gi'), '');
+          html = html.replace(
+            new RegExp(`<img[^>]*src=["']${ref}["'][^>]*>`, "gi"),
+            "",
+          );
         }
       }
     }
-    
+
     // Download and convert external image URLs to data URLs
-    const externalImgRegex = /<img[^>]*src=["']?(https?:\/\/[^"'\s>]+)["']?([^>]*)>/gi;
+    const externalImgRegex =
+      /<img[^>]*src=["']?(https?:\/\/[^"'\s>]+)["']?([^>]*)>/gi;
     let match;
-    const replacements: Array<{from: string, to: string}> = [];
-    
+    const replacements: Array<{ from: string; to: string }> = [];
+
     while ((match = externalImgRegex.exec(html)) !== null) {
       const fullTag = match[0];
       const imageUrl = match[1];
       const restOfTag = match[2];
-      
+
       try {
-        const response = await fetch(imageUrl, { mode: 'cors' });
+        const response = await fetch(imageUrl, { mode: "cors" });
         if (!response.ok) {
           continue;
         }
-        
+
         const blob = await response.blob();
         const arrayBuffer = await blob.arrayBuffer();
         const base64Data = btoa(
           new Uint8Array(arrayBuffer).reduce(
             (data, byte) => data + String.fromCharCode(byte),
-            ''
-          )
+            "",
+          ),
         );
-        
-        const mimeType = blob.type || response.headers.get('content-type') || 'image/png';
+
+        const mimeType =
+          blob.type || response.headers.get("content-type") || "image/png";
         const dataUrl = `data:${mimeType};base64,${base64Data}`;
-        
+
         const newTag = `<img src="${dataUrl}"${restOfTag}>`;
         replacements.push({ from: fullTag, to: newTag });
       } catch (error) {
-        console.error('Error downloading external image:', imageUrl, error);
+        console.error("Error downloading external image:", imageUrl, error);
       }
     }
-    
+
     for (const { from, to } of replacements) {
       html = html.replace(from, to);
     }
-    
+
     entry.entry = html;
   }
-  
+
   return processedEntries;
 };
 
@@ -192,22 +258,22 @@ const processEntriesImages = async (
  */
 const buildPuNoteParagraph = (puNote: string): Paragraph[] => {
   const paragraphs: Paragraph[] = [];
-  
+
   try {
     const puNoteElements = parseHtmlContent(puNote);
     if (puNoteElements.length > 0) {
       const firstPara = puNoteElements[0];
       const prefixRun = new TextRun({
-        text: 'PU Note: ',
+        text: "PU Note: ",
         bold: true,
         italics: true,
-        font: 'Roboto',
+        font: "Roboto",
       });
       const modifiedChildren = (firstPara as any).root?.[0]?.root || [];
       const italicChildren = modifiedChildren.map((child: any) => {
-        if (child.constructor.name === 'TextRun') {
+        if (child.constructor.name === "TextRun") {
           return new TextRun({
-            ...(child as any).root?.[0]?.root || {},
+            ...((child as any).root?.[0]?.root || {}),
             italics: true,
           });
         }
@@ -217,7 +283,7 @@ const buildPuNoteParagraph = (puNote: string): Paragraph[] => {
         new Paragraph({
           children: [prefixRun, ...italicChildren],
           spacing: { after: 100 },
-        })
+        }),
       );
       for (let i = 1; i < puNoteElements.length; i++) {
         paragraphs.push(puNoteElements[i]);
@@ -228,7 +294,7 @@ const buildPuNoteParagraph = (puNote: string): Paragraph[] => {
   } catch {
     paragraphs.push(createPlainPuNoteParagraph(puNote));
   }
-  
+
   return paragraphs;
 };
 
@@ -236,15 +302,15 @@ const createPlainPuNoteParagraph = (puNote: string): Paragraph =>
   new Paragraph({
     children: [
       new TextRun({
-        text: 'PU Note: ',
+        text: "PU Note: ",
         bold: true,
         italics: true,
-        font: 'Roboto',
+        font: "Roboto",
       }),
       new TextRun({
         text: puNote,
         italics: true,
-        font: 'Roboto',
+        font: "Roboto",
       }),
     ],
     spacing: { after: 100 },
@@ -255,40 +321,51 @@ const createPlainPuNoteParagraph = (puNote: string): Paragraph =>
  */
 const buildDocumentChildren = (
   entries: MorningMeetingEntry[],
-  selectedDate: string
+  selectedDate: string,
 ): Paragraph[] => {
   // Sort by priority (SG Attention first)
   const sortedEntries = [...entries].sort((a, b) => {
-    if (a.priority === 'sg-attention' && b.priority !== 'sg-attention') return -1;
-    if (a.priority !== 'sg-attention' && b.priority === 'sg-attention') return 1;
+    if (a.priority === "sg-attention" && b.priority !== "sg-attention")
+      return -1;
+    if (a.priority !== "sg-attention" && b.priority === "sg-attention")
+      return 1;
     return 0;
   });
 
   // Group entries by region and country
-  const entriesByRegionAndCountry = sortedEntries.reduce((acc, entry) => {
-    if (!acc[entry.region]) {
-      acc[entry.region] = {};
-    }
-    
-    // Handle entries without countries
-    if (!entry.country || entry.country === '' || (Array.isArray(entry.country) && entry.country.length === 0)) {
-      // Store entries without countries under empty string key
-      if (!acc[entry.region]['']) {
-        acc[entry.region][''] = [];
+  const entriesByRegionAndCountry = sortedEntries.reduce(
+    (acc, entry) => {
+      if (!acc[entry.region]) {
+        acc[entry.region] = {};
       }
-      acc[entry.region][''].push(entry);
-    } else {
-      // Handle both single country (string) and multiple countries (array)
-      const countries = Array.isArray(entry.country) ? entry.country : [entry.country];
-      countries.forEach(country => {
-        if (!acc[entry.region][country]) {
-          acc[entry.region][country] = [];
+
+      // Handle entries without countries
+      if (
+        !entry.country ||
+        entry.country === "" ||
+        (Array.isArray(entry.country) && entry.country.length === 0)
+      ) {
+        // Store entries without countries under empty string key
+        if (!acc[entry.region][""]) {
+          acc[entry.region][""] = [];
         }
-        acc[entry.region][country].push(entry);
-      });
-    }
-    return acc;
-  }, {} as Record<string, Record<string, MorningMeetingEntry[]>>);
+        acc[entry.region][""].push(entry);
+      } else {
+        // Handle both single country (string) and multiple countries (array)
+        const countries = Array.isArray(entry.country)
+          ? entry.country
+          : [entry.country];
+        countries.forEach((country) => {
+          if (!acc[entry.region][country]) {
+            acc[entry.region][country] = [];
+          }
+          acc[entry.region][country].push(entry);
+        });
+      }
+      return acc;
+    },
+    {} as Record<string, Record<string, MorningMeetingEntry[]>>,
+  );
 
   const sortedRegions = Object.keys(entriesByRegionAndCountry).sort();
 
@@ -301,11 +378,11 @@ const buildDocumentChildren = (
       spacing: { after: 100 },
       children: [
         new TextRun({
-          text: 'Morning Meeting Update',
+          text: "Morning Meeting Update",
           bold: true,
           size: 32,
-          font: 'Roboto',
-          color: '009edb',
+          font: "Roboto",
+          color: "009edb",
         }),
       ],
     }),
@@ -317,8 +394,8 @@ const buildDocumentChildren = (
         new TextRun({
           text: formatDateLong(selectedDate),
           size: 24,
-          font: 'Roboto',
-          color: '009edb',
+          font: "Roboto",
+          color: "009edb",
         }),
       ],
     }),
@@ -339,24 +416,26 @@ const buildDocumentChildren = (
             text: region,
             bold: true,
             size: 24,
-            font: 'Roboto',
-            color: '009edb',
+            font: "Roboto",
+            color: "009edb",
           }),
         ],
-      })
+      }),
     );
 
     // Get countries for this region and sort them (put empty country last)
-    const countries = Object.keys(entriesByRegionAndCountry[region]).sort((a, b) => {
-      if (a === '') return 1;
-      if (b === '') return -1;
-      return a.localeCompare(b);
-    });
+    const countries = Object.keys(entriesByRegionAndCountry[region]).sort(
+      (a, b) => {
+        if (a === "") return 1;
+        if (b === "") return -1;
+        return a.localeCompare(b);
+      },
+    );
 
     // Add entries grouped by country
     countries.forEach((country) => {
       // Add country header only if country is not empty
-      if (country !== '') {
+      if (country !== "") {
         children.push(
           new Paragraph({
             children: [
@@ -364,99 +443,114 @@ const buildDocumentChildren = (
                 text: country,
                 bold: true,
                 size: 24,
-                font: 'Roboto',
+                font: "Roboto",
               }),
             ],
             spacing: { before: 300, after: 200 },
-          })
+          }),
         );
       } else {
         // Add spacing before entries without country
         children.push(
           new Paragraph({
             spacing: { before: 200, after: 100 },
-            children: [new TextRun('')],
-          })
+            children: [new TextRun("")],
+          }),
         );
       }
 
       // Add all entries for this country
-      entriesByRegionAndCountry[region][country].forEach((entry: MorningMeetingEntry, index: number) => {
-        // Headline
-        children.push(
-          new Paragraph({
-            children: [
-              new TextRun({
-                text: entry.headline,
-                bold: true,
-                size: 22,
-                font: 'Roboto',
-              }),
-            ],
-            spacing: { after: 100 },
-          })
-        );
-
-        // Priority and Category
-        children.push(
-          new Paragraph({
-            children: [
-              new TextRun({
-                text: entry.priority === 'sg-attention' ? 'SG Attention' : 'Situational Awareness',
-                italics: true,
-                size: 20,
-                font: 'Roboto',
-              }),
-              new TextRun({
-                text: ` | ${entry.category}`,
-                italics: true,
-                size: 20,
-                font: 'Roboto',
-              })
-            ],
-            spacing: { after: 150 },
-          })
-        );
-
-        // Content
-        if (entry.entry) {
-          try {
-            const contentElements = parseHtmlContent(entry.entry);
-            children.push(...contentElements);
-          } catch {
-            children.push(
-              new Paragraph({
-                children: [new TextRun({ text: entry.entry, font: 'Roboto' })],
-                spacing: { after: 100 },
-              })
-            );
-          }
-        }
-
-        // Source URL
-        if (entry.sourceUrl) {
+      entriesByRegionAndCountry[region][country].forEach(
+        (entry: MorningMeetingEntry, index: number) => {
+          // Headline
           children.push(
             new Paragraph({
               children: [
-                new TextRun({ text: 'Source: ', italics: true, font: 'Roboto' }),
-                new TextRun({ text: entry.sourceUrl, italics: true, font: 'Roboto' }),
+                new TextRun({
+                  text: entry.headline,
+                  bold: true,
+                  size: 22,
+                  font: "Roboto",
+                }),
               ],
               spacing: { after: 100 },
-            })
+            }),
           );
-        }
 
-        // PU Note
-        if (entry.puNote) {
-          children.push(...buildPuNoteParagraph(entry.puNote));
-        }
+          // Priority and Category
+          children.push(
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text:
+                    entry.priority === "sg-attention"
+                      ? "SG Attention"
+                      : "Situational Awareness",
+                  italics: true,
+                  size: 20,
+                  font: "Roboto",
+                }),
+                new TextRun({
+                  text: ` | ${entry.category}`,
+                  italics: true,
+                  size: 20,
+                  font: "Roboto",
+                }),
+              ],
+              spacing: { after: 150 },
+            }),
+          );
 
-        // Separator between entries (but not after the last entry in the country)
-        const countryEntries = entriesByRegionAndCountry[region][country];
-        if (index < countryEntries.length - 1) {
-          children.push(createSeparator(40, { before: 200, after: 200 }));
-        }
-      });
+          // Content
+          if (entry.entry) {
+            try {
+              const contentElements = parseHtmlContent(entry.entry);
+              children.push(...contentElements);
+            } catch {
+              children.push(
+                new Paragraph({
+                  children: [
+                    new TextRun({ text: entry.entry, font: "Roboto" }),
+                  ],
+                  spacing: { after: 100 },
+                }),
+              );
+            }
+          }
+
+          // Source URL
+          if (entry.sourceUrl) {
+            children.push(
+              new Paragraph({
+                children: [
+                  new TextRun({
+                    text: "Source: ",
+                    italics: true,
+                    font: "Roboto",
+                  }),
+                  new TextRun({
+                    text: entry.sourceUrl,
+                    italics: true,
+                    font: "Roboto",
+                  }),
+                ],
+                spacing: { after: 100 },
+              }),
+            );
+          }
+
+          // PU Note
+          if (entry.puNote) {
+            children.push(...buildPuNoteParagraph(entry.puNote));
+          }
+
+          // Separator between entries (but not after the last entry in the country)
+          const countryEntries = entriesByRegionAndCountry[region][country];
+          if (index < countryEntries.length - 1) {
+            children.push(createSeparator(40, { before: 200, after: 200 }));
+          }
+        },
+      );
 
       // Separator after country section
       children.push(createSeparator());
@@ -472,10 +566,10 @@ const buildDocumentChildren = (
         new TextRun({
           text: `Exported on ${getCurrentDateTime()}`,
           italics: true,
-          font: 'Roboto',
+          font: "Roboto",
         }),
       ],
-    })
+    }),
   );
 
   return children;
@@ -488,17 +582,17 @@ const generateDocumentBlob = async (
   entries: MorningMeetingEntry[],
   selectedDate: string,
   includeImages: boolean,
-  createDocumentHeader: () => Promise<Table>
+  createDocumentHeader: () => Promise<Table>,
 ): Promise<Blob> => {
   // Process images in entries
   const processedEntries = await processEntriesImages(entries, includeImages);
-  
+
   // Build document content
   const children = buildDocumentChildren(processedEntries, selectedDate);
-  
+
   // Create header
   const headerTable = await createDocumentHeader();
-  
+
   // Create document
   const doc = new Document({
     sections: [
@@ -517,30 +611,41 @@ const generateDocumentBlob = async (
   return Packer.toBlob(doc);
 };
 
-export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogProps) {
+export function ExportDailyBriefingDialog({
+  open,
+  onOpenChange,
+}: ExportDialogProps) {
   const { data: session } = useSession();
   const { info: showInfo, success: showSuccess, error: showError } = usePopup();
   const [selectedDate, setSelectedDate] = useState<string>(
-    new Date().toISOString().split('T')[0]
+    new Date().toISOString().split("T")[0],
   );
   const [isExporting, setIsExporting] = useState(false);
   const [isSendingEmail, setIsSendingEmail] = useState(false);
   const dateInputRef = useRef<HTMLInputElement>(null);
-  
-  const handleOpenChange = useCallback((newOpen: boolean) => {
-    onOpenChange(newOpen);
-  }, [onOpenChange]);
-  const [approvedEntries, setApprovedEntries] = useState<MorningMeetingEntry[]>([]);
+
+  const handleOpenChange = useCallback(
+    (newOpen: boolean) => {
+      onOpenChange(newOpen);
+    },
+    [onOpenChange],
+  );
+  const [approvedEntries, setApprovedEntries] = useState<MorningMeetingEntry[]>(
+    [],
+  );
   const [isLoadingEntries, setIsLoadingEntries] = useState(false);
   const [includeImages, setIncludeImages] = useState(true);
 
   // Unified function to get all entries for a date using 8AM cutoff (regardless of approval status)
-  const getApprovedEntriesForDate = useCallback(async (dateStr: string): Promise<MorningMeetingEntry[]> => {
-    const allEntries = await getSubmittedEntries();
-    return allEntries.filter((entry: MorningMeetingEntry) => {
-      return isWithinCutoffRange(entry.date, dateStr);
-    });
-  }, []);
+  const getApprovedEntriesForDate = useCallback(
+    async (dateStr: string): Promise<MorningMeetingEntry[]> => {
+      const allEntries = await getSubmittedEntries();
+      return allEntries.filter((entry: MorningMeetingEntry) => {
+        return isWithinCutoffRange(entry.date, dateStr);
+      });
+    },
+    [],
+  );
 
   // Blur the date input when dialog opens to prevent auto-focus
   useEffect(() => {
@@ -557,7 +662,9 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
     const loadEntriesForDate = async () => {
       // Don't load entries if session is not ready
       if (!session?.user) {
-        console.log('ExportDailyBriefingDialog: Session not ready, skipping load');
+        console.log(
+          "ExportDailyBriefingDialog: Session not ready, skipping load",
+        );
         return;
       }
 
@@ -566,9 +673,10 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
         const entriesForDate = await getApprovedEntriesForDate(selectedDate);
         setApprovedEntries(entriesForDate);
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        console.error('Error loading entries:', errorMessage);
-        showError('Failed to Load Entries', errorMessage);
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
+        console.error("Error loading entries:", errorMessage);
+        showError("Failed to Load Entries", errorMessage);
         setApprovedEntries([]);
       } finally {
         setIsLoadingEntries(false);
@@ -586,13 +694,13 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
   const createDocumentHeader = async (): Promise<Table> => {
     // Load UN logo from public folder
     let logoParagraphChildren: (ImageRun | TextRun)[] = [];
-    
+
     try {
-      const response = await fetch('/images/UN_Logo_Black.png');
+      const response = await fetch("/images/UN_Logo_Black.png");
       const blob = await response.blob();
       const arrayBuffer = await blob.arrayBuffer();
       const imageData = new Uint8Array(arrayBuffer);
-      
+
       logoParagraphChildren = [
         new ImageRun({
           data: imageData,
@@ -600,48 +708,48 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
             width: 43,
             height: 36,
           },
-          type: 'png',
+          type: "png",
         }),
       ];
     } catch (error) {
-      console.error('Failed to load UN logo:', error);
+      console.error("Failed to load UN logo:", error);
       // Fallback to text if image fails to load
       logoParagraphChildren = [
         new TextRun({
-          text: '[UN Logo]',
+          text: "[UN Logo]",
           size: 16,
-          color: '666666',
-          font: 'Roboto',
+          color: "666666",
+          font: "Roboto",
         }),
       ];
     }
 
     // Create a table-based header with logo on left and classification on right
     const headerTable = new Table({
-      width: { size: 100, type: 'pct' },
+      width: { size: 100, type: "pct" },
       borders: {
-        top: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' },
-        bottom: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' },
-        left: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' },
-        right: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' },
-        insideHorizontal: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' },
-        insideVertical: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' },
+        top: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+        bottom: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+        left: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+        right: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+        insideHorizontal: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+        insideVertical: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
       },
       rows: [
         new TableRow({
-          height: { value: 720, rule: 'atLeast' },
+          height: { value: 720, rule: "atLeast" },
           children: [
             // Left cell with logo
             new TableCell({
-              width: { size: 50, type: 'pct' },
+              width: { size: 50, type: "pct" },
               borders: {
-                top: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' },
-                bottom: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' },
-                left: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' },
-                right: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' },
+                top: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+                bottom: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+                left: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+                right: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
               },
               margins: { top: 100, bottom: 0, left: 0, right: 100 },
-              verticalAlign: 'top',
+              verticalAlign: "top",
               children: [
                 new Paragraph({
                   children: logoParagraphChildren,
@@ -650,25 +758,25 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
             }),
             // Right cell with classification
             new TableCell({
-              width: { size: 50, type: 'pct' },
+              width: { size: 50, type: "pct" },
               borders: {
-                top: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' },
-                bottom: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' },
-                left: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' },
-                right: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' },
+                top: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+                bottom: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+                left: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+                right: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
               },
               margins: { top: 0, bottom: 0, left: 100, right: 0 },
-              verticalAlign: 'center',
+              verticalAlign: "center",
               children: [
                 new Paragraph({
                   alignment: AlignmentType.RIGHT,
                   children: [
                     new TextRun({
-                      text: 'INTERNAL | NOT FOR FURTHER DISTRIBUTION',
+                      text: "INTERNAL | NOT FOR FURTHER DISTRIBUTION",
                       bold: false,
                       size: 18,
-                      color: '000000',
-                      font: 'Roboto',
+                      color: "000000",
+                      font: "Roboto",
                     }),
                   ],
                 }),
@@ -688,7 +796,10 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
       const entriesForDate = await getApprovedEntriesForDate(selectedDate);
 
       if (entriesForDate.length === 0) {
-        showInfo('No Approved Entries', 'No approved entries found for the selected date.');
+        showInfo(
+          "No Approved Entries",
+          "No approved entries found for the selected date.",
+        );
         setIsExporting(false);
         return;
       }
@@ -698,17 +809,20 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
         entriesForDate,
         selectedDate,
         includeImages,
-        createDocumentHeader
+        createDocumentHeader,
       );
-      
+
       // Save file with formatted filename
       saveAs(blob, formatExportFilename(selectedDate));
 
-      showSuccess('Export Successful', 'Daily briefing exported successfully!');
+      showSuccess("Export Successful", "Daily briefing exported successfully!");
       handleOpenChange(false);
     } catch (error) {
-      console.error('Error exporting briefing:', error);
-      showError('Export Failed', 'Failed to export daily briefing. Please try again.');
+      console.error("Error exporting briefing:", error);
+      showError(
+        "Export Failed",
+        "Failed to export daily briefing. Please try again.",
+      );
     } finally {
       setIsExporting(false);
     }
@@ -716,12 +830,15 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
 
   const handleSendViaEmail = async () => {
     if (!session?.user?.email) {
-      showError('Not Authenticated', 'You must be logged in to send emails.');
+      showError("Not Authenticated", "You must be logged in to send emails.");
       return;
     }
 
     if (approvedEntries.length === 0) {
-      showError('No Entries', 'No approved entries found for the selected date.');
+      showError(
+        "No Entries",
+        "No approved entries found for the selected date.",
+      );
       return;
     }
 
@@ -732,23 +849,23 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
         [...approvedEntries],
         selectedDate,
         includeImages,
-        createDocumentHeader
+        createDocumentHeader,
       );
-      
+
       // Convert blob to base64 for API
       const arrayBuffer = await blob.arrayBuffer();
       const base64Data = btoa(
         new Uint8Array(arrayBuffer).reduce(
           (data, byte) => data + String.fromCharCode(byte),
-          ''
-        )
+          "",
+        ),
       );
       const docxBlob = `data:application/vnd.openxmlformats-officedocument.wordprocessingml.document;base64,${base64Data}`;
 
       // Send via API with formatted filename
-      const response = await fetch('/api/send-briefing', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/send-briefing", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           docxBlob,
           fileName: formatExportFilename(selectedDate),
@@ -758,14 +875,22 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to send email');
+        throw new Error(errorData.error || "Failed to send email");
       }
 
-      showSuccess('Email Sent', `Briefing sent successfully to ${session.user.email}`);
+      showSuccess(
+        "Email Sent",
+        `Briefing sent successfully to ${session.user.email}`,
+      );
       handleOpenChange(false);
     } catch (error) {
-      console.error('Error sending briefing via email:', error);
-      showError('Send Failed', error instanceof Error ? error.message : 'Failed to send briefing via email.');
+      console.error("Error sending briefing via email:", error);
+      showError(
+        "Send Failed",
+        error instanceof Error
+          ? error.message
+          : "Failed to send briefing via email.",
+      );
     } finally {
       setIsSendingEmail(false);
     }
@@ -773,30 +898,32 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="!max-w-none w-screen h-dvh sm:!max-w-md sm:h-auto !p-0 sm:!p-6 flex flex-col rounded-none sm:rounded-lg">
-        <DialogHeader className="px-4 pt-4 sm:px-0 sm:pt-0 text-left sm:text-left">
+      <DialogContent className="flex h-dvh w-screen !max-w-none flex-col rounded-none !p-0 sm:h-auto sm:!max-w-md sm:rounded-lg sm:!p-6">
+        <DialogHeader className="px-4 pt-4 text-left sm:px-0 sm:pt-0 sm:text-left">
           <DialogTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5 text-un-blue" />
             Export Daily Briefing
           </DialogTitle>
           <DialogDescription className="text-left">
-          The exported document will include all entries from the previous day at 8:00 AM until the selected day at 8:00 AM, organized by priority with full content and formatting.
+            The exported document will include all entries from the previous day
+            at 8:00 AM until the selected day at 8:00 AM, organized by priority
+            with full content and formatting.
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-4 py-4 px-4 sm:px-0 flex-1 overflow-y-auto flex flex-col">
+        <div className="flex flex-1 flex-col space-y-4 overflow-y-auto px-4 py-4 sm:px-0">
           <div className="space-y-2">
             <label className="text-sm font-medium text-foreground">
               Select Date
             </label>
             <div className="relative">
-              <Calendar className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 pointer-events-none" />
+              <Calendar className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400" />
               <input
                 ref={dateInputRef}
                 type="date"
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
                 autoFocus={false}
-                className="h-10 w-full rounded border border-slate-300 bg-white pl-10 pr-3 text-sm focus:border-un-blue focus:outline-none focus:ring-2 focus:ring-un-blue/20 appearance-none"
+                className="h-10 w-full appearance-none rounded border border-slate-300 bg-white pr-3 pl-10 text-sm focus:border-un-blue focus:ring-2 focus:ring-un-blue/20 focus:outline-none"
               />
             </div>
           </div>
@@ -805,17 +932,19 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
             <Checkbox
               id="include-images"
               checked={includeImages}
-              onCheckedChange={(checked) => setIncludeImages(checked as boolean)}
+              onCheckedChange={(checked) =>
+                setIncludeImages(checked as boolean)
+              }
             />
             <label
               htmlFor="include-images"
-              className="text-sm font-medium text-foreground cursor-pointer"
+              className="cursor-pointer text-sm font-medium text-foreground"
             >
               Include images in export
             </label>
           </div>
 
-          <div className="space-y-2 flex-1 flex flex-col min-h-0 max-h-80">
+          <div className="flex max-h-80 min-h-0 flex-1 flex-col space-y-2">
             <label className="text-sm font-medium text-foreground">
               Approved Entries ({approvedEntries.length})
             </label>
@@ -823,13 +952,20 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
               {isLoadingEntries ? (
                 <p className="text-xs text-slate-500">Loading entries...</p>
               ) : approvedEntries.length === 0 ? (
-                <p className="text-xs text-slate-500">No approved entries for this date</p>
+                <p className="text-xs text-slate-500">
+                  No approved entries for this date
+                </p>
               ) : (
                 <ul className="space-y-2">
                   {approvedEntries.map((entry) => (
-                    <li key={entry.id} className="flex items-start gap-2 text-sm">
-                      <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-green-600 mt-0.5" />
-                      <span className="text-slate-700 line-clamp-2">{entry.headline}</span>
+                    <li
+                      key={entry.id}
+                      className="flex items-start gap-2 text-sm"
+                    >
+                      <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-green-600" />
+                      <span className="line-clamp-2 text-slate-700">
+                        {entry.headline}
+                      </span>
                     </li>
                   ))}
                 </ul>
@@ -837,29 +973,29 @@ export function ExportDailyBriefingDialog({ open, onOpenChange }: ExportDialogPr
             </div>
           </div>
         </div>
-        <DialogFooter className="flex flex-col sm:flex-row gap-2 w-full px-4 pb-4 sm:px-0 sm:pb-0 flex-shrink-0">
-          <Button 
+        <DialogFooter className="flex w-full flex-shrink-0 flex-col gap-2 px-4 pb-4 sm:flex-row sm:px-0 sm:pb-0">
+          <Button
             onClick={handleOpenChange.bind(null, false)}
-            variant="outline" 
-            className="w-full sm:w-auto order-3 sm:order-1"
+            variant="outline"
+            className="order-3 w-full sm:order-1 sm:w-auto"
           >
             Cancel
           </Button>
-          <Button 
-            onClick={handleExport} 
+          <Button
+            onClick={handleExport}
             disabled={isExporting || isSendingEmail}
-            className="w-full sm:w-auto order-1 sm:order-2"
+            className="order-1 w-full sm:order-2 sm:w-auto"
           >
             <Download className="h-4 w-4" />
-            {isExporting ? 'Exporting...' : 'Export to Word'}
+            {isExporting ? "Exporting..." : "Export to Word"}
           </Button>
-          <Button 
-            onClick={handleSendViaEmail} 
+          <Button
+            onClick={handleSendViaEmail}
             disabled={isSendingEmail || isExporting}
-            className="w-full sm:w-auto order-2 sm:order-3"
+            className="order-2 w-full sm:order-3 sm:w-auto"
           >
             <Mail className="h-4 w-4" />
-            {isSendingEmail ? 'Sending...' : 'Send via Email'}
+            {isSendingEmail ? "Sending..." : "Send via Email"}
           </Button>
         </DialogFooter>
       </DialogContent>

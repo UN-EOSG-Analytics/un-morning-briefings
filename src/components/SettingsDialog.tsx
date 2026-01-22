@@ -1,18 +1,26 @@
-'use client';
+"use client";
 
-import { useState, useRef } from 'react';
-import { useSession, signOut } from 'next-auth/react';
-import { Settings, Trash2, AlertTriangle, Check, X, Download, Upload } from 'lucide-react';
+import { useState, useRef } from "react";
+import { useSession, signOut } from "next-auth/react";
+import {
+  Settings,
+  Trash2,
+  AlertTriangle,
+  Check,
+  X,
+  Download,
+  Upload,
+} from "lucide-react";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { usePopup } from '@/lib/popup-context';
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { usePopup } from "@/lib/popup-context";
 
 interface SettingsDialogProps {
   open: boolean;
@@ -24,62 +32,61 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   const { success: showSuccess, warning: showWarning } = usePopup();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [isEditingName, setIsEditingName] = useState(false);
-  const [firstName, setFirstName] = useState(session?.user?.firstName || '');
-  const [lastName, setLastName] = useState(session?.user?.lastName || '');
+  const [firstName, setFirstName] = useState(session?.user?.firstName || "");
+  const [lastName, setLastName] = useState(session?.user?.lastName || "");
   const [isSavingName, setIsSavingName] = useState(false);
   const [isCreatingBackup, setIsCreatingBackup] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
-  // Email workflow settings
-  const [emailTime, setEmailTime] = useState('09:00');
-  const [emailAddress, setEmailAddress] = useState('');
 
+  // Email workflow settings
+  const [emailTime, setEmailTime] = useState("09:00");
+  const [emailAddress, setEmailAddress] = useState("");
 
   const handleDeleteAccount = async () => {
     if (!session?.user?.email) return;
 
     setIsDeleting(true);
-    setError('');
+    setError("");
 
     try {
-      const response = await fetch('/api/user/delete', {
-        method: 'DELETE',
+      const response = await fetch("/api/user/delete", {
+        method: "DELETE",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to delete account');
+        throw new Error(data.error || "Failed to delete account");
       }
 
       // Account deleted successfully - sign out and redirect
-      await signOut({ callbackUrl: '/login?deleted=true' });
+      await signOut({ callbackUrl: "/login?deleted=true" });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      setError(err instanceof Error ? err.message : "An error occurred");
       setIsDeleting(false);
     }
   };
 
   const handleSaveName = async () => {
     if (!firstName.trim() || !lastName.trim()) {
-      setError('First and last name are required');
+      setError("First and last name are required");
       return;
     }
 
     setIsSavingName(true);
-    setError('');
+    setError("");
 
     try {
-      const response = await fetch('/api/user/update-name', {
-        method: 'PUT',
+      const response = await fetch("/api/user/update-name", {
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           firstName: firstName.trim(),
@@ -90,7 +97,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to update name');
+        throw new Error(data.error || "Failed to update name");
       }
 
       // Update the session with new name
@@ -101,7 +108,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
 
       setIsEditingName(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
       setIsSavingName(false);
     }
@@ -109,20 +116,20 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
 
   const handleCreateBackup = async () => {
     setIsCreatingBackup(true);
-    setError('');
+    setError("");
 
     try {
-      const response = await fetch('/api/entries');
+      const response = await fetch("/api/entries");
 
       if (!response.ok) {
-        throw new Error('Failed to fetch entries');
+        throw new Error("Failed to fetch entries");
       }
 
       const data = await response.json();
 
       // Create backup object with metadata
       const backup = {
-        version: '1.0',
+        version: "1.0",
         timestamp: new Date().toISOString(),
         user: session?.user?.email,
         entries: Array.isArray(data) ? data : [],
@@ -130,31 +137,32 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
 
       // Convert to JSON string
       const jsonString = JSON.stringify(backup, null, 2);
-      
+
       // Create blob and download
-      const blob = new Blob([jsonString], { type: 'application/json' });
+      const blob = new Blob([jsonString], { type: "application/json" });
       const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = url;
-      link.download = `un-briefings-backup-${new Date().toISOString().split('T')[0]}.json`;
+      link.download = `un-briefings-backup-${new Date().toISOString().split("T")[0]}.json`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
-
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create backup');
+      setError(err instanceof Error ? err.message : "Failed to create backup");
     } finally {
       setIsCreatingBackup(false);
     }
   };
 
-  const handleImportBackup = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImportBackup = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
     setIsImporting(true);
-    setError('');
+    setError("");
 
     try {
       // Read the file
@@ -163,14 +171,14 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
 
       // Validate backup structure
       if (!backup.entries || !Array.isArray(backup.entries)) {
-        throw new Error('Invalid backup file format');
+        throw new Error("Invalid backup file format");
       }
 
       // Send to API for import
-      const response = await fetch('/api/entries/import', {
-        method: 'POST',
+      const response = await fetch("/api/entries/import", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ entries: backup.entries }),
       });
@@ -178,36 +186,36 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || 'Failed to import entries');
+        throw new Error(result.error || "Failed to import entries");
       }
 
       // Show success message
       showSuccess(
-        'Import Successful',
-        `Imported ${result.imported} entries. ${result.skipped} duplicates were skipped.`
+        "Import Successful",
+        `Imported ${result.imported} entries. ${result.skipped} duplicates were skipped.`,
       );
-      
+
       // Close dialog after successful import
       setTimeout(() => {
         onOpenChange(false);
       }, 1000);
-      
     } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : 'Failed to import backup';
+      const errorMsg =
+        err instanceof Error ? err.message : "Failed to import backup";
       setError(errorMsg);
-      showWarning('Import Failed', errorMsg);
+      showWarning("Import Failed", errorMsg);
     } finally {
       setIsImporting(false);
       // Reset file input
       if (fileInputRef.current) {
-        fileInputRef.current.value = '';
+        fileInputRef.current.value = "";
       }
     }
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] h-[420px] flex flex-col">
+      <DialogContent className="flex h-[420px] flex-col sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Settings className="h-5 w-5" />
@@ -218,17 +226,23 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
           </DialogDescription>
         </DialogHeader>
 
-        <Tabs defaultValue="account" className="w-full flex flex-col flex-1 min-h-0">
-          <TabsList className="grid w-full grid-cols-3 flex-shrink-0">
+        <Tabs
+          defaultValue="account"
+          className="flex min-h-0 w-full flex-1 flex-col"
+        >
+          <TabsList className="grid w-full flex-shrink-0 grid-cols-3">
             <TabsTrigger value="account">Account</TabsTrigger>
             <TabsTrigger value="data">Data Management</TabsTrigger>
             <TabsTrigger value="email">E-Mail Workflow</TabsTrigger>
           </TabsList>
 
           {/* Account Tab */}
-          <TabsContent value="account" className="space-y-4 mt-4 overflow-y-auto flex-1">
+          <TabsContent
+            value="account"
+            className="mt-4 flex-1 space-y-4 overflow-y-auto"
+          >
             {/* Account Information */}
-            <div className="bg-slate-50 rounded-lg p-4 space-y-3">
+            <div className="space-y-3 rounded-lg bg-slate-50 p-4">
               <div>
                 <p className="text-xs text-slate-600">Email</p>
                 <p className="text-sm font-medium">{session?.user?.email}</p>
@@ -236,31 +250,35 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
 
               {/* Name Section - Edit Mode */}
               {isEditingName ? (
-                <div className="space-y-2 bg-white border border-slate-200 rounded p-3">
+                <div className="space-y-2 rounded border border-slate-200 bg-white p-3">
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label className="text-xs text-slate-600">First Name</label>
+                      <label className="text-xs text-slate-600">
+                        First Name
+                      </label>
                       <input
                         type="text"
                         value={firstName}
                         onChange={(e) => setFirstName(e.target.value)}
                         placeholder="First name"
-                        className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-sm focus:border-un-blue focus:outline-none focus:ring-2 focus:ring-un-blue/20"
+                        className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-sm focus:border-un-blue focus:ring-2 focus:ring-un-blue/20 focus:outline-none"
                       />
                     </div>
                     <div>
-                      <label className="text-xs text-slate-600">Last Name</label>
+                      <label className="text-xs text-slate-600">
+                        Last Name
+                      </label>
                       <input
                         type="text"
                         value={lastName}
                         onChange={(e) => setLastName(e.target.value)}
                         placeholder="Last name"
-                        className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-sm focus:border-un-blue focus:outline-none focus:ring-2 focus:ring-un-blue/20"
+                        className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-sm focus:border-un-blue focus:ring-2 focus:ring-un-blue/20 focus:outline-none"
                       />
                     </div>
                   </div>
                   {error && (
-                    <p className="text-xs text-red-600 font-medium">{error}</p>
+                    <p className="text-xs font-medium text-red-600">{error}</p>
                   )}
                   <div className="flex gap-2 pt-2">
                     <Button
@@ -268,14 +286,14 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                       variant="outline"
                       onClick={() => {
                         setIsEditingName(false);
-                        setFirstName(session?.user?.firstName || '');
-                        setLastName(session?.user?.lastName || '');
-                        setError('');
+                        setFirstName(session?.user?.firstName || "");
+                        setLastName(session?.user?.lastName || "");
+                        setError("");
                       }}
                       disabled={isSavingName}
                       className="flex-1"
                     >
-                      <X className="h-4 w-4 mr-1" />
+                      <X className="mr-1 h-4 w-4" />
                       Cancel
                     </Button>
                     <Button
@@ -284,8 +302,8 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                       disabled={isSavingName}
                       className="flex-1 bg-un-blue hover:bg-un-blue/90"
                     >
-                      <Check className="h-4 w-4 mr-1" />
-                      {isSavingName ? 'Saving...' : 'Save'}
+                      <Check className="mr-1 h-4 w-4" />
+                      {isSavingName ? "Saving..." : "Save"}
                     </Button>
                   </div>
                 </div>
@@ -317,28 +335,30 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
             {!showDeleteConfirm ? (
               <Button
                 variant="outline"
-                className="w-full text-red-600 border-red-200 hover:bg-red-50"
+                className="w-full border-red-200 text-red-600 hover:bg-red-50"
                 onClick={() => setShowDeleteConfirm(true)}
               >
-                <Trash2 className="h-4 w-4 mr-2" />
+                <Trash2 className="mr-2 h-4 w-4" />
                 Delete Account
               </Button>
             ) : (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4 space-y-3">
+              <div className="space-y-3 rounded-lg border border-red-200 bg-red-50 p-4">
                 <div className="flex items-start gap-2">
-                  <AlertTriangle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+                  <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-600" />
                   <div className="space-y-1">
                     <p className="text-sm font-semibold text-red-900">
                       Are you absolutely sure?
                     </p>
                     <p className="text-xs text-red-700">
-                      This action cannot be undone. This will delete your account for the UN Morning Briefing Tool and remove all of your drafts from our servers.
+                      This action cannot be undone. This will delete your
+                      account for the UN Morning Briefing Tool and remove all of
+                      your drafts from our servers.
                     </p>
                   </div>
                 </div>
-                
+
                 {error && (
-                  <p className="text-xs text-red-600 font-medium">{error}</p>
+                  <p className="text-xs font-medium text-red-600">{error}</p>
                 )}
 
                 <div className="flex gap-2">
@@ -347,7 +367,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                     size="sm"
                     onClick={() => {
                       setShowDeleteConfirm(false);
-                      setError('');
+                      setError("");
                     }}
                     disabled={isDeleting}
                     className="flex-1"
@@ -361,7 +381,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                     disabled={isDeleting}
                     className="flex-1 bg-red-600 hover:bg-red-700"
                   >
-                    {isDeleting ? 'Deleting...' : 'Yes, delete my account'}
+                    {isDeleting ? "Deleting..." : "Yes, delete my account"}
                   </Button>
                 </div>
               </div>
@@ -369,26 +389,31 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
           </TabsContent>
 
           {/* Data Management Tab */}
-          <TabsContent value="data" className="space-y-4 mt-4 overflow-y-auto flex-1">
-            <div className="bg-slate-50 rounded-lg p-4 space-y-4">
+          <TabsContent
+            value="data"
+            className="mt-4 flex-1 space-y-4 overflow-y-auto"
+          >
+            <div className="space-y-4 rounded-lg bg-slate-50 p-4">
               <div>
-                <h3 className="text-sm font-semibold text-slate-900 mb-3">Backup & Restore</h3>
-                <div className="grid grid-cols-1 gap-2 mb-2">
+                <h3 className="mb-3 text-sm font-semibold text-slate-900">
+                  Backup & Restore
+                </h3>
+                <div className="mb-2 grid grid-cols-1 gap-2">
                   <Button
                     variant="outline"
                     onClick={handleCreateBackup}
                     disabled={isCreatingBackup}
                   >
-                    <Download className="h-4 w-4 mr-2" />
-                    {isCreatingBackup ? 'Creating...' : 'Download Backup'}
+                    <Download className="mr-2 h-4 w-4" />
+                    {isCreatingBackup ? "Creating..." : "Download Backup"}
                   </Button>
                   <Button
                     variant="outline"
                     onClick={() => fileInputRef.current?.click()}
                     disabled={isImporting}
                   >
-                    <Upload className="h-4 w-4 mr-2" />
-                    {isImporting ? 'Importing...' : 'Import Backup'}
+                    <Upload className="mr-2 h-4 w-4" />
+                    {isImporting ? "Importing..." : "Import Backup"}
                   </Button>
                 </div>
                 <input
@@ -399,36 +424,42 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                   className="hidden"
                 />
                 <p className="text-xs text-slate-600">
-                  Download all entries as JSON backup or import a backup file to restore entries.
+                  Download all entries as JSON backup or import a backup file to
+                  restore entries.
                 </p>
               </div>
             </div>
           </TabsContent>
 
           {/* E-Mail Workflow Tab */}
-          <TabsContent value="email" className="space-y-4 mt-4 overflow-y-auto flex-1">
-            <div className="bg-slate-50 rounded-lg p-4 space-y-4">
+          <TabsContent
+            value="email"
+            className="mt-4 flex-1 space-y-4 overflow-y-auto"
+          >
+            <div className="space-y-4 rounded-lg bg-slate-50 p-4">
               <div>
-                <h3 className="text-sm font-semibold text-slate-900 mb-3">Scheduled Briefing</h3>
-                <p className="text-xs text-slate-600 mb-3">
+                <h3 className="mb-3 text-sm font-semibold text-slate-900">
+                  Scheduled Briefing
+                </h3>
+                <p className="mb-3 text-xs text-slate-600">
                   Configure automatic daily briefing emails.
                 </p>
-                
+
                 <div className="space-y-3">
                   <div>
-                    <label className="text-xs text-slate-600 block mb-1">
+                    <label className="mb-1 block text-xs text-slate-600">
                       Send Time
                     </label>
                     <input
                       type="time"
                       value={emailTime}
                       onChange={(e) => setEmailTime(e.target.value)}
-                      className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-un-blue focus:outline-none focus:ring-2 focus:ring-un-blue/20"
+                      className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-un-blue focus:ring-2 focus:ring-un-blue/20 focus:outline-none"
                     />
                   </div>
 
                   <div>
-                    <label className="text-xs text-slate-600 block mb-1">
+                    <label className="mb-1 block text-xs text-slate-600">
                       Recipient Email Address
                     </label>
                     <input
@@ -436,15 +467,11 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                       value={emailAddress}
                       onChange={(e) => setEmailAddress(e.target.value)}
                       placeholder="recipient@un.org"
-                      className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-un-blue focus:outline-none focus:ring-2 focus:ring-un-blue/20"
+                      className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-un-blue focus:ring-2 focus:ring-un-blue/20 focus:outline-none"
                     />
                   </div>
 
-                  <Button
-                    variant="outline"
-                    className="w-full"
-                    disabled
-                  >
+                  <Button variant="outline" className="w-full" disabled>
                     Save Email Settings
                   </Button>
                 </div>

@@ -1,12 +1,12 @@
-import nodemailer from 'nodemailer';
-import * as fs from 'fs';
-import * as path from 'path';
+import nodemailer from "nodemailer";
+import * as fs from "fs";
+import * as path from "path";
 
 // Create a transporter using the configured SMTP server
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
-  port: parseInt(process.env.SMTP_PORT || '587'),
-  secure: process.env.SMTP_PORT === '465', // true for 465, false for other ports
+  port: parseInt(process.env.SMTP_PORT || "587"),
+  secure: process.env.SMTP_PORT === "465", // true for 465, false for other ports
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
@@ -17,27 +17,30 @@ export async function sendVerificationEmail(
   email: string,
   token: string,
   firstName: string,
-  baseUrl: string
+  baseUrl: string,
 ) {
   const verificationUrl = `${baseUrl}/api/auth/verify-email?token=${token}`;
-  const siteTitle = 'United Nations | Morning Briefings';
+  const siteTitle = "United Nations | Morning Briefings";
 
   // Read and encode the logo as base64
-  let logoDataUri = '';
+  let logoDataUri = "";
   try {
-    const logoPath = path.join(process.cwd(), 'public/images/UN_Logo_Stacked_Colour_English.png');
+    const logoPath = path.join(
+      process.cwd(),
+      "public/images/UN_Logo_Stacked_Colour_English.png",
+    );
     const logoBuffer = fs.readFileSync(logoPath);
-    logoDataUri = `data:image/png;base64,${logoBuffer.toString('base64')}`;
+    logoDataUri = `data:image/png;base64,${logoBuffer.toString("base64")}`;
   } catch (error) {
-    console.warn('[EMAIL SERVICE] Warning: Could not read logo file', error);
+    console.warn("[EMAIL SERVICE] Warning: Could not read logo file", error);
     // Fallback: use a simple UN text if logo can't be loaded
-    logoDataUri = '';
+    logoDataUri = "";
   }
 
   const mailOptions = {
     from: process.env.SMTP_FROM,
     to: email,
-    subject: 'Verify your UN Morning Briefing System account',
+    subject: "Verify your UN Morning Briefing System account",
     html: `
       <!DOCTYPE html>
       <html>
@@ -55,9 +58,13 @@ export async function sendVerificationEmail(
                     <td style="padding:0 0 24px;">
                       <table cellpadding="0" cellspacing="0">
                         <tr>
-                          ${logoDataUri ? `<td style="vertical-align:middle;padding-right:16px;">
+                          ${
+                            logoDataUri
+                              ? `<td style="vertical-align:middle;padding-right:16px;">
                             <img src="${logoDataUri}" alt="UN" width="180" style="display:block;border:none;max-width:100%;" />
-                          </td>` : ''}
+                          </td>`
+                              : ""
+                          }
                           <td style="vertical-align:middle;">
                             <div style="font-size:20px;font-weight:700;color:#000000;line-height:1.2;">${siteTitle}</div>
                           </td>
@@ -105,11 +112,15 @@ export async function sendVerificationEmail(
 
   try {
     // Check if email credentials are configured
-    if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
+    if (
+      !process.env.SMTP_HOST ||
+      !process.env.SMTP_USER ||
+      !process.env.SMTP_PASS
+    ) {
       console.warn(
-        '[EMAIL SERVICE] Warning: SMTP credentials not configured. Set SMTP_HOST, SMTP_USER, and SMTP_PASS in .env'
+        "[EMAIL SERVICE] Warning: SMTP credentials not configured. Set SMTP_HOST, SMTP_USER, and SMTP_PASS in .env",
       );
-      console.log('[EMAIL PREVIEW]', {
+      console.log("[EMAIL PREVIEW]", {
         to: email,
         subject: mailOptions.subject,
         verificationUrl: verificationUrl,
@@ -118,10 +129,10 @@ export async function sendVerificationEmail(
     }
 
     const info = await transporter.sendMail(mailOptions);
-    console.log('[EMAIL SENT]', { messageId: info.messageId, to: email });
+    console.log("[EMAIL SENT]", { messageId: info.messageId, to: email });
     return true;
   } catch (error) {
-    console.error('[EMAIL ERROR]', error);
+    console.error("[EMAIL ERROR]", error);
     // Log the error but don't fail registration
     return false;
   }

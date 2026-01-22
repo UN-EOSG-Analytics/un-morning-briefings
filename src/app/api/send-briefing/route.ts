@@ -1,29 +1,50 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import nodemailer from 'nodemailer';
-import * as fs from 'fs';
-import * as path from 'path';
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import nodemailer from "nodemailer";
+import * as fs from "fs";
+import * as path from "path";
 
 /**
  * Format a date string (YYYY-MM-DD) to long format without timezone conversion
  */
 function formatDateLong(dateStr: string): string {
-  const [year, month, day] = dateStr.split('-').map(Number);
-  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-  
+  const [year, month, day] = dateStr.split("-").map(Number);
+  const monthNames = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ];
+  const dayNames = [
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+  ];
+
   // Create date object without timezone issues (use UTC components)
   const date = new Date(Date.UTC(year, month - 1, day));
   const dayOfWeek = dayNames[date.getUTCDay()];
-  
+
   return `${dayOfWeek}, ${monthNames[month - 1]} ${day}, ${year}`;
 }
 
 // Create a transporter using the configured SMTP server
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
-  port: parseInt(process.env.SMTP_PORT || '587'),
-  secure: process.env.SMTP_PORT === '465',
+  port: parseInt(process.env.SMTP_PORT || "587"),
+  secure: process.env.SMTP_PORT === "465",
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
@@ -35,36 +56,36 @@ export async function POST(request: NextRequest) {
     // Check authentication
     const session = await getServerSession();
     if (!session?.user?.email) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { docxBlob, fileName, briefingDate } = await request.json();
 
     if (!docxBlob || !fileName) {
       return NextResponse.json(
-        { error: 'Missing docxBlob or fileName' },
-        { status: 400 }
+        { error: "Missing docxBlob or fileName" },
+        { status: 400 },
       );
     }
 
     // Convert base64 blob to Buffer
-    const base64Data = docxBlob.split(',')[1] || docxBlob;
-    const buffer = Buffer.from(base64Data, 'base64');
+    const base64Data = docxBlob.split(",")[1] || docxBlob;
+    const buffer = Buffer.from(base64Data, "base64");
 
     // Read and encode the logo as base64
-    let logoDataUri = '';
+    let logoDataUri = "";
     try {
-      const logoPath = path.join(process.cwd(), 'public/images/UN_Logo_Stacked_Colour_English.png');
+      const logoPath = path.join(
+        process.cwd(),
+        "public/images/UN_Logo_Stacked_Colour_English.png",
+      );
       const logoBuffer = fs.readFileSync(logoPath);
-      logoDataUri = `data:image/png;base64,${logoBuffer.toString('base64')}`;
+      logoDataUri = `data:image/png;base64,${logoBuffer.toString("base64")}`;
     } catch (error) {
-      console.warn('[EMAIL SERVICE] Warning: Could not read logo file', error);
+      console.warn("[EMAIL SERVICE] Warning: Could not read logo file", error);
     }
 
-    const siteTitle = 'United Nations | Morning Briefings';
+    const siteTitle = "United Nations | Morning Briefings";
     const formattedDate = formatDateLong(briefingDate);
 
     // Send email with attachment
@@ -89,9 +110,13 @@ export async function POST(request: NextRequest) {
                       <td style="padding:0 0 24px;">
                         <table cellpadding="0" cellspacing="0">
                           <tr>
-                            ${logoDataUri ? `<td style="vertical-align:middle;padding-right:16px;">
+                            ${
+                              logoDataUri
+                                ? `<td style="vertical-align:middle;padding-right:16px;">
                               <img src="${logoDataUri}" alt="UN" width="180" style="display:block;border:none;max-width:100%;" />
-                            </td>` : ''}
+                            </td>`
+                                : ""
+                            }
                             <td style="vertical-align:middle;">
                               <div style="font-size:20px;font-weight:700;color:#000000;line-height:1.2;">${siteTitle}</div>
                             </td>
@@ -140,20 +165,21 @@ export async function POST(request: NextRequest) {
         {
           filename: fileName,
           content: buffer,
-          contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          contentType:
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         },
       ],
     });
 
     return NextResponse.json({
       success: true,
-      message: 'Email sent successfully',
+      message: "Email sent successfully",
     });
   } catch (error) {
-    console.error('[SEND-BRIEFING] Error:', error);
+    console.error("[SEND-BRIEFING] Error:", error);
     return NextResponse.json(
-      { error: 'Failed to send email' },
-      { status: 500 }
+      { error: "Failed to send email" },
+      { status: 500 },
     );
   }
 }

@@ -1,40 +1,40 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { reformulateBriefing, reformulateSelection } from '@/lib/ai-service';
+import { NextRequest, NextResponse } from "next/server";
+import { reformulateBriefing, reformulateSelection } from "@/lib/ai-service";
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const { mode, content, fullSentence, selectionStart, selectionEnd } = body;
 
-    if (mode === 'selection') {
+    if (mode === "selection") {
       // Regenerate only selected text with full sentence context
-      if (!fullSentence || typeof fullSentence !== 'string') {
+      if (!fullSentence || typeof fullSentence !== "string") {
         return NextResponse.json(
-          { error: 'Full sentence context is required' },
-          { status: 400 }
+          { error: "Full sentence context is required" },
+          { status: 400 },
         );
       }
 
       if (selectionStart === undefined || selectionEnd === undefined) {
         return NextResponse.json(
-          { error: 'Selection boundaries are required' },
-          { status: 400 }
+          { error: "Selection boundaries are required" },
+          { status: 400 },
         );
       }
 
       const reformulatedText = await reformulateSelection(
         fullSentence,
         selectionStart,
-        selectionEnd
+        selectionEnd,
       );
 
       return NextResponse.json({ content: reformulatedText });
     } else {
       // Regenerate full content
-      if (!content || typeof content !== 'string') {
+      if (!content || typeof content !== "string") {
         return NextResponse.json(
-          { error: 'Content is required' },
-          { status: 400 }
+          { error: "Content is required" },
+          { status: 400 },
         );
       }
 
@@ -43,11 +43,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ content: reformulatedContent });
     }
   } catch (error) {
-    console.error('[REFORMULATE API] Error:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Failed to reformulate content';
-    return NextResponse.json(
-      { error: errorMessage },
-      { status: 500 }
-    );
+    console.error("[REFORMULATE API] Error:", error);
+    const errorMessage =
+      error instanceof Error ? error.message : "Failed to reformulate content";
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

@@ -1,9 +1,9 @@
 "use client";
 
-import Link from 'next/link';
-import { useRouter, usePathname } from 'next/navigation';
-import React, { ReactNode } from 'react';
-import { useUnsavedChanges } from '@/lib/unsaved-changes-context';
+import Link from "next/link";
+import { useRouter, usePathname } from "next/navigation";
+import React, { ReactNode } from "react";
+import { useUnsavedChanges } from "@/lib/unsaved-changes-context";
 
 interface NavButtonProps {
   href: string;
@@ -12,7 +12,12 @@ interface NavButtonProps {
   onClick?: () => void;
 }
 
-export default function NavButton({ href, children, className = '', onClick }: NavButtonProps) {
+export default function NavButton({
+  href,
+  children,
+  className = "",
+  onClick,
+}: NavButtonProps) {
   const router = useRouter();
   const pathname = usePathname();
   const { confirmNavigation } = useUnsavedChanges();
@@ -24,9 +29,9 @@ export default function NavButton({ href, children, className = '', onClick }: N
     }
 
     // Only check for unsaved changes when leaving the form page
-    if (pathname === '/form') {
+    if (pathname === "/form") {
       e.preventDefault();
-      
+
       const confirmed = await confirmNavigation();
       if (confirmed) {
         if (onClick) {
@@ -43,7 +48,11 @@ export default function NavButton({ href, children, className = '', onClick }: N
   };
 
   return (
-    <Link href={href} onClick={handleClick} className={`inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition ${className}`}>
+    <Link
+      href={href}
+      onClick={handleClick}
+      className={`inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition ${className}`}
+    >
       {children}
     </Link>
   );

@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import React, { createContext, useContext, useCallback, useState } from 'react';
-import { Popup, PopupAction } from '@/types/popup';
+import React, { createContext, useContext, useCallback, useState } from "react";
+import { Popup, PopupAction } from "@/types/popup";
 
 interface PopupContextType {
   popups: Popup[];
-  showPopup: (config: Omit<Popup, 'id'>) => string;
+  showPopup: (config: Omit<Popup, "id">) => string;
   closePopup: (id: string) => void;
   confirm: (title: string, message: string) => Promise<boolean>;
   success: (title: string, message: string, duration?: number) => void;
@@ -34,7 +34,7 @@ export function PopupProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const showPopup = useCallback(
-    (config: Omit<Popup, 'id'>) => {
+    (config: Omit<Popup, "id">) => {
       const id = generateId();
       const popup: Popup = {
         ...config,
@@ -42,7 +42,7 @@ export function PopupProvider({ children }: { children: React.ReactNode }) {
         autoClose:
           config.autoClose !== undefined
             ? config.autoClose
-            : config.type !== 'confirm',
+            : config.type !== "confirm",
         duration: config.duration || 5000,
       };
 
@@ -57,7 +57,7 @@ export function PopupProvider({ children }: { children: React.ReactNode }) {
 
       return id;
     },
-    [generateId, closePopup]
+    [generateId, closePopup],
   );
 
   const confirm = useCallback(
@@ -67,16 +67,16 @@ export function PopupProvider({ children }: { children: React.ReactNode }) {
         let id: string;
 
         const handleConfirm: PopupAction = {
-          label: 'Confirm',
+          label: "Confirm",
           onClick: () => {
             closePopup(id);
             resolve(true);
           },
-          variant: 'destructive',
+          variant: "destructive",
         };
 
         const handleCancel: PopupAction = {
-          label: 'Cancel',
+          label: "Cancel",
           onClick: () => {
             closePopup(id);
             resolve(false);
@@ -84,7 +84,7 @@ export function PopupProvider({ children }: { children: React.ReactNode }) {
         };
 
         id = showPopup({
-          type: 'confirm',
+          type: "confirm",
           title,
           message,
           actions: [handleCancel, handleConfirm],
@@ -92,55 +92,55 @@ export function PopupProvider({ children }: { children: React.ReactNode }) {
         });
       });
     },
-    [showPopup, closePopup]
+    [showPopup, closePopup],
   );
 
   const success = useCallback(
     (title: string, message: string, duration?: number) => {
       showPopup({
-        type: 'success',
+        type: "success",
         title,
         message,
         duration,
       });
     },
-    [showPopup]
+    [showPopup],
   );
 
   const error = useCallback(
     (title: string, message: string, duration?: number) => {
       showPopup({
-        type: 'error',
+        type: "error",
         title,
         message,
         duration,
       });
     },
-    [showPopup]
+    [showPopup],
   );
 
   const warning = useCallback(
     (title: string, message: string, duration?: number) => {
       showPopup({
-        type: 'warning',
+        type: "warning",
         title,
         message,
         duration,
       });
     },
-    [showPopup]
+    [showPopup],
   );
 
   const info = useCallback(
     (title: string, message: string, duration?: number) => {
       showPopup({
-        type: 'info',
+        type: "info",
         title,
         message,
         duration,
       });
     },
-    [showPopup]
+    [showPopup],
   );
 
   return (
@@ -164,7 +164,7 @@ export function PopupProvider({ children }: { children: React.ReactNode }) {
 export function usePopup(): PopupContextType {
   const context = useContext(PopupContext);
   if (!context) {
-    throw new Error('usePopup must be used within PopupProvider');
+    throw new Error("usePopup must be used within PopupProvider");
   }
   return context;
 }

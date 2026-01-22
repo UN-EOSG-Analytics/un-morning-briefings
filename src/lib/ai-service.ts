@@ -1,11 +1,16 @@
-import { createAzure } from '@ai-sdk/azure';
-import { generateText } from 'ai';
+import { createAzure } from "@ai-sdk/azure";
+import { generateText } from "ai";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { CATEGORIES, PRIORITIES, REGIONS, COUNTRIES } from '@/types/morning-meeting';
+import {
+  CATEGORIES,
+  PRIORITIES,
+  REGIONS,
+  COUNTRIES,
+} from "@/types/morning-meeting";
 
 interface AutoFillResult {
   category: string;
-  priority: 'sg-attention' | 'situational-awareness';
+  priority: "sg-attention" | "situational-awareness";
   region: string;
   country: string | string[];
   headline: string;
@@ -17,23 +22,32 @@ interface AutoFillResult {
 // Initialize Azure OpenAI client
 const azure = createAzure({
   apiKey: process.env.AZURE_OPENAI_API_KEY,
-  resourceName: process.env.AZURE_OPENAI_ENDPOINT?.replace('https://', '').replace('.openai.azure.com/', ''),
+  resourceName: process.env.AZURE_OPENAI_ENDPOINT?.replace(
+    "https://",
+    "",
+  ).replace(".openai.azure.com/", ""),
 });
 
-export async function autoFillFromContent(content: string): Promise<AutoFillResult> {
+export async function autoFillFromContent(
+  content: string,
+): Promise<AutoFillResult> {
   const apiKey = process.env.AZURE_OPENAI_API_KEY;
-  
+
   if (!apiKey) {
-    console.error('[AI SERVICE] AZURE_OPENAI_API_KEY is not configured in .env file');
-    throw new Error('AZURE_OPENAI_API_KEY is not configured. Please add it to your .env file.');
+    console.error(
+      "[AI SERVICE] AZURE_OPENAI_API_KEY is not configured in .env file",
+    );
+    throw new Error(
+      "AZURE_OPENAI_API_KEY is not configured. Please add it to your .env file.",
+    );
   }
 
   // Build lists for the prompt
-  const categoryList = CATEGORIES.join(', ');
-  const priorityList = PRIORITIES.map(p => p.value).join(', ');
-  const regionList = REGIONS.join(', ');
-  const countryList = COUNTRIES.join(', ');
-  
+  const categoryList = CATEGORIES.join(", ");
+  const priorityList = PRIORITIES.map((p) => p.value).join(", ");
+  const regionList = REGIONS.join(", ");
+  const countryList = COUNTRIES.join(", ");
+
   const prompt = `Create a JSON object to auto-fill the fields of a UN Morning Meeting briefing entry based on the provided content, which will be pasted from a news source
 
 Content: ${content}
@@ -100,30 +114,33 @@ Now, return the JSON:
 
   try {
     const { text } = await generateText({
-      model: azure('gpt-4o'),
+      model: azure("gpt-4o"),
       prompt,
     });
-    
+
     // Remove markdown code blocks if present
-    const jsonText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+    const jsonText = text
+      .replace(/```json\n?/g, "")
+      .replace(/```\n?/g, "")
+      .trim();
     const parsed = JSON.parse(jsonText);
-    
+
     return {
-      category: parsed.category || '',
-      priority: parsed.priority || 'situational-awareness',
-      region: parsed.region || '',
-      country: parsed.country || '',
-      headline: parsed.headline || '',
+      category: parsed.category || "",
+      priority: parsed.priority || "situational-awareness",
+      region: parsed.region || "",
+      country: parsed.country || "",
+      headline: parsed.headline || "",
       date: parsed.date,
       entry: parsed.entry || content,
-      sourceDate: parsed.sourceDate || '',
+      sourceDate: parsed.sourceDate || "",
     };
   } catch (error) {
-    console.error('[AI SERVICE] Error details:', error);
+    console.error("[AI SERVICE] Error details:", error);
     if (error instanceof Error) {
       throw new Error(`AI processing failed: ${error.message}`);
     }
-    throw new Error('Failed to process content with AI');
+    throw new Error("Failed to process content with AI");
   }
 }
 
@@ -132,17 +149,25 @@ Now, return the JSON:
  */
 export async function generateSummary(content: string): Promise<string[]> {
   const apiKey = process.env.AZURE_OPENAI_API_KEY;
-  
+
   if (!apiKey) {
-    console.error('[AI SERVICE] AZURE_OPENAI_API_KEY is not configured in .env file');
-    throw new Error('AZURE_OPENAI_API_KEY is not configured. Please add it to your .env file.');
+    console.error(
+      "[AI SERVICE] AZURE_OPENAI_API_KEY is not configured in .env file",
+    );
+    throw new Error(
+      "AZURE_OPENAI_API_KEY is not configured. Please add it to your .env file.",
+    );
   }
 
   // Extract plain text from HTML
-  const plainText = content.replace(/<[^>]*>/g, ' ').replace(/&[a-z]+;/g, ' ').replace(/\s+/g, ' ').trim();
+  const plainText = content
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&[a-z]+;/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 
   if (!plainText) {
-    throw new Error('Content is empty');
+    throw new Error("Content is empty");
   }
 
   const prompt = `Create a concise executive summary of this briefing in 3-5 key bullet points.
@@ -160,25 +185,25 @@ ${plainText}`;
 
   try {
     const { text } = await generateText({
-      model: azure('gpt-4o'),
+      model: azure("gpt-4o"),
       prompt,
     });
-    
+
     // Split into lines and clean up
     const bullets = text
-      .split('\n')
-      .map(line => line.trim())
-      .filter(line => line.length > 0)
-      .map(line => line.replace(/^[•\-*]\s*/, '').trim())
-      .filter(line => line.length > 0);
-    
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0)
+      .map((line) => line.replace(/^[•\-*]\s*/, "").trim())
+      .filter((line) => line.length > 0);
+
     return bullets;
   } catch (error) {
-    console.error('[AI SERVICE] Summary generation error:', error);
+    console.error("[AI SERVICE] Summary generation error:", error);
     if (error instanceof Error) {
       throw new Error(`Summary generation failed: ${error.message}`);
     }
-    throw new Error('Failed to generate summary');
+    throw new Error("Failed to generate summary");
   }
 }
 
@@ -189,25 +214,30 @@ ${plainText}`;
 export async function reformulateSelection(
   fullSentence: string,
   selectionStart: number,
-  selectionEnd: number
+  selectionEnd: number,
 ): Promise<string> {
   const apiKey = process.env.AZURE_OPENAI_API_KEY;
-  
+
   if (!apiKey) {
-    console.error('[AI SERVICE] AZURE_OPENAI_API_KEY is not configured in .env file');
-    throw new Error('AZURE_OPENAI_API_KEY is not configured. Please add it to your .env file.');
+    console.error(
+      "[AI SERVICE] AZURE_OPENAI_API_KEY is not configured in .env file",
+    );
+    throw new Error(
+      "AZURE_OPENAI_API_KEY is not configured. Please add it to your .env file.",
+    );
   }
 
   // Extract the parts
   const beforeText = fullSentence.substring(0, selectionStart);
   const selectedText = fullSentence.substring(selectionStart, selectionEnd);
   const afterText = fullSentence.substring(selectionEnd);
-  
+
   // Check if we're reformulating the entire text (no context)
-  const isFullText = selectionStart === 0 && selectionEnd === fullSentence.length;
-  
+  const isFullText =
+    selectionStart === 0 && selectionEnd === fullSentence.length;
+
   let prompt: string;
-  
+
   if (isFullText) {
     // Direct reformulation without context markers
     prompt = `Reformulate this UN briefing text to be more concise and professional.
@@ -249,47 +279,48 @@ Your reformulated text:`;
   try {
     // Calculate appropriate token limit based on input length
     const estimatedTokens = Math.max(800, Math.ceil(selectedText.length / 2));
-    
+
     const { text: reformulatedText } = await generateText({
-      model: azure('gpt-4o'),
+      model: azure("gpt-4o"),
       prompt,
       temperature: 0.7,
       maxOutputTokens: estimatedTokens,
     });
-    
+
     // Clean up response
-    const cleanedText = reformulatedText.trim()
-      .replace(/^["'`]+|["'`]+$/g, '') // Remove surrounding quotes
-      .replace(/^(Here is|Here's|The rewritten|Rewritten)[:\s]*/i, '') // Remove meta prefixes
+    const cleanedText = reformulatedText
+      .trim()
+      .replace(/^["'`]+|["'`]+$/g, "") // Remove surrounding quotes
+      .replace(/^(Here is|Here's|The rewritten|Rewritten)[:\s]*/i, "") // Remove meta prefixes
       .trim();
-    
+
     // Validate response isn't meta-commentary
     const metaPatterns = [
       /^(Wait|Note|Context|Explanation|I would|I will|Let me|The text|This)/i,
       /<<<START SELECTION>>>/,
-      /<<<END SELECTION>>>/
+      /<<<END SELECTION>>>/,
     ];
-    
+
     for (const pattern of metaPatterns) {
       if (pattern.test(cleanedText)) {
-        console.warn('[AI SERVICE] AI returned invalid response format');
+        console.warn("[AI SERVICE] AI returned invalid response format");
         return selectedText;
       }
     }
-    
+
     // If empty, return original
     if (!cleanedText) {
-      console.warn('[AI SERVICE] AI response empty, using original text');
+      console.warn("[AI SERVICE] AI response empty, using original text");
       return selectedText;
     }
-    
+
     return cleanedText;
   } catch (error) {
-    console.error('[AI SERVICE] Selection reformulation error:', error);
+    console.error("[AI SERVICE] Selection reformulation error:", error);
     if (error instanceof Error) {
       throw new Error(`Reformulation failed: ${error.message}`);
     }
-    throw new Error('Failed to reformulate selected text');
+    throw new Error("Failed to reformulate selected text");
   }
 }
 
@@ -299,33 +330,37 @@ Your reformulated text:`;
  */
 export async function reformulateBriefing(content: string): Promise<string> {
   const apiKey = process.env.AZURE_OPENAI_API_KEY;
-  
+
   if (!apiKey) {
-    console.error('[AI SERVICE] AZURE_OPENAI_API_KEY is not configured in .env file');
-    throw new Error('AZURE_OPENAI_API_KEY is not configured. Please add it to your .env file.');
+    console.error(
+      "[AI SERVICE] AZURE_OPENAI_API_KEY is not configured in .env file",
+    );
+    throw new Error(
+      "AZURE_OPENAI_API_KEY is not configured. Please add it to your .env file.",
+    );
   }
 
   // Extract and preserve all images with their positions
   const imageRegex = /<img[^>]*>/g;
   const images: string[] = [];
   let contentWithPlaceholders = content;
-  
+
   // Replace each image with a placeholder and store the original
   contentWithPlaceholders = content.replace(imageRegex, (match) => {
     const index = images.length;
     images.push(match);
     return `[IMAGE_PLACEHOLDER_${index}]`;
   });
-  
+
   // Extract plain text without images/HTML
   const plainText = contentWithPlaceholders
-    .replace(/<[^>]*>/g, ' ') // Remove HTML tags
-    .replace(/&[a-z]+;/g, ' ') // Remove HTML entities
-    .replace(/\s+/g, ' ')
+    .replace(/<[^>]*>/g, " ") // Remove HTML tags
+    .replace(/&[a-z]+;/g, " ") // Remove HTML entities
+    .replace(/\s+/g, " ")
     .trim();
 
   if (!plainText) {
-    throw new Error('Content is empty');
+    throw new Error("Content is empty");
   }
 
   const prompt = `Reformulate the following briefing content to be:
@@ -348,25 +383,25 @@ ${plainText}`;
 
   try {
     const { text: reformulatedText } = await generateText({
-      model: azure('gpt-4o'),
+      model: azure("gpt-4o"),
       prompt,
     });
-    
+
     // Convert reformulated text to TipTap HTML format
     let reformulatedHtml = reformulatedText.trim();
-    
+
     // Convert plain text paragraphs to proper TipTap HTML
     // Split by double newlines (paragraph breaks) or single newlines
     const paragraphs = reformulatedHtml
       .split(/\n\n+/)
-      .map(p => p.trim())
-      .filter(p => p.length > 0);
-    
+      .map((p) => p.trim())
+      .filter((p) => p.length > 0);
+
     // Convert each paragraph to proper HTML
     reformulatedHtml = paragraphs
-      .map(paragraph => {
+      .map((paragraph) => {
         // Check if this is already HTML
-        if (paragraph.startsWith('<') && paragraph.endsWith('>')) {
+        if (paragraph.startsWith("<") && paragraph.endsWith(">")) {
           return paragraph;
         }
         // Check if it's an image placeholder - don't wrap in <p>
@@ -376,8 +411,8 @@ ${plainText}`;
         // Wrap plain text in <p> tags
         return `<p>${paragraph}</p>`;
       })
-      .join('');
-    
+      .join("");
+
     // Re-insert images at their placeholder positions
     images.forEach((img, index) => {
       const placeholder = `[IMAGE_PLACEHOLDER_${index}]`;
@@ -387,13 +422,13 @@ ${plainText}`;
       // Also try without the <p> tags in case they weren't added
       reformulatedHtml = reformulatedHtml.replace(placeholder, img);
     });
-    
+
     return reformulatedHtml;
   } catch (error) {
-    console.error('[AI SERVICE] Reformulation error:', error);
+    console.error("[AI SERVICE] Reformulation error:", error);
     if (error instanceof Error) {
       throw new Error(`Reformulation failed: ${error.message}`);
     }
-    throw new Error('Failed to reformulate content');
+    throw new Error("Failed to reformulate content");
   }
 }

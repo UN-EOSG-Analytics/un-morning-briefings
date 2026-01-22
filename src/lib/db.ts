@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { Pool } from 'pg';
+import { Pool } from "pg";
 
 const globalForDb = global as unknown as { db: Pool };
 
@@ -17,12 +17,12 @@ export const db =
     connectionTimeoutMillis: 2000,
   });
 
-if (process.env.NODE_ENV !== 'production') globalForDb.db = db;
+if (process.env.NODE_ENV !== "production") globalForDb.db = db;
 
 /**
  * Execute a database query with automatic schema prefix
  * Automatically sets search_path to pu_morning_briefings schema
- * 
+ *
  * @param text - SQL query string
  * @param params - Optional array of query parameters
  * @returns Promise that resolves to query result with rows and rowCount
@@ -31,11 +31,11 @@ if (process.env.NODE_ENV !== 'production') globalForDb.db = db;
  */
 export async function query<T = any>(
   text: string,
-  params?: any[]
+  params?: any[],
 ): Promise<{ rows: T[]; rowCount: number | null }> {
   const client = await db.connect();
   try {
-    await client.query('SET search_path TO pu_morning_briefings, public');
+    await client.query("SET search_path TO pu_morning_briefings, public");
     const result = await client.query(text, params);
     return result;
   } finally {

@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useState, useRef, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
+import { useState, useRef, useEffect } from "react";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -9,17 +9,20 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '@/components/ui/dialog';
-import { Calendar, FileText } from 'lucide-react';
+} from "@/components/ui/dialog";
+import { Calendar, FileText } from "lucide-react";
 
 interface BriefingModeDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-export function BriefingModeDialog({ open, onOpenChange }: BriefingModeDialogProps) {
+export function BriefingModeDialog({
+  open,
+  onOpenChange,
+}: BriefingModeDialogProps) {
   const [selectedDate, setSelectedDate] = useState<string>(
-    new Date().toISOString().split('T')[0]
+    new Date().toISOString().split("T")[0],
   );
   const dateInputRef = useRef<HTMLInputElement>(null);
 
@@ -35,7 +38,7 @@ export function BriefingModeDialog({ open, onOpenChange }: BriefingModeDialogPro
 
   const handleViewBriefing = () => {
     // Open briefing view in new tab
-    window.open(`/briefing?date=${selectedDate}`, '_blank');
+    window.open(`/briefing?date=${selectedDate}`, "_blank");
     onOpenChange(false);
   };
 
@@ -51,11 +54,11 @@ export function BriefingModeDialog({ open, onOpenChange }: BriefingModeDialogPro
             Select a date to view the briefing document
           </DialogDescription>
         </DialogHeader>
-        
+
         <div className="space-y-4 py-4">
           <div className="space-y-2">
             <label htmlFor="briefing-date" className="text-sm font-medium">
-              <Calendar className="inline h-4 w-4 mr-1" />
+              <Calendar className="mr-1 inline h-4 w-4" />
               Select Date
             </label>
             <input
@@ -64,7 +67,7 @@ export function BriefingModeDialog({ open, onOpenChange }: BriefingModeDialogPro
               type="date"
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
+              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-slate-400 focus:outline-none"
             />
           </div>
         </div>
@@ -73,9 +76,7 @@ export function BriefingModeDialog({ open, onOpenChange }: BriefingModeDialogPro
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button onClick={handleViewBriefing}>
-            View Briefing
-          </Button>
+          <Button onClick={handleViewBriefing}>View Briefing</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

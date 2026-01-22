@@ -1,5 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Paragraph, TextRun, HeadingLevel, AlignmentType, UnderlineType } from 'docx';
+import {
+  Paragraph,
+  TextRun,
+  HeadingLevel,
+  AlignmentType,
+  UnderlineType,
+} from "docx";
 
 /**
  * Convert TipTap JSON to docx Paragraph elements
@@ -24,33 +30,33 @@ function convertNode(node: any): Paragraph[] {
   const paragraphs: Paragraph[] = [];
 
   switch (node.type) {
-    case 'paragraph':
+    case "paragraph":
       paragraphs.push(convertParagraph(node));
       break;
-    case 'heading':
+    case "heading":
       paragraphs.push(convertHeading(node));
       break;
-    case 'bulletList':
+    case "bulletList":
       paragraphs.push(...convertBulletList(node));
       break;
-    case 'orderedList':
+    case "orderedList":
       paragraphs.push(...convertOrderedList(node));
       break;
-    case 'blockquote':
+    case "blockquote":
       paragraphs.push(convertBlockquote(node));
       break;
-    case 'codeBlock':
+    case "codeBlock":
       paragraphs.push(convertCodeBlock(node));
       break;
-    case 'horizontalRule':
+    case "horizontalRule":
       paragraphs.push(
         new Paragraph({
-          text: '─'.repeat(60),
+          text: "─".repeat(60),
           spacing: { after: 100, before: 100 },
-        })
+        }),
       );
       break;
-    case 'image':
+    case "image":
       paragraphs.push(convertImage(node));
       break;
     default:
@@ -70,7 +76,8 @@ function convertParagraph(node: any): Paragraph {
   const alignment = getAlignment(node.attrs?.textAlign);
 
   return new Paragraph({
-    children: runs.length > 0 ? runs : [new TextRun({ text: '', font: 'Roboto' })],
+    children:
+      runs.length > 0 ? runs : [new TextRun({ text: "", font: "Roboto" })],
     alignment,
     spacing: { after: 100 },
   });
@@ -81,7 +88,7 @@ function convertHeading(node: any): Paragraph {
   const runs = extractTextRuns(node.content || []);
   const alignment = getAlignment(node.attrs?.textAlign);
 
-  let headingLevel: typeof HeadingLevel[keyof typeof HeadingLevel];
+  let headingLevel: (typeof HeadingLevel)[keyof typeof HeadingLevel];
   let fontSize: number;
 
   switch (level) {
@@ -105,8 +112,23 @@ function convertHeading(node: any): Paragraph {
   return new Paragraph({
     children:
       runs.length > 0
-        ? runs.map((run) => new TextRun({ ...run, bold: true, size: fontSize, font: 'Roboto' }))
-        : [new TextRun({ text: '', bold: true, size: fontSize, font: 'Roboto' })],
+        ? runs.map(
+            (run) =>
+              new TextRun({
+                ...run,
+                bold: true,
+                size: fontSize,
+                font: "Roboto",
+              }),
+          )
+        : [
+            new TextRun({
+              text: "",
+              bold: true,
+              size: fontSize,
+              font: "Roboto",
+            }),
+          ],
     heading: headingLevel,
     alignment,
     spacing: { after: 150, before: 100 },
@@ -118,15 +140,17 @@ function convertBulletList(node: any): Paragraph[] {
 
   if (node.content) {
     for (const item of node.content) {
-      if (item.type === 'listItem') {
+      if (item.type === "listItem") {
         const runs = extractTextRuns(item.content?.[0]?.content || []);
         paragraphs.push(
           new Paragraph({
             children:
-              runs.length > 0 ? runs : [new TextRun({ text: '', font: 'Roboto' })],
+              runs.length > 0
+                ? runs
+                : [new TextRun({ text: "", font: "Roboto" })],
             bullet: { level: 0 },
             spacing: { after: 50 },
-          })
+          }),
         );
       }
     }
@@ -140,15 +164,17 @@ function convertOrderedList(node: any): Paragraph[] {
 
   if (node.content) {
     for (const item of node.content) {
-      if (item.type === 'listItem') {
+      if (item.type === "listItem") {
         const runs = extractTextRuns(item.content?.[0]?.content || []);
         paragraphs.push(
           new Paragraph({
             children:
-              runs.length > 0 ? runs : [new TextRun({ text: '', font: 'Roboto' })],
-            numbering: { reference: 'numbering', level: 0 },
+              runs.length > 0
+                ? runs
+                : [new TextRun({ text: "", font: "Roboto" })],
+            numbering: { reference: "numbering", level: 0 },
             spacing: { after: 50 },
-          })
+          }),
         );
       }
     }
@@ -163,13 +189,28 @@ function convertBlockquote(node: any): Paragraph {
   return new Paragraph({
     children:
       runs.length > 0
-        ? runs.map((run) => new TextRun({ ...run, italics: true, color: '495057', font: 'Roboto' }))
-        : [new TextRun({ text: '', italics: true, color: '495057', font: 'Roboto' })],
+        ? runs.map(
+            (run) =>
+              new TextRun({
+                ...run,
+                italics: true,
+                color: "495057",
+                font: "Roboto",
+              }),
+          )
+        : [
+            new TextRun({
+              text: "",
+              italics: true,
+              color: "495057",
+              font: "Roboto",
+            }),
+          ],
     border: {
       left: {
-        color: '009edb',
+        color: "009edb",
         space: 100,
-        style: 'single',
+        style: "single",
         size: 12,
       },
     },
@@ -184,14 +225,14 @@ function convertCodeBlock(node: any): Paragraph {
     children: [
       new TextRun({
         text,
-        font: 'Courier New',
+        font: "Courier New",
         size: 18,
-        color: 'd4d4d4',
+        color: "d4d4d4",
       }),
     ],
     shading: {
-      type: 'clear',
-      color: '1e1e1e',
+      type: "clear",
+      color: "1e1e1e",
     },
     spacing: { after: 100, before: 100 },
   });
@@ -199,10 +240,17 @@ function convertCodeBlock(node: any): Paragraph {
 
 function convertImage(node: any): Paragraph {
   // Images are stored as data in TipTap
-  const alt = node.attrs?.alt || 'Image';
-  
+  const alt = node.attrs?.alt || "Image";
+
   return new Paragraph({
-    children: [new TextRun({ text: `[Image: ${alt}]`, color: '0000FF', underline: { type: UnderlineType.SINGLE }, font: 'Roboto' })],
+    children: [
+      new TextRun({
+        text: `[Image: ${alt}]`,
+        color: "0000FF",
+        underline: { type: UnderlineType.SINGLE },
+        font: "Roboto",
+      }),
+    ],
     spacing: { after: 100, before: 100 },
   });
 }
@@ -211,47 +259,47 @@ function extractTextRuns(content: any[]): any[] {
   const runs: any[] = [];
 
   for (const node of content) {
-    if (node.type === 'text') {
+    if (node.type === "text") {
       const marks = node.marks || [];
       const run: any = {
-        text: node.text || '',
-        font: 'Roboto',
+        text: node.text || "",
+        font: "Roboto",
       };
 
       for (const mark of marks) {
         switch (mark.type) {
-          case 'bold':
+          case "bold":
             run.bold = true;
             break;
-          case 'italic':
+          case "italic":
             run.italics = true;
             break;
-          case 'strike':
+          case "strike":
             run.strike = true;
             break;
-          case 'code':
-            run.font = 'Courier New';
+          case "code":
+            run.font = "Courier New";
             break;
-          case 'link':
-            run.color = '0000FF';
+          case "link":
+            run.color = "0000FF";
             run.underline = { type: UnderlineType.SINGLE };
             break;
-          case 'underline':
+          case "underline":
             run.underline = { type: UnderlineType.SINGLE };
             break;
-          case 'highlight':
+          case "highlight":
             // Use yellow highlight color (same as typical editors)
             run.shading = {
-              type: 'clear',
-              fill: 'FFFF00',
+              type: "clear",
+              fill: "FFFF00",
             };
             break;
         }
       }
 
       runs.push(new TextRun(run));
-    } else if (node.type === 'hardBreak') {
-      runs.push(new TextRun({ text: '\n', font: 'Roboto' }));
+    } else if (node.type === "hardBreak") {
+      runs.push(new TextRun({ text: "\n", font: "Roboto" }));
     } else {
       // Handle nested content
       if (node.content) {
@@ -264,26 +312,28 @@ function extractTextRuns(content: any[]): any[] {
 }
 
 function extractTextContent(node: any): string {
-  if (node.type === 'text') {
-    return node.text || '';
+  if (node.type === "text") {
+    return node.text || "";
   }
 
   if (node.content) {
-    return node.content.map(extractTextContent).join('');
+    return node.content.map(extractTextContent).join("");
   }
 
-  return '';
+  return "";
 }
 
-function getAlignment(align?: string): typeof AlignmentType[keyof typeof AlignmentType] {
+function getAlignment(
+  align?: string,
+): (typeof AlignmentType)[keyof typeof AlignmentType] {
   switch (align) {
-    case 'left':
+    case "left":
       return AlignmentType.LEFT;
-    case 'center':
+    case "center":
       return AlignmentType.CENTER;
-    case 'right':
+    case "right":
       return AlignmentType.RIGHT;
-    case 'justify':
+    case "justify":
       return AlignmentType.JUSTIFIED;
     default:
       return AlignmentType.LEFT;

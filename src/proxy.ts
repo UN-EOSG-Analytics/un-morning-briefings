@@ -1,8 +1,8 @@
-import { withAuth } from 'next-auth/middleware';
+import { withAuth } from "next-auth/middleware";
 
 export const proxy = withAuth({
   pages: {
-    signIn: '/login',
+    signIn: "/login",
   },
   callbacks: {
     authorized: ({ token }) => !!token,
@@ -20,6 +20,6 @@ export const config = {
      * - /images (public images)
      * - /favicon.ico (favicon file)
      */
-    '/((?!login|api|_next/static|_next/image|images|favicon.ico).*)',
+    "/((?!login|api|_next/static|_next/image|images|favicon.ico).*)",
   ],
 };

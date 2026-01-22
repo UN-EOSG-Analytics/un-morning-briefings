@@ -1,12 +1,12 @@
-import labels from '@/lib/labels.json';
+import labels from "@/lib/labels.json";
 
-export type ApprovalStatus = 'pending' | 'discussed' | 'left-out';
+export type ApprovalStatus = "pending" | "discussed" | "left-out";
 
 // Morning Meeting Form Types
 export interface MorningMeetingEntry {
   id?: string;
   category: string;
-  priority: 'sg-attention' | 'situational-awareness' | '';
+  priority: "sg-attention" | "situational-awareness" | "";
   region: string;
   country: string | string[]; // Support both single and multiple countries
   headline: string;
@@ -22,7 +22,7 @@ export interface MorningMeetingEntry {
     position: number | null;
     mimeType: string;
   }>;
-  status?: 'draft' | 'submitted';
+  status?: "draft" | "submitted";
   approvalStatus?: ApprovalStatus;
 }
 

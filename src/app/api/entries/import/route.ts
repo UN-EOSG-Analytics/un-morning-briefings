@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { NextRequest, NextResponse } from 'next/server';
-import { query } from '@/lib/db';
-import { checkAuth } from '@/lib/auth-helper';
+import { NextRequest, NextResponse } from "next/server";
+import { query } from "@/lib/db";
+import { checkAuth } from "@/lib/auth-helper";
 
 // Helper function to serialize country field for database storage
 function serializeCountry(country: string | string[]): string {
@@ -29,8 +29,8 @@ export async function POST(request: NextRequest) {
 
     if (!entries || !Array.isArray(entries)) {
       return NextResponse.json(
-        { error: 'Invalid request: entries array is required' },
-        { status: 400 }
+        { error: "Invalid request: entries array is required" },
+        { status: 400 },
       );
     }
 
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
         const existingCheck = await query(
           `SELECT id FROM pu_morning_briefings.entries 
            WHERE id = $1 OR (headline = $2 AND date = $3)`,
-          [entry.id, entry.headline, entry.date]
+          [entry.id, entry.headline, entry.date],
         );
 
         if (existingCheck.rows.length > 0) {
@@ -71,14 +71,18 @@ export async function POST(request: NextRequest) {
             entry.sourceDate || null,
             entry.puNote || null,
             entry.author || auth.session?.user?.email,
-            entry.status || 'draft',
+            entry.status || "draft",
             entry.aiSummary || null,
-            entry.approvalStatus || 'pending',
-          ]
+            entry.approvalStatus || "pending",
+          ],
         );
 
         // Import images if they exist (Note: image blobs won't be restored, only metadata)
-        if (entry.images && Array.isArray(entry.images) && entry.images.length > 0) {
+        if (
+          entry.images &&
+          Array.isArray(entry.images) &&
+          entry.images.length > 0
+        ) {
           for (const image of entry.images) {
             // Skip if image data is missing (we can't restore blob data from JSON)
             if (!image.blobUrl) continue;
@@ -97,14 +101,15 @@ export async function POST(request: NextRequest) {
                 image.width || null,
                 image.height || null,
                 image.position ?? null,
-              ]
+              ],
             );
           }
         }
 
         imported++;
       } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+        const errorMessage =
+          err instanceof Error ? err.message : "Unknown error";
         errors.push(`Entry "${entry.headline}": ${errorMessage}`);
       }
     }
@@ -116,15 +121,16 @@ export async function POST(request: NextRequest) {
       errors: errors.length > 0 ? errors : undefined,
     });
   } catch (error) {
-    console.error('Error importing entries:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error("Error importing entries:", error);
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
 
     return NextResponse.json(
       {
-        error: 'Failed to import entries',
+        error: "Failed to import entries",
         details: errorMessage,
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { generateSummary } from '@/lib/ai-service';
+import { NextRequest, NextResponse } from "next/server";
+import { generateSummary } from "@/lib/ai-service";
 
 export async function POST(request: NextRequest) {
   try {
@@ -7,8 +7,8 @@ export async function POST(request: NextRequest) {
 
     if (!content) {
       return NextResponse.json(
-        { error: 'Content is required' },
-        { status: 400 }
+        { error: "Content is required" },
+        { status: 400 },
       );
     }
 
@@ -16,10 +16,13 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ summary });
   } catch (error) {
-    console.error('Summary API error:', error);
+    console.error("Summary API error:", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to generate summary' },
-      { status: 500 }
+      {
+        error:
+          error instanceof Error ? error.message : "Failed to generate summary",
+      },
+      { status: 500 },
     );
   }
 }

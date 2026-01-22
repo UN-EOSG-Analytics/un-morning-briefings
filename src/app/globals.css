@@ -252,7 +252,7 @@ body::-webkit-scrollbar {
   background-color: #e9ecef;
   border-radius: 0.25rem;
   padding: 0.125rem 0.25rem;
-  font-family: 'Courier New', monospace;
+  font-family: "Courier New", monospace;
   font-size: 0.875em;
 }
 
@@ -301,19 +301,19 @@ body::-webkit-scrollbar {
   width: var(--image-width);
 }
 
-.ProseMirror img[data-width='250px'] {
+.ProseMirror img[data-width="250px"] {
   width: 250px;
 }
 
-.ProseMirror img[data-width='400px'] {
+.ProseMirror img[data-width="400px"] {
   width: 400px;
 }
 
-.ProseMirror img[data-width='600px'] {
+.ProseMirror img[data-width="600px"] {
   width: 600px;
 }
 
-.ProseMirror img[data-width='100%'] {
+.ProseMirror img[data-width="100%"] {
   width: 100%;
 }
 

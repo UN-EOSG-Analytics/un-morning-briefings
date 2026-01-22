@@ -1,10 +1,20 @@
-'use client';
+"use client";
 
-import { useState, useMemo } from 'react';
-import { AlertCircle, Search, X, Check } from 'lucide-react';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Button } from '@/components/ui/button';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
+import { useState, useMemo } from "react";
+import { AlertCircle, Search, X, Check } from "lucide-react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+} from "@/components/ui/command";
 
 interface MultiSelectFieldProps {
   label?: string;
@@ -22,35 +32,39 @@ interface MultiSelectFieldProps {
 
 export function MultiSelectField({
   label,
-  placeholder = 'Select options...',
+  placeholder = "Select options...",
   value,
   onValueChange,
   options,
   error,
   required = false,
-  className = 'w-full',
+  className = "w-full",
   disabled = false,
   showLabel = true,
   searchable = true,
 }: MultiSelectFieldProps) {
   const [open, setOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
 
   const { selectedOptions, unselectedOptions } = useMemo(() => {
     const searchLower = searchQuery.toLowerCase();
-    const filtered = searchQuery 
-      ? options.filter(option => option.label.toLowerCase().includes(searchLower))
+    const filtered = searchQuery
+      ? options.filter((option) =>
+          option.label.toLowerCase().includes(searchLower),
+        )
       : options;
-    
-    const selected = filtered.filter(option => value.includes(option.value));
-    const unselected = filtered.filter(option => !value.includes(option.value));
-    
+
+    const selected = filtered.filter((option) => value.includes(option.value));
+    const unselected = filtered.filter(
+      (option) => !value.includes(option.value),
+    );
+
     return { selectedOptions: selected, unselectedOptions: unselected };
   }, [options, searchQuery, value]);
 
   const handleToggle = (optionValue: string) => {
     const newValue = value.includes(optionValue)
-      ? value.filter(v => v !== optionValue)
+      ? value.filter((v) => v !== optionValue)
       : [...value, optionValue];
     onValueChange(newValue);
   };
@@ -63,20 +77,20 @@ export function MultiSelectField({
     const trimmedQuery = searchQuery.trim();
     if (trimmedQuery && !value.includes(trimmedQuery)) {
       onValueChange([...value, trimmedQuery]);
-      setSearchQuery('');
+      setSearchQuery("");
     }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       e.preventDefault();
       handleAddCustom();
     }
   };
 
   const selectedLabels = value
-    .map(v => {
-      const option = options.find(opt => opt.value === v);
+    .map((v) => {
+      const option = options.find((opt) => opt.value === v);
       return option ? option.label : v; // Use value itself if not found in options (custom entry)
     })
     .filter(Boolean);
@@ -89,7 +103,7 @@ export function MultiSelectField({
           {required && <span className="text-red-500">*</span>}
         </label>
       )}
-      
+
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
@@ -97,11 +111,11 @@ export function MultiSelectField({
             role="combobox"
             aria-expanded={open}
             disabled={disabled}
-            className={`w-full justify-start h-9 font-normal px-3 gap-1 overflow-hidden ${
-              error ? 'border-red-500 bg-red-50' : ''
+            className={`h-9 w-full justify-start gap-1 overflow-hidden px-3 font-normal ${
+              error ? "border-red-500 bg-red-50" : ""
             }`}
           >
-            <div className="flex gap-1 items-center overflow-x-auto">
+            <div className="flex items-center gap-1 overflow-x-auto">
               {value.length === 0 ? (
                 <span className="text-slate-400">{placeholder}</span>
               ) : (
@@ -109,7 +123,7 @@ export function MultiSelectField({
                   {selectedLabels.map((label, index) => (
                     <span
                       key={index}
-                      className="inline-flex items-center gap-1 rounded-full bg-un-blue/10 px-2 py-0.5 text-xs text-un-blue whitespace-nowrap"
+                      className="inline-flex items-center gap-1 rounded-full bg-un-blue/10 px-2 py-0.5 text-xs whitespace-nowrap text-un-blue"
                     >
                       {label}
                       <div
@@ -120,12 +134,12 @@ export function MultiSelectField({
                           handleToggle(value[index]);
                         }}
                         onKeyDown={(e) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
+                          if (e.key === "Enter" || e.key === " ") {
                             e.preventDefault();
                             handleToggle(value[index]);
                           }
                         }}
-                        className="cursor-pointer hover:text-un-blue/80 ml-0.5 flex items-center"
+                        className="ml-0.5 flex cursor-pointer items-center hover:text-un-blue/80"
                       >
                         <X className="h-3 w-3" />
                       </div>
@@ -162,9 +176,15 @@ export function MultiSelectField({
             <CommandEmpty>
               {searchQuery.trim() ? (
                 <div className="px-2 py-3 text-center">
-                  <p className="text-xs text-slate-500 mb-1.5">No matching options</p>
+                  <p className="mb-1.5 text-xs text-slate-500">
+                    No matching options
+                  </p>
                   <p className="text-xs text-slate-400">
-                    Press <kbd className="px-1.5 py-0.5 text-xs font-medium text-slate-700 bg-slate-100 border border-slate-300 rounded shadow-sm">Enter</kbd> or click below to add
+                    Press{" "}
+                    <kbd className="rounded border border-slate-300 bg-slate-100 px-1.5 py-0.5 text-xs font-medium text-slate-700 shadow-sm">
+                      Enter
+                    </kbd>{" "}
+                    or click below to add
                   </p>
                 </div>
               ) : (
@@ -174,16 +194,20 @@ export function MultiSelectField({
               )}
             </CommandEmpty>
             <CommandGroup className="max-h-64 overflow-auto">
-              {searchQuery.trim() && selectedOptions.length === 0 && unselectedOptions.length === 0 && (
-                <CommandItem
-                  value={searchQuery.trim()}
-                  onSelect={handleAddCustom}
-                  className="cursor-pointer bg-un-blue/5 border border-un-blue/20 mx-2 my-1 rounded"
-                >
-                  <Check className="mr-2 h-4 w-4 opacity-0" />
-                  <span className="font-medium text-un-blue">Add &quot;{searchQuery.trim()}&quot;</span>
-                </CommandItem>
-              )}
+              {searchQuery.trim() &&
+                selectedOptions.length === 0 &&
+                unselectedOptions.length === 0 && (
+                  <CommandItem
+                    value={searchQuery.trim()}
+                    onSelect={handleAddCustom}
+                    className="mx-2 my-1 cursor-pointer rounded border border-un-blue/20 bg-un-blue/5"
+                  >
+                    <Check className="mr-2 h-4 w-4 opacity-0" />
+                    <span className="font-medium text-un-blue">
+                      Add &quot;{searchQuery.trim()}&quot;
+                    </span>
+                  </CommandItem>
+                )}
               {selectedOptions.length > 0 && (
                 <>
                   {selectedOptions.map((option) => (
@@ -193,12 +217,12 @@ export function MultiSelectField({
                       onSelect={() => handleToggle(option.value)}
                       className="cursor-pointer bg-un-blue/5"
                     >
-                      <Check className="mr-2 h-4 w-4 opacity-100 text-un-blue" />
+                      <Check className="mr-2 h-4 w-4 text-un-blue opacity-100" />
                       <span className="font-medium">{option.label}</span>
                     </CommandItem>
                   ))}
                   {unselectedOptions.length > 0 && (
-                    <div className="h-px bg-slate-200 my-1 mx-2" />
+                    <div className="mx-2 my-1 h-px bg-slate-200" />
                   )}
                 </>
               )}

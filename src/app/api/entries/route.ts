@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { NextRequest, NextResponse } from 'next/server';
-import { query } from '@/lib/db';
-import { blobStorage } from '@/lib/blob-storage';
-import { convertImageReferencesServerSide } from '@/lib/image-conversion';
-import { checkAuth } from '@/lib/auth-helper';
+import { NextRequest, NextResponse } from "next/server";
+import { query } from "@/lib/db";
+import { blobStorage } from "@/lib/blob-storage";
+import { convertImageReferencesServerSide } from "@/lib/image-conversion";
+import { checkAuth } from "@/lib/auth-helper";
 
 // Helper function to serialize country field for database storage
 function serializeCountry(country: string | string[]): string {
@@ -18,7 +18,7 @@ function serializeCountry(country: string | string[]): string {
 function parseCountry(country: string): string | string[] {
   if (!country) return country;
   // Try to parse as JSON array
-  if (country.startsWith('[')) {
+  if (country.startsWith("[")) {
     try {
       const parsed = JSON.parse(country);
       if (Array.isArray(parsed)) {
@@ -45,12 +45,17 @@ export async function GET(request: NextRequest) {
 
   try {
     const { searchParams } = new URL(request.url);
-    const date = searchParams.get('date');
-    const status = searchParams.get('status');
-    const author = searchParams.get('author');
-    const noConvert = searchParams.get('noConvert') === 'true'; // Skip image conversion for list views
+    const date = searchParams.get("date");
+    const status = searchParams.get("status");
+    const author = searchParams.get("author");
+    const noConvert = searchParams.get("noConvert") === "true"; // Skip image conversion for list views
 
-    console.log('GET /api/entries: Params -', { date, status, author, noConvert });
+    console.log("GET /api/entries: Params -", {
+      date,
+      status,
+      author,
+      noConvert,
+    });
 
     let sql = `
       SELECT 
@@ -107,68 +112,80 @@ export async function GET(request: NextRequest) {
     }
 
     if (conditions.length > 0) {
-      sql += ` WHERE ${conditions.join(' AND ')}`;
+      sql += ` WHERE ${conditions.join(" AND ")}`;
     }
 
     sql += ` GROUP BY e.id ORDER BY e.date DESC`;
 
-    console.log('GET /api/entries: Executing SQL with params:', { sql, params });
+    console.log("GET /api/entries: Executing SQL with params:", {
+      sql,
+      params,
+    });
     const result = await query(sql, params);
-    console.log('GET /api/entries: Query returned', result.rows.length, 'rows');
-    
+    console.log("GET /api/entries: Query returned", result.rows.length, "rows");
+
     // Parse country field for all entries
-    const entries = result.rows.map(row => ({
+    const entries = result.rows.map((row) => ({
       ...row,
-      country: parseCountry(row.country)
+      country: parseCountry(row.country),
     }));
-    
+
     // Skip image conversion for list views (performance optimization)
     if (noConvert) {
-      console.log('GET /api/entries: Skipping image conversion (noConvert=true)');
-      return NextResponse.json(entries, { 
+      console.log(
+        "GET /api/entries: Skipping image conversion (noConvert=true)",
+      );
+      return NextResponse.json(entries, {
         headers: {
-          'Cache-Control': 'private, max-age=5', // 5 second cache
-        }
+          "Cache-Control": "private, max-age=5", // 5 second cache
+        },
       });
     }
-    
+
     // Convert blob URLs to data URLs for private blob storage
     for (const entry of entries) {
       if (entry.images && entry.images.length > 0) {
-        console.log(`GET /api/entries: Processing ${entry.images.length} images for entry ${entry.id}`);
+        console.log(
+          `GET /api/entries: Processing ${entry.images.length} images for entry ${entry.id}`,
+        );
         entry.entry = await convertImageReferencesServerSide(
           entry.entry,
           entry.images,
           blobStorage,
-          'GET /api/entries'
+          "GET /api/entries",
         );
       }
     }
-    
+
     return NextResponse.json(entries);
   } catch (error) {
-    console.error('Error fetching entries:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error("Error fetching entries:", error);
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
     const errorStack = error instanceof Error ? error.stack : undefined;
-    
+
     // Check if it's a database connection error
-    const isDatabaseError = errorMessage.includes('connect') || 
-                           errorMessage.includes('ECONNREFUSED') ||
-                           errorMessage.includes('FATAL') ||
-                           errorMessage.includes('password');
-    
-    console.error('Error details:', { 
-      message: errorMessage, 
+    const isDatabaseError =
+      errorMessage.includes("connect") ||
+      errorMessage.includes("ECONNREFUSED") ||
+      errorMessage.includes("FATAL") ||
+      errorMessage.includes("password");
+
+    console.error("Error details:", {
+      message: errorMessage,
       isDatabaseError,
-      stack: errorStack 
+      stack: errorStack,
     });
-    
-    return NextResponse.json({ 
-      error: 'Failed to fetch entries',
-      details: errorMessage,
-      isDatabaseError,
-      hint: isDatabaseError ? 'Check DATABASE_URL in .env.local' : undefined
-    }, { status: 500 });
+
+    return NextResponse.json(
+      {
+        error: "Failed to fetch entries",
+        details: errorMessage,
+        isDatabaseError,
+        hint: isDatabaseError ? "Check DATABASE_URL in .env.local" : undefined,
+      },
+      { status: 500 },
+    );
   }
 }
 
@@ -187,19 +204,34 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { entry: entryContent, images, ...data } = body;
 
-    console.log('POST /api/entries: Received request with', images?.length || 0, 'images');
-    console.log('POST /api/entries: Entry content length:', entryContent?.length);
+    console.log(
+      "POST /api/entries: Received request with",
+      images?.length || 0,
+      "images",
+    );
+    console.log(
+      "POST /api/entries: Entry content length:",
+      entryContent?.length,
+    );
 
     // Upload images to blob storage
     const uploadedImages = [];
     if (images && images.length > 0) {
-      console.log('POST /api/entries: Starting image upload to blob storage');
+      console.log("POST /api/entries: Starting image upload to blob storage");
       for (const img of images) {
         try {
-          console.log(`POST /api/entries: Uploading image ${img.filename} (${img.mimeType}), position: ${img.position}`);
-          const buffer = Buffer.from(img.data, 'base64');
-          const result = await blobStorage.upload(buffer, img.filename, img.mimeType);
-          console.log(`POST /api/entries: Successfully uploaded to ${result.url}`);
+          console.log(
+            `POST /api/entries: Uploading image ${img.filename} (${img.mimeType}), position: ${img.position}`,
+          );
+          const buffer = Buffer.from(img.data, "base64");
+          const result = await blobStorage.upload(
+            buffer,
+            img.filename,
+            img.mimeType,
+          );
+          console.log(
+            `POST /api/entries: Successfully uploaded to ${result.url}`,
+          );
           uploadedImages.push({
             filename: result.filename,
             mimeType: result.mimeType,
@@ -213,7 +245,11 @@ export async function POST(request: NextRequest) {
           // Continue with other images, skip this one
         }
       }
-      console.log('POST /api/entries: Uploaded', uploadedImages.length, 'images successfully');
+      console.log(
+        "POST /api/entries: Uploaded",
+        uploadedImages.length,
+        "images successfully",
+      );
     }
 
     // Generate ID
@@ -241,8 +277,8 @@ export async function POST(request: NextRequest) {
         data.puNote || null,
         data.author || null,
         data.status || null,
-        'pending',
-      ]
+        "pending",
+      ],
     );
 
     // Insert images if any
@@ -261,7 +297,7 @@ export async function POST(request: NextRequest) {
             img.width ?? null,
             img.height ?? null,
             img.position ?? null,
-          ]
+          ],
         );
       }
     }
@@ -302,30 +338,37 @@ export async function POST(request: NextRequest) {
       LEFT JOIN pu_morning_briefings.images i ON e.id = i.entry_id
       WHERE e.id = $1
       GROUP BY e.id`,
-      [id]
+      [id],
     );
 
     const createdEntry = {
       ...result.rows[0],
-      country: parseCountry(result.rows[0].country)
+      country: parseCountry(result.rows[0].country),
     };
     createdEntry.entry = await convertImageReferencesServerSide(
-        createdEntry.entry,
-        createdEntry.images,
-        blobStorage,
-        'POST /api/entries'
-      );
+      createdEntry.entry,
+      createdEntry.images,
+      blobStorage,
+      "POST /api/entries",
+    );
 
     return NextResponse.json(createdEntry, { status: 201 });
   } catch (error) {
-    console.error('Error creating entry:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error("Error creating entry:", error);
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
     const errorStack = error instanceof Error ? error.stack : undefined;
-    console.error('Error details:', { message: errorMessage, stack: errorStack });
-    return NextResponse.json({ 
-      error: 'Failed to create entry',
-      details: errorMessage 
-    }, { status: 500 });
+    console.error("Error details:", {
+      message: errorMessage,
+      stack: errorStack,
+    });
+    return NextResponse.json(
+      {
+        error: "Failed to create entry",
+        details: errorMessage,
+      },
+      { status: 500 },
+    );
   }
 }
 
@@ -345,27 +388,36 @@ export async function PATCH(request: NextRequest) {
     const { id, approvalStatus, aiSummary, action } = body;
 
     if (!id) {
-      return NextResponse.json({ error: 'Entry ID is required' }, { status: 400 });
+      return NextResponse.json(
+        { error: "Entry ID is required" },
+        { status: 400 },
+      );
     }
 
     const now = new Date().toISOString();
 
     // Build update query based on what fields are provided
-    if (approvalStatus && !['pending', 'discussed', 'left-out'].includes(approvalStatus)) {
-      return NextResponse.json({ error: 'Invalid approval status' }, { status: 400 });
+    if (
+      approvalStatus &&
+      !["pending", "discussed", "left-out"].includes(approvalStatus)
+    ) {
+      return NextResponse.json(
+        { error: "Invalid approval status" },
+        { status: 400 },
+      );
     }
 
-    let updateQuery = 'UPDATE pu_morning_briefings.entries SET';
+    let updateQuery = "UPDATE pu_morning_briefings.entries SET";
     const params: any[] = [];
     let paramIndex = 1;
     const updateParts: string[] = [];
 
     // Handle postpone action: set status to pending and advance date by 1 day
-    if (action === 'postpone') {
+    if (action === "postpone") {
       updateParts.push(`approval_status = $${paramIndex}`);
-      params.push('pending');
+      params.push("pending");
       paramIndex++;
-      
+
       updateParts.push(`date = (date + INTERVAL '1 day')`);
     } else {
       if (approvalStatus) {
@@ -382,10 +434,13 @@ export async function PATCH(request: NextRequest) {
     }
 
     if (updateParts.length === 0) {
-      return NextResponse.json({ error: 'No fields to update' }, { status: 400 });
+      return NextResponse.json(
+        { error: "No fields to update" },
+        { status: 400 },
+      );
     }
 
-    updateQuery += ` ${updateParts.join(', ')} WHERE id = $${paramIndex}`;
+    updateQuery += ` ${updateParts.join(", ")} WHERE id = $${paramIndex}`;
     params.push(id);
 
     // Update entry
@@ -410,20 +465,24 @@ export async function PATCH(request: NextRequest) {
         COALESCE(approval_status, 'pending') as "approvalStatus"
       FROM pu_morning_briefings.entries
       WHERE id = $1`,
-      [id]
+      [id],
     );
 
     if (result.rows.length === 0) {
-      return NextResponse.json({ error: 'Entry not found' }, { status: 404 });
+      return NextResponse.json({ error: "Entry not found" }, { status: 404 });
     }
 
     return NextResponse.json(result.rows[0]);
   } catch (error) {
-    console.error('Error updating entry:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    return NextResponse.json({ 
-      error: 'Failed to update entry',
-      details: errorMessage 
-    }, { status: 500 });
+    console.error("Error updating entry:", error);
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
+    return NextResponse.json(
+      {
+        error: "Failed to update entry",
+        details: errorMessage,
+      },
+      { status: 500 },
+    );
   }
 }

@@ -1,16 +1,30 @@
-'use client';
+"use client";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { MorningMeetingEntry, PRIORITIES } from '@/types/morning-meeting';
-import { getPriorityBadgeClass } from '@/lib/useEntriesFilter';
-import { usePopup } from '@/lib/popup-context';
-import { formatDateResponsive } from '@/lib/format-date';
-import { Edit, Trash2, Check, X, Sparkles, ChevronLeft, ChevronRight, FastForward } from 'lucide-react';
-import Link from 'next/link';
-import { useState, useEffect, useCallback, useRef } from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { MorningMeetingEntry, PRIORITIES } from "@/types/morning-meeting";
+import { getPriorityBadgeClass } from "@/lib/useEntriesFilter";
+import { usePopup } from "@/lib/popup-context";
+import { formatDateResponsive } from "@/lib/format-date";
+import {
+  Edit,
+  Trash2,
+  Check,
+  X,
+  Sparkles,
+  ChevronLeft,
+  ChevronRight,
+  FastForward,
+} from "lucide-react";
+import Link from "next/link";
+import { useState, useEffect, useCallback, useRef } from "react";
 
 interface ViewEntryDialogProps {
   open: boolean;
@@ -23,9 +37,9 @@ interface ViewEntryDialogProps {
   allEntries?: MorningMeetingEntry[];
 }
 
-export function ViewEntryDialog({ 
-  open, 
-  onOpenChange, 
+export function ViewEntryDialog({
+  open,
+  onOpenChange,
   entry,
   onDelete,
   onApprove,
@@ -40,9 +54,12 @@ export function ViewEntryDialog({
   const [currentIndex, setCurrentIndex] = useState(0);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  const handleOpenChange = useCallback((newOpen: boolean) => {
-    onOpenChange(newOpen);
-  }, [onOpenChange]);
+  const handleOpenChange = useCallback(
+    (newOpen: boolean) => {
+      onOpenChange(newOpen);
+    },
+    [onOpenChange],
+  );
 
   const handleDelete = useCallback(() => {
     if (entry?.id && onDelete) {
@@ -69,7 +86,7 @@ export function ViewEntryDialog({
   // Update current index when entry changes (from parent)
   useEffect(() => {
     if (entry && allEntries.length > 0) {
-      const index = allEntries.findIndex(e => e.id === entry.id);
+      const index = allEntries.findIndex((e) => e.id === entry.id);
       if (index >= 0) {
         setCurrentIndex(index);
       }
@@ -87,69 +104,79 @@ export function ViewEntryDialog({
     }
   }, [displayEntry?.id]);
 
-  const handleApprove = useCallback(async (status: 'pending' | 'discussed' | 'left-out') => {
-    if (!displayEntry?.id) return;
-    
-    setIsUpdatingApproval(true);
-    try {
-      const response = await fetch('/api/entries', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: displayEntry.id, approvalStatus: status }),
-      });
+  const handleApprove = useCallback(
+    async (status: "pending" | "discussed" | "left-out") => {
+      if (!displayEntry?.id) return;
 
-      if (!response.ok) {
-        throw new Error('Failed to update approval status');
+      setIsUpdatingApproval(true);
+      try {
+        const response = await fetch("/api/entries", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: displayEntry.id, approvalStatus: status }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to update approval status");
+        }
+
+        const statusLabels = {
+          discussed: "Discussed",
+          "left-out": "Left out",
+          pending: "Pending",
+        };
+
+        showSuccess(
+          statusLabels[status],
+          `Entry status changed to ${statusLabels[status].toLowerCase()}`,
+        );
+
+        // Call the onApprove callback to refresh the data
+        if (onApprove) {
+          onApprove({ ...displayEntry, approvalStatus: status });
+        }
+      } catch (error) {
+        console.error("Approval update error:", error);
+        showWarning(
+          "Update Failed",
+          "Failed to update approval status. Please try again.",
+        );
+      } finally {
+        setIsUpdatingApproval(false);
       }
-
-      const statusLabels = {
-        discussed: 'Discussed',
-        'left-out': 'Left out',
-        pending: 'Pending'
-      };
-
-      showSuccess(
-        statusLabels[status],
-        `Entry status changed to ${statusLabels[status].toLowerCase()}`
-      );
-
-      // Call the onApprove callback to refresh the data
-      if (onApprove) {
-        onApprove({ ...displayEntry, approvalStatus: status });
-      }
-    } catch (error) {
-      console.error('Approval update error:', error);
-      showWarning('Update Failed', 'Failed to update approval status. Please try again.');
-    } finally {
-      setIsUpdatingApproval(false);
-    }
-  }, [displayEntry, onApprove, showSuccess, showWarning]);
+    },
+    [displayEntry, onApprove, showSuccess, showWarning],
+  );
 
   const handlePostpone = useCallback(async () => {
     if (!displayEntry?.id) return;
-    
+
     setIsUpdatingApproval(true);
     try {
-      const response = await fetch('/api/entries', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: displayEntry.id, action: 'postpone' }),
+      const response = await fetch("/api/entries", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: displayEntry.id, action: "postpone" }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to postpone entry');
+        throw new Error("Failed to postpone entry");
       }
 
       showSuccess(
-        'Postponed',
-        'Entry has been postponed to the next day and set to pending'
+        "Postponed",
+        "Entry has been postponed to the next day and set to pending",
       );
 
       // Update the entry with new date and status
       if (onApprove) {
         const newDate = new Date(displayEntry.date);
         newDate.setDate(newDate.getDate() + 1);
-        onApprove({ ...displayEntry, date: newDate.toISOString(), approvalStatus: 'pending' });
+        onApprove({
+          ...displayEntry,
+          date: newDate.toISOString(),
+          approvalStatus: "pending",
+        });
       }
 
       // Trigger refresh to reorder entries
@@ -157,8 +184,11 @@ export function ViewEntryDialog({
         onPostpone();
       }
     } catch (error) {
-      console.error('Postpone error:', error);
-      showWarning('Postpone Failed', 'Failed to postpone entry. Please try again.');
+      console.error("Postpone error:", error);
+      showWarning(
+        "Postpone Failed",
+        "Failed to postpone entry. Please try again.",
+      );
     } finally {
       setIsUpdatingApproval(false);
     }
@@ -169,17 +199,18 @@ export function ViewEntryDialog({
     if (displayEntry?.aiSummary) {
       try {
         // Handle both string (JSON) and array formats
-        const summary = typeof displayEntry.aiSummary === 'string' 
-          ? JSON.parse(displayEntry.aiSummary) 
-          : displayEntry.aiSummary;
-        
+        const summary =
+          typeof displayEntry.aiSummary === "string"
+            ? JSON.parse(displayEntry.aiSummary)
+            : displayEntry.aiSummary;
+
         if (Array.isArray(summary)) {
           setSummary(summary);
         } else {
           setSummary(null);
         }
       } catch (error) {
-        console.error('Error parsing AI summary:', error);
+        console.error("Error parsing AI summary:", error);
         setSummary(null);
       }
     } else {
@@ -189,51 +220,57 @@ export function ViewEntryDialog({
 
   const handleGenerateSummary = async () => {
     if (!displayEntry?.entry || !displayEntry?.id) return;
-    
+
     setIsGeneratingSummary(true);
-    
+
     try {
-      const response = await fetch('/api/summarize', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/summarize", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content: displayEntry.entry }),
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        const errorMessage = errorData.error || 'Failed to generate summary';
-        
+        const errorMessage = errorData.error || "Failed to generate summary";
+
         // Check if it's an API key configuration error
-        if (errorMessage.includes('GEMINI_API_KEY') || errorMessage.includes('not configured')) {
-          showWarning('AI Usage not enabled', 'Please wait for Update');
+        if (
+          errorMessage.includes("GEMINI_API_KEY") ||
+          errorMessage.includes("not configured")
+        ) {
+          showWarning("AI Usage not enabled", "Please wait for Update");
         } else {
-          showWarning('Summary Failed', 'Failed to generate summary. Please try again.');
+          showWarning(
+            "Summary Failed",
+            "Failed to generate summary. Please try again.",
+          );
         }
         return;
       }
-      
+
       const data = await response.json();
       setSummary(data.summary);
-      
+
       // Save summary to backend
       try {
-        await fetch('/api/entries', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            id: displayEntry.id, 
-            aiSummary: data.summary 
+        await fetch("/api/entries", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id: displayEntry.id,
+            aiSummary: data.summary,
           }),
         });
       } catch (error) {
-        console.error('Error saving summary to backend:', error);
+        console.error("Error saving summary to backend:", error);
         // Don't show error to user - summary was still generated, just not saved
       }
-      
-      showSuccess('Summary Generated', 'AI summary created successfully.');
+
+      showSuccess("Summary Generated", "AI summary created successfully.");
     } catch (error) {
-      console.error('Summary generation error:', error);
-      showWarning('AI Usage not enabled', 'Please wait for Update');
+      console.error("Summary generation error:", error);
+      showWarning("AI Usage not enabled", "Please wait for Update");
     } finally {
       setIsGeneratingSummary(false);
     }
@@ -243,21 +280,19 @@ export function ViewEntryDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="!max-w-280 w-screen h-dvh sm:w-[95vw] sm:h-[90vh] md:w-[85vw] md:h-[90vh] lg:w-[70vw] lg:h-[90vh] flex flex-col !p-0 rounded-none sm:rounded-lg overflow-hidden gap-0">
+      <DialogContent className="flex h-dvh w-screen !max-w-280 flex-col gap-0 overflow-hidden rounded-none !p-0 sm:h-[90vh] sm:w-[95vw] sm:rounded-lg md:h-[90vh] md:w-[85vw] lg:h-[90vh] lg:w-[70vw]">
         {/* Hidden title for accessibility */}
-        <DialogTitle className="sr-only">
-          {displayEntry.headline}
-        </DialogTitle>
-        
+        <DialogTitle className="sr-only">{displayEntry.headline}</DialogTitle>
+
         {/* Header - Fixed at top */}
-        <div className="mt-2 flex-shrink-0 bg-white border-b border-slate-200 py-2 sm:py-3 px-3 sm:px-6">
-          <div className="flex items-center justify-between gap-2 mb-1">
-            <h2 className="text-lg sm:text-2xl font-bold text-slate-900 mb-0 line-clamp-2 flex-1">
+        <div className="mt-2 flex-shrink-0 border-b border-slate-200 bg-white px-3 py-2 sm:px-6 sm:py-3">
+          <div className="mb-1 flex items-center justify-between gap-2">
+            <h2 className="mb-0 line-clamp-2 flex-1 text-lg font-bold text-slate-900 sm:text-2xl">
               {displayEntry.headline}
             </h2>
             {/* Progress indicator - Show on iPad and smaller when viewing multiple entries */}
             {allEntries.length > 1 && (
-              <div className="flex lg:hidden items-center gap-2 shrink-0">
+              <div className="flex shrink-0 items-center gap-2 lg:hidden">
                 <Button
                   variant="ghost"
                   size="sm"
@@ -267,7 +302,7 @@ export function ViewEntryDialog({
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
-                <span className="text-xs text-slate-600 whitespace-nowrap font-medium">
+                <span className="text-xs font-medium whitespace-nowrap text-slate-600">
                   {currentIndex + 1}/{allEntries.length}
                 </span>
                 <Button
@@ -283,12 +318,12 @@ export function ViewEntryDialog({
             )}
           </div>
         </div>
-        
+
         {/* Badges and AI Button - Fixed */}
-        <div className="flex-shrink-0 px-3 sm:px-6 py-2 sm:py-3 border-b border-slate-200 flex gap-2 sm:gap-3 items-stretch bg-white">
-          <div className="flex gap-1 sm:gap-2 flex-wrap items-center flex-1">
+        <div className="flex flex-shrink-0 items-stretch gap-2 border-b border-slate-200 bg-white px-3 py-2 sm:gap-3 sm:px-6 sm:py-3">
+          <div className="flex flex-1 flex-wrap items-center gap-1 sm:gap-2">
             {/* Date Badge */}
-            <span className="inline-flex items-center rounded-full bg-slate-100 px-2 sm:px-2.5 py-1 sm:py-1.5 text-xs sm:text-sm font-medium text-slate-700">
+            <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700 sm:px-2.5 sm:py-1.5 sm:text-sm">
               <span className="hidden sm:inline">
                 {formatDateResponsive(displayEntry.date).desktop}
               </span>
@@ -297,64 +332,88 @@ export function ViewEntryDialog({
               </span>
             </span>
             {/* Priority Badge */}
-            <span className={`inline-flex items-center gap-1 rounded-full px-2 sm:px-2.5 py-1 sm:py-1.5 text-xs sm:text-sm font-medium ${getPriorityBadgeClass(displayEntry.priority)}`}>
-              <span className={`h-1.5 w-1.5 rounded-full ${displayEntry.priority === 'sg-attention' ? 'bg-red-600' : 'bg-blue-600'}`} />
-              {PRIORITIES.find(p => p.value === displayEntry.priority)?.label}
+            <span
+              className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium sm:px-2.5 sm:py-1.5 sm:text-sm ${getPriorityBadgeClass(displayEntry.priority)}`}
+            >
+              <span
+                className={`h-1.5 w-1.5 rounded-full ${displayEntry.priority === "sg-attention" ? "bg-red-600" : "bg-blue-600"}`}
+              />
+              {PRIORITIES.find((p) => p.value === displayEntry.priority)?.label}
             </span>
             {/* Region Badge */}
-            <span className="inline-flex items-center rounded-full bg-slate-100 px-2 sm:px-2.5 py-1 sm:py-1.5 text-xs sm:text-sm font-medium text-slate-700">
+            <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700 sm:px-2.5 sm:py-1.5 sm:text-sm">
               {displayEntry.region}
             </span>
             {/* Country Badge(s) */}
             {(() => {
-              const countries = Array.isArray(displayEntry.country) ? displayEntry.country : (displayEntry.country ? [displayEntry.country] : []);
+              const countries = Array.isArray(displayEntry.country)
+                ? displayEntry.country
+                : displayEntry.country
+                  ? [displayEntry.country]
+                  : [];
               return countries.map((country, idx) => (
-                <span key={idx} className="inline-flex items-center rounded-full bg-slate-100 px-2 sm:px-2.5 py-1 sm:py-1.5 text-xs sm:text-sm font-medium text-slate-700">
+                <span
+                  key={idx}
+                  className="inline-flex items-center rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700 sm:px-2.5 sm:py-1.5 sm:text-sm"
+                >
                   {country}
                 </span>
               ));
             })()}
             {/* Category Badge */}
-            <span className="inline-flex items-center rounded-full bg-slate-100 px-2 sm:px-2.5 py-1 sm:py-1.5 text-xs sm:text-sm font-medium text-slate-700">
+            <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700 sm:px-2.5 sm:py-1.5 sm:text-sm">
               {displayEntry.category}
             </span>
             {/* Author Badge */}
-            <span className="inline-flex items-center rounded-full bg-slate-100 px-2 sm:px-2.5 py-1 sm:py-1.5 text-xs sm:text-sm font-medium text-slate-700">
-              {displayEntry.author || 'N/A'}
+            <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700 sm:px-2.5 sm:py-1.5 sm:text-sm">
+              {displayEntry.author || "N/A"}
             </span>
           </div>
           <Button
             size="sm"
             onClick={handleGenerateSummary}
             disabled={isGeneratingSummary}
-            className={`bg-[#009edb] hover:bg-[#0080b8] text-white gap-1 text-xs sm:text-sm px-2.5 sm:px-3 shrink-0 h-full flex items-center justify-center ${summary ? 'opacity-50' : ''}`}
+            className={`flex h-full shrink-0 items-center justify-center gap-1 bg-[#009edb] px-2.5 text-xs text-white hover:bg-[#0080b8] sm:px-3 sm:text-sm ${summary ? "opacity-50" : ""}`}
           >
             <Sparkles className="h-3 w-3 sm:h-4 sm:w-4" />
-            <span className="hidden sm:inline">{isGeneratingSummary ? 'Generating...' : 'Create Summary'}</span>
-            <span className="sm:hidden">{isGeneratingSummary ? '...' : 'AI'}</span>
+            <span className="hidden sm:inline">
+              {isGeneratingSummary ? "Generating..." : "Create Summary"}
+            </span>
+            <span className="sm:hidden">
+              {isGeneratingSummary ? "..." : "AI"}
+            </span>
           </Button>
         </div>
-        
+
         {/* Scrollable content */}
-        <div ref={scrollContainerRef} className="flex-1 overflow-y-auto px-3 sm:px-6 py-1" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+        <div
+          ref={scrollContainerRef}
+          className="flex-1 overflow-y-auto px-3 py-1 sm:px-6"
+          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+        >
           <style>{`
             ::-webkit-scrollbar {
               display: none;
             }
           `}</style>
-          
+
           {/* AI Summary Box - Inside scrollable area */}
           {summary && (
-            <div className="pt-2 pb-1 border-b border-slate-200 mb-2">
+            <div className="mb-2 border-b border-slate-200 pt-2 pb-1">
               <div className="rounded-lg border-2 border-[#009edb] bg-[#009edb]/5 p-3">
-                <div className="text-xs sm:text-sm font-semibold text-[#009edb] mb-2 flex items-center gap-2">
+                <div className="mb-2 flex items-center gap-2 text-xs font-semibold text-[#009edb] sm:text-sm">
                   <Sparkles className="h-3 w-3 sm:h-4 sm:w-4" />
                   Key Points
                 </div>
                 <ul className="space-y-1">
                   {summary.map((point, index) => (
-                    <li key={index} className="text-xs sm:text-sm text-slate-700 flex gap-2">
-                      <span className="text-[#009edb] font-bold shrink-0">•</span>
+                    <li
+                      key={index}
+                      className="flex gap-2 text-xs text-slate-700 sm:text-sm"
+                    >
+                      <span className="shrink-0 font-bold text-[#009edb]">
+                        •
+                      </span>
                       <span>{point}</span>
                     </li>
                   ))}
@@ -362,9 +421,9 @@ export function ViewEntryDialog({
               </div>
             </div>
           )}
-          
+
           {/* Entry metadata - REMOVED, now in badges */}
-          
+
           {/* Entry content */}
           <div className="mb-0">
             <div
@@ -494,12 +553,12 @@ export function ViewEntryDialog({
 
           {/* PU notes */}
           {displayEntry.puNote && (
-            <div className="mb-2 pb-2 border-b border-slate-200">
-              <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">
+            <div className="mb-2 border-b border-slate-200 pb-2">
+              <div className="mb-1 text-xs font-semibold tracking-wide text-slate-500 uppercase">
                 PU Notes
               </div>
-              <div 
-                className="text-xs sm:text-sm text-slate-700 break-words entry-content"
+              <div
+                className="entry-content text-xs break-words text-slate-700 sm:text-sm"
                 dangerouslySetInnerHTML={{ __html: displayEntry.puNote }}
               />
             </div>
@@ -508,14 +567,14 @@ export function ViewEntryDialog({
           {/* Source URL */}
           {displayEntry.sourceUrl && (
             <div>
-              <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">
+              <div className="mb-2 text-xs font-semibold tracking-wide text-slate-500 uppercase">
                 Source URL
               </div>
               <a
                 href={displayEntry.sourceUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-un-blue hover:underline break-all text-sm"
+                className="text-sm break-all text-un-blue hover:underline"
               >
                 {displayEntry.sourceUrl}
               </a>
@@ -524,16 +583,16 @@ export function ViewEntryDialog({
         </div>
 
         {/* Footer */}
-        <div className="border-t border-slate-200 pt-1 pb-2 sm:pt-4 sm:pb-4 px-3 sm:px-6 flex-shrink-0 bg-white flex flex-col sm:flex-row gap-1">
+        <div className="flex flex-shrink-0 flex-col gap-1 border-t border-slate-200 bg-white px-3 pt-1 pb-2 sm:flex-row sm:px-6 sm:pt-4 sm:pb-4">
           {/* Mobile: Navigation buttons - Hidden on medium and below, shown on large screens in center */}
           {allEntries.length > 1 && (
-            <div className="hidden lg:flex gap-2 justify-center mb-1">
+            <div className="mb-1 hidden justify-center gap-2 lg:flex">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={handlePrevious}
                 disabled={currentIndex === 0}
-                className="gap-1 h-8 text-xs"
+                className="h-8 gap-1 text-xs"
               >
                 <ChevronLeft className="h-3 w-3" />
                 Previous
@@ -546,7 +605,7 @@ export function ViewEntryDialog({
                 size="sm"
                 onClick={handleNext}
                 disabled={currentIndex >= allEntries.length - 1}
-                className="gap-1 h-8 text-xs"
+                className="h-8 gap-1 text-xs"
               >
                 Next
                 <ChevronRight className="h-3 w-3" />
@@ -556,45 +615,53 @@ export function ViewEntryDialog({
 
           {/* Approve/Deny buttons - shown above on mobile */}
           {showApproveButton && onApprove && (
-            <div className="flex gap-2 w-full sm:hidden mb-0">
+            <div className="mb-0 flex w-full gap-2 sm:hidden">
               <Button
-                variant={displayEntry.approvalStatus === 'discussed' ? 'default' : 'outline'}
-                onClick={() => handleApprove('discussed')}
+                variant={
+                  displayEntry.approvalStatus === "discussed"
+                    ? "default"
+                    : "outline"
+                }
+                onClick={() => handleApprove("discussed")}
                 disabled={isUpdatingApproval}
-                className={`gap-1 flex-1 h-8 text-xs ${
-                  displayEntry.approvalStatus === 'discussed'
-                    ? 'bg-green-600 hover:bg-green-700 text-white'
-                    : displayEntry.approvalStatus === 'left-out'
-                    ? 'opacity-50 text-green-600 hover:opacity-100 hover:bg-green-50 hover:text-green-700'
-                    : 'text-green-600 hover:bg-green-50 hover:text-green-700'
+                className={`h-8 flex-1 gap-1 text-xs ${
+                  displayEntry.approvalStatus === "discussed"
+                    ? "bg-green-600 text-white hover:bg-green-700"
+                    : displayEntry.approvalStatus === "left-out"
+                      ? "text-green-600 opacity-50 hover:bg-green-50 hover:text-green-700 hover:opacity-100"
+                      : "text-green-600 hover:bg-green-50 hover:text-green-700"
                 }`}
               >
                 <Check className="h-3 w-3" />
                 Discussed
               </Button>
-              
+
               <Button
-                variant={displayEntry.approvalStatus === 'left-out' ? 'default' : 'outline'}
-                onClick={() => handleApprove('left-out')}
+                variant={
+                  displayEntry.approvalStatus === "left-out"
+                    ? "default"
+                    : "outline"
+                }
+                onClick={() => handleApprove("left-out")}
                 disabled={isUpdatingApproval}
-                className={`gap-1 flex-1 h-8 text-xs ${
-                  displayEntry.approvalStatus === 'left-out'
-                    ? 'bg-red-600 hover:bg-red-700 text-white'
-                    : displayEntry.approvalStatus === 'discussed'
-                    ? 'opacity-50 text-red-600 hover:opacity-100 hover:bg-red-50 hover:text-red-700'
-                    : 'text-red-600 hover:bg-red-50 hover:text-red-700'
+                className={`h-8 flex-1 gap-1 text-xs ${
+                  displayEntry.approvalStatus === "left-out"
+                    ? "bg-red-600 text-white hover:bg-red-700"
+                    : displayEntry.approvalStatus === "discussed"
+                      ? "text-red-600 opacity-50 hover:bg-red-50 hover:text-red-700 hover:opacity-100"
+                      : "text-red-600 hover:bg-red-50 hover:text-red-700"
                 }`}
               >
                 <X className="h-3 w-3" />
                 Left out
               </Button>
-              
-              {displayEntry.approvalStatus !== 'discussed' && (
+
+              {displayEntry.approvalStatus !== "discussed" && (
                 <Button
                   variant="outline"
                   onClick={() => handlePostpone()}
                   disabled={isUpdatingApproval}
-                  className="gap-1 flex-1 h-8 text-xs text-blue-600 hover:bg-blue-50 hover:text-blue-700"
+                  className="h-8 flex-1 gap-1 text-xs text-blue-600 hover:bg-blue-50 hover:text-blue-700"
                 >
                   <FastForward className="h-3 w-3" />
                   Postpone
@@ -609,17 +676,17 @@ export function ViewEntryDialog({
               <Link href={`/form?edit=${displayEntry.id}`}>
                 <Button
                   variant="outline"
-                  className="gap-2 h-8 text-xs px-3 w-full"
+                  className="h-8 w-full gap-2 px-3 text-xs"
                 >
                   <Edit className="h-3 w-3" />
                   Edit
                 </Button>
               </Link>
-              
+
               <Button
                 onClick={() => handleOpenChange(false)}
                 variant="outline"
-                className="gap-2 h-8 text-xs px-3"
+                className="h-8 gap-2 px-3 text-xs"
               >
                 <X className="h-3 w-3" />
                 Close
@@ -628,23 +695,20 @@ export function ViewEntryDialog({
           </div>
 
           {/* Action buttons - Desktop layout */}
-          <div className="hidden sm:flex gap-2 justify-between items-center w-full">
+          <div className="hidden w-full items-center justify-between gap-2 sm:flex">
             {/* Left: Edit/Close */}
             <div className="flex gap-2">
               <Link href={`/form?edit=${displayEntry.id}`}>
-                <Button
-                  variant="outline"
-                  className="gap-2 h-8 text-xs px-3"
-                >
+                <Button variant="outline" className="h-8 gap-2 px-3 text-xs">
                   <Edit className="h-3 w-3" />
                   Edit
                 </Button>
               </Link>
-              
+
               <Button
                 onClick={() => handleOpenChange(false)}
                 variant="outline"
-                className="gap-2 h-8 text-xs px-3"
+                className="h-8 gap-2 px-3 text-xs"
               >
                 <X className="h-3 w-3" />
                 Close
@@ -653,18 +717,18 @@ export function ViewEntryDialog({
 
             {/* Middle: Navigation - Only show on large screens, hidden on iPad */}
             {allEntries.length > 1 && (
-              <div className="hidden lg:flex gap-2 items-center">
+              <div className="hidden items-center gap-2 lg:flex">
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={handlePrevious}
                   disabled={currentIndex === 0}
-                  className="gap-1 h-8 text-xs"
+                  className="h-8 gap-1 text-xs"
                 >
                   <ChevronLeft className="h-3 w-3" />
                   Previous
                 </Button>
-                <span className="text-xs text-slate-600 whitespace-nowrap">
+                <span className="text-xs whitespace-nowrap text-slate-600">
                   {currentIndex + 1} of {allEntries.length}
                 </span>
                 <Button
@@ -672,7 +736,7 @@ export function ViewEntryDialog({
                   size="sm"
                   onClick={handleNext}
                   disabled={currentIndex >= allEntries.length - 1}
-                  className="gap-1 h-8 text-xs"
+                  className="h-8 gap-1 text-xs"
                 >
                   Next
                   <ChevronRight className="h-3 w-3" />
@@ -685,43 +749,51 @@ export function ViewEntryDialog({
               {showApproveButton && onApprove && (
                 <>
                   <Button
-                    variant={displayEntry.approvalStatus === 'discussed' ? 'default' : 'outline'}
-                    onClick={() => handleApprove('discussed')}
+                    variant={
+                      displayEntry.approvalStatus === "discussed"
+                        ? "default"
+                        : "outline"
+                    }
+                    onClick={() => handleApprove("discussed")}
                     disabled={isUpdatingApproval}
-                    className={`gap-2 h-8 text-xs ${
-                      displayEntry.approvalStatus === 'discussed'
-                        ? 'bg-green-600 hover:bg-green-700 text-white'
-                        : displayEntry.approvalStatus === 'left-out'
-                        ? 'opacity-50 text-green-600 hover:opacity-100 hover:bg-green-50 hover:text-green-700'
-                        : 'text-green-600 hover:bg-green-50 hover:text-green-700'
+                    className={`h-8 gap-2 text-xs ${
+                      displayEntry.approvalStatus === "discussed"
+                        ? "bg-green-600 text-white hover:bg-green-700"
+                        : displayEntry.approvalStatus === "left-out"
+                          ? "text-green-600 opacity-50 hover:bg-green-50 hover:text-green-700 hover:opacity-100"
+                          : "text-green-600 hover:bg-green-50 hover:text-green-700"
                     }`}
                   >
                     <Check className="h-4 w-4" />
                     Discussed
                   </Button>
-                  
+
                   <Button
-                    variant={displayEntry.approvalStatus === 'left-out' ? 'default' : 'outline'}
-                    onClick={() => handleApprove('left-out')}
+                    variant={
+                      displayEntry.approvalStatus === "left-out"
+                        ? "default"
+                        : "outline"
+                    }
+                    onClick={() => handleApprove("left-out")}
                     disabled={isUpdatingApproval}
-                    className={`gap-2 h-8 text-xs ${
-                      displayEntry.approvalStatus === 'left-out'
-                        ? 'bg-red-600 hover:bg-red-700 text-white'
-                        : displayEntry.approvalStatus === 'discussed'
-                        ? 'opacity-50 text-red-600 hover:opacity-100 hover:bg-red-50 hover:text-red-700'
-                        : 'text-red-600 hover:bg-red-50 hover:text-red-700'
+                    className={`h-8 gap-2 text-xs ${
+                      displayEntry.approvalStatus === "left-out"
+                        ? "bg-red-600 text-white hover:bg-red-700"
+                        : displayEntry.approvalStatus === "discussed"
+                          ? "text-red-600 opacity-50 hover:bg-red-50 hover:text-red-700 hover:opacity-100"
+                          : "text-red-600 hover:bg-red-50 hover:text-red-700"
                     }`}
                   >
                     <X className="h-4 w-4" />
                     Left out
                   </Button>
-                  
-                  {displayEntry.approvalStatus !== 'discussed' && (
+
+                  {displayEntry.approvalStatus !== "discussed" && (
                     <Button
                       variant="outline"
                       onClick={() => handlePostpone()}
                       disabled={isUpdatingApproval}
-                      className="gap-2 h-8 text-xs text-blue-600 hover:bg-blue-50 hover:text-blue-700"
+                      className="h-8 gap-2 text-xs text-blue-600 hover:bg-blue-50 hover:text-blue-700"
                     >
                       <FastForward className="h-4 w-4" />
                       Postpone
@@ -734,7 +806,7 @@ export function ViewEntryDialog({
                 <Button
                   variant="outline"
                   onClick={handleDelete}
-                  className="gap-2 h-8 text-xs text-red-600 hover:bg-red-50 hover:text-red-700"
+                  className="h-8 gap-2 text-xs text-red-600 hover:bg-red-50 hover:text-red-700"
                 >
                   <Trash2 className="h-4 w-4" />
                   Delete

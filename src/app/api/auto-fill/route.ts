@@ -1,14 +1,14 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { autoFillFromContent } from '@/lib/ai-service';
+import { NextRequest, NextResponse } from "next/server";
+import { autoFillFromContent } from "@/lib/ai-service";
 
 export async function POST(req: NextRequest) {
   try {
     const { content } = await req.json();
 
-    if (!content || typeof content !== 'string') {
+    if (!content || typeof content !== "string") {
       return NextResponse.json(
-        { error: 'Content is required' },
-        { status: 400 }
+        { error: "Content is required" },
+        { status: 400 },
       );
     }
 
@@ -16,11 +16,9 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error('[AUTO-FILL API] Error:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Failed to process content';
-    return NextResponse.json(
-      { error: errorMessage },
-      { status: 500 }
-    );
+    console.error("[AUTO-FILL API] Error:", error);
+    const errorMessage =
+      error instanceof Error ? error.message : "Failed to process content";
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

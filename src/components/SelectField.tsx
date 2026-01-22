@@ -1,14 +1,14 @@
-'use client';
+"use client";
 
-import { useCallback, useState, useMemo } from 'react';
+import { useCallback, useState, useMemo } from "react";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { AlertCircle, Search, X } from 'lucide-react';
+} from "@/components/ui/select";
+import { AlertCircle, Search, X } from "lucide-react";
 
 interface SelectFieldProps {
   label?: string;
@@ -27,29 +27,32 @@ interface SelectFieldProps {
 
 export function SelectField({
   label,
-  placeholder = 'Select an option...',
+  placeholder = "Select an option...",
   value,
   onValueChange,
   options,
   error,
   required = false,
-  className = 'w-full',
-  triggerClassName = '',
+  className = "w-full",
+  triggerClassName = "",
   disabled = false,
   showLabel = true,
   searchable = false,
 }: SelectFieldProps) {
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
 
-  const handleValueChange = useCallback((newValue: string) => {
-    onValueChange(newValue);
-    setSearchQuery('');
-  }, [onValueChange]);
+  const handleValueChange = useCallback(
+    (newValue: string) => {
+      onValueChange(newValue);
+      setSearchQuery("");
+    },
+    [onValueChange],
+  );
 
   const filteredOptions = useMemo(() => {
     if (!searchQuery) return options;
-    return options.filter(option =>
-      option.label.toLowerCase().includes(searchQuery.toLowerCase())
+    return options.filter((option) =>
+      option.label.toLowerCase().includes(searchQuery.toLowerCase()),
     );
   }, [options, searchQuery]);
 
@@ -61,30 +64,34 @@ export function SelectField({
           {required && <span className="text-red-500">*</span>}
         </label>
       )}
-      <Select value={value} onValueChange={handleValueChange} disabled={disabled}>
+      <Select
+        value={value}
+        onValueChange={handleValueChange}
+        disabled={disabled}
+      >
         <SelectTrigger
           className={`w-full ${
-            error ? 'border-red-500 bg-red-50' : ''
+            error ? "border-red-500 bg-red-50" : ""
           } ${triggerClassName}`}
         >
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
         <SelectContent>
           {searchable && (
-            <div className="flex items-center gap-2 px-2 py-2 sticky top-0 bg-slate-50 border-b">
-              <Search className="h-4 w-4 text-slate-400 shrink-0" />
+            <div className="sticky top-0 flex items-center gap-2 border-b bg-slate-50 px-2 py-2">
+              <Search className="h-4 w-4 shrink-0 text-slate-400" />
               <input
                 type="text"
                 placeholder="Search..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="flex-1 outline-none bg-transparent text-sm placeholder-slate-400"
+                className="flex-1 bg-transparent text-sm placeholder-slate-400 outline-none"
                 onClick={(e) => e.stopPropagation()}
               />
               {searchQuery && (
                 <button
-                  onClick={() => setSearchQuery('')}
-                  className="text-slate-400 hover:text-slate-600 shrink-0"
+                  onClick={() => setSearchQuery("")}
+                  className="shrink-0 text-slate-400 hover:text-slate-600"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -98,7 +105,7 @@ export function SelectField({
               </SelectItem>
             ))
           ) : (
-            <div className="px-2 py-2 text-sm text-slate-500 text-center">
+            <div className="px-2 py-2 text-center text-sm text-slate-500">
               No results found
             </div>
           )}

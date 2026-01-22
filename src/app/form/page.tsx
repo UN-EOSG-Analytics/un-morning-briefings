@@ -1,24 +1,33 @@
-'use client';
+"use client";
 
-import { MorningMeetingForm } from '@/components/MorningMeetingForm';
-import { MorningMeetingEntry } from '@/types/morning-meeting';
-import { saveEntry, updateEntry, getEntryById, getDraftEntries } from '@/lib/storage';
-import { useRouter } from 'next/navigation';
-import { Suspense, useState, useEffect } from 'react';
-import { usePopup } from '@/lib/popup-context';
+import { MorningMeetingForm } from "@/components/MorningMeetingForm";
+import { MorningMeetingEntry } from "@/types/morning-meeting";
+import {
+  saveEntry,
+  updateEntry,
+  getEntryById,
+  getDraftEntries,
+} from "@/lib/storage";
+import { useRouter } from "next/navigation";
+import { Suspense, useState, useEffect } from "react";
+import { usePopup } from "@/lib/popup-context";
 
 function FormContent() {
   const router = useRouter();
   const { error: showError, success: showSuccess } = usePopup();
-  const [searchParams, setSearchParams] = useState<URLSearchParams | null>(null);
-  const [initialData, setInitialData] = useState<MorningMeetingEntry | undefined>();
+  const [searchParams, setSearchParams] = useState<URLSearchParams | null>(
+    null,
+  );
+  const [initialData, setInitialData] = useState<
+    MorningMeetingEntry | undefined
+  >();
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     setSearchParams(params);
-    
-    const editId = params.get('edit');
+
+    const editId = params.get("edit");
     if (editId) {
       // Load entry data for editing
       const loadEntry = async () => {
@@ -28,8 +37,8 @@ function FormContent() {
             setInitialData(entryToEdit);
           }
         } catch (error) {
-          console.error('Error loading entry:', error);
-          showError('Failed to Load', 'Unable to load entry for editing');
+          console.error("Error loading entry:", error);
+          showError("Failed to Load", "Unable to load entry for editing");
         } finally {
           setIsLoading(false);
         }
@@ -42,72 +51,77 @@ function FormContent() {
 
   const handleSubmit = async (data: MorningMeetingEntry) => {
     try {
-      const editId = searchParams?.get('edit');
-      const entryData = { ...data, status: 'submitted' as const };
-      
+      const editId = searchParams?.get("edit");
+      const entryData = { ...data, status: "submitted" as const };
+
       if (editId) {
         // Update existing entry
         await updateEntry(editId, entryData);
-        showSuccess('Success', 'Entry updated successfully!');
+        showSuccess("Success", "Entry updated successfully!");
       } else {
         // Create new entry
         await saveEntry(entryData);
-        showSuccess('Success', 'Entry submitted successfully!');
+        showSuccess("Success", "Entry submitted successfully!");
       }
-      router.push('/list');
+      router.push("/list");
     } catch (error) {
-      console.error('Error submitting form:', error);
-      showError('Failed to Submit', 'Unable to submit entry. Please try again.');
+      console.error("Error submitting form:", error);
+      showError(
+        "Failed to Submit",
+        "Unable to submit entry. Please try again.",
+      );
     }
   };
 
   const handleSaveDraft = async (data: MorningMeetingEntry) => {
     try {
-      const editId = searchParams?.get('edit');
-      const draftData = { ...data, status: 'draft' as const };
-      
+      const editId = searchParams?.get("edit");
+      const draftData = { ...data, status: "draft" as const };
+
       // If no headline is provided, generate one based on draft number
-      if (!draftData.headline || draftData.headline.trim() === '') {
+      if (!draftData.headline || draftData.headline.trim() === "") {
         if (!editId) {
           // Only generate a draft number for new drafts, not updates
-          const allDrafts = await getDraftEntries('Current User');
+          const allDrafts = await getDraftEntries("Current User");
           const nextDraftNumber = allDrafts.length + 1;
           draftData.headline = `Draft #${nextDraftNumber}`;
         }
       }
-      
+
       if (editId) {
         // Update existing draft
         await updateEntry(editId, draftData);
-        showSuccess('Draft Saved', 'Your draft has been updated successfully!');
+        showSuccess("Draft Saved", "Your draft has been updated successfully!");
       } else {
         // Save as new draft
         await saveEntry(draftData);
-        showSuccess('Draft Saved', 'Your draft has been saved successfully!');
+        showSuccess("Draft Saved", "Your draft has been saved successfully!");
       }
-      router.push('/drafts');
+      router.push("/drafts");
     } catch (error) {
-      console.error('Error saving draft:', error);
-      showError('Failed to Save', 'Unable to save draft. Please try again.');
+      console.error("Error saving draft:", error);
+      showError("Failed to Save", "Unable to save draft. Please try again.");
     }
   };
 
   const handleCancel = () => {
-    router.push('/list');
+    router.push("/list");
   };
 
   if (isLoading) {
-    return <main className="flex items-center justify-center py-12">Loading...</main>;
+    return (
+      <main className="flex items-center justify-center py-12">Loading...</main>
+    );
   }
 
   return (
     <main>
-      <MorningMeetingForm 
+      <MorningMeetingForm
         onSubmit={handleSubmit}
         onSaveDraft={handleSaveDraft}
         onCancel={handleCancel}
-        initialData={initialData} 
-        isEditing={!!searchParams?.get('edit')} 
+        initialData={initialData}
+        isEditing={!!searchParams?.get("edit")}
       />
     </main>
   );
@@ -115,7 +129,11 @@ function FormContent() {
 
 export default function MorningMeetingPage() {
   return (
-    <Suspense fallback={<div className="flex items-center justify-center py-12">Loading...</div>}>
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center py-12">Loading...</div>
+      }
+    >
       <FormContent />
     </Suspense>
   );

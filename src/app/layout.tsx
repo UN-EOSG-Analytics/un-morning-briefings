@@ -18,10 +18,12 @@ const roboto = Roboto({
 
 export const metadata: Metadata = {
   title: "United Nations | Morning Briefings",
-  description: "A web application to manage Morning Briefings for the United Nations.",
+  description:
+    "A web application to manage Morning Briefings for the United Nations.",
   openGraph: {
     title: "United Nations Morning Briefings",
-    description: "A web application to manage Morning Briefings for the United Nations.",
+    description:
+      "A web application to manage Morning Briefings for the United Nations.",
     type: "website",
     locale: "en_US",
   },
@@ -45,9 +47,7 @@ export default function RootLayout({
           <PopupProvider>
             <UnsavedChangesProvider>
               <Navbar />
-              <div className="flex-1 pt-16">
-                {children}
-              </div>
+              <div className="flex-1 pt-16">{children}</div>
               <Footer />
               <PopupContainer />
             </UnsavedChangesProvider>

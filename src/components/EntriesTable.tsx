@@ -1,17 +1,42 @@
-'use client';
+"use client";
 
-import { useState, useRef, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { MorningMeetingEntry, PRIORITIES, REGIONS, CATEGORIES } from '@/types/morning-meeting';
-import { formatDateResponsive, formatDateDesktop, formatDateWithWeekday, formatTime } from '@/lib/format-date';
-import { Trash2, Edit, Clock, Check, X, FastForward, FileDown, FileText } from 'lucide-react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { ViewEntryDialog } from './ViewEntryDialog';
-import { SearchBar } from './SearchBar';
-import { ColumnFilter } from './ColumnFilter';
-import { useEntriesFilter, getPriorityBadgeClass, getRegionBadgeClass, formatCategoryForDisplay, getBriefingDate } from '@/lib/useEntriesFilter';
+import { useState, useRef, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import {
+  MorningMeetingEntry,
+  PRIORITIES,
+  REGIONS,
+  CATEGORIES,
+} from "@/types/morning-meeting";
+import {
+  formatDateResponsive,
+  formatDateDesktop,
+  formatDateWithWeekday,
+  formatTime,
+} from "@/lib/format-date";
+import {
+  Trash2,
+  Edit,
+  Clock,
+  Check,
+  X,
+  FastForward,
+  FileDown,
+  FileText,
+} from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { ViewEntryDialog } from "./ViewEntryDialog";
+import { SearchBar } from "./SearchBar";
+import { ColumnFilter } from "./ColumnFilter";
+import {
+  useEntriesFilter,
+  getPriorityBadgeClass,
+  getRegionBadgeClass,
+  formatCategoryForDisplay,
+  getBriefingDate,
+} from "@/lib/useEntriesFilter";
 
 interface EntriesTableProps {
   entries: MorningMeetingEntry[];
@@ -30,14 +55,17 @@ export function EntriesTable({
   onToggleApproval,
   onPostpone,
   showApprovedColumn = false,
-  emptyMessage = 'No entries found.',
-  resultLabel = 'entries',
+  emptyMessage = "No entries found.",
+  resultLabel = "entries",
   initialDateFilter,
 }: EntriesTableProps) {
   const router = useRouter();
-  const [selectedEntry, setSelectedEntry] = useState<MorningMeetingEntry | null>(null);
+  const [selectedEntry, setSelectedEntry] =
+    useState<MorningMeetingEntry | null>(null);
   const [showViewDialog, setShowViewDialog] = useState(false);
-  const [openStatusDropdown, setOpenStatusDropdown] = useState<string | null>(null);
+  const [openStatusDropdown, setOpenStatusDropdown] = useState<string | null>(
+    null,
+  );
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
   const [exportingDate, setExportingDate] = useState<string | null>(null);
 
@@ -70,26 +98,26 @@ export function EntriesTable({
     setUpdatingStatus(entryId);
     try {
       const response = await fetch(`/api/entries`, {
-        method: 'PATCH',
+        method: "PATCH",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ id: entryId, approvalStatus: newStatus }),
       });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        console.error('API Error:', response.status, errorData);
+        console.error("API Error:", response.status, errorData);
         throw new Error(`Failed to update status: ${response.status}`);
       }
 
       // Update the entry in the list
-      const updatedEntry = entries.find(e => e.id === entryId);
+      const updatedEntry = entries.find((e) => e.id === entryId);
       if (updatedEntry) {
         updatedEntry.approvalStatus = newStatus as any;
       }
     } catch (error) {
-      console.error('Error updating status:', error);
+      console.error("Error updating status:", error);
     } finally {
       setUpdatingStatus(null);
       setOpenStatusDropdown(null);
@@ -100,27 +128,27 @@ export function EntriesTable({
     setUpdatingStatus(entryId);
     try {
       const response = await fetch(`/api/entries`, {
-        method: 'PATCH',
+        method: "PATCH",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify({ id: entryId, action: 'postpone' }),
+        body: JSON.stringify({ id: entryId, action: "postpone" }),
       });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        console.error('API Error:', response.status, errorData);
+        console.error("API Error:", response.status, errorData);
         throw new Error(`Failed to postpone entry: ${response.status}`);
       }
 
       // Update the entry in the list
-      const updatedEntry = entries.find(e => e.id === entryId);
+      const updatedEntry = entries.find((e) => e.id === entryId);
       if (updatedEntry) {
         // Advance date by 1 day
         const currentDate = new Date(updatedEntry.date);
         currentDate.setDate(currentDate.getDate() + 1);
         updatedEntry.date = currentDate.toISOString();
-        updatedEntry.approvalStatus = 'pending';
+        updatedEntry.approvalStatus = "pending";
       }
 
       // Trigger refresh to reorder entries
@@ -128,7 +156,7 @@ export function EntriesTable({
         onPostpone();
       }
     } catch (error) {
-      console.error('Error postponing entry:', error);
+      console.error("Error postponing entry:", error);
     } finally {
       setUpdatingStatus(null);
       setOpenStatusDropdown(null);
@@ -140,14 +168,15 @@ export function EntriesTable({
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
       // Close if clicking outside any dropdown
-      if (!target.closest('.status-dropdown-container')) {
+      if (!target.closest(".status-dropdown-container")) {
         setOpenStatusDropdown(null);
       }
     };
 
     if (openStatusDropdown) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
+      document.addEventListener("mousedown", handleClickOutside);
+      return () =>
+        document.removeEventListener("mousedown", handleClickOutside);
     }
   }, [openStatusDropdown]);
 
@@ -158,25 +187,30 @@ export function EntriesTable({
 
   // Extract unique briefing dates from entries
   const uniqueDates = Array.from(
-    new Set(entries.map((entry) => getBriefingDate(entry.date)))
-  ).sort().reverse();
+    new Set(entries.map((entry) => getBriefingDate(entry.date))),
+  )
+    .sort()
+    .reverse();
 
   return (
     <>
       {/* Search Bar and Reset Button */}
       <div className="flex items-center gap-2">
-        <SearchBar
-          searchTerm={searchTerm}
-          onSearchChange={setSearchTerm}
-        />
-        {(searchTerm || filterRegion !== 'all' || filterCategory !== 'all' || filterPriority !== 'all' || filterDate || sortField !== 'date' || sortDirection !== 'desc') && (
+        <SearchBar searchTerm={searchTerm} onSearchChange={setSearchTerm} />
+        {(searchTerm ||
+          filterRegion !== "all" ||
+          filterCategory !== "all" ||
+          filterPriority !== "all" ||
+          filterDate ||
+          sortField !== "date" ||
+          sortDirection !== "desc") && (
           <button
             onClick={() => {
               handleResetFilters();
-              setSortField('date');
-              setSortDirection('desc');
+              setSortField("date");
+              setSortDirection("desc");
             }}
-            className="px-3 py-2 text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-md transition-all duration-200 whitespace-nowrap opacity-0 animate-[fadeIn_0.3s_ease-in_forwards]"
+            className="animate-[fadeIn_0.3s_ease-in_forwards] rounded-md bg-slate-100 px-3 py-2 text-sm font-medium whitespace-nowrap text-slate-700 opacity-0 transition-all duration-200 hover:bg-slate-200"
           >
             Reset Filters
           </button>
@@ -184,24 +218,24 @@ export function EntriesTable({
       </div>
 
       {/* Table */}
-      <Card className="border-slate-200 p-0 mt-4 overflow-hidden">
+      <Card className="mt-4 overflow-hidden border-slate-200 p-0">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="border-b border-slate-200 bg-slate-50">
               <tr>
-                <th
-                  className="rounded-tl-xl px-2 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-700 min-w-12 sm:min-w-26"
-                >
+                <th className="min-w-12 rounded-tl-xl px-2 py-3 text-left text-xs font-semibold tracking-wide text-slate-700 uppercase sm:min-w-26 sm:px-4">
                   <div className="flex items-center gap-1 sm:gap-2">
                     <span
-                      className="hidden sm:inline cursor-pointer hover:bg-slate-100 rounded px-1 py-1 whitespace-nowrap"
-                      onClick={() => handleSort('date')}
+                      className="hidden cursor-pointer rounded px-1 py-1 whitespace-nowrap hover:bg-slate-100 sm:inline"
+                      onClick={() => handleSort("date")}
                     >
-                      Date {sortField === 'date' && (sortDirection === 'asc' ? '↑' : '↓')}
+                      Date{" "}
+                      {sortField === "date" &&
+                        (sortDirection === "asc" ? "↑" : "↓")}
                     </span>
                     <span
-                      className="sm:hidden cursor-pointer hover:bg-slate-100 rounded px-1 py-1"
-                      onClick={() => handleSort('date')}
+                      className="cursor-pointer rounded px-1 py-1 hover:bg-slate-100 sm:hidden"
+                      onClick={() => handleSort("date")}
                     >
                       Date
                     </span>
@@ -209,20 +243,18 @@ export function EntriesTable({
                       <ColumnFilter
                         columnName="Briefing Date"
                         options={uniqueDates.map((date) =>
-                          formatDateDesktop(date)
+                          formatDateDesktop(date),
                         )}
                         selectedValue={
-                          filterDate
-                            ? formatDateDesktop(filterDate)
-                            : 'all'
+                          filterDate ? formatDateDesktop(filterDate) : "all"
                         }
                         onValueChange={(label) => {
-                          if (label === 'all') {
-                            setFilterDate('');
+                          if (label === "all") {
+                            setFilterDate("");
                           } else {
                             // Find the matching date from uniqueDates by comparing formatted strings
                             const matchingDate = uniqueDates.find(
-                              (date) => formatDateDesktop(date) === label
+                              (date) => formatDateDesktop(date) === label,
                             );
                             if (matchingDate) {
                               setFilterDate(matchingDate);
@@ -233,25 +265,25 @@ export function EntriesTable({
                     </div>
                   </div>
                 </th>
-                <th
-                  className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-700"
-                >
+                <th className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-slate-700 uppercase">
                   <span
-                    className="cursor-pointer hover:bg-slate-100 rounded px-1 py-1 inline-block"
-                    onClick={() => handleSort('headline')}
+                    className="inline-block cursor-pointer rounded px-1 py-1 hover:bg-slate-100"
+                    onClick={() => handleSort("headline")}
                   >
-                    Headline {sortField === 'headline' && (sortDirection === 'asc' ? '↑' : '↓')}
+                    Headline{" "}
+                    {sortField === "headline" &&
+                      (sortDirection === "asc" ? "↑" : "↓")}
                   </span>
                 </th>
-                <th
-                  className="hidden sm:table-cell px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-700"
-                >
+                <th className="hidden px-4 py-3 text-left text-xs font-semibold tracking-wide text-slate-700 uppercase sm:table-cell">
                   <div className="flex items-center gap-2">
                     <span
-                      className="cursor-pointer hover:bg-slate-100 rounded px-1 py-1"
-                      onClick={() => handleSort('region')}
+                      className="cursor-pointer rounded px-1 py-1 hover:bg-slate-100"
+                      onClick={() => handleSort("region")}
                     >
-                      Region {sortField === 'region' && (sortDirection === 'asc' ? '↑' : '↓')}
+                      Region{" "}
+                      {sortField === "region" &&
+                        (sortDirection === "asc" ? "↑" : "↓")}
                     </span>
                     <ColumnFilter
                       columnName="Region"
@@ -261,21 +293,28 @@ export function EntriesTable({
                     />
                   </div>
                 </th>
-                <th className="hidden sm:table-cell px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-700">
+                <th className="hidden px-4 py-3 text-left text-xs font-semibold tracking-wide text-slate-700 uppercase sm:table-cell">
                   <div className="flex items-center gap-2">
                     Priority
                     <ColumnFilter
                       columnName="Priority"
                       options={PRIORITIES.map((p) => p.label)}
-                      selectedValue={filterPriority === 'all' ? 'all' : PRIORITIES.find((p) => p.value === filterPriority)?.label || 'all'}
+                      selectedValue={
+                        filterPriority === "all"
+                          ? "all"
+                          : PRIORITIES.find((p) => p.value === filterPriority)
+                              ?.label || "all"
+                      }
                       onValueChange={(label) => {
-                        const value = PRIORITIES.find((p) => p.label === label)?.value || 'all';
+                        const value =
+                          PRIORITIES.find((p) => p.label === label)?.value ||
+                          "all";
                         setFilterPriority(value);
                       }}
                     />
                   </div>
                 </th>
-                <th className="hidden sm:table-cell px-2 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-700">
+                <th className="hidden px-2 py-3 text-left text-xs font-semibold tracking-wide text-slate-700 uppercase sm:table-cell">
                   <div className="flex items-center gap-2">
                     Category
                     <ColumnFilter
@@ -287,11 +326,11 @@ export function EntriesTable({
                   </div>
                 </th>
                 {showApprovedColumn && (
-                  <th className="hidden sm:table-cell px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-700">
+                  <th className="hidden px-4 py-3 text-left text-xs font-semibold tracking-wide text-slate-700 uppercase sm:table-cell">
                     Status
                   </th>
                 )}
-                <th className="hidden sm:table-cell rounded-tr-xl px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-700">
+                <th className="hidden rounded-tr-xl px-4 py-3 text-right text-xs font-semibold tracking-wide text-slate-700 uppercase sm:table-cell">
                   Actions
                 </th>
               </tr>
@@ -299,26 +338,50 @@ export function EntriesTable({
             <tbody>
               {sortedEntries.length === 0 ? (
                 <tr>
-                  <td colSpan={showApprovedColumn ? 7 : 6} className="px-4 py-12 text-center text-slate-500">
-                    {emptyMessage} <Link href="/form" className="text-un-blue hover:underline">Create your first entry</Link>
+                  <td
+                    colSpan={showApprovedColumn ? 7 : 6}
+                    className="px-4 py-12 text-center text-slate-500"
+                  >
+                    {emptyMessage}{" "}
+                    <Link href="/form" className="text-un-blue hover:underline">
+                      Create your first entry
+                    </Link>
                   </td>
                 </tr>
               ) : (
                 sortedEntries.map((entry, idx) => {
                   const currentBriefingDate = getBriefingDate(entry.date);
-                  const prevBriefingDate = idx > 0 ? getBriefingDate(sortedEntries[idx - 1].date) : null;
-                  const showSeparator = !prevBriefingDate || prevBriefingDate !== currentBriefingDate;
-                  
+                  const prevBriefingDate =
+                    idx > 0
+                      ? getBriefingDate(sortedEntries[idx - 1].date)
+                      : null;
+                  const showSeparator =
+                    !prevBriefingDate ||
+                    prevBriefingDate !== currentBriefingDate;
+
                   return [
                     showSeparator && (
                       <tr key={`sep-${entry.id}`} className="bg-slate-100">
-                        <td colSpan={showApprovedColumn ? 7 : 6} className="px-4 py-2">
+                        <td
+                          colSpan={showApprovedColumn ? 7 : 6}
+                          className="px-4 py-2"
+                        >
                           <div className="flex items-center gap-4">
-                            <span className="text-xs font-semibold text-un-blue">▼ Briefing for {formatDateWithWeekday(currentBriefingDate)}</span>
-                            <div className="flex gap-1.5 ml-auto" onClick={(e) => e.stopPropagation()}>
+                            <span className="text-xs font-semibold text-un-blue">
+                              ▼ Briefing for{" "}
+                              {formatDateWithWeekday(currentBriefingDate)}
+                            </span>
+                            <div
+                              className="ml-auto flex gap-1.5"
+                              onClick={(e) => e.stopPropagation()}
+                            >
                               <button
-                                onClick={() => router.push(`/briefing?date=${currentBriefingDate}`)}
-                                className="p-1 text-slate-600 hover:text-un-blue transition-colors"
+                                onClick={() =>
+                                  router.push(
+                                    `/briefing?date=${currentBriefingDate}`,
+                                  )
+                                }
+                                className="p-1 text-slate-600 transition-colors hover:text-un-blue"
                                 title="View briefing"
                               >
                                 <FileText className="h-4 w-4" />
@@ -327,13 +390,15 @@ export function EntriesTable({
                                 onClick={async () => {
                                   setExportingDate(currentBriefingDate);
                                   try {
-                                    router.push(`/briefing?date=${currentBriefingDate}&export=true`);
+                                    router.push(
+                                      `/briefing?date=${currentBriefingDate}&export=true`,
+                                    );
                                   } finally {
                                     setExportingDate(null);
                                   }
                                 }}
                                 disabled={exportingDate === currentBriefingDate}
-                                className="p-1 text-slate-600 hover:text-un-blue transition-colors disabled:opacity-50"
+                                className="p-1 text-slate-600 transition-colors hover:text-un-blue disabled:opacity-50"
                                 title="Export to Word"
                               >
                                 <FileDown className="h-4 w-4" />
@@ -345,139 +410,183 @@ export function EntriesTable({
                     ),
                     <tr
                       key={entry.id}
-                      className="border-b border-slate-100 hover:bg-slate-50 cursor-pointer"
+                      className="cursor-pointer border-b border-slate-100 hover:bg-slate-50"
                       onClick={() => handleRowClick(entry)}
                     >
-                    <td className="whitespace-nowrap px-2 sm:px-4 py-3 text-sm text-slate-600">
-                      <div className="flex flex-col gap-1">
-                        <span className="hidden sm:inline">
-                          {formatDateDesktop(entry.date)}
-                        </span>
-                        <span className="sm:hidden">
-                          {formatDateResponsive(entry.date).mobile}
-                        </span>
-                        <span className="text-xs text-slate-500">
-                          {formatTime(entry.date)}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="max-w-md px-4 py-3 text-sm">
-                      <div className="line-clamp-3 sm:line-clamp-2">{entry.headline}</div>
-                    </td>
-                    <td className="hidden sm:table-cell whitespace-nowrap px-4 py-3">
-                      <span className={`inline-block rounded px-2 py-1 text-xs font-medium ${getRegionBadgeClass(entry.region)}`}>
-                        {entry.region}
-                      </span>
-                    </td>
-                    <td className="hidden sm:table-cell whitespace-nowrap px-4 py-3">
-                      <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${getPriorityBadgeClass(entry.priority)}`}>
-                        <span className={`h-1.5 w-1.5 rounded-full ${entry.priority === 'sg-attention' ? 'bg-red-600' : 'bg-blue-600'}`} />
-                        {PRIORITIES.find(p => p.value === entry.priority)?.label}
-                      </span>
-                    </td>
-                    <td className="hidden sm:table-cell whitespace-nowrap px-2 py-3 text-sm">
-                      <span className="inline-block rounded px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800">
-                        {formatCategoryForDisplay(entry.category)}
-                      </span>
-                    </td>
-                    {showApprovedColumn && (
-                      <td className="hidden sm:table-cell whitespace-nowrap px-4 py-3" onClick={(e) => e.stopPropagation()}>
-                        <div className="relative status-dropdown-container">
-                          {(() => {
-                            const status = entry.approvalStatus || 'pending';
-                            const badgeConfig = {
-                              pending: {
-                                bg: 'bg-amber-50',
-                                text: 'text-amber-700',
-                                icon: Clock,
-                                label: 'Pending'
-                              },
-                              discussed: {
-                                bg: 'bg-green-50',
-                                text: 'text-green-700',
-                                icon: Check,
-                                label: 'Discussed'
-                              },
-                              'left-out': {
-                                bg: 'bg-red-50',
-                                text: 'text-red-700',
-                                icon: X,
-                                label: 'Left out'
-                              }
-                            };
-                            const config = badgeConfig[status as keyof typeof badgeConfig] || badgeConfig.pending;
-                            const Icon = config.icon;
-                            return (
-                              <>
-                                <button
-                                  onClick={() => setOpenStatusDropdown(openStatusDropdown === entry.id ? null : entry.id)}
-                                  disabled={updatingStatus === entry.id}
-                                  className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium cursor-pointer hover:opacity-80 transition-opacity ${config.bg} ${config.text} disabled:opacity-50`}
-                                >
-                                  <Icon className="h-3.5 w-3.5" />
-                                  {config.label}
-                                </button>
-                                {openStatusDropdown === entry.id && (
-                                  <div className="absolute top-full mt-1.5 left-0 z-50 bg-white border border-slate-200 rounded-lg shadow-lg py-1 w-max">
-                                    {['pending', 'discussed', 'left-out'].filter(s => s !== status).map((statusOption) => {
-                                      const statusConfig = badgeConfig[statusOption as keyof typeof badgeConfig];
-                                      const StatusIcon = statusConfig.icon;
-                                      return (
-                                        <button
-                                          key={statusOption}
-                                          onClick={() => handleStatusChange(entry.id, statusOption)}
-                                          disabled={updatingStatus === entry.id}
-                                          className="block px-3 py-2 hover:bg-slate-50 transition-colors disabled:opacity-50"
-                                        >
-                                          <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium ${statusConfig.bg} ${statusConfig.text}`}>
-                                            <StatusIcon className="h-3.5 w-3.5" />
-                                            {statusConfig.label}
-                                          </span>
-                                        </button>
-                                      );
-                                    })}
-                                    {status !== 'discussed' && (
-                                      <button
-                                        onClick={() => handlePostpone(entry.id)}
-                                        disabled={updatingStatus === entry.id}
-                                        className="block w-full px-3 py-2 hover:bg-slate-50 transition-colors disabled:opacity-50 border-t border-slate-100"
-                                      >
-                                        <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium bg-blue-50 text-blue-700">
-                                          <FastForward className="h-3.5 w-3.5" />
-                                          Postpone
-                                        </span>
-                                      </button>
-                                    )}
-                                  </div>
-                                )}
-                              </>
-                            );
-                          })()}
+                      <td className="px-2 py-3 text-sm whitespace-nowrap text-slate-600 sm:px-4">
+                        <div className="flex flex-col gap-1">
+                          <span className="hidden sm:inline">
+                            {formatDateDesktop(entry.date)}
+                          </span>
+                          <span className="sm:hidden">
+                            {formatDateResponsive(entry.date).mobile}
+                          </span>
+                          <span className="text-xs text-slate-500">
+                            {formatTime(entry.date)}
+                          </span>
                         </div>
                       </td>
-                    )}
-                    <td className="hidden sm:table-cell whitespace-nowrap px-2 py-3 text-right">
-                      <div className="flex justify-end gap-0">
-                        <Link href={`/form?edit=${entry.id}`} onClick={(e) => e.stopPropagation()}>
+                      <td className="max-w-md px-4 py-3 text-sm">
+                        <div className="line-clamp-3 sm:line-clamp-2">
+                          {entry.headline}
+                        </div>
+                      </td>
+                      <td className="hidden px-4 py-3 whitespace-nowrap sm:table-cell">
+                        <span
+                          className={`inline-block rounded px-2 py-1 text-xs font-medium ${getRegionBadgeClass(entry.region)}`}
+                        >
+                          {entry.region}
+                        </span>
+                      </td>
+                      <td className="hidden px-4 py-3 whitespace-nowrap sm:table-cell">
+                        <span
+                          className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${getPriorityBadgeClass(entry.priority)}`}
+                        >
+                          <span
+                            className={`h-1.5 w-1.5 rounded-full ${entry.priority === "sg-attention" ? "bg-red-600" : "bg-blue-600"}`}
+                          />
+                          {
+                            PRIORITIES.find((p) => p.value === entry.priority)
+                              ?.label
+                          }
+                        </span>
+                      </td>
+                      <td className="hidden px-2 py-3 text-sm whitespace-nowrap sm:table-cell">
+                        <span className="inline-block rounded bg-gray-100 px-2 py-1 text-xs font-medium text-gray-800">
+                          {formatCategoryForDisplay(entry.category)}
+                        </span>
+                      </td>
+                      {showApprovedColumn && (
+                        <td
+                          className="hidden px-4 py-3 whitespace-nowrap sm:table-cell"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <div className="status-dropdown-container relative">
+                            {(() => {
+                              const status = entry.approvalStatus || "pending";
+                              const badgeConfig = {
+                                pending: {
+                                  bg: "bg-amber-50",
+                                  text: "text-amber-700",
+                                  icon: Clock,
+                                  label: "Pending",
+                                },
+                                discussed: {
+                                  bg: "bg-green-50",
+                                  text: "text-green-700",
+                                  icon: Check,
+                                  label: "Discussed",
+                                },
+                                "left-out": {
+                                  bg: "bg-red-50",
+                                  text: "text-red-700",
+                                  icon: X,
+                                  label: "Left out",
+                                },
+                              };
+                              const config =
+                                badgeConfig[
+                                  status as keyof typeof badgeConfig
+                                ] || badgeConfig.pending;
+                              const Icon = config.icon;
+                              return (
+                                <>
+                                  <button
+                                    onClick={() =>
+                                      setOpenStatusDropdown(
+                                        openStatusDropdown === entry.id
+                                          ? null
+                                          : entry.id,
+                                      )
+                                    }
+                                    disabled={updatingStatus === entry.id}
+                                    className={`inline-flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-opacity hover:opacity-80 ${config.bg} ${config.text} disabled:opacity-50`}
+                                  >
+                                    <Icon className="h-3.5 w-3.5" />
+                                    {config.label}
+                                  </button>
+                                  {openStatusDropdown === entry.id && (
+                                    <div className="absolute top-full left-0 z-50 mt-1.5 w-max rounded-lg border border-slate-200 bg-white py-1 shadow-lg">
+                                      {["pending", "discussed", "left-out"]
+                                        .filter((s) => s !== status)
+                                        .map((statusOption) => {
+                                          const statusConfig =
+                                            badgeConfig[
+                                              statusOption as keyof typeof badgeConfig
+                                            ];
+                                          const StatusIcon = statusConfig.icon;
+                                          return (
+                                            <button
+                                              key={statusOption}
+                                              onClick={() =>
+                                                handleStatusChange(
+                                                  entry.id,
+                                                  statusOption,
+                                                )
+                                              }
+                                              disabled={
+                                                updatingStatus === entry.id
+                                              }
+                                              className="block px-3 py-2 transition-colors hover:bg-slate-50 disabled:opacity-50"
+                                            >
+                                              <span
+                                                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium ${statusConfig.bg} ${statusConfig.text}`}
+                                              >
+                                                <StatusIcon className="h-3.5 w-3.5" />
+                                                {statusConfig.label}
+                                              </span>
+                                            </button>
+                                          );
+                                        })}
+                                      {status !== "discussed" && (
+                                        <button
+                                          onClick={() =>
+                                            handlePostpone(entry.id)
+                                          }
+                                          disabled={updatingStatus === entry.id}
+                                          className="block w-full border-t border-slate-100 px-3 py-2 transition-colors hover:bg-slate-50 disabled:opacity-50"
+                                        >
+                                          <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-700">
+                                            <FastForward className="h-3.5 w-3.5" />
+                                            Postpone
+                                          </span>
+                                        </button>
+                                      )}
+                                    </div>
+                                  )}
+                                </>
+                              );
+                            })()}
+                          </div>
+                        </td>
+                      )}
+                      <td className="hidden px-2 py-3 text-right whitespace-nowrap sm:table-cell">
+                        <div className="flex justify-end gap-0">
+                          <Link
+                            href={`/form?edit=${entry.id}`}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0 text-slate-600 hover:bg-slate-100"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          </Link>
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-8 w-8 p-0 text-slate-600 hover:bg-slate-100"
+                            className="h-8 w-8 p-0 text-red-600 hover:bg-red-50 hover:text-red-700"
+                            onClick={(e) =>
+                              handleActionClick(e, () => onDelete(entry.id))
+                            }
                           >
-                            <Edit className="h-4 w-4" />
+                            <Trash2 className="h-4 w-4" />
                           </Button>
-                        </Link>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0 text-red-600 hover:bg-red-50 hover:text-red-700"
-                          onClick={(e) => handleActionClick(e, () => onDelete(entry.id))}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
+                        </div>
+                      </td>
+                    </tr>,
                   ].filter(Boolean);
                 })
               )}
@@ -487,8 +596,13 @@ export function EntriesTable({
       </Card>
 
       {/* Result Count */}
-      <div className="text-sm text-slate-600 mt-2">
-        {sortedEntries.length} {sortedEntries.length === 1 ? (resultLabel.endsWith('ies') ? resultLabel.slice(0, -3) + 'y' : resultLabel.slice(0, -1)) : resultLabel}
+      <div className="mt-2 text-sm text-slate-600">
+        {sortedEntries.length}{" "}
+        {sortedEntries.length === 1
+          ? resultLabel.endsWith("ies")
+            ? resultLabel.slice(0, -3) + "y"
+            : resultLabel.slice(0, -1)
+          : resultLabel}
       </div>
 
       {/* View Entry Dialog */}

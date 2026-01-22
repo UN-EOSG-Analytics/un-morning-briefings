@@ -12,6 +12,36 @@ import { Edit, Trash2, Check, X, Sparkles, ChevronLeft, ChevronRight, FastForwar
 import Link from 'next/link';
 import { useState, useEffect, useCallback, useRef } from 'react';
 
+/**
+ * Format a source date (ISO or YYYY-MM-DD format) to readable format
+ * Example: "2026-01-20T05:00:00.000Z" or "2026-01-20" → "January 20, 2026"
+ */
+const formatSourceDate = (dateStr: string): string => {
+  const monthNames = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ];
+
+  // Extract YYYY-MM-DD from ISO format or direct date string
+  const dateMatch = dateStr.match(/(\d{4})-(\d{2})-(\d{2})/);
+  if (!dateMatch) return dateStr;
+
+  const [, year, month, day] = dateMatch;
+  const monthNum = parseInt(month, 10) - 1;
+
+  return `${monthNames[monthNum]} ${parseInt(day, 10)}, ${year}`;
+};
+
 interface ViewEntryDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -479,20 +509,25 @@ export function ViewEntryDialog({
             </div>
           )}
 
-          {/* Source URL */}
-          {displayEntry.sourceUrl && (
-            <div>
-              <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">
-                Source URL
-              </div>
-              <a
-                href={displayEntry.sourceUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-un-blue hover:underline break-all text-sm"
-              >
-                {displayEntry.sourceUrl}
-              </a>
+          {/* Source URL and Date */}
+          {(displayEntry.sourceUrl || displayEntry.sourceDate) && (
+            <div className="flex flex-wrap items-center gap-2 text-sm text-slate-700">
+              {displayEntry.sourceUrl && (
+                <a
+                  href={displayEntry.sourceUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-un-blue hover:underline break-all"
+                >
+                  {displayEntry.sourceUrl}
+                </a>
+              )}
+              {displayEntry.sourceUrl && displayEntry.sourceDate && (
+                <span className="text-slate-400">|</span>
+              )}
+              {displayEntry.sourceDate && (
+                <span>{formatSourceDate(displayEntry.sourceDate)}</span>
+              )}
             </div>
           )}
         </div>

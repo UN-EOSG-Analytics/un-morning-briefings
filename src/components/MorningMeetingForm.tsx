@@ -158,6 +158,24 @@ export function MorningMeetingForm({
     return [country];
   };
 
+  // Format source date to YYYY-MM-DD for date input field
+  const formatSourceDateForInput = (dateValue: any): string => {
+    if (!dateValue) return "";
+
+    if (typeof dateValue === "string") {
+      // Extract YYYY-MM-DD from the string in any format
+      // This handles formats like:
+      // - "2026-01-15" (already correct)
+      // - "2026-01-15T13:30" (remove time)
+      // - "2026-01-15T13:30:00" (remove time)
+      // - "2026-01-15T13:30:00.000Z" (remove time and Z)
+      const match = dateValue.match(/(\d{4}-\d{2}-\d{2})/);
+      return match ? match[1] : "";
+    }
+
+    return "";
+  };
+
   const [formData, setFormData] = useState<MorningMeetingEntry>({
     category: initialData?.category || "",
     priority: initialData?.priority || "",
@@ -167,7 +185,7 @@ export function MorningMeetingForm({
     date: formatDateForInput(initialData?.date),
     entry: cleanEntry(initialData?.entry || ""),
     sourceUrl: initialData?.sourceUrl || "",
-    sourceDate: initialData?.sourceDate || "",
+    sourceDate: formatSourceDateForInput(initialData?.sourceDate),
     puNote: initialData?.puNote || "",
     author: initialData?.author || "Current User",
   });

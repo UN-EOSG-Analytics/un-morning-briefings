@@ -159,7 +159,13 @@ export function MultiSelectField({
             )}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-full p-0" align="start" side="bottom">
+        <PopoverContent 
+          className="w-full p-0" 
+          align="start" 
+          side="bottom"
+          sideOffset={4}
+          avoidCollisions={false}
+        >
           <Command>
             {searchable && (
               <div className="flex items-center border-b px-3">

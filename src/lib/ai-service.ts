@@ -246,7 +246,8 @@ Text to reformulate:
 "${selectedText}"
 
 Guidelines:
-- Make it concise, clear, and professional
+- Make it concise, clear, and professional, neutral reporting style
+- Do not change the meaning or add analysis
 - Maintain all key facts and information
 - Use formal UN briefing tone
 - Preserve any paragraph breaks if present (output multiple paragraphs separated by double newlines)

@@ -60,7 +60,6 @@ export default function AnalyticsPage() {
       const response = await fetch(`/api/analytics?${params.toString()}`);
       if (response.ok) {
         const data = await response.json();
-        console.log("Analytics data received:", data);
         setAnalyticsData(data);
       } else {
         console.error("API response not OK:", response.status, await response.text());
@@ -149,9 +148,6 @@ export default function AnalyticsPage() {
       return true;
     })
     || [];
-
-  console.log("Entry length data:", entryLengthData);
-  console.log("Top countries data:", topCountriesData);
 
   // Transform chronological data for area chart
   const chronologicalMap = new Map<string, Record<string, number>>();

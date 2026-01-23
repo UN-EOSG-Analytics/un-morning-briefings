@@ -2,16 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
 export async function GET(request: NextRequest) {
-  console.log("Analytics API called");
   try {
-    console.time("analytics-query");
     const searchParams = request.nextUrl.searchParams;
     const startDate = searchParams.get("startDate");
     const endDate = searchParams.get("endDate");
     const regions = searchParams.get("regions");
     const countries = searchParams.get("countries");
-
-    console.log("Filters:", { startDate, endDate, regions, countries });
 
     // Build WHERE clause
     const conditions: string[] = [];
@@ -55,9 +51,6 @@ export async function GET(request: NextRequest) {
       ? `WHERE ${conditions.join(" AND ")}`
       : "";
 
-    console.log("WHERE clause:", whereClause);
-    console.log("Params:", params);
-
     // Get regional distribution
     let regionalDistribution;
     try {
@@ -69,9 +62,8 @@ export async function GET(request: NextRequest) {
          ORDER BY count DESC`,
         params
       );
-      console.log("Regional distribution fetched:", regionalDistribution.rows.length, "rows");
     } catch (error) {
-      console.error("Error fetching regional distribution:", error);
+      console.error("Analytics: regional distribution error:", error);
       regionalDistribution = { rows: [] };
     }
 
@@ -87,7 +79,7 @@ export async function GET(request: NextRequest) {
         params
       );
     } catch (error) {
-      console.error("Error fetching category distribution:", error);
+      console.error("Analytics: category error:", error);
       categoryDistribution = { rows: [] };
     }
 
@@ -103,7 +95,7 @@ export async function GET(request: NextRequest) {
         params
       );
     } catch (error) {
-      console.error("Error fetching priority distribution:", error);
+      console.error("Analytics: priority error:", error);
       priorityDistribution = { rows: [] };
     }
 
@@ -111,14 +103,6 @@ export async function GET(request: NextRequest) {
     let entryLengthQuery;
     try {
       // First check if there are any entries
-      const countCheck = await db.query(
-        `SELECT COUNT(*) as total
-         FROM pu_morning_briefings.entries
-         ${whereClause}`,
-        params
-      );
-      console.log("Total entries matching filters:", countCheck.rows[0]?.total);
-
       entryLengthQuery = await db.query(
         `SELECT 
            CASE 
@@ -142,9 +126,8 @@ export async function GET(request: NextRequest) {
            END`,
         params
       );
-      console.log("Entry length distribution rows:", entryLengthQuery.rows.length);
     } catch (error) {
-      console.error("Error fetching entry length distribution:", error);
+      console.error("Analytics: entry length error:", error);
       entryLengthQuery = { rows: [] };
     }
 
@@ -163,7 +146,7 @@ export async function GET(request: NextRequest) {
         params
       );
     } catch (error) {
-      console.error("Error fetching chronological data:", error);
+      console.error("Analytics: chronological error:", error);
       chronologicalData = { rows: [] };
     }
 
@@ -181,7 +164,7 @@ export async function GET(request: NextRequest) {
         params
       );
     } catch (error) {
-      console.error("Error fetching entries per month:", error);
+      console.error("Analytics: entries per month error:", error);
       entriesPerMonth = { rows: [] };
     }
 
@@ -199,7 +182,7 @@ export async function GET(request: NextRequest) {
         params
       );
     } catch (error) {
-      console.error("Error fetching total stats:", error);
+      console.error("Analytics: total stats error:", error);
       totalStats = { rows: [{ total_entries: '0', total_regions: '0', total_authors: '0', avg_entry_length: '0' }] };
     }
 
@@ -213,10 +196,6 @@ export async function GET(request: NextRequest) {
          ${whereClause}`,
         params
       );
-      console.log("Raw countries fetched:", rawCountries.rows.length, "rows");
-      if (rawCountries.rows.length > 0) {
-        console.log("Sample raw data:", rawCountries.rows.slice(0, 3));
-      }
 
       // Parse countries in JavaScript
       const countryMap = new Map<string, number>();
@@ -253,12 +232,8 @@ export async function GET(request: NextRequest) {
         .slice(0, 10);
 
       topCountries = { rows: countryArray };
-      console.log("Parsed countries:", topCountries.rows.length, "unique countries");
-      if (topCountries.rows.length > 0) {
-        console.log("Top 3 countries:", topCountries.rows.slice(0, 3));
-      }
     } catch (error) {
-      console.error("Error fetching top countries:", error);
+      console.error("Analytics: top countries error:", error);
       topCountries = { rows: [] };
     }
 
@@ -272,13 +247,6 @@ export async function GET(request: NextRequest) {
       totalStats: totalStats.rows[0],
       topCountries: topCountries.rows,
     };
-
-    console.log("Returning analytics data:", {
-      regionalCount: regionalDistribution.rows.length,
-      totalEntries: totalStats.rows[0]?.total_entries,
-      countriesCount: topCountries.rows.length,
-    });
-    console.timeEnd("analytics-query");
 
     return NextResponse.json(responseData);
   } catch (error) {

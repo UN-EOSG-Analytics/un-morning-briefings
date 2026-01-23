@@ -48,14 +48,7 @@ export async function GET(request: NextRequest) {
     const date = searchParams.get("date");
     const status = searchParams.get("status");
     const author = searchParams.get("author");
-    const noConvert = searchParams.get("noConvert") === "true"; // Skip image conversion for list views
-
-    console.log("GET /api/entries: Params -", {
-      date,
-      status,
-      author,
-      noConvert,
-    });
+    const noConvert = searchParams.get("noConvert") === "true";
 
     let sql = `
       SELECT 
@@ -118,12 +111,7 @@ export async function GET(request: NextRequest) {
 
     sql += ` GROUP BY e.id ORDER BY e.date DESC`;
 
-    console.log("GET /api/entries: Executing SQL with params:", {
-      sql,
-      params,
-    });
     const result = await query(sql, params);
-    console.log("GET /api/entries: Query returned", result.rows.length, "rows");
 
     // Parse country field for all entries
     const entries = result.rows.map((row) => ({
@@ -133,27 +121,18 @@ export async function GET(request: NextRequest) {
 
     // Skip image conversion for list views (performance optimization)
     if (noConvert) {
-      console.log(
-        "GET /api/entries: Skipping image conversion (noConvert=true)",
-      );
       return NextResponse.json(entries, {
-        headers: {
-          "Cache-Control": "private, max-age=5", // 5 second cache
-        },
+        headers: { "Cache-Control": "private, max-age=5" },
       });
     }
 
     // Convert blob URLs to data URLs for private blob storage
     for (const entry of entries) {
       if (entry.images && entry.images.length > 0) {
-        console.log(
-          `GET /api/entries: Processing ${entry.images.length} images for entry ${entry.id}`,
-        );
         entry.entry = await convertImageReferencesServerSide(
           entry.entry,
           entry.images,
           blobStorage,
-          "GET /api/entries",
         );
       }
     }
@@ -163,20 +142,12 @@ export async function GET(request: NextRequest) {
     console.error("Error fetching entries:", error);
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error";
-    const errorStack = error instanceof Error ? error.stack : undefined;
 
-    // Check if it's a database connection error
     const isDatabaseError =
       errorMessage.includes("connect") ||
       errorMessage.includes("ECONNREFUSED") ||
       errorMessage.includes("FATAL") ||
       errorMessage.includes("password");
-
-    console.error("Error details:", {
-      message: errorMessage,
-      isDatabaseError,
-      stack: errorStack,
-    });
 
     return NextResponse.json(
       {
@@ -205,33 +176,16 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { entry: entryContent, images, ...data } = body;
 
-    console.log(
-      "POST /api/entries: Received request with",
-      images?.length || 0,
-      "images",
-    );
-    console.log(
-      "POST /api/entries: Entry content length:",
-      entryContent?.length,
-    );
-
     // Upload images to blob storage
     const uploadedImages = [];
     if (images && images.length > 0) {
-      console.log("POST /api/entries: Starting image upload to blob storage");
       for (const img of images) {
         try {
-          console.log(
-            `POST /api/entries: Uploading image ${img.filename} (${img.mimeType}), position: ${img.position}`,
-          );
           const buffer = Buffer.from(img.data, "base64");
           const result = await blobStorage.upload(
             buffer,
             img.filename,
             img.mimeType,
-          );
-          console.log(
-            `POST /api/entries: Successfully uploaded to ${result.url}`,
           );
           uploadedImages.push({
             filename: result.filename,
@@ -243,14 +197,8 @@ export async function POST(request: NextRequest) {
           });
         } catch (error) {
           console.error(`Error uploading image ${img.filename}:`, error);
-          // Continue with other images, skip this one
         }
       }
-      console.log(
-        "POST /api/entries: Uploaded",
-        uploadedImages.length,
-        "images successfully",
-      );
     }
 
     // Generate ID

@@ -8,7 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { AlertCircle, Search, X, Star, Sparkles } from "lucide-react";
+import { AlertCircle, Search, X, Sparkles } from "lucide-react";
 
 interface SelectFieldProps {
   label?: string;

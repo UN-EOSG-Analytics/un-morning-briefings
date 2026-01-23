@@ -1,48 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useState, useMemo } from "react";
-
-/**
- * Parse a date string and extract components WITHOUT any timezone conversion.
- * Works with formats like:
- * - "2026-01-15T13:30:00.000Z"
- * - "2026-01-15T13:30:00"
- * - "2026-01-15T13:30"
- *
- * Returns the literal values from the string, ignoring any Z suffix.
- */
-function parseDateString(dateStr: string): {
-  year: number;
-  month: number;
-  day: number;
-  hour: number;
-  minute: number;
-} {
-  // Extract YYYY-MM-DD and HH:MM from the string
-  const match = dateStr.match(/(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
-  if (!match) {
-    // Fallback for date-only strings
-    const dateOnly = dateStr.match(/(\d{4})-(\d{2})-(\d{2})/);
-    if (dateOnly) {
-      return {
-        year: parseInt(dateOnly[1]),
-        month: parseInt(dateOnly[2]),
-        day: parseInt(dateOnly[3]),
-        hour: 0,
-        minute: 0,
-      };
-    }
-    return { year: 0, month: 0, day: 0, hour: 0, minute: 0 };
-  }
-
-  return {
-    year: parseInt(match[1]),
-    month: parseInt(match[2]),
-    day: parseInt(match[3]),
-    hour: parseInt(match[4]),
-    minute: parseInt(match[5]),
-  };
-}
+import { parseDateString } from "./format-date";
 
 /**
  * Convert date components to a comparable number (minutes since epoch-ish)

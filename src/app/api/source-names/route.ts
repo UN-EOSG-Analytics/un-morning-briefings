@@ -17,8 +17,6 @@ export async function GET() {
       : "";
     const authorValue = fullName || user?.email || "Current User";
 
-    console.log("Fetching source names for author:", authorValue);
-
     // Get unique source names used by this user
     const result = await db.query(
       `SELECT DISTINCT source_name
@@ -31,7 +29,6 @@ export async function GET() {
       [authorValue]
     );
 
-    console.log(`Found ${result.rows.length} unique source names for ${authorValue}`);
     const sourceNames = result.rows.map((row: any) => row.source_name);
 
     return NextResponse.json({ sourceNames });

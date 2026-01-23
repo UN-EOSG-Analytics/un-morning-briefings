@@ -66,36 +66,14 @@ export async function convertImageReferencesToDataUrls(
       const ref = `image-ref://img-${position}`;
 
       if (updatedHtml.includes(ref)) {
-        console.log(
-          `${contextName}: Found reference ${ref}, fetching image ID ${img.id}`,
-        );
-
         const imgResponse = await fetch(`/api/images/${img.id}`);
-        console.log(
-          `${contextName}: Image API response status:`,
-          imgResponse.status,
-        );
-
         if (imgResponse.ok) {
           const blob = await imgResponse.blob();
-          console.log(
-            `${contextName}: Received blob with size: ${blob.size}, type: ${blob.type}`,
-          );
-
           const dataUrl = await blobToDataUrl(blob);
-          console.log(
-            `${contextName}: Converted to data URL, length: ${dataUrl.length}`,
-          );
-
           updatedHtml = updatedHtml.replace(ref, dataUrl);
         } else {
-          console.error(
-            `${contextName}: Failed to fetch image ${img.id}, status: ${imgResponse.status}`,
-          );
           updatedHtml = updatedHtml.replace(ref, "");
         }
-      } else {
-        console.log(`${contextName}: Reference ${ref} not found in HTML`);
       }
     } catch (error) {
       console.error(`${contextName}: Error converting image reference:`, error);
@@ -132,22 +110,11 @@ export async function convertImageReferencesServerSide(
       const position = getImagePosition(img, images);
       const ref = `image-ref://img-${position}`;
 
-      console.log(`${contextName}: Looking for reference ${ref} in HTML`);
-
-      if (updatedHtml.includes(ref)) {
-        console.log(
-          `${contextName}: Found reference, downloading from ${img.blobUrl}`,
-        );
-
-        // Download image from blob storage
+        if (updatedHtml.includes(ref)) {
         const buffer = await blobStorage.download(img.blobUrl);
         const base64Data = buffer.toString("base64");
         const dataUrl = `data:${img.mimeType};base64,${base64Data}`;
-
         updatedHtml = updatedHtml.replace(ref, dataUrl);
-        console.log(`${contextName}: Replaced reference with data URL`);
-      } else {
-        console.log(`${contextName}: Reference ${ref} not found in HTML`);
       }
     } catch (error) {
       console.error(
@@ -176,13 +143,8 @@ export async function convertEntriesImageReferences(
   entries: any[],
   contextName: string = "convertEntries",
 ): Promise<any[]> {
-  console.log(`${contextName}: Processing ${entries.length} entries`);
-
   for (const entry of entries) {
     if (entry.images && entry.images.length > 0 && entry.entry) {
-      console.log(
-        `${contextName}: Converting ${entry.images.length} image references for entry ${entry.id}`,
-      );
       entry.entry = await convertImageReferencesToDataUrls(
         entry.entry,
         entry.images,
@@ -190,13 +152,5 @@ export async function convertEntriesImageReferences(
       );
     }
   }
-
-  if (entries.length > 0 && entries[0].entry) {
-    console.log(
-      `${contextName}: After conversion, first entry HTML preview:`,
-      entries[0].entry.substring(0, 200),
-    );
-  }
-
   return entries;
 }

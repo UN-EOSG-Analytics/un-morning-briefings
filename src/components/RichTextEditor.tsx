@@ -221,7 +221,6 @@ export function RichTextEditor({
         // Create image element to get dimensions
         const img = new window.Image();
         img.onload = () => {
-          console.log("Image loaded with dimensions:", img.width, img.height);
           editor
             .chain()
             .focus()

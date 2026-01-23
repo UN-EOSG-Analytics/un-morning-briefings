@@ -242,8 +242,6 @@ function parseHtmlContentServer(html: string): Paragraph[] {
     paraMatches.push(...matches);
   }
 
-  console.log("Server parser: Found", paraMatches.length, "paragraphs");
-
   for (const paraMatch of paraMatches) {
     const paraContent = paraMatch[1] || paraMatch[0];
     const paraRuns: (TextRun | ImageRun)[] = [];
@@ -278,10 +276,6 @@ function parseHtmlContentServer(html: string): Paragraph[] {
         const dataUrl = imgMatch[1];
         const dataWidth = imgMatch[2];
         const dataHeight = imgMatch[3];
-        console.log("Server parser: Found data URL image with dimensions:", {
-          width: dataWidth,
-          height: dataHeight,
-        });
 
         try {
           const buffer = base64ToBuffer(dataUrl);
@@ -299,12 +293,6 @@ function parseHtmlContentServer(html: string): Paragraph[] {
               type: imageType,
               transformation: { width: dims.width, height: dims.height },
             }),
-          );
-          console.log(
-            "Server parser: Successfully embedded data URL image, type:",
-            imageType,
-            "dims:",
-            dims,
           );
         } catch (error) {
           console.error(
@@ -362,11 +350,6 @@ function parseHtmlContentServer(html: string): Paragraph[] {
     }
   }
 
-  console.log(
-    "Server parser: Finished, returned",
-    paragraphs.length,
-    "paragraphs",
-  );
   return paragraphs;
 }
 
@@ -432,12 +415,7 @@ function parseHtmlContentClient(html: string): Paragraph[] {
         );
       }
     } else if (["h1", "h2", "h3"].includes(tagName)) {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const level = parseInt(tagName.slice(1));
       const children = extractTextRuns(element);
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const sizes: Record<number, number> = { 1: 28, 2: 24, 3: 20 };
-
       paragraphs.push(
         new Paragraph({
           children:
@@ -545,11 +523,6 @@ function parseHtmlContentClient(html: string): Paragraph[] {
       const dataWidth = element.getAttribute("data-width");
       const dataHeight = element.getAttribute("data-height");
 
-      console.log("Client parser: Processing img tag:", {
-        src: src?.substring(0, 50),
-        alt,
-      });
-
       if (src) {
         try {
           if (src.startsWith("data:image")) {
@@ -563,12 +536,6 @@ function parseHtmlContentClient(html: string): Paragraph[] {
             );
             const imageType = getImageType(src);
 
-            console.log(
-              "Client parser: Embedding data URL image, type:",
-              imageType,
-              "dims:",
-              dims,
-            );
             paragraphs.push(
               new Paragraph({
                 children: [
@@ -732,12 +699,6 @@ function extractTextRuns(element: Element): any[] {
               );
               const imageType = getImageType(src);
 
-              console.log(
-                "Embedding inline image, type:",
-                imageType,
-                "dimensions:",
-                dims,
-              );
               runs.push(
                 new ImageRun({
                   data: buffer as unknown as Uint8Array,

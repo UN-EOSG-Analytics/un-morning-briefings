@@ -1,8 +1,12 @@
 /**
  * Parse a date string and extract components WITHOUT any timezone conversion.
- * Returns the literal values from the string.
+ * Works with formats like:
+ * - "2026-01-15T13:30:00.000Z"
+ * - "2026-01-15T13:30:00"
+ * - "2026-01-15T13:30"
+ * Returns the literal values from the string, ignoring any Z suffix.
  */
-function parseDateString(dateStr: string): {
+export function parseDateString(dateStr: string): {
   year: number;
   month: number;
   day: number;

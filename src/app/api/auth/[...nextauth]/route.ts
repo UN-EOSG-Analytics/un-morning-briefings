@@ -96,13 +96,8 @@ export const authOptions: NextAuthOptions = {
       // Fallback to baseUrl
       return baseUrl;
     },
-    async jwt({ token, user, account }) {
-      console.log("jwt callback: Called", {
-        hasUser: !!user,
-        hasAccount: !!account,
-      });
+    async jwt({ token, user }) {
       if (user) {
-        console.log("jwt callback: Adding user to token");
         token.id = user.id;
         token.firstName = user.firstName;
         token.lastName = user.lastName;
@@ -111,10 +106,6 @@ export const authOptions: NextAuthOptions = {
       return token;
     },
     async session({ session, token }) {
-      console.log("session callback: Called", {
-        hasToken: !!token,
-        tokenId: token.id,
-      });
       if (session.user && token.id) {
         session.user.id = token.id as string;
         session.user.firstName = token.firstName;

@@ -24,6 +24,8 @@ import {
 import { SelectField } from "@/components/SelectField";
 import { MultiSelectField } from "@/components/MultiSelectField";
 import { RichTextEditor } from "@/components/RichTextEditor";
+import { TextField } from "@/components/TextField";
+import { AutocompleteField } from "@/components/AutocompleteField";
 import {
   MorningMeetingEntry,
   FormFieldError,
@@ -214,10 +216,8 @@ export function MorningMeetingForm({
   const [frequentCountries, setFrequentCountries] = useState<string[]>([]);
   const [existingCustomCountries, setExistingCustomCountries] = useState<string[]>([]);
 
-  // Source name autocomplete
+  // Source name suggestions for autocomplete
   const [sourceNames, setSourceNames] = useState<string[]>([]);
-  const [showSourceSuggestions, setShowSourceSuggestions] = useState(false);
-  const [filteredSourceNames, setFilteredSourceNames] = useState<string[]>([]);
 
   // Compute region options with frequent region at top with star
   const regionOptions = useMemo(() => {
@@ -424,12 +424,8 @@ export function MorningMeetingForm({
     const fetchSourceNames = async () => {
       try {
         const response = await fetch("/api/source-names");
-        if (!response.ok) {
-          console.log("Source names API response not OK:", response.status);
-          return;
-        }
+        if (!response.ok) return;
         const data = await response.json();
-        console.log("Fetched source names:", data.sourceNames);
         setSourceNames(data.sourceNames || []);
       } catch (error) {
         console.error("Failed to fetch source names:", error);
@@ -440,27 +436,6 @@ export function MorningMeetingForm({
       fetchSourceNames();
     }
   }, [session]);
-
-  // Filter source names based on input
-  useEffect(() => {
-    if (!formData.sourceName || formData.sourceName.trim() === "") {
-      setFilteredSourceNames([]);
-      setShowSourceSuggestions(false);
-      return;
-    }
-
-    const searchTerm = formData.sourceName.toLowerCase();
-    const filtered = sourceNames.filter((name) =>
-      name.toLowerCase().includes(searchTerm)
-    );
-    console.log(`Filtering "${searchTerm}" from ${sourceNames.length} names, found ${filtered.length} matches`);
-    setFilteredSourceNames(filtered);
-    
-    // Show suggestions if there are any matches and field is likely focused
-    if (filtered.length > 0) {
-      setShowSourceSuggestions(true);
-    }
-  }, [formData.sourceName, sourceNames]);
 
   // No coordination needed - region and country are independent
 
@@ -561,24 +536,6 @@ export function MorningMeetingForm({
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   }, [formData]);
-
-  // Source name autocomplete handlers
-  const handleSourceNameFocus = () => {
-    // Show suggestions on focus if there's input and matches
-    if (formData.sourceName && formData.sourceName.trim() && filteredSourceNames.length > 0) {
-      setShowSourceSuggestions(true);
-    }
-  };
-
-  const handleSourceNameBlur = () => {
-    // Delay to allow click on suggestion
-    setTimeout(() => setShowSourceSuggestions(false), 200);
-  };
-
-  const handleSourceNameSelect = (name: string) => {
-    setFormData((prev) => ({ ...prev, sourceName: name }));
-    setShowSourceSuggestions(false);
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1006,67 +963,35 @@ export function MorningMeetingForm({
 
                 {/* Source Data Row: Name, Date, URL */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-                  <div className="space-y-0 relative">
-                    <label className="text-sm font-medium text-slate-700">
-                      Source Name{" "}
-                      <span className="text-xs text-slate-500">(optional)</span>
-                    </label>
-                    <input
-                      type="text"
-                      name="sourceName"
-                      value={formData.sourceName || ""}
-                      onChange={handleInputChange}
-                      onFocus={handleSourceNameFocus}
-                      onBlur={handleSourceNameBlur}
-                      placeholder="Add source name..."
-                      className="w-full rounded border border-slate-300 bg-slate-50 px-3 py-2 text-sm transition outline-none focus:border-un-blue focus:ring-2 focus:ring-un-blue/15"
-                      autoComplete="off"
-                    />
-                    {/* Suggestions Dropdown */}
-                    {showSourceSuggestions && filteredSourceNames.length > 0 && (
-                      <div className="absolute z-50 w-full mt-1 bg-white border border-slate-300 rounded-md shadow-none max-h-48 overflow-y-auto">
-                        {filteredSourceNames.map((name, index) => (
-                          <button
-                            key={index}
-                            type="button"
-                            onClick={() => handleSourceNameSelect(name)}
-                            className="w-full text-left px-3 py-2 text-sm hover:bg-un-blue hover:text-white transition-colors cursor-pointer border-b border-slate-100 last:border-b-0"
-                          >
-                            {name}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                  <AutocompleteField
+                    label="Source Name"
+                    optional
+                    value={formData.sourceName || ""}
+                    onChange={(value) =>
+                      setFormData((prev) => ({ ...prev, sourceName: value }))
+                    }
+                    suggestions={sourceNames}
+                    placeholder="Add source name..."
+                  />
 
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-700">
-                      Source Date{" "}
-                      <span className="text-xs text-slate-500">(optional)</span>
-                    </label>
-                    <input
-                      type="date"
-                      name="sourceDate"
-                      value={formData.sourceDate || ""}
-                      onChange={handleInputChange}
-                      className="w-full rounded border border-slate-300 bg-slate-50 px-3 py-2 text-sm transition outline-none focus:border-un-blue focus:ring-2 focus:ring-un-blue/15"
-                    />
-                  </div>
+                  <TextField
+                    type="date"
+                    label="Source Date"
+                    optional
+                    name="sourceDate"
+                    value={formData.sourceDate || ""}
+                    onChange={handleInputChange}
+                  />
 
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-700">
-                      Source URL{" "}
-                      <span className="text-xs text-slate-500">(optional)</span>
-                    </label>
-                    <input
-                      type="url"
-                      name="sourceUrl"
-                      value={formData.sourceUrl || ""}
-                      onChange={handleInputChange}
-                      placeholder="https://..."
-                      className="w-full rounded border border-slate-300 bg-slate-50 px-3 py-2 text-sm transition outline-none focus:border-un-blue focus:ring-2 focus:ring-un-blue/15"
-                    />
-                  </div>
+                  <TextField
+                    type="url"
+                    label="Source URL"
+                    optional
+                    name="sourceUrl"
+                    value={formData.sourceUrl || ""}
+                    onChange={handleInputChange}
+                    placeholder="https://..."
+                  />
                 </div>
 
                 {/* PU Note */}
@@ -1124,61 +1049,30 @@ export function MorningMeetingForm({
 
                 {showMetadata && (
                   <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    {/* Author */}
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-slate-700">
-                        Author
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.author || "Current User"}
-                        readOnly
-                        className="w-full rounded border border-slate-300 bg-slate-100 px-3 py-2 text-sm text-slate-600"
-                      />
-                    </div>
+                    <TextField
+                      label="Author"
+                      value={formData.author || "Current User"}
+                      readOnly
+                      inputClassName="bg-slate-100 text-slate-600"
+                    />
 
-                    {/* Date */}
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-slate-700">
-                        Creation Date
-                      </label>
-                      <input
-                        type="date"
-                        name="dateOnly"
-                        value={formData.date.split("T")[0] || ""}
-                        onChange={handleInputChange}
-                        className={`w-full rounded border px-3 py-2 text-sm transition outline-none ${
-                          errors.date
-                            ? "border-red-500 bg-red-50 focus:border-red-500 focus:ring-2 focus:ring-red-500/15"
-                            : "border-slate-300 bg-slate-50 focus:border-un-blue focus:ring-2 focus:ring-un-blue/15"
-                        }`}
-                      />
-                      {errors.date && (
-                        <div className="flex items-center gap-1 text-xs text-red-600">
-                          <AlertCircle className="h-3.5 w-3.5" />
-                          {errors.date}
-                        </div>
-                      )}
-                    </div>
+                    <TextField
+                      type="date"
+                      label="Creation Date"
+                      name="dateOnly"
+                      value={formData.date.split("T")[0] || ""}
+                      onChange={handleInputChange}
+                      error={errors.date}
+                    />
 
-                    {/* Time */}
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-slate-700">
-                        Creation Time
-                      </label>
-                      <input
-                        type="text"
-                        name="timeOnly"
-                        placeholder="HH:MM"
-                        value={(formData.date.split("T")[1] || "").slice(0, 5)}
-                        onChange={handleInputChange}
-                        className={`w-full rounded border px-3 py-2 text-sm transition outline-none ${
-                          errors.date
-                            ? "border-red-500 bg-red-50 focus:border-red-500 focus:ring-2 focus:ring-red-500/15"
-                            : "border-slate-300 bg-slate-50 focus:border-un-blue focus:ring-2 focus:ring-un-blue/15"
-                        }`}
-                      />
-                    </div>
+                    <TextField
+                      type="text"
+                      label="Creation Time"
+                      name="timeOnly"
+                      placeholder="HH:MM"
+                      value={(formData.date.split("T")[1] || "").slice(0, 5)}
+                      onChange={handleInputChange}
+                    />
                   </div>
                 )}
 

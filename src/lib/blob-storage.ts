@@ -147,18 +147,14 @@ class BlobStorageService {
   }
 
   private async downloadLocal(url: string): Promise<Buffer> {
-    console.log("downloadLocal: Attempting to download from URL:", url);
     const filename = url.replace("/uploads/", "");
     const filePath = path.join(this.localStoragePath, filename);
-    console.log("downloadLocal: File path:", filePath);
-    console.log("downloadLocal: File exists:", existsSync(filePath));
 
     if (!existsSync(filePath)) {
       throw new Error(`File not found: ${filePath}`);
     }
 
     const buffer = await readFile(filePath);
-    console.log("downloadLocal: Successfully read file, size:", buffer.length);
     return buffer;
   }
 

@@ -130,10 +130,6 @@ export async function PUT(
     const body = await request.json();
     const { entry: entryContent, images, ...data } = body;
 
-    console.log("PUT /api/entries/[id] - Entry ID:", id);
-    console.log("PUT /api/entries/[id] - Body keys:", Object.keys(body));
-    console.log("PUT /api/entries/[id] - Data:", JSON.stringify(data, null, 2));
-
     // Delete existing images from blob storage and database if new ones are provided
     if (images) {
       const existingImagesResult = await query(

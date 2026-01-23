@@ -841,13 +841,7 @@ export function ExportDailyBriefingDialog({
 
   useEffect(() => {
     const loadEntriesForDate = async () => {
-      // Don't load entries if session is not ready
-      if (!session?.user) {
-        console.log(
-          "ExportDailyBriefingDialog: Session not ready, skipping load",
-        );
-        return;
-      }
+      if (!session?.user) return;
 
       setIsLoadingEntries(true);
       try {

@@ -1018,7 +1018,7 @@ export function MorningMeetingForm({
                       onChange={handleInputChange}
                       onFocus={handleSourceNameFocus}
                       onBlur={handleSourceNameBlur}
-                      placeholder="e.g., Reuters, BBC"
+                      placeholder="Add source name..."
                       className="w-full rounded border border-slate-300 bg-slate-50 px-3 py-2 text-sm transition outline-none focus:border-un-blue focus:ring-2 focus:ring-un-blue/15"
                       autoComplete="off"
                     />

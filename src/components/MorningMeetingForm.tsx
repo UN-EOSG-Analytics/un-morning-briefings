@@ -214,6 +214,11 @@ export function MorningMeetingForm({
   const [frequentCountries, setFrequentCountries] = useState<string[]>([]);
   const [existingCustomCountries, setExistingCustomCountries] = useState<string[]>([]);
 
+  // Source name autocomplete
+  const [sourceNames, setSourceNames] = useState<string[]>([]);
+  const [showSourceSuggestions, setShowSourceSuggestions] = useState(false);
+  const [filteredSourceNames, setFilteredSourceNames] = useState<string[]>([]);
+
   // Compute region options with frequent region at top with star
   const regionOptions = useMemo(() => {
     const options = REGIONS.map((region) => ({
@@ -414,6 +419,49 @@ export function MorningMeetingForm({
     }
   }, [formData.author]);
 
+  // Fetch source names used by this user
+  useEffect(() => {
+    const fetchSourceNames = async () => {
+      try {
+        const response = await fetch("/api/source-names");
+        if (!response.ok) {
+          console.log("Source names API response not OK:", response.status);
+          return;
+        }
+        const data = await response.json();
+        console.log("Fetched source names:", data.sourceNames);
+        setSourceNames(data.sourceNames || []);
+      } catch (error) {
+        console.error("Failed to fetch source names:", error);
+      }
+    };
+
+    if (session?.user) {
+      fetchSourceNames();
+    }
+  }, [session]);
+
+  // Filter source names based on input
+  useEffect(() => {
+    if (!formData.sourceName || formData.sourceName.trim() === "") {
+      setFilteredSourceNames([]);
+      setShowSourceSuggestions(false);
+      return;
+    }
+
+    const searchTerm = formData.sourceName.toLowerCase();
+    const filtered = sourceNames.filter((name) =>
+      name.toLowerCase().includes(searchTerm)
+    );
+    console.log(`Filtering "${searchTerm}" from ${sourceNames.length} names, found ${filtered.length} matches`);
+    setFilteredSourceNames(filtered);
+    
+    // Show suggestions if there are any matches and field is likely focused
+    if (filtered.length > 0) {
+      setShowSourceSuggestions(true);
+    }
+  }, [formData.sourceName, sourceNames]);
+
   // No coordination needed - region and country are independent
 
   const handleInputChange = useCallback(
@@ -513,6 +561,24 @@ export function MorningMeetingForm({
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   }, [formData]);
+
+  // Source name autocomplete handlers
+  const handleSourceNameFocus = () => {
+    // Show suggestions on focus if there's input and matches
+    if (formData.sourceName && formData.sourceName.trim() && filteredSourceNames.length > 0) {
+      setShowSourceSuggestions(true);
+    }
+  };
+
+  const handleSourceNameBlur = () => {
+    // Delay to allow click on suggestion
+    setTimeout(() => setShowSourceSuggestions(false), 200);
+  };
+
+  const handleSourceNameSelect = (name: string) => {
+    setFormData((prev) => ({ ...prev, sourceName: name }));
+    setShowSourceSuggestions(false);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -940,7 +1006,7 @@ export function MorningMeetingForm({
 
                 {/* Source Data Row: Name, Date, URL */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-                  <div className="space-y-2">
+                  <div className="space-y-0 relative">
                     <label className="text-sm font-medium text-slate-700">
                       Source Name{" "}
                       <span className="text-xs text-slate-500">(optional)</span>
@@ -950,9 +1016,27 @@ export function MorningMeetingForm({
                       name="sourceName"
                       value={formData.sourceName || ""}
                       onChange={handleInputChange}
+                      onFocus={handleSourceNameFocus}
+                      onBlur={handleSourceNameBlur}
                       placeholder="e.g., Reuters, BBC"
                       className="w-full rounded border border-slate-300 bg-slate-50 px-3 py-2 text-sm transition outline-none focus:border-un-blue focus:ring-2 focus:ring-un-blue/15"
+                      autoComplete="off"
                     />
+                    {/* Suggestions Dropdown */}
+                    {showSourceSuggestions && filteredSourceNames.length > 0 && (
+                      <div className="absolute z-50 w-full mt-1 bg-white border border-slate-300 rounded-md shadow-none max-h-48 overflow-y-auto">
+                        {filteredSourceNames.map((name, index) => (
+                          <button
+                            key={index}
+                            type="button"
+                            onClick={() => handleSourceNameSelect(name)}
+                            className="w-full text-left px-3 py-2 text-sm hover:bg-un-blue hover:text-white transition-colors cursor-pointer border-b border-slate-100 last:border-b-0"
+                          >
+                            {name}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                   <div className="space-y-2">

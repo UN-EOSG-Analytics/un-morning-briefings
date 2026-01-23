@@ -8,14 +8,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { AlertCircle, Search, X } from "lucide-react";
+import { AlertCircle, Search, X, Star, Sparkles } from "lucide-react";
 
 interface SelectFieldProps {
   label?: string;
   placeholder?: string;
   value: string;
   onValueChange: (value: string) => void;
-  options: Array<{ value: string; label: string }>;
+  options: Array<{ value: string; label: string; showStar?: boolean }>;
   error?: string;
   required?: boolean;
   className?: string;
@@ -101,7 +101,12 @@ export function SelectField({
           {filteredOptions.length > 0 ? (
             filteredOptions.map((option) => (
               <SelectItem key={option.value} value={option.value}>
-                {option.label}
+                <div className="flex items-center gap-2 relative">
+                  <span>{option.label}</span>
+                  {option.showStar && (
+                    <Sparkles className="h-3 w-3 text-un-blue/30 fill-un-blue/20 -ml-1" />
+                  )}
+                </div>
               </SelectItem>
             ))
           ) : (

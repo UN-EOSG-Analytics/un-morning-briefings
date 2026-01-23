@@ -2,7 +2,7 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import {
@@ -208,6 +208,62 @@ export function MorningMeetingForm({
   const { warning: showWarning, success: showSuccess } = usePopup();
   const { setHasUnsavedChanges } = useUnsavedChanges();
 
+  // Track frequently used regions and countries
+  const [frequentRegion, setFrequentRegion] = useState<string | null>(null);
+  const [frequentCountries, setFrequentCountries] = useState<string[]>([]);
+
+  // Compute region options with frequent region at top with star
+  const regionOptions = useMemo(() => {
+    const options = REGIONS.map((region) => ({
+      value: region,
+      label: region,
+      showStar: region === frequentRegion,
+    }));
+
+    // Move frequent region to top if it exists
+    if (frequentRegion) {
+      const frequentIndex = options.findIndex((opt) => opt.value === frequentRegion);
+      if (frequentIndex > 0) {
+        const [frequentOpt] = options.splice(frequentIndex, 1);
+        options.unshift(frequentOpt);
+      }
+    }
+
+    return options;
+  }, [frequentRegion]);
+
+  // Compute country options with top 3 frequent countries at top with stars
+  const countryOptions = useMemo(() => {
+    const options = availableCountries.map((country) => ({
+      value: country,
+      label: country,
+      showStar: frequentCountries.includes(country),
+    }));
+
+    // Move frequent countries to top if they exist
+    if (frequentCountries.length > 0) {
+      const frequentOpts: typeof options = [];
+      const otherOpts: typeof options = [];
+
+      options.forEach((opt) => {
+        if (frequentCountries.includes(opt.value)) {
+          frequentOpts.push(opt);
+        } else {
+          otherOpts.push(opt);
+        }
+      });
+
+      // Sort frequent countries by their frequency order
+      frequentOpts.sort((a, b) => {
+        return frequentCountries.indexOf(a.value) - frequentCountries.indexOf(b.value);
+      });
+
+      return [...frequentOpts, ...otherOpts];
+    }
+
+    return options;
+  }, [availableCountries, frequentCountries]);
+
   // Track if form has been modified
   const [initialFormData] = useState(formData);
 
@@ -266,6 +322,72 @@ export function MorningMeetingForm({
     window.addEventListener("beforeunload", handleBeforeUnload);
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [formData, initialFormData]);
+
+  // Fetch user's recent entries to determine frequently used regions/countries
+  useEffect(() => {
+    const fetchFrequentSelections = async () => {
+      try {
+        // Get date from 2 weeks ago
+        const twoWeeksAgo = new Date();
+        twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
+        
+        const response = await fetch(`/api/entries`);
+        if (!response.ok) return;
+        
+        const data = await response.json();
+        // Handle both formats: { entries: [...] } or direct array
+        const entries = Array.isArray(data) ? data : (Array.isArray(data.entries) ? data.entries : []);
+        
+        if (!Array.isArray(entries) || entries.length === 0) return;
+        
+        // Filter entries from last 2 weeks by current user
+        const recentEntries = entries.filter((entry: any) => {
+          const entryDate = new Date(entry.date);
+          return entryDate >= twoWeeksAgo && entry.author === formData.author;
+        });
+
+        if (recentEntries.length === 0) return;
+
+        // Count region usage
+        const regionCounts: Record<string, number> = {};
+        recentEntries.forEach((entry: any) => {
+          if (entry.region) {
+            regionCounts[entry.region] = (regionCounts[entry.region] || 0) + 1;
+          }
+        });
+
+        // Get most used region
+        const sortedRegions = Object.entries(regionCounts).sort((a, b) => b[1] - a[1]);
+        if (sortedRegions.length > 0) {
+          setFrequentRegion(sortedRegions[0][0]);
+        }
+
+        // Count country usage
+        const countryCounts: Record<string, number> = {};
+        recentEntries.forEach((entry: any) => {
+          const countries = parseCountryField(entry.country);
+          countries.forEach((country: string) => {
+            if (country) {
+              countryCounts[country] = (countryCounts[country] || 0) + 1;
+            }
+          });
+        });
+
+        // Get top 3 most used countries
+        const sortedCountries = Object.entries(countryCounts)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 3)
+          .map(([country]) => country);
+        setFrequentCountries(sortedCountries);
+      } catch (error) {
+        console.error("Failed to fetch frequent selections:", error);
+      }
+    };
+
+    if (formData.author && formData.author !== "Current User") {
+      fetchFrequentSelections();
+    }
+  }, [formData.author]);
 
   // No coordination needed - region and country are independent
 
@@ -621,10 +743,7 @@ export function MorningMeetingForm({
                     onValueChange={(value) =>
                       handleSelectChange("region", value)
                     }
-                    options={REGIONS.map((region) => ({
-                      value: region,
-                      label: region,
-                    }))}
+                    options={regionOptions}
                     error={errors.region}
                     required={true}
                     searchable={false}
@@ -642,10 +761,7 @@ export function MorningMeetingForm({
                           : []
                     }
                     onValueChange={handleCountryChange}
-                    options={availableCountries.map((country) => ({
-                      value: country,
-                      label: country,
-                    }))}
+                    options={countryOptions}
                     error={errors.country}
                     required={false}
                     searchable={true}

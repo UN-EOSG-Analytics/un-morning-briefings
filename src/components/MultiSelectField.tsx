@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { AlertCircle, Search, X, Check } from "lucide-react";
+import { AlertCircle, Search, X, Check, Star } from "lucide-react";
 import {
   Popover,
   PopoverContent,
@@ -21,7 +21,7 @@ interface MultiSelectFieldProps {
   placeholder?: string;
   value: string[];
   onValueChange: (value: string[]) => void;
-  options: Array<{ value: string; label: string }>;
+  options: Array<{ value: string; label: string; showStar?: boolean }>;
   error?: string;
   required?: boolean;
   className?: string;
@@ -218,7 +218,12 @@ export function MultiSelectField({
                       className="cursor-pointer bg-un-blue/5"
                     >
                       <Check className="mr-2 h-4 w-4 text-un-blue opacity-100" />
-                      <span className="font-medium">{option.label}</span>
+                      <div className="flex items-center gap-2 flex-1">
+                        <span className="font-medium">{option.label}</span>
+                        {option.showStar && (
+                          <Sparkles className="h-3 w-3 text-un-blue/30 fill-un-blue/20 -ml-1" />
+                        )}
+                      </div>
                     </CommandItem>
                   ))}
                   {unselectedOptions.length > 0 && (
@@ -234,7 +239,12 @@ export function MultiSelectField({
                   className="cursor-pointer"
                 >
                   <Check className="mr-2 h-4 w-4 opacity-0" />
-                  {option.label}
+                  <div className="flex items-center gap-2 flex-1">
+                    <span>{option.label}</span>
+                    {option.showStar && (
+                      <Sparkles className="h-3 w-3 text-un-blue/30 fill-un-blue/20 -ml-1" />
+                    )}
+                  </div>
                 </CommandItem>
               ))}
             </CommandGroup>

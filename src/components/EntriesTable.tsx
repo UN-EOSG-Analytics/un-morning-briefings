@@ -391,7 +391,7 @@ export function EntriesTable({
                                 className="p-1 text-slate-600 transition-colors hover:text-un-blue"
                                 title="View briefing"
                               >
-                                <FileText className="h-4 w-4" />
+                                <FileText className="h-5 w-5" />
                               </button>
                               <button
                                 onClick={async () => {
@@ -419,7 +419,7 @@ export function EntriesTable({
                                 className="p-1 text-slate-600 transition-colors hover:text-un-blue disabled:opacity-50"
                                 title="Export to Word"
                               >
-                                <FileDown className="h-4 w-4" />
+                                <FileDown className="h-5 w-5" />
                               </button>
                             </div>
                           </div>
@@ -594,7 +594,7 @@ export function EntriesTable({
                               size="sm"
                               className="h-8 w-8 p-0 text-slate-600 hover:bg-slate-100"
                             >
-                              <Edit className="h-4 w-4" />
+                              <Edit className="h-5 w-5" />
                             </Button>
                           </Link>
                           <Button
@@ -605,7 +605,7 @@ export function EntriesTable({
                               handleActionClick(e, () => onDelete(entry.id))
                             }
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <Trash2 className="h-5 w-5" />
                           </Button>
                         </div>
                       </td>

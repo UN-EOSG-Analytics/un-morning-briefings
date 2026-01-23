@@ -356,10 +356,12 @@ export function MorningMeetingForm({
           }
         });
 
-        // Get most used region
+        // Get most used region - only set if there's actual data
         const sortedRegions = Object.entries(regionCounts).sort((a, b) => b[1] - a[1]);
-        if (sortedRegions.length > 0) {
+        if (sortedRegions.length > 0 && Object.keys(regionCounts).length > 0) {
           setFrequentRegion(sortedRegions[0][0]);
+        } else {
+          setFrequentRegion(null);
         }
 
         // Count country usage
@@ -373,12 +375,16 @@ export function MorningMeetingForm({
           });
         });
 
-        // Get top 3 most used countries
-        const sortedCountries = Object.entries(countryCounts)
-          .sort((a, b) => b[1] - a[1])
-          .slice(0, 3)
-          .map(([country]) => country);
-        setFrequentCountries(sortedCountries);
+        // Get top 3 most used countries - only set if there's actual data
+        if (Object.keys(countryCounts).length > 0) {
+          const sortedCountries = Object.entries(countryCounts)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 3)
+            .map(([country]) => country);
+          setFrequentCountries(sortedCountries);
+        } else {
+          setFrequentCountries([]);
+        }
       } catch (error) {
         console.error("Failed to fetch frequent selections:", error);
       }

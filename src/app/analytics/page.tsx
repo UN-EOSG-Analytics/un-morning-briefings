@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { SelectField } from "@/components/SelectField";
 import { MultiSelectField } from "@/components/MultiSelectField";
 import { REGIONS } from "@/types/morning-meeting";
 import labelsData from "@/lib/labels.json";
@@ -45,7 +46,7 @@ const UN_COLORS = [
 export default function AnalyticsPage() {
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
-  const [selectedRegions, setSelectedRegions] = useState<string[]>([]);
+  const [selectedRegion, setSelectedRegion] = useState<string>("");
   const [selectedCountries, setSelectedCountries] = useState<string[]>([]);
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -56,7 +57,7 @@ export default function AnalyticsPage() {
       const params = new URLSearchParams();
       if (startDate) params.append("startDate", startDate);
       if (endDate) params.append("endDate", endDate);
-      if (selectedRegions.length > 0) params.append("regions", selectedRegions.join(","));
+      if (selectedRegion) params.append("regions", selectedRegion);
       if (selectedCountries.length > 0) params.append("countries", selectedCountries.join(","));
 
       const response = await fetch(`/api/analytics?${params.toString()}`);
@@ -84,7 +85,7 @@ export default function AnalyticsPage() {
   const handleClearFilters = () => {
     setStartDate("");
     setEndDate("");
-    setSelectedRegions([]);
+    setSelectedRegion("");
     setSelectedCountries([]);
     // Fetch with no filters
     setTimeout(() => fetchAnalytics(), 0);
@@ -222,23 +223,27 @@ export default function AnalyticsPage() {
                 />
               </div>
               <div>
-                <MultiSelectField
-                  label="Regions"
+                <label className="mb-2 block text-sm font-medium text-slate-700">
+                  Region
+                </label>
+                <SelectField
                   placeholder="All regions"
-                  value={selectedRegions}
-                  onValueChange={setSelectedRegions}
+                  value={selectedRegion}
+                  onValueChange={setSelectedRegion}
                   options={regionOptions}
-                  showLabel={true}
+                  showLabel={false}
                 />
               </div>
               <div>
+                <label className="mb-2 block text-sm font-medium text-slate-700">
+                  Countries
+                </label>
                 <MultiSelectField
-                  label="Countries"
                   placeholder="All countries"
                   value={selectedCountries}
                   onValueChange={setSelectedCountries}
                   options={countryOptions}
-                  showLabel={true}
+                  showLabel={false}
                 />
               </div>
             </div>

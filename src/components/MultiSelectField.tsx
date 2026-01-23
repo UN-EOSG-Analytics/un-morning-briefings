@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { AlertCircle, Search, X, Check, Star } from "lucide-react";
+import { AlertCircle, Search, X, Check, Star, Sparkles } from "lucide-react";
 import {
   Popover,
   PopoverContent,

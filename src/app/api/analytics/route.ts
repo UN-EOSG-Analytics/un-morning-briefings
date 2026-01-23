@@ -109,6 +109,15 @@ export async function GET(request: NextRequest) {
     // Get entry length distribution
     let entryLengthQuery;
     try {
+      // First check if there are any entries
+      const countCheck = await db.query(
+        `SELECT COUNT(*) as total
+         FROM pu_morning_briefings.entries
+         ${whereClause}`,
+        params
+      );
+      console.log("Total entries matching filters:", countCheck.rows[0]?.total);
+
       entryLengthQuery = await db.query(
         `SELECT 
            CASE 
@@ -132,6 +141,7 @@ export async function GET(request: NextRequest) {
            END`,
         params
       );
+      console.log("Entry length distribution rows:", entryLengthQuery.rows.length);
     } catch (error) {
       console.error("Error fetching entry length distribution:", error);
       entryLengthQuery = { rows: [] };
@@ -192,20 +202,64 @@ export async function GET(request: NextRequest) {
       totalStats = { rows: [{ total_entries: '0', total_regions: '0', total_authors: '0', avg_entry_length: '0' }] };
     }
 
-    // Get top countries (simplified - just count country field occurrences)
+    // Get top countries - raw data first to debug
     let topCountries;
     try {
-      topCountries = await db.query(
-        `SELECT 
-           country as country_name,
-           COUNT(*) as count
+      // First, get raw country data to understand format
+      const rawCountries = await db.query(
+        `SELECT country
          FROM pu_morning_briefings.entries
          ${whereClause}
-         GROUP BY country
+         LIMIT 5`,
+        params
+      );
+      console.log("Sample raw country data:", rawCountries.rows);
+
+      // Now parse and aggregate countries
+      topCountries = await db.query(
+        `WITH country_data AS (
+           SELECT 
+             -- Remove JSON array brackets and quotes if present
+             TRIM(BOTH '[]"' FROM country) as raw_country
+           FROM pu_morning_briefings.entries
+           ${whereClause}
+         ),
+         cleaned_countries AS (
+           -- Remove parenthetical text and clean up
+           SELECT 
+             TRIM(
+               REGEXP_REPLACE(
+                 raw_country,
+                 '\\s*\\([^)]*\\)\\s*$',
+                 ''
+               )
+             ) as country_name
+           FROM country_data
+           WHERE raw_country IS NOT NULL 
+             AND raw_country != ''
+             AND raw_country != '[]'
+         ),
+         split_countries AS (
+           -- Split by comma and clean each
+           SELECT 
+             TRIM(unnest(string_to_array(country_name, ','))) as country_name
+           FROM cleaned_countries
+         )
+         SELECT 
+           country_name,
+           COUNT(*) as count
+         FROM split_countries
+         WHERE country_name != ''
+           AND country_name IS NOT NULL
+         GROUP BY country_name
          ORDER BY count DESC
          LIMIT 10`,
         params
       );
+      console.log("Top countries fetched:", topCountries.rows.length, "rows");
+      if (topCountries.rows.length > 0) {
+        console.log("Sample countries:", topCountries.rows.slice(0, 3));
+      }
     } catch (error) {
       console.error("Error fetching top countries:", error);
       topCountries = { rows: [] };

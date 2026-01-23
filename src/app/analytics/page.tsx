@@ -27,17 +27,17 @@ interface AnalyticsData {
   topCountries: { country_name: string; count: string }[];
 }
 
-const COLORS = [
-  "#0066CC", // UN Blue
-  "#00B8D4", // Light Blue
-  "#FF6B6B", // Red
-  "#4ECDC4", // Teal
-  "#FFD93D", // Yellow
-  "#6C5CE7", // Purple
-  "#A8E6CF", // Mint
-  "#FF8B94", // Pink
-  "#C7CEEA", // Lavender
-  "#FFA07A", // Light Salmon
+const UN_COLORS = [
+  "#0066CC", // UN Blue (primary)
+  "#009EDB", // Light Blue
+  "#4A90E2", // Sky Blue
+  "#667B91", // Slate Blue
+  "#8FA6B8", // Steel Blue
+  "#5B92C7", // Medium Blue
+  "#3D7AB5", // Deep Blue
+  "#C4D8E3", // Pale Blue
+  "#7E99AC", // Gray Blue
+  "#96B3C8", // Muted Blue
 ];
 
 export default function AnalyticsPage() {
@@ -122,10 +122,36 @@ export default function AnalyticsPage() {
     count: parseInt(item.count),
   })) || [];
 
-  const topCountriesData = analyticsData?.topCountries.map((item) => ({
-    name: item.country_name.trim(),
-    count: parseInt(item.count),
-  })) || [];
+  // Helper function to clean country names from JSON artifacts and invalid entries
+  const cleanCountryName = (name: string): string => {
+    return name
+      .replace(/^\[/, '') // Remove leading bracket
+      .replace(/\]$/, '') // Remove trailing bracket
+      .replace(/^"/, '') // Remove leading quote
+      .replace(/"$/, '') // Remove trailing quote
+      .replace(/\\"/g, '"') // Unescape quotes
+      .replace(/\s*\([^)]*\)$/g, '') // Remove trailing parentheses
+      .trim();
+  };
+
+  const topCountriesData = analyticsData?.topCountries
+    .map((item) => {
+      const cleanName = cleanCountryName(item.country_name);
+      return {
+        name: cleanName,
+        count: parseInt(item.count),
+      };
+    })
+    .filter((item) => {
+      // Only filter out truly invalid entries
+      if (!item.name || item.name === '[]' || item.name === '') return false;
+      if (item.count <= 0) return false;
+      return true;
+    })
+    || [];
+
+  console.log("Entry length data:", entryLengthData);
+  console.log("Top countries data:", topCountriesData);
 
   // Transform chronological data for area chart
   const chronologicalMap = new Map<string, Record<string, number>>();
@@ -342,13 +368,13 @@ export default function AnalyticsPage() {
                         cx="50%"
                         cy="50%"
                         labelLine={false}
-                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                        label={({ name, percent }) => `${name}: ${percent ? (percent * 100).toFixed(0) : 0}%`}
                         outerRadius={100}
                         fill="#8884d8"
                         dataKey="count"
                       >
                         {topRegions.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          <Cell key={`cell-${index}`} fill={UN_COLORS[index % UN_COLORS.length]} />
                         ))}
                       </Pie>
                       <Tooltip
@@ -382,7 +408,7 @@ export default function AnalyticsPage() {
                           borderRadius: "8px",
                         }}
                       />
-                      <Bar dataKey="count" fill="#00B8D4" radius={[0, 4, 4, 0]} />
+                      <Bar dataKey="count" fill="#0066CC" radius={[0, 4, 4, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </CardContent>
@@ -402,13 +428,13 @@ export default function AnalyticsPage() {
                         cx="50%"
                         cy="50%"
                         labelLine={false}
-                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                        label={({ name, percent }) => `${name}: ${percent ? (percent * 100).toFixed(0) : 0}%`}
                         outerRadius={100}
                         fill="#8884d8"
                         dataKey="count"
                       >
                         {priorityData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          <Cell key={`cell-${index}`} fill={UN_COLORS[index % UN_COLORS.length]} />
                         ))}
                       </Pie>
                       <Tooltip
@@ -442,7 +468,7 @@ export default function AnalyticsPage() {
                           borderRadius: "8px",
                         }}
                       />
-                      <Bar dataKey="count" fill="#FF6B6B" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="count" fill="#009EDB" radius={[4, 4, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </CardContent>
@@ -467,7 +493,7 @@ export default function AnalyticsPage() {
                           borderRadius: "8px",
                         }}
                       />
-                      <Bar dataKey="count" fill="#4ECDC4" radius={[0, 4, 4, 0]} />
+                      <Bar dataKey="count" fill="#4A90E2" radius={[0, 4, 4, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </CardContent>
@@ -518,8 +544,8 @@ export default function AnalyticsPage() {
                           type="monotone"
                           dataKey={region}
                           stackId="1"
-                          stroke={COLORS[index % COLORS.length]}
-                          fill={COLORS[index % COLORS.length]}
+                          stroke={UN_COLORS[index % UN_COLORS.length]}
+                          fill={UN_COLORS[index % UN_COLORS.length]}
                           fillOpacity={0.6}
                         />
                       ))}

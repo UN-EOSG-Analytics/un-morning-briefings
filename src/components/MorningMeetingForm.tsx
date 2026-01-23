@@ -211,6 +211,7 @@ export function MorningMeetingForm({
   // Track frequently used regions and countries
   const [frequentRegion, setFrequentRegion] = useState<string | null>(null);
   const [frequentCountries, setFrequentCountries] = useState<string[]>([]);
+  const [existingCustomCountries, setExistingCustomCountries] = useState<string[]>([]);
 
   // Compute region options with frequent region at top with star
   const regionOptions = useMemo(() => {
@@ -322,6 +323,23 @@ export function MorningMeetingForm({
     window.addEventListener("beforeunload", handleBeforeUnload);
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [formData, initialFormData]);
+
+  // Fetch all existing custom countries from the database
+  useEffect(() => {
+    const fetchExistingCustomCountries = async () => {
+      try {
+        const response = await fetch("/api/countries");
+        if (response.ok) {
+          const data = await response.json();
+          setExistingCustomCountries(data.countries || []);
+        }
+      } catch (error) {
+        console.error("Failed to fetch existing custom countries:", error);
+      }
+    };
+
+    fetchExistingCustomCountries();
+  }, []);
 
   // Fetch user's recent entries to determine frequently used regions/countries
   useEffect(() => {
@@ -757,7 +775,7 @@ export function MorningMeetingForm({
 
                   {/* Country */}
                   <MultiSelectField
-                    label="Country/Countries"
+                    label="Countries"
                     placeholder="Select countries..."
                     value={
                       Array.isArray(formData.country)
@@ -771,6 +789,7 @@ export function MorningMeetingForm({
                     error={errors.country}
                     required={false}
                     searchable={true}
+                    existingCustomValues={existingCustomCountries}
                   />
                 </div>
               </section>

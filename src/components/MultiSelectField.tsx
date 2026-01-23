@@ -28,6 +28,7 @@ interface MultiSelectFieldProps {
   disabled?: boolean;
   showLabel?: boolean;
   searchable?: boolean;
+  existingCustomValues?: string[]; // Custom values that exist in the database
 }
 
 export function MultiSelectField({
@@ -42,11 +43,12 @@ export function MultiSelectField({
   disabled = false,
   showLabel = true,
   searchable = true,
+  existingCustomValues = [],
 }: MultiSelectFieldProps) {
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const { selectedOptions, unselectedOptions } = useMemo(() => {
+  const { selectedOptions, unselectedOptions, matchingCustomOptions } = useMemo(() => {
     const searchLower = searchQuery.toLowerCase();
     const filtered = searchQuery
       ? options.filter((option) =>
@@ -59,8 +61,27 @@ export function MultiSelectField({
       (option) => !value.includes(option.value),
     );
 
-    return { selectedOptions: selected, unselectedOptions: unselected };
-  }, [options, searchQuery, value]);
+    // Find custom values that match the search but aren't in the predefined options
+    const predefinedValues = options.map(opt => opt.value);
+    const matchingCustom = searchQuery
+      ? existingCustomValues
+          .filter((customValue) => 
+            !predefinedValues.includes(customValue) &&
+            customValue.toLowerCase().includes(searchLower)
+          )
+          .map((customValue) => ({
+            value: customValue,
+            label: customValue,
+            isCustom: true,
+          }))
+      : [];
+
+    return { 
+      selectedOptions: selected, 
+      unselectedOptions: unselected,
+      matchingCustomOptions: matchingCustom,
+    };
+  }, [options, searchQuery, value, existingCustomValues]);
 
   const handleToggle = (optionValue: string) => {
     const newValue = value.includes(optionValue)
@@ -200,9 +221,31 @@ export function MultiSelectField({
               )}
             </CommandEmpty>
             <CommandGroup className="max-h-64 overflow-auto">
+              {/* Show existing custom values that match the search */}
+              {matchingCustomOptions.length > 0 && (
+                <>
+                  <div className="px-2 py-1.5 text-xs font-medium text-slate-500">
+                    Previously added
+                  </div>
+                  {matchingCustomOptions.map((option) => (
+                    <CommandItem
+                      key={option.value}
+                      value={option.value}
+                      onSelect={() => handleToggle(option.value)}
+                      className="cursor-pointer"
+                    >
+                      <Check className={`mr-2 h-4 w-4 ${value.includes(option.value) ? 'text-un-blue opacity-100' : 'opacity-0'}`} />
+                      <span>{option.label}</span>
+                    </CommandItem>
+                  ))}
+                  <div className="mx-2 my-1 h-px bg-slate-200" />
+                </>
+              )}
+              {/* Show "Add new" option only if no matches found */}
               {searchQuery.trim() &&
                 selectedOptions.length === 0 &&
-                unselectedOptions.length === 0 && (
+                unselectedOptions.length === 0 &&
+                matchingCustomOptions.length === 0 && (
                   <CommandItem
                     value={searchQuery.trim()}
                     onSelect={handleAddCustom}

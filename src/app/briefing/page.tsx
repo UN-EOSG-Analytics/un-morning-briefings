@@ -934,7 +934,7 @@ function BriefingContent() {
         )}
 
         {/* Footer */}
-        <div className="mt-16 border-t border-slate-400 pt-8 text-center">
+        <div className="mt-16 pt-8 text-center">
           <p className="text-sm text-slate-600 italic">
             Generated on {getCurrentDateTime()}
           </p>

@@ -73,7 +73,7 @@ export function AutocompleteField({
   };
 
   return (
-    <div className={cn("space-y-2 relative", wrapperClassName)} ref={wrapperRef}>
+    <div className={cn("space-y-1 relative", wrapperClassName)} ref={wrapperRef}>
       {label && (
         <label className="text-sm font-medium text-slate-700">
           {label}
@@ -98,7 +98,7 @@ export function AutocompleteField({
       />
       {/* Suggestions Dropdown */}
       {showSuggestions && filteredSuggestions.length > 0 && (
-        <div className="absolute z-50 w-full mt-1 bg-white border border-slate-300 rounded-md shadow-lg max-h-48 overflow-y-auto">
+        <div className="y-0 absolute z-50 w-full mt-0 mb-0 bg-white border border-slate-300 rounded-md shadow-lg max-h-48 overflow-y-auto">
           {filteredSuggestions.map((suggestion, index) => (
             <button
               key={index}

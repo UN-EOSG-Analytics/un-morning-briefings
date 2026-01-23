@@ -29,6 +29,7 @@ import {
   BorderStyle,
   ImageRun,
   Header,
+  ExternalHyperlink,
 } from "docx";
 import { saveAs } from "file-saver";
 import { FileText, Calendar, CheckCircle2, Mail, Download } from "lucide-react";
@@ -548,9 +549,9 @@ const buildDocumentChildren = (
             }
           }
 
-          // Source URL and Date
-          if (entry.sourceUrl || entry.sourceDate) {
-            const sourceChildren: TextRun[] = [
+          // Source Information (Name with optional hyperlink, Date)
+          if (entry.sourceName || entry.sourceDate) {
+            const sourceChildren: (TextRun | ExternalHyperlink)[] = [
               new TextRun({
                 text: "Source: ",
                 italics: true,
@@ -558,17 +559,35 @@ const buildDocumentChildren = (
               }),
             ];
             
-            if (entry.sourceUrl) {
-              sourceChildren.push(
-                new TextRun({
-                  text: entry.sourceUrl,
-                  italics: true,
-                  font: "Roboto",
-                }),
-              );
+            if (entry.sourceName) {
+              if (entry.sourceUrl) {
+                // Create hyperlink for source name if URL is available
+                sourceChildren.push(
+                  new ExternalHyperlink({
+                    children: [
+                      new TextRun({
+                        text: entry.sourceName,
+                        italics: true,
+                        font: "Roboto",
+                        style: "Hyperlink",
+                      }),
+                    ],
+                    link: entry.sourceUrl,
+                  })
+                );
+              } else {
+                // Plain text if no URL
+                sourceChildren.push(
+                  new TextRun({
+                    text: entry.sourceName,
+                    italics: true,
+                    font: "Roboto",
+                  }),
+                );
+              }
             }
             
-            if (entry.sourceUrl && entry.sourceDate) {
+            if (entry.sourceName && entry.sourceDate) {
               sourceChildren.push(
                 new TextRun({
                   text: " | ",

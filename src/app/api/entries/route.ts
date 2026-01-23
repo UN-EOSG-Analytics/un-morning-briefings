@@ -67,6 +67,7 @@ export async function GET(request: NextRequest) {
         e.headline,
         e.date,
         e.entry,
+        e.source_name as "sourceName",
         e.source_url as "sourceUrl",
         e.source_date as "sourceDate",
         e.pu_note as "puNote",
@@ -261,8 +262,8 @@ export async function POST(request: NextRequest) {
     await query(
       `INSERT INTO pu_morning_briefings.entries (
         id, category, priority, region, country, headline, date, entry,
-        source_url, source_date, pu_note, author, status, approval_status
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`,
+        source_name, source_url, source_date, pu_note, author, status, approval_status
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`,
       [
         id,
         data.category,
@@ -272,6 +273,7 @@ export async function POST(request: NextRequest) {
         data.headline,
         data.date, // Store as string, no Date conversion
         entryContent,
+        data.sourceName || null,
         data.sourceUrl || null,
         data.sourceDate || null,
         data.puNote || null,
@@ -313,6 +315,7 @@ export async function POST(request: NextRequest) {
         e.headline,
         e.date,
         e.entry,
+        e.source_name as "sourceName",
         e.source_url as "sourceUrl",
         e.source_date as "sourceDate",
         e.pu_note as "puNote",
@@ -457,7 +460,9 @@ export async function PATCH(request: NextRequest) {
         headline,
         date,
         entry,
+        source_name as "sourceName",
         source_url as "sourceUrl",
+        source_date as "sourceDate",
         pu_note as "puNote",
         author,
         status,

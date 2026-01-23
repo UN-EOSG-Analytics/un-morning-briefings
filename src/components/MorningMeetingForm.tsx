@@ -184,8 +184,9 @@ export function MorningMeetingForm({
     headline: initialData?.headline || "",
     date: formatDateForInput(initialData?.date),
     entry: cleanEntry(initialData?.entry || ""),
-    sourceUrl: initialData?.sourceUrl || "",
+    sourceName: initialData?.sourceName || "",
     sourceDate: formatSourceDateForInput(initialData?.sourceDate),
+    sourceUrl: initialData?.sourceUrl || "",
     puNote: initialData?.puNote || "",
     author: initialData?.author || "Current User",
   });
@@ -565,8 +566,9 @@ export function MorningMeetingForm({
         headline: "",
         date: new Date().toISOString().split("T")[0],
         entry: "",
-        sourceUrl: "",
+        sourceName: "",
         sourceDate: "",
+        sourceUrl: "",
         puNote: "",
         author: "Current User",
       });
@@ -936,19 +938,19 @@ export function MorningMeetingForm({
                   )}
                 </div>
 
-                {/* Source URL and Date */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                {/* Source Data Row: Name, Date, URL */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-slate-700">
-                      Source URL{" "}
+                      Source Name{" "}
                       <span className="text-xs text-slate-500">(optional)</span>
                     </label>
                     <input
-                      type="url"
-                      name="sourceUrl"
-                      value={formData.sourceUrl || ""}
+                      type="text"
+                      name="sourceName"
+                      value={formData.sourceName || ""}
                       onChange={handleInputChange}
-                      placeholder="https://..."
+                      placeholder="e.g., Reuters, BBC"
                       className="w-full rounded border border-slate-300 bg-slate-50 px-3 py-2 text-sm transition outline-none focus:border-un-blue focus:ring-2 focus:ring-un-blue/15"
                     />
                   </div>
@@ -963,6 +965,21 @@ export function MorningMeetingForm({
                       name="sourceDate"
                       value={formData.sourceDate || ""}
                       onChange={handleInputChange}
+                      className="w-full rounded border border-slate-300 bg-slate-50 px-3 py-2 text-sm transition outline-none focus:border-un-blue focus:ring-2 focus:ring-un-blue/15"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-slate-700">
+                      Source URL{" "}
+                      <span className="text-xs text-slate-500">(optional)</span>
+                    </label>
+                    <input
+                      type="url"
+                      name="sourceUrl"
+                      value={formData.sourceUrl || ""}
+                      onChange={handleInputChange}
+                      placeholder="https://..."
                       className="w-full rounded border border-slate-300 bg-slate-50 px-3 py-2 text-sm transition outline-none focus:border-un-blue focus:ring-2 focus:ring-un-blue/15"
                     />
                   </div>

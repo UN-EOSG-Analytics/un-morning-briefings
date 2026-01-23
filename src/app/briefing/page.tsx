@@ -20,6 +20,7 @@ import {
   BorderStyle,
   ImageRun,
   Header,
+  ExternalHyperlink,
 } from "docx";
 import { saveAs } from "file-saver";
 import { parseHtmlContent } from "@/lib/html-to-docx";
@@ -488,21 +489,64 @@ const generateBriefingDocument = async (
             }
           }
 
-          if (entry.sourceDate) {
+          if (entry.sourceName || entry.sourceDate) {
+            const sourceChildren: (TextRun | ExternalHyperlink)[] = [
+              new TextRun({
+                text: "Source: ",
+                italics: true,
+                font: "Roboto",
+              }),
+            ];
+            
+            if (entry.sourceName) {
+              if (entry.sourceUrl) {
+                sourceChildren.push(
+                  new ExternalHyperlink({
+                    children: [
+                      new TextRun({
+                        text: entry.sourceName,
+                        italics: true,
+                        font: "Roboto",
+                        style: "Hyperlink",
+                      }),
+                    ],
+                    link: entry.sourceUrl,
+                  })
+                );
+              } else {
+                sourceChildren.push(
+                  new TextRun({
+                    text: entry.sourceName,
+                    italics: true,
+                    font: "Roboto",
+                  }),
+                );
+              }
+            }
+            
+            if (entry.sourceName && entry.sourceDate) {
+              sourceChildren.push(
+                new TextRun({
+                  text: " | ",
+                  italics: true,
+                  font: "Roboto",
+                }),
+              );
+            }
+            
+            if (entry.sourceDate) {
+              sourceChildren.push(
+                new TextRun({
+                  text: formatSourceDate(entry.sourceDate),
+                  italics: true,
+                  font: "Roboto",
+                }),
+              );
+            }
+            
             children.push(
               new Paragraph({
-                children: [
-                  new TextRun({
-                    text: "Source Date: ",
-                    italics: true,
-                    font: "Roboto",
-                  }),
-                  new TextRun({
-                    text: formatSourceDate(entry.sourceDate),
-                    italics: true,
-                    font: "Roboto",
-                  }),
-                ],
+                children: sourceChildren,
                 spacing: { after: 100 },
               }),
             );
@@ -891,11 +935,25 @@ function BriefingContent() {
                                 />
                               )}
 
-                              {/* Source URL and Date */}
-                              {(entry.sourceUrl || entry.sourceDate) && (
-                                <p className="text-sm leading-relaxed break-all text-slate-600 italic">
-                                  Source: {entry.sourceUrl}
-                                  {entry.sourceUrl && entry.sourceDate && " | "}
+                              {/* Source Information */}
+                              {(entry.sourceName || entry.sourceDate) && (
+                                <p className="text-sm leading-relaxed text-slate-600 italic">
+                                  Source:{" "}
+                                  {entry.sourceName && (
+                                    entry.sourceUrl ? (
+                                      <a
+                                        href={entry.sourceUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-un-blue hover:underline"
+                                      >
+                                        {entry.sourceName}
+                                      </a>
+                                    ) : (
+                                      <span>{entry.sourceName}</span>
+                                    )
+                                  )}
+                                  {entry.sourceName && entry.sourceDate && " | "}
                                   {entry.sourceDate && formatSourceDate(entry.sourceDate)}
                                 </p>
                               )}

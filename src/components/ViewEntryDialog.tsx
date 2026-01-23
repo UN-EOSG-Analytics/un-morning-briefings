@@ -509,20 +509,24 @@ export function ViewEntryDialog({
             </div>
           )}
 
-          {/* Source URL and Date */}
-          {(displayEntry.sourceUrl || displayEntry.sourceDate) && (
+          {/* Source Information */}
+          {(displayEntry.sourceName || displayEntry.sourceUrl || displayEntry.sourceDate) && (
             <div className="flex flex-wrap items-center gap-2 text-sm text-slate-700">
-              {displayEntry.sourceUrl && (
-                <a
-                  href={displayEntry.sourceUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-un-blue hover:underline break-all"
-                >
-                  {displayEntry.sourceUrl}
-                </a>
+              {displayEntry.sourceName && (
+                displayEntry.sourceUrl ? (
+                  <a
+                    href={displayEntry.sourceUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-medium text-un-blue hover:underline"
+                  >
+                    {displayEntry.sourceName}
+                  </a>
+                ) : (
+                  <span className="font-medium">{displayEntry.sourceName}</span>
+                )
               )}
-              {displayEntry.sourceUrl && displayEntry.sourceDate && (
+              {displayEntry.sourceName && displayEntry.sourceDate && (
                 <span className="text-slate-400">|</span>
               )}
               {displayEntry.sourceDate && (

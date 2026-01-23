@@ -55,6 +55,7 @@ export async function GET(
         e.headline,
         e.date,
         e.entry,
+        e.source_name as "sourceName",
         e.source_url as "sourceUrl",
         e.source_date as "sourceDate",
         e.pu_note as "puNote",
@@ -215,6 +216,10 @@ export async function PUT(
       updateFields.push(`entry = $${paramCount++}`);
       updateValues.push(entryContent);
     }
+    if (data.sourceName !== undefined) {
+      updateFields.push(`source_name = $${paramCount++}`);
+      updateValues.push(data.sourceName || null);
+    }
     if (data.sourceUrl !== undefined) {
       updateFields.push(`source_url = $${paramCount++}`);
       updateValues.push(data.sourceUrl);
@@ -285,6 +290,7 @@ export async function PUT(
         e.headline,
         e.date,
         e.entry,
+        e.source_name as "sourceName",
         e.source_url as "sourceUrl",
         COALESCE(e.source_date, NULL) as "sourceDate",
         e.pu_note as "puNote",

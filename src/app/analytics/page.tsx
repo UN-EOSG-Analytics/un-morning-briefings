@@ -7,7 +7,8 @@ import { MultiSelectField } from "@/components/MultiSelectField";
 import { REGIONS } from "@/types/morning-meeting";
 import labelsData from "@/lib/labels.json";
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Area, AreaChart } from "recharts";
-import { Calendar, TrendingUp, FileText, Globe, Filter } from "lucide-react";
+import { Calendar, TrendingUp, FileText, Globe, Filter, Map as MapIcon } from "lucide-react";
+import { WorldMapHeatmap } from "@/components/WorldMapHeatmap";
 
 const COUNTRIES: string[] = ((labelsData as Record<string, unknown>).countries || []) as string[];
 
@@ -25,6 +26,7 @@ interface AnalyticsData {
     avg_entry_length: string;
   };
   topCountries: { country_name: string; count: string }[];
+  allCountries: { country_name: string; count: string }[];
 }
 
 const UN_COLORS = [
@@ -248,6 +250,34 @@ export default function AnalyticsPage() {
                 Clear All
               </Button>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* World Map Heatmap */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <MapIcon className="h-5 w-5" />
+              Geographic Distribution
+            </CardTitle>
+            <CardDescription>
+              Heatmap showing entry concentration by country
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="flex items-center justify-center h-[400px]">
+                <div className="text-center">
+                  <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-un-blue"></div>
+                  <p className="mt-2 text-sm text-slate-600">Loading map...</p>
+                </div>
+              </div>
+            ) : (
+              <WorldMapHeatmap
+                data={analyticsData?.allCountries || []}
+                className="h-[400px]"
+              />
+            )}
           </CardContent>
         </Card>
 

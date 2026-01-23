@@ -228,13 +228,13 @@ export async function GET(request: NextRequest) {
       // Convert to array and sort
       const countryArray = Array.from(countryMap.entries())
         .map(([name, count]) => ({ country_name: name, count: count.toString() }))
-        .sort((a, b) => parseInt(b.count) - parseInt(a.count))
-        .slice(0, 10);
+        .sort((a, b) => parseInt(b.count) - parseInt(a.count));
 
-      topCountries = { rows: countryArray };
+      // Top 10 for the chart, all for the map
+      topCountries = { rows: countryArray.slice(0, 10), allRows: countryArray };
     } catch (error) {
       console.error("Analytics: top countries error:", error);
-      topCountries = { rows: [] };
+      topCountries = { rows: [], allRows: [] };
     }
 
     const responseData = {
@@ -246,6 +246,7 @@ export async function GET(request: NextRequest) {
       entriesPerMonth: entriesPerMonth.rows,
       totalStats: totalStats.rows[0],
       topCountries: topCountries.rows,
+      allCountries: topCountries.allRows || [],
     };
 
     return NextResponse.json(responseData);

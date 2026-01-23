@@ -272,7 +272,7 @@ export function EntriesTable({
                     </div>
                   </div>
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-slate-700 uppercase">
+                <th className="px-2 py-3 text-left text-xs font-semibold tracking-wide text-slate-700 uppercase sm:px-4">
                   <span
                     className="inline-block cursor-pointer rounded px-1 py-1 hover:bg-slate-100"
                     onClick={() => handleSort("headline")}
@@ -282,7 +282,7 @@ export function EntriesTable({
                       (sortDirection === "asc" ? "↑" : "↓")}
                   </span>
                 </th>
-                <th className="hidden px-4 py-3 text-left text-xs font-semibold tracking-wide text-slate-700 uppercase sm:table-cell">
+                <th className="hidden px-2 py-3 text-left text-xs font-semibold tracking-wide text-slate-700 uppercase sm:table-cell sm:px-3 lg:px-4">
                   <div className="flex items-center gap-2">
                     <span
                       className="cursor-pointer rounded px-1 py-1 hover:bg-slate-100"
@@ -300,7 +300,7 @@ export function EntriesTable({
                     />
                   </div>
                 </th>
-                <th className="hidden px-4 py-3 text-left text-xs font-semibold tracking-wide text-slate-700 uppercase sm:table-cell">
+                <th className="hidden px-2 py-3 text-left text-xs font-semibold tracking-wide text-slate-700 uppercase sm:table-cell sm:px-3 lg:px-4">
                   <div className="flex items-center gap-2">
                     Priority
                     <ColumnFilter
@@ -321,7 +321,7 @@ export function EntriesTable({
                     />
                   </div>
                 </th>
-                <th className="hidden px-2 py-3 text-left text-xs font-semibold tracking-wide text-slate-700 uppercase sm:table-cell">
+                <th className="hidden px-2 py-3 text-left text-xs font-semibold tracking-wide text-slate-700 uppercase lg:table-cell">
                   <div className="flex items-center gap-2">
                     Category
                     <ColumnFilter
@@ -333,11 +333,11 @@ export function EntriesTable({
                   </div>
                 </th>
                 {showApprovedColumn && (
-                  <th className="hidden px-4 py-3 text-left text-xs font-semibold tracking-wide text-slate-700 uppercase sm:table-cell">
+                  <th className="hidden px-2 py-3 text-left text-xs font-semibold tracking-wide text-slate-700 uppercase sm:table-cell sm:px-3 lg:px-4">
                     Status
                   </th>
                 )}
-                <th className="hidden rounded-tr-xl px-4 py-3 text-right text-xs font-semibold tracking-wide text-slate-700 uppercase sm:table-cell">
+                <th className="hidden rounded-tr-xl px-2 py-3 text-right text-xs font-semibold tracking-wide text-slate-700 uppercase sm:table-cell sm:px-3 lg:px-4">
                   Actions
                 </th>
               </tr>
@@ -347,7 +347,7 @@ export function EntriesTable({
                 <tr>
                   <td
                     colSpan={showApprovedColumn ? 7 : 6}
-                    className="px-4 py-12 text-center text-slate-500"
+                    className="px-2 py-12 text-center text-slate-500 sm:px-4"
                   >
                     {emptyMessage}{" "}
                     <Link href="/form" className="text-un-blue hover:underline">
@@ -371,7 +371,7 @@ export function EntriesTable({
                       <tr key={`sep-${entry.id}`} className="bg-slate-100">
                         <td
                           colSpan={showApprovedColumn ? 7 : 6}
-                          className="px-4 py-2"
+                          className="px-2 py-2 sm:px-4"
                         >
                           <div className="flex items-center gap-4">
                             <span className="text-xs font-semibold text-un-blue">
@@ -444,39 +444,44 @@ export function EntriesTable({
                           </span>
                         </div>
                       </td>
-                      <td className="max-w-md px-4 py-3 text-sm">
+                      <td className="max-w-md px-2 py-3 text-sm sm:px-4">
                         <div className="line-clamp-3 sm:line-clamp-2">
                           {entry.headline}
                         </div>
                       </td>
-                      <td className="hidden px-4 py-3 whitespace-nowrap sm:table-cell">
+                      <td className="hidden px-2 py-3 whitespace-nowrap sm:table-cell sm:px-3 lg:px-4">
                         <span
                           className={`inline-block rounded px-2 py-1 text-xs font-medium ${getRegionBadgeClass(entry.region)}`}
                         >
                           {entry.region}
                         </span>
                       </td>
-                      <td className="hidden px-4 py-3 whitespace-nowrap sm:table-cell">
+                      <td className="hidden px-2 py-3 whitespace-nowrap sm:table-cell sm:px-3 lg:px-4">
                         <span
                           className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${getPriorityBadgeClass(entry.priority)}`}
                         >
                           <span
                             className={`h-1.5 w-1.5 rounded-full ${entry.priority === "sg-attention" ? "bg-red-600" : "bg-blue-600"}`}
                           />
-                          {
-                            PRIORITIES.find((p) => p.value === entry.priority)
-                              ?.label
-                          }
+                          <span className="lg:hidden">
+                            {entry.priority === "sg-attention" ? "SG" : "Sit."}
+                          </span>
+                          <span className="hidden lg:inline">
+                            {
+                              PRIORITIES.find((p) => p.value === entry.priority)
+                                ?.label
+                            }
+                          </span>
                         </span>
                       </td>
-                      <td className="hidden px-2 py-3 text-sm whitespace-nowrap sm:table-cell">
+                      <td className="hidden px-2 py-3 text-sm whitespace-nowrap lg:table-cell">
                         <span className="inline-block rounded bg-gray-100 px-2 py-1 text-xs font-medium text-gray-800">
                           {formatCategoryForDisplay(entry.category)}
                         </span>
                       </td>
                       {showApprovedColumn && (
                         <td
-                          className="hidden px-4 py-3 whitespace-nowrap sm:table-cell"
+                          className="hidden px-2 py-3 whitespace-nowrap sm:table-cell sm:px-3 lg:px-4"
                           onClick={(e) => e.stopPropagation()}
                         >
                           <div className="status-dropdown-container relative">
@@ -578,7 +583,7 @@ export function EntriesTable({
                           </div>
                         </td>
                       )}
-                      <td className="hidden px-2 py-3 text-right whitespace-nowrap sm:table-cell">
+                      <td className="hidden px-2 py-3 text-right whitespace-nowrap sm:table-cell sm:px-3 lg:px-4">
                         <div className="flex justify-end gap-0">
                           <Link
                             href={`/form?edit=${entry.id}`}

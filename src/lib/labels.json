@@ -4,7 +4,7 @@
     "Meeting Note",
     "Code Cable",
     "SitRep",
-    "Other UN Internal Document"
+    "UN Internal Document"
   ],
   "priorities": [
     { "value": "sg-attention", "label": "SG's attention" },

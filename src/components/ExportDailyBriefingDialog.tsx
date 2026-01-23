@@ -1006,14 +1006,14 @@ export function ExportDailyBriefingDialog({
 
           <div className="flex max-h-80 min-h-0 flex-1 flex-col space-y-2">
             <label className="text-sm font-medium text-foreground">
-              Approved Entries ({approvedEntries.length})
+              Assigned Entries ({approvedEntries.length})
             </label>
             <div className="flex-1 overflow-y-auto rounded border border-slate-200 bg-slate-50 p-3">
               {isLoadingEntries ? (
                 <p className="text-xs text-slate-500">Loading entries...</p>
               ) : approvedEntries.length === 0 ? (
                 <p className="text-xs text-slate-500">
-                  No approved entries for this date
+                  No assigned entries for this date
                 </p>
               ) : (
                 <ul className="space-y-2">

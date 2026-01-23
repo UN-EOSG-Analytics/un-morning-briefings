@@ -126,7 +126,7 @@ export function MorningMeetingList({
               size="sm"
               onClick={handleRefresh}
               disabled={isRefreshing}
-              className="w-full justify-center sm:h-10 sm:w-auto sm:px-6"
+              className="hidden lg:flex w-full justify-center sm:h-10 sm:w-auto sm:px-6"
             >
               <RefreshCw
                 className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}

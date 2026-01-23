@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 export async function GET(request: NextRequest) {
   console.log("Analytics API called");
   try {
+    console.time("analytics-query");
     const searchParams = request.nextUrl.searchParams;
     const startDate = searchParams.get("startDate");
     const endDate = searchParams.get("endDate");
@@ -202,63 +203,59 @@ export async function GET(request: NextRequest) {
       totalStats = { rows: [{ total_entries: '0', total_regions: '0', total_authors: '0', avg_entry_length: '0' }] };
     }
 
-    // Get top countries - raw data first to debug
+    // Get top countries - parse in JavaScript for reliability
     let topCountries;
     try {
-      // First, get raw country data to understand format
+      // Get all raw country data
       const rawCountries = await db.query(
         `SELECT country
          FROM pu_morning_briefings.entries
-         ${whereClause}
-         LIMIT 5`,
+         ${whereClause}`,
         params
       );
-      console.log("Sample raw country data:", rawCountries.rows);
+      console.log("Raw countries fetched:", rawCountries.rows.length, "rows");
+      if (rawCountries.rows.length > 0) {
+        console.log("Sample raw data:", rawCountries.rows.slice(0, 3));
+      }
 
-      // Now parse and aggregate countries
-      topCountries = await db.query(
-        `WITH country_data AS (
-           SELECT 
-             -- Remove JSON array brackets and quotes if present
-             TRIM(BOTH '[]"' FROM country) as raw_country
-           FROM pu_morning_briefings.entries
-           ${whereClause}
-         ),
-         cleaned_countries AS (
-           -- Remove parenthetical text and clean up
-           SELECT 
-             TRIM(
-               REGEXP_REPLACE(
-                 raw_country,
-                 '\\s*\\([^)]*\\)\\s*$',
-                 ''
-               )
-             ) as country_name
-           FROM country_data
-           WHERE raw_country IS NOT NULL 
-             AND raw_country != ''
-             AND raw_country != '[]'
-         ),
-         split_countries AS (
-           -- Split by comma and clean each
-           SELECT 
-             TRIM(unnest(string_to_array(country_name, ','))) as country_name
-           FROM cleaned_countries
-         )
-         SELECT 
-           country_name,
-           COUNT(*) as count
-         FROM split_countries
-         WHERE country_name != ''
-           AND country_name IS NOT NULL
-         GROUP BY country_name
-         ORDER BY count DESC
-         LIMIT 10`,
-        params
-      );
-      console.log("Top countries fetched:", topCountries.rows.length, "rows");
+      // Parse countries in JavaScript
+      const countryMap = new Map<string, number>();
+      rawCountries.rows.forEach((row: any) => {
+        if (!row.country) return;
+        
+        let countryStr = row.country;
+        
+        // Remove JSON array brackets if present
+        countryStr = countryStr.replace(/^\[/, '').replace(/\]$/, '');
+        // Remove quotes
+        countryStr = countryStr.replace(/^"/, '').replace(/"$/, '').replace(/\\"/g, '"');
+        // Split by comma and process each country
+        const countries = countryStr.split(',').map((c: string) => {
+          return c
+            .trim()
+            .replace(/^\["?/, '') // Remove opening bracket and quote
+            .replace(/"\]?$/, '') // Remove closing bracket and quote
+            .replace(/\s*\([^)]*\)$/, '') // Remove parenthetical text
+            .trim();
+        });
+        
+        countries.forEach((c: string) => {
+          if (c && c !== '[]' && c !== '""' && c.length > 0) {
+            countryMap.set(c, (countryMap.get(c) || 0) + 1);
+          }
+        });
+      });
+
+      // Convert to array and sort
+      const countryArray = Array.from(countryMap.entries())
+        .map(([name, count]) => ({ country_name: name, count: count.toString() }))
+        .sort((a, b) => parseInt(b.count) - parseInt(a.count))
+        .slice(0, 10);
+
+      topCountries = { rows: countryArray };
+      console.log("Parsed countries:", topCountries.rows.length, "unique countries");
       if (topCountries.rows.length > 0) {
-        console.log("Sample countries:", topCountries.rows.slice(0, 3));
+        console.log("Top 3 countries:", topCountries.rows.slice(0, 3));
       }
     } catch (error) {
       console.error("Error fetching top countries:", error);
@@ -279,7 +276,9 @@ export async function GET(request: NextRequest) {
     console.log("Returning analytics data:", {
       regionalCount: regionalDistribution.rows.length,
       totalEntries: totalStats.rows[0]?.total_entries,
+      countriesCount: topCountries.rows.length,
     });
+    console.timeEnd("analytics-query");
 
     return NextResponse.json(responseData);
   } catch (error) {

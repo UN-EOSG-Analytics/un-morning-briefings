@@ -326,7 +326,8 @@ Your reformulated text:`;
 
 /**
  * Reformulate text to be concise, professional, and appropriate for a UN briefing
- * Preserves images at their original positions in the content
+ * PRESERVES the exact HTML/TipTap structure - only reformulates text content within tags
+ * Does not change meaning, add analysis, or modify formatting
  */
 export async function reformulateBriefing(content: string): Promise<string> {
   const apiKey = process.env.AZURE_OPENAI_API_KEY;
@@ -340,46 +341,60 @@ export async function reformulateBriefing(content: string): Promise<string> {
     );
   }
 
-  // Extract and preserve all images with their positions
-  const imageRegex = /<img[^>]*>/g;
-  const images: string[] = [];
-  let contentWithPlaceholders = content;
+  // Extract text segments while preserving HTML structure
+  // We'll replace text content with placeholders, reformulate, then put back
+  const textSegments: string[] = [];
+  let htmlTemplate = content;
 
-  // Replace each image with a placeholder and store the original
-  contentWithPlaceholders = content.replace(imageRegex, (match) => {
-    const index = images.length;
-    images.push(match);
-    return `[IMAGE_PLACEHOLDER_${index}]`;
+  // Match text content between HTML tags (but not inside tag attributes)
+  // This regex captures text that is between > and < (the actual content)
+  const textContentRegex = />((?:(?!<)[^>])+)</g;
+
+  htmlTemplate = content.replace(textContentRegex, (match, textContent) => {
+    const trimmedText = textContent.trim();
+    // Only process non-empty text that isn't just whitespace or HTML entities
+    if (trimmedText && !/^(&nbsp;|\s)*$/.test(trimmedText)) {
+      const index = textSegments.length;
+      textSegments.push(trimmedText);
+      // Preserve the original whitespace around the placeholder
+      const leadingSpace = textContent.match(/^\s*/)?.[0] || "";
+      const trailingSpace = textContent.match(/\s*$/)?.[0] || "";
+      return `>${leadingSpace}[TEXT_${index}]${trailingSpace}<`;
+    }
+    return match;
   });
 
-  // Extract plain text without images/HTML
-  const plainText = contentWithPlaceholders
-    .replace(/<[^>]*>/g, " ") // Remove HTML tags
-    .replace(/&[a-z]+;/g, " ") // Remove HTML entities
-    .replace(/\s+/g, " ")
-    .trim();
-
-  if (!plainText) {
-    throw new Error("Content is empty");
+  // If no text segments found, return original content
+  if (textSegments.length === 0) {
+    return content;
   }
 
-  const prompt = `Reformulate the following briefing content to be:
-- Concise and impactful
-- Professional and formal in tone
-- Appropriate for a UN morning briefing
-- Well-structured with clear paragraphs
-- Free of redundancy
-- Do not generate a heading, but keep subheadings already present in the text.
+  // Create a mapping for the AI to reformulate
+  const textMapping = textSegments
+    .map((text, index) => `[TEXT_${index}]: ${text}`)
+    .join("\n");
 
-IMPORTANT: The text contains image placeholders in the format [IMAGE_PLACEHOLDER_0], [IMAGE_PLACEHOLDER_1], etc.
-You MUST keep these placeholders exactly where they are in the text. Do not move, remove, or alter them.
-Reformulate only the text around these placeholders.
+  const prompt = `You are a UN briefing editor. Your task is to ONLY improve the wording of text segments while keeping their exact meaning.
 
-Maintain all key facts and details, but improve clarity and readability.
-Return ONLY the reformulated text with placeholders preserved, no explanations.
+STRICT RULES:
+- ONLY improve word choice and sentence flow
+- Do NOT change the meaning of any text
+- Do NOT add new information or analysis
+- Do NOT remove any facts or details
+- Do NOT change proper nouns, names, dates, numbers, or statistics
+- Keep the same general length (do not significantly expand or reduce)
+- Maintain professional UN diplomatic tone
 
-Original content:
-${plainText}`;
+Here are the text segments to reformulate. Return ONLY the reformulated versions in the exact same format:
+
+${textMapping}
+
+Return your response in EXACTLY this format (one per line, preserving the [TEXT_N] markers):
+[TEXT_0]: reformulated text here
+[TEXT_1]: reformulated text here
+...and so on for each segment.
+
+Do NOT include any other text, explanations, or formatting.`;
 
   try {
     const { text: reformulatedText } = await generateText({
@@ -387,43 +402,29 @@ ${plainText}`;
       prompt,
     });
 
-    // Convert reformulated text to TipTap HTML format
-    let reformulatedHtml = reformulatedText.trim();
+    // Parse the AI response to extract reformulated segments
+    const reformulatedSegments = new Map<number, string>();
+    const responseLines = reformulatedText.trim().split("\n");
 
-    // Convert plain text paragraphs to proper TipTap HTML
-    // Split by double newlines (paragraph breaks) or single newlines
-    const paragraphs = reformulatedHtml
-      .split(/\n\n+/)
-      .map((p) => p.trim())
-      .filter((p) => p.length > 0);
+    for (const line of responseLines) {
+      const match = line.match(/^\[TEXT_(\d+)\]:\s*(.+)$/);
+      if (match) {
+        const index = parseInt(match[1], 10);
+        const text = match[2].trim();
+        reformulatedSegments.set(index, text);
+      }
+    }
 
-    // Convert each paragraph to proper HTML
-    reformulatedHtml = paragraphs
-      .map((paragraph) => {
-        // Check if this is already HTML
-        if (paragraph.startsWith("<") && paragraph.endsWith(">")) {
-          return paragraph;
-        }
-        // Check if it's an image placeholder - don't wrap in <p>
-        if (/^\[IMAGE_PLACEHOLDER_\d+\]$/.test(paragraph)) {
-          return paragraph;
-        }
-        // Wrap plain text in <p> tags
-        return `<p>${paragraph}</p>`;
-      })
-      .join("");
+    // Replace placeholders with reformulated text in the HTML template
+    let result = htmlTemplate;
+    for (let i = 0; i < textSegments.length; i++) {
+      const placeholder = `[TEXT_${i}]`;
+      // Use the reformulated text if available, otherwise keep original
+      const newText = reformulatedSegments.get(i) || textSegments[i];
+      result = result.replace(placeholder, newText);
+    }
 
-    // Re-insert images at their placeholder positions
-    images.forEach((img, index) => {
-      const placeholder = `[IMAGE_PLACEHOLDER_${index}]`;
-      // The placeholder might be wrapped in <p> tags after conversion, so handle that
-      const placeholderInP = `<p>${placeholder}</p>`;
-      reformulatedHtml = reformulatedHtml.replace(placeholderInP, img);
-      // Also try without the <p> tags in case they weren't added
-      reformulatedHtml = reformulatedHtml.replace(placeholder, img);
-    });
-
-    return reformulatedHtml;
+    return result;
   } catch (error) {
     console.error("[AI SERVICE] Reformulation error:", error);
     if (error instanceof Error) {

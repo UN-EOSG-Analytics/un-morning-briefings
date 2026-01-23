@@ -99,38 +99,6 @@ export async function GET(request: NextRequest) {
       priorityDistribution = { rows: [] };
     }
 
-    // Get entry length distribution
-    let entryLengthQuery;
-    try {
-      // First check if there are any entries
-      entryLengthQuery = await db.query(
-        `SELECT 
-           CASE 
-             WHEN LENGTH(entry) < 500 THEN '< 500'
-             WHEN LENGTH(entry) < 1000 THEN '500-1000'
-             WHEN LENGTH(entry) < 2000 THEN '1000-2000'
-             WHEN LENGTH(entry) < 3000 THEN '2000-3000'
-             ELSE '> 3000'
-           END as length_range,
-           COUNT(*) as count
-         FROM pu_morning_briefings.entries
-         ${whereClause}
-         GROUP BY length_range
-         ORDER BY 
-           CASE length_range
-             WHEN '< 500' THEN 1
-             WHEN '500-1000' THEN 2
-             WHEN '1000-2000' THEN 3
-             WHEN '2000-3000' THEN 4
-             ELSE 5
-           END`,
-        params
-      );
-    } catch (error) {
-      console.error("Analytics: entry length error:", error);
-      entryLengthQuery = { rows: [] };
-    }
-
     // Get chronological data (entries per day by region)
     let chronologicalData;
     try {
@@ -241,7 +209,6 @@ export async function GET(request: NextRequest) {
       regionalDistribution: regionalDistribution.rows,
       categoryDistribution: categoryDistribution.rows,
       priorityDistribution: priorityDistribution.rows,
-      entryLengthDistribution: entryLengthQuery.rows,
       chronologicalData: chronologicalData.rows,
       entriesPerMonth: entriesPerMonth.rows,
       totalStats: totalStats.rows[0],

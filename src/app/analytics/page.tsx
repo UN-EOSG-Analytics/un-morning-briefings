@@ -152,9 +152,17 @@ export default function AnalyticsPage() {
     })
     || [];
 
-  // Transform chronological data for area chart
+  // Transform chronological data for area chart (exclude weekends)
   const chronologicalMap = new Map<string, Record<string, number>>();
   analyticsData?.chronologicalData.forEach((item) => {
+    const date = new Date(item.date);
+    const dayOfWeek = date.getDay(); // 0 = Sunday, 6 = Saturday
+    
+    // Skip weekends (Saturday = 6, Sunday = 0)
+    if (dayOfWeek === 0 || dayOfWeek === 6) {
+      return;
+    }
+
     if (!chronologicalMap.has(item.date)) {
       chronologicalMap.set(item.date, {});
     }
@@ -265,9 +273,6 @@ export default function AnalyticsPage() {
               <MapIcon className="h-5 w-5" />
               Geographic Distribution
             </CardTitle>
-            <CardDescription>
-              Heatmap showing entry concentration by country
-            </CardDescription>
           </CardHeader>
           <CardContent>
             {loading ? (
@@ -359,7 +364,7 @@ export default function AnalyticsPage() {
             </div>
 
             {/* Charts Grid */}
-            <div className="grid gap-6 lg:grid-cols-2">
+            <div className="grid gap-6 lg:grid-cols-3">
               {/* Regional Distribution */}
               <Card>
                 <CardHeader>
@@ -480,31 +485,6 @@ export default function AnalyticsPage() {
                 </CardContent>
               </Card>
 
-              {/* Entry Length Distribution */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Entry Length Distribution</CardTitle>
-                  <CardDescription>Distribution of entry lengths in characters</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={entryLengthData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                      <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                      <YAxis tick={{ fontSize: 12 }} />
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: "#fff",
-                          border: "1px solid #e2e8f0",
-                          borderRadius: "8px",
-                        }}
-                      />
-                      <Bar dataKey="count" fill="#009EDB" radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </CardContent>
-              </Card>
-
               {/* Top Countries */}
               <Card>
                 <CardHeader>
@@ -529,15 +509,48 @@ export default function AnalyticsPage() {
                   </ResponsiveContainer>
                 </CardContent>
               </Card>
+
+              {/* Monthly Entry Trends */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Monthly Entry Trends</CardTitle>
+                  <CardDescription>Total entries per month</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <LineChart data={monthlyData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                      <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                      <YAxis tick={{ fontSize: 12 }} />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "#fff",
+                          border: "1px solid #e2e8f0",
+                          borderRadius: "8px",
+                        }}
+                      />
+                      <Legend />
+                      <Line
+                        type="monotone"
+                        dataKey="count"
+                        stroke="#0066CC"
+                        strokeWidth={2}
+                        dot={{ fill: "#0066CC", r: 4 }}
+                        activeDot={{ r: 6 }}
+                        name="Entries"
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
             </div>
 
-            {/* Chronological Charts - Full Width */}
-            <div className="mt-6 space-y-6">
-              {/* Regional Trends Over Time */}
+            {/* Regional Activity Over Time - Full Width */}
+            <div className="mt-6">
               <Card>
                 <CardHeader>
                   <CardTitle>Regional Activity Over Time</CardTitle>
-                  <CardDescription>Daily entry distribution by region</CardDescription>
+                  <CardDescription>Daily entry distribution by region (weekdays only)</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={400}>
@@ -581,40 +594,6 @@ export default function AnalyticsPage() {
                         />
                       ))}
                     </AreaChart>
-                  </ResponsiveContainer>
-                </CardContent>
-              </Card>
-
-              {/* Monthly Trends */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Monthly Entry Trends</CardTitle>
-                  <CardDescription>Total entries per month</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <LineChart data={monthlyData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                      <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-                      <YAxis tick={{ fontSize: 12 }} />
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: "#fff",
-                          border: "1px solid #e2e8f0",
-                          borderRadius: "8px",
-                        }}
-                      />
-                      <Legend />
-                      <Line
-                        type="monotone"
-                        dataKey="count"
-                        stroke="#0066CC"
-                        strokeWidth={2}
-                        dot={{ fill: "#0066CC", r: 4 }}
-                        activeDot={{ r: 6 }}
-                        name="Entries"
-                      />
-                    </LineChart>
                   </ResponsiveContainer>
                 </CardContent>
               </Card>

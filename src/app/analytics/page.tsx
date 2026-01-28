@@ -50,19 +50,19 @@ export default function AnalyticsPage() {
   const [selectedRegion, setSelectedRegion] = useState<string>("");
   const [selectedCountries, setSelectedCountries] = useState<string[]>([]);
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);
-  const [allDates, setAllDates] = useState<string[]>([]);
+  const [allAvailableDates, setAllAvailableDates] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [isMapFullscreen, setIsMapFullscreen] = useState(false);
   const [showConnections, setShowConnections] = useState(false);
 
-  // Get start and end dates from the slider values
+  // Get start and end dates from the slider values (using full available date range)
   const getDateFromSlider = (index: number): string => {
-    if (allDates.length === 0) return "";
-    return allDates[Math.min(index, allDates.length - 1)];
+    if (allAvailableDates.length === 0) return "";
+    return allAvailableDates[Math.min(index, allAvailableDates.length - 1)];
   };
 
-  const startDate = getDateFromSlider(Math.floor((dateRange[0] / 100) * allDates.length));
-  const endDate = getDateFromSlider(Math.floor((dateRange[1] / 100) * allDates.length));
+  const startDate = getDateFromSlider(Math.floor((dateRange[0] / 100) * allAvailableDates.length));
+  const endDate = getDateFromSlider(Math.floor((dateRange[1] / 100) * allAvailableDates.length));
 
   const fetchAnalytics = async () => {
     setLoading(true);
@@ -82,15 +82,13 @@ export default function AnalyticsPage() {
         });
         setAnalyticsData(data);
         
-        // Extract unique dates from chronological data for the slider
-        const uniqueDates = Array.from(
-          new Set(data.chronologicalData?.map((item: any) => item.date) || [])
-        ).sort() as string[];
-        setAllDates(uniqueDates);
-        
-        // Initialize slider to full range
-        if (uniqueDates.length > 0 && (dateRange[0] === 0 && dateRange[1] === 100)) {
-          setDateRange([0, 100]);
+        // Extract unique dates from chronological data only on initial load
+        // This ensures the slider always shows the full available range, not filtered subset
+        if (allAvailableDates.length === 0) {
+          const uniqueDates = Array.from(
+            new Set(data.chronologicalData?.map((item: any) => item.date) || [])
+          ).sort() as string[];
+          setAllAvailableDates(uniqueDates);
         }
       } else {
         console.error("API response not OK:", response.status, await response.text());

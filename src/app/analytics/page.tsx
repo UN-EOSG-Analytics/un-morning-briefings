@@ -8,7 +8,7 @@ import { MultiSelectField } from "@/components/MultiSelectField";
 import { REGIONS } from "@/types/morning-meeting";
 import labelsData from "@/lib/labels.json";
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Area, AreaChart } from "recharts";
-import { Calendar, TrendingUp, FileText, Globe, Filter, Map as MapIcon } from "lucide-react";
+import { Calendar, TrendingUp, FileText, Globe, Filter, Map as MapIcon, Maximize2 } from "lucide-react";
 import { WorldMapHeatmap } from "@/components/WorldMapHeatmap";
 
 const COUNTRIES: string[] = ((labelsData as Record<string, unknown>).countries || []) as string[];
@@ -50,6 +50,7 @@ export default function AnalyticsPage() {
   const [selectedCountries, setSelectedCountries] = useState<string[]>([]);
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isMapFullscreen, setIsMapFullscreen] = useState(false);
 
   const fetchAnalytics = async () => {
     setLoading(true);
@@ -274,7 +275,16 @@ export default function AnalyticsPage() {
               Geographic Distribution
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="relative">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsMapFullscreen(true)}
+              className="absolute right-10 top-4 z-10 h-8 w-8 p-0 bg-white/90 hover:bg-white"
+              title="Expand to fullscreen"
+            >
+              <Maximize2 className="h-4 w-4" />
+            </Button>
             {loading ? (
               <div className="flex items-center justify-center h-[400px]">
                 <div className="text-center">
@@ -290,6 +300,36 @@ export default function AnalyticsPage() {
             )}
           </CardContent>
         </Card>
+
+        {/* Fullscreen Map Dialog */}
+        {isMapFullscreen && (
+          <div className="fixed inset-0 z-50 bg-white">
+            <div className="relative h-full w-full overflow-hidden">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsMapFullscreen(false)}
+                className="absolute right-4 top-4 z-10 h-8 w-8 p-0 bg-white/90 hover:bg-white"
+                title="Exit fullscreen"
+              >
+                <span className="text-xl leading-none">×</span>
+              </Button>
+              {loading ? (
+                <div className="flex items-center justify-center h-full">
+                  <div className="text-center">
+                    <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-un-blue"></div>
+                    <p className="mt-2 text-sm text-slate-600">Loading map...</p>
+                  </div>
+                </div>
+              ) : (
+                <WorldMapHeatmap
+                  data={analyticsData?.allCountries || []}
+                  className="h-full"
+                />
+              )}
+            </div>
+          </div>
+        )}
 
         {loading ? (
           <div className="flex items-center justify-center py-12">

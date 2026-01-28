@@ -8,7 +8,7 @@ import { MultiSelectField } from "@/components/MultiSelectField";
 import { REGIONS } from "@/types/morning-meeting";
 import labelsData from "@/lib/labels.json";
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Area, AreaChart } from "recharts";
-import { Calendar, TrendingUp, FileText, Globe, Filter, Map as MapIcon, Maximize2 } from "lucide-react";
+import { Calendar, TrendingUp, FileText, Globe, Filter, Map as MapIcon, Maximize2, Network } from "lucide-react";
 import { WorldMapHeatmap } from "@/components/WorldMapHeatmap";
 
 const COUNTRIES: string[] = ((labelsData as Record<string, unknown>).countries || []) as string[];
@@ -28,6 +28,7 @@ interface AnalyticsData {
   };
   topCountries: { country_name: string; count: string }[];
   allCountries: { country_name: string; count: string }[];
+  countryConnections?: { country1: string; country2: string; count: string }[];
 }
 
 const UN_COLORS = [
@@ -51,6 +52,7 @@ export default function AnalyticsPage() {
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [isMapFullscreen, setIsMapFullscreen] = useState(false);
+  const [showConnections, setShowConnections] = useState(false);
 
   const fetchAnalytics = async () => {
     setLoading(true);
@@ -269,22 +271,27 @@ export default function AnalyticsPage() {
 
         {/* World Map Heatmap */}
         <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <MapIcon className="h-5 w-5" />
-              Geographic Distribution
-            </CardTitle>
-          </CardHeader>
           <CardContent className="relative">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsMapFullscreen(true)}
-              className="absolute right-10 top-4 z-10 h-8 w-8 p-0 bg-white/90 hover:bg-white"
-              title="Expand to fullscreen"
-            >
-              <Maximize2 className="h-4 w-4" />
-            </Button>
+            <div className="absolute right-10 top-4 z-10 flex flex-col gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsMapFullscreen(true)}
+                className="h-8 w-8 p-0 bg-white/90 hover:bg-white"
+                title="Expand to fullscreen"
+              >
+                <Maximize2 className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowConnections(!showConnections)}
+                className={`h-8 w-8 p-0 ${showConnections ? 'bg-un-blue text-white hover:bg-un-blue/90' : 'bg-white/90 hover:bg-white'}`}
+                title="Toggle country connections"
+              >
+                <Network className="h-4 w-4" />
+              </Button>
+            </div>
             {loading ? (
               <div className="flex items-center justify-center h-[400px]">
                 <div className="text-center">
@@ -295,6 +302,7 @@ export default function AnalyticsPage() {
             ) : (
               <WorldMapHeatmap
                 data={analyticsData?.allCountries || []}
+                connections={showConnections ? (analyticsData?.countryConnections || []) : []}
                 className="h-[400px]"
               />
             )}
@@ -305,15 +313,26 @@ export default function AnalyticsPage() {
         {isMapFullscreen && (
           <div className="fixed inset-0 z-50 bg-white">
             <div className="relative h-full w-full overflow-hidden">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsMapFullscreen(false)}
-                className="absolute right-4 top-4 z-10 h-8 w-8 p-0 bg-white/90 hover:bg-white"
-                title="Exit fullscreen"
-              >
-                <span className="text-xl leading-none">×</span>
-              </Button>
+              <div className="absolute right-4 top-4 z-10 flex flex-col gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsMapFullscreen(false)}
+                  className="h-8 w-8 p-0 bg-white/90 hover:bg-white"
+                  title="Exit fullscreen"
+                >
+                  <span className="text-xl leading-none">×</span>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowConnections(!showConnections)}
+                  className={`h-8 w-8 p-0 ${showConnections ? 'bg-un-blue text-white hover:bg-un-blue/90' : 'bg-white/90 hover:bg-white'}`}
+                  title="Toggle country connections"
+                >
+                  <Network className="h-4 w-4" />
+                </Button>
+              </div>
               {loading ? (
                 <div className="flex items-center justify-center h-full">
                   <div className="text-center">
@@ -324,6 +343,7 @@ export default function AnalyticsPage() {
               ) : (
                 <WorldMapHeatmap
                   data={analyticsData?.allCountries || []}
+                  connections={showConnections ? (analyticsData?.countryConnections || []) : []}
                   className="h-full"
                 />
               )}

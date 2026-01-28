@@ -7,6 +7,7 @@ import {
   Geography,
   Marker,
   ZoomableGroup,
+  Line,
 } from "react-simple-maps";
 import { getCountryCoordinates } from "@/lib/country-coordinates";
 
@@ -23,8 +24,15 @@ interface CountryData {
   count: string | number;
 }
 
+interface CountryConnection {
+  country1: string;
+  country2: string;
+  count: string | number;
+}
+
 interface WorldMapHeatmapProps {
   data: CountryData[];
+  connections?: CountryConnection[];
   className?: string;
 }
 
@@ -46,7 +54,7 @@ interface TooltipState {
 /**
  * World map with heatmap overlay showing country entry distribution
  */
-function WorldMapHeatmapComponent({ data, className = "" }: WorldMapHeatmapProps) {
+function WorldMapHeatmapComponent({ data, connections = [], className = "" }: WorldMapHeatmapProps) {
   const [tooltip, setTooltip] = useState<TooltipState>({
     show: false,
     x: 0,
@@ -84,6 +92,64 @@ function WorldMapHeatmapComponent({ data, className = "" }: WorldMapHeatmapProps
     // Sort by intensity so smaller points render on top
     return points.sort((a, b) => b.intensity - a.intensity);
   }, [data]);
+
+  // Process connections
+  const connectionLines = useMemo(() => {
+    if (!connections || connections.length === 0) return [];
+
+    const lines = [];
+    let maxConnectionCount = 0;
+
+    // Find max connection count for normalization
+    for (const conn of connections) {
+      const count = typeof conn.count === "string" ? parseInt(conn.count) : conn.count;
+      if (count > maxConnectionCount) maxConnectionCount = count;
+    }
+
+    // Create lines between countries
+    for (const conn of connections) {
+      const coords1 = getCountryCoordinates(conn.country1);
+      const coords2 = getCountryCoordinates(conn.country2);
+      
+      if (coords1 && coords2) {
+        const count = typeof conn.count === "string" ? parseInt(conn.count) : conn.count;
+        const intensity = maxConnectionCount > 0 ? count / maxConnectionCount : 0;
+        
+        lines.push({
+          start: coords1,
+          end: coords2,
+          intensity,
+          count,
+        });
+      }
+    }
+
+    return lines;
+  }, [connections]);
+
+  // Get color for connection lines based on intensity
+  const getConnectionColor = (intensity: number): string => {
+    // Purple to bright cyan gradient
+    if (intensity < 0.33) {
+      const t = intensity / 0.33;
+      const r = Math.round(147 - t * 50);
+      const g = Math.round(51 + t * 150);
+      const b = Math.round(234);
+      return `rgba(${r}, ${g}, ${b}, 0.6)`;
+    } else if (intensity < 0.66) {
+      const t = (intensity - 0.33) / 0.33;
+      const r = Math.round(97 - t * 50);
+      const g = Math.round(201 + t * 54);
+      const b = Math.round(234 - t * 94);
+      return `rgba(${r}, ${g}, ${b}, 0.7)`;
+    } else {
+      const t = (intensity - 0.66) / 0.34;
+      const r = Math.round(47 + t * 208);
+      const g = Math.round(255);
+      const b = Math.round(140 - t * 40);
+      return `rgba(${r}, ${g}, ${b}, 0.8)`;
+    }
+  };
 
   // Get color based on intensity (blue to red gradient like the reference image)
   const getHeatColor = (intensity: number): string => {
@@ -173,6 +239,39 @@ function WorldMapHeatmapComponent({ data, className = "" }: WorldMapHeatmapProps
               ))
             }
           </Geographies>
+
+          {/* Connection lines */}
+          {connectionLines.map((line, index) => {
+            const strokeWidth = 0.5 + line.intensity * 2.5;
+            const color = getConnectionColor(line.intensity);
+            
+            return (
+              <g key={`connection-${index}`}>
+                <line
+                  x1={line.start[0]}
+                  y1={line.start[1]}
+                  x2={line.end[0]}
+                  y2={line.end[1]}
+                  stroke={color}
+                  strokeWidth={strokeWidth}
+                  strokeLinecap="round"
+                  style={{
+                    filter: "blur(1px)",
+                    opacity: 0.4,
+                  }}
+                />
+                <line
+                  x1={line.start[0]}
+                  y1={line.start[1]}
+                  x2={line.end[0]}
+                  y2={line.end[1]}
+                  stroke={color}
+                  strokeWidth={strokeWidth * 0.5}
+                  strokeLinecap="round"
+                />
+              </g>
+            );
+          })}
 
           {/* Heatmap markers */}
           {heatmapPoints.map((point, index) => {

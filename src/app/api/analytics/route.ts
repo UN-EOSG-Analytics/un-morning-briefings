@@ -205,6 +205,70 @@ export async function GET(request: NextRequest) {
       topCountries = { rows: [], allRows: [] };
     }
 
+    // Get country connections (co-occurrences)
+    let countryConnections;
+    try {
+      // Get all entries with their countries
+      const rawCountries = await db.query(
+        `SELECT country
+         FROM pu_morning_briefings.entries
+         ${whereClause}`,
+        params
+      );
+
+      // Parse and build co-occurrence map
+      const connectionMap = new Map<string, number>();
+      
+      rawCountries.rows.forEach((row: any) => {
+        if (!row.country) return;
+        
+        let countryStr = row.country;
+        countryStr = countryStr.replace(/^\[/, '').replace(/\]$/, '');
+        
+        const countries = countryStr.split(',')
+          .map((c: string) => {
+            return c
+              .trim()
+              .replace(/^\["?/, '')
+              .replace(/"\]?$/, '')
+              .replace(/\s*\([^)]*\)$/, '')
+              .replace(/\\"/g, '"')
+              .trim();
+          })
+          .filter((c: string) => c && c !== '[]' && c !== '""' && c.length > 0);
+
+        // Create connections between all pairs of countries in this entry
+        for (let i = 0; i < countries.length; i++) {
+          for (let j = i + 1; j < countries.length; j++) {
+            const country1 = countries[i];
+            const country2 = countries[j];
+            
+            // Create a consistent key (alphabetically sorted)
+            const key = country1 < country2 
+              ? `${country1}|||${country2}` 
+              : `${country2}|||${country1}`;
+            
+            connectionMap.set(key, (connectionMap.get(key) || 0) + 1);
+          }
+        }
+      });
+
+      // Convert to array
+      const connectionArray = Array.from(connectionMap.entries())
+        .map(([key, count]) => {
+          const [country1, country2] = key.split('|||');
+          return { country1, country2, count: count.toString() };
+        })
+        .filter(conn => parseInt(conn.count) >= 2) // Only show connections with 2+ co-occurrences
+        .sort((a, b) => parseInt(b.count) - parseInt(a.count))
+        .slice(0, 100); // Limit to top 100 connections to avoid clutter
+
+      countryConnections = { rows: connectionArray };
+    } catch (error) {
+      console.error("Analytics: country connections error:", error);
+      countryConnections = { rows: [] };
+    }
+
     const responseData = {
       regionalDistribution: regionalDistribution.rows,
       categoryDistribution: categoryDistribution.rows,
@@ -214,6 +278,7 @@ export async function GET(request: NextRequest) {
       totalStats: totalStats.rows[0],
       topCountries: topCountries.rows,
       allCountries: topCountries.allRows || [],
+      countryConnections: countryConnections.rows,
     };
 
     return NextResponse.json(responseData);

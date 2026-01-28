@@ -9,7 +9,7 @@ import { MultiSelectField } from "@/components/MultiSelectField";
 import { REGIONS } from "@/types/morning-meeting";
 import labelsData from "@/lib/labels.json";
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Area, AreaChart } from "recharts";
-import { Calendar, TrendingUp, FileText, Globe, Filter, Map as MapIcon, Maximize2, Network } from "lucide-react";
+import { Calendar, TrendingUp, FileText, Globe, Filter, Map as MapIcon, Maximize2, Network, BarChart3 } from "lucide-react";
 import { WorldMapHeatmap } from "@/components/WorldMapHeatmap";
 
 const COUNTRIES: string[] = ((labelsData as Record<string, unknown>).countries || []) as string[];
@@ -214,15 +214,26 @@ export default function AnalyticsPage() {
   })) || [];
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+    <div className="bg-background">
+      <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
         {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-slate-900">Analytics Dashboard</h1>
-          <p className="mt-2 text-sm text-slate-600">
-            Comprehensive insights into your morning briefing entries
-          </p>
-        </div>
+        <Card className="border-slate-200 py-0 mb-6">
+          <div className="flex items-center justify-between p-6">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded bg-accent">
+                <BarChart3 className="h-5 w-5 text-black" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-semibold text-foreground">
+                  Analytics Dashboard
+                </h1>
+                <p className="text-sm text-slate-600">
+                  Comprehensive insights into your morning briefing entries
+                </p>
+              </div>
+            </div>
+          </div>
+        </Card>
 
         {/* Filters Section */}
         <Card className="mb-6 py-4">
@@ -688,7 +699,7 @@ export default function AnalyticsPage() {
             </p>
           </div>
         )}
-      </div>
+      </main>
     </div>
   );
 }

@@ -431,8 +431,8 @@ export default function AnalyticsPage() {
                 <CardContent>
                   <div className="text-2xl font-bold text-slate-900">
                     {analyticsData.totalStats?.avg_entry_length
-                      ? `${Math.round(parseFloat(analyticsData.totalStats.avg_entry_length))} chars`
-                      : "0 chars"}
+                      ? `${Math.round(parseFloat(analyticsData.totalStats.avg_entry_length) / 5)} words`
+                      : "0 words"}
                   </div>
                 </CardContent>
               </Card>
@@ -539,29 +539,18 @@ export default function AnalyticsPage() {
                 </CardContent>
               </Card>
 
-              {/* Priority Distribution */}
+              {/* Entry Length Distribution */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Priority Distribution</CardTitle>
-                  <CardDescription>Entries by priority level</CardDescription>
+                  <CardTitle>Entry Length Distribution</CardTitle>
+                  <CardDescription>Entries by length category</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
-                    <PieChart>
-                      <Pie
-                        data={priorityData}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        label={({ name, percent }) => `${name}: ${percent ? (percent * 100).toFixed(0) : 0}%`}
-                        outerRadius={100}
-                        fill="#8884d8"
-                        dataKey="count"
-                      >
-                        {priorityData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={UN_COLORS[index % UN_COLORS.length]} />
-                        ))}
-                      </Pie>
+                    <BarChart data={entryLengthData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                      <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                      <YAxis tick={{ fontSize: 12 }} />
                       <Tooltip
                         contentStyle={{
                           backgroundColor: "#fff",
@@ -569,7 +558,8 @@ export default function AnalyticsPage() {
                           borderRadius: "8px",
                         }}
                       />
-                    </PieChart>
+                      <Bar dataKey="count" fill="#009EDB" radius={[4, 4, 0, 0]} />
+                    </BarChart>
                   </ResponsiveContainer>
                 </CardContent>
               </Card>

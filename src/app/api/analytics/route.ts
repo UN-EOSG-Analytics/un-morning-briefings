@@ -99,6 +99,30 @@ export async function GET(request: NextRequest) {
       priorityDistribution = { rows: [] };
     }
 
+    // Get entry length distribution
+    let entryLengthDistribution;
+    try {
+      entryLengthDistribution = await db.query(
+        `SELECT 
+           CASE 
+             WHEN LENGTH(entry) < 100 THEN '0-100'
+             WHEN LENGTH(entry) < 300 THEN '100-300'
+             WHEN LENGTH(entry) < 500 THEN '300-500'
+             WHEN LENGTH(entry) < 1000 THEN '500-1000'
+             ELSE '1000+'
+           END as length_range,
+           COUNT(*) as count
+         FROM pu_morning_briefings.entries
+         ${whereClause}
+         GROUP BY length_range
+         ORDER BY length_range`,
+        params
+      );
+    } catch (error) {
+      console.error("Analytics: entry length distribution error:", error);
+      entryLengthDistribution = { rows: [] };
+    }
+
     // Get chronological data (entries per day by region)
     let chronologicalData;
     try {
@@ -273,6 +297,7 @@ export async function GET(request: NextRequest) {
       regionalDistribution: regionalDistribution.rows,
       categoryDistribution: categoryDistribution.rows,
       priorityDistribution: priorityDistribution.rows,
+      entryLengthDistribution: entryLengthDistribution.rows,
       chronologicalData: chronologicalData.rows,
       entriesPerMonth: entriesPerMonth.rows,
       totalStats: totalStats.rows[0],
@@ -280,6 +305,8 @@ export async function GET(request: NextRequest) {
       allCountries: topCountries.allRows || [],
       countryConnections: countryConnections.rows,
     };
+
+    console.log("Returning country connections:", countryConnections.rows.length);
 
     return NextResponse.json(responseData);
   } catch (error) {

@@ -95,8 +95,12 @@ function WorldMapHeatmapComponent({ data, connections = [], className = "" }: Wo
 
   // Process connections
   const connectionLines = useMemo(() => {
-    if (!connections || connections.length === 0) return [];
+    if (!connections || connections.length === 0) {
+      console.log("No connections data:", connections);
+      return [];
+    }
 
+    console.log("Processing connections:", connections.length);
     const lines = [];
     let maxConnectionCount = 0;
 
@@ -121,9 +125,12 @@ function WorldMapHeatmapComponent({ data, connections = [], className = "" }: Wo
           intensity,
           count,
         });
+      } else {
+        console.log("Missing coordinates for:", conn.country1, "or", conn.country2);
       }
     }
 
+    console.log("Created connection lines:", lines.length);
     return lines;
   }, [connections]);
 
@@ -246,30 +253,14 @@ function WorldMapHeatmapComponent({ data, connections = [], className = "" }: Wo
             const color = getConnectionColor(line.intensity);
             
             return (
-              <g key={`connection-${index}`}>
-                <line
-                  x1={line.start[0]}
-                  y1={line.start[1]}
-                  x2={line.end[0]}
-                  y2={line.end[1]}
-                  stroke={color}
-                  strokeWidth={strokeWidth}
-                  strokeLinecap="round"
-                  style={{
-                    filter: "blur(1px)",
-                    opacity: 0.4,
-                  }}
-                />
-                <line
-                  x1={line.start[0]}
-                  y1={line.start[1]}
-                  x2={line.end[0]}
-                  y2={line.end[1]}
-                  stroke={color}
-                  strokeWidth={strokeWidth * 0.5}
-                  strokeLinecap="round"
-                />
-              </g>
+              <Line
+                key={`connection-${index}`}
+                from={line.start}
+                to={line.end}
+                stroke={color}
+                strokeWidth={strokeWidth}
+                strokeLinecap="round"
+              />
             );
           })}
 

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
 import { SelectField } from "@/components/SelectField";
 import { MultiSelectField } from "@/components/MultiSelectField";
 import { REGIONS } from "@/types/morning-meeting";
@@ -45,14 +46,23 @@ const UN_COLORS = [
 ];
 
 export default function AnalyticsPage() {
-  const [startDate, setStartDate] = useState<string>("");
-  const [endDate, setEndDate] = useState<string>("");
+  const [dateRange, setDateRange] = useState<[number, number]>([0, 100]);
   const [selectedRegion, setSelectedRegion] = useState<string>("");
   const [selectedCountries, setSelectedCountries] = useState<string[]>([]);
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);
+  const [allDates, setAllDates] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [isMapFullscreen, setIsMapFullscreen] = useState(false);
   const [showConnections, setShowConnections] = useState(false);
+
+  // Get start and end dates from the slider values
+  const getDateFromSlider = (index: number): string => {
+    if (allDates.length === 0) return "";
+    return allDates[Math.min(index, allDates.length - 1)];
+  };
+
+  const startDate = getDateFromSlider(Math.floor((dateRange[0] / 100) * allDates.length));
+  const endDate = getDateFromSlider(Math.floor((dateRange[1] / 100) * allDates.length));
 
   const fetchAnalytics = async () => {
     setLoading(true);
@@ -66,7 +76,22 @@ export default function AnalyticsPage() {
       const response = await fetch(`/api/analytics?${params.toString()}`);
       if (response.ok) {
         const data = await response.json();
+        console.log("Analytics data received:", {
+          countryConnections: data.countryConnections?.length || 0,
+          allCountries: data.allCountries?.length || 0
+        });
         setAnalyticsData(data);
+        
+        // Extract unique dates from chronological data for the slider
+        const uniqueDates = Array.from(
+          new Set(data.chronologicalData?.map((item: any) => item.date) || [])
+        ).sort() as string[];
+        setAllDates(uniqueDates);
+        
+        // Initialize slider to full range
+        if (uniqueDates.length > 0 && (dateRange[0] === 0 && dateRange[1] === 100)) {
+          setDateRange([0, 100]);
+        }
       } else {
         console.error("API response not OK:", response.status, await response.text());
       }
@@ -86,8 +111,7 @@ export default function AnalyticsPage() {
   };
 
   const handleClearFilters = () => {
-    setStartDate("");
-    setEndDate("");
+    setDateRange([0, 100]);
     setSelectedRegion("");
     setSelectedCountries([]);
     // Fetch with no filters
@@ -210,29 +234,7 @@ export default function AnalyticsPage() {
             <CardDescription>Filter data by date range, regions, and countries</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <div>
-                <label className="mb-2 block text-sm font-medium text-slate-700">
-                  Start Date
-                </label>
-                <input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="h-9 w-full rounded border border-slate-300 px-3 text-sm focus:border-un-blue focus:outline-none focus:ring-1 focus:ring-un-blue"
-                />
-              </div>
-              <div>
-                <label className="mb-2 block text-sm font-medium text-slate-700">
-                  End Date
-                </label>
-                <input
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="h-9 w-full rounded border border-slate-300 px-3 text-sm focus:border-un-blue focus:outline-none focus:ring-1 focus:ring-un-blue"
-                />
-              </div>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <div>
                 <label className="mb-2 block text-sm font-medium text-slate-700">
                   Region
@@ -256,6 +258,24 @@ export default function AnalyticsPage() {
                   options={countryOptions}
                   showLabel={false}
                 />
+              </div>
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-700">
+                  Date Range
+                </label>
+                <div className="space-y-2">
+                  <Slider
+                    value={dateRange}
+                    onValueChange={(value) => setDateRange([value[0], value[1]] as [number, number])}
+                    min={0}
+                    max={100}
+                    step={1}
+                    className="w-full [&_[data-slot=slider-track]]:bg-blue-200 [&_[data-slot=slider-range]]:bg-un-blue"
+                  />
+                  <div className="text-xs text-slate-600">
+                    {startDate ? new Date(startDate).toLocaleDateString() : "Start"} → {endDate ? new Date(endDate).toLocaleDateString() : "End"}
+                  </div>
+                </div>
               </div>
             </div>
             <div className="mt-4 flex gap-2">

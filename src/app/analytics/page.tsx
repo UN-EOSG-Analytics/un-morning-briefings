@@ -102,24 +102,24 @@ export default function AnalyticsPage() {
   }));
 
   // Transform data for charts
-  const regionalData = analyticsData?.regionalDistribution.map((item) => ({
+  const regionalData = analyticsData?.regionalDistribution?.map((item) => ({
     name: item.region,
     count: parseInt(item.count),
   })) || [];
 
   const topRegions = regionalData.slice(0, 5);
 
-  const categoryData = analyticsData?.categoryDistribution.map((item) => ({
+  const categoryData = analyticsData?.categoryDistribution?.map((item) => ({
     name: item.category,
     count: parseInt(item.count),
   })) || [];
 
-  const priorityData = analyticsData?.priorityDistribution.map((item) => ({
+  const priorityData = analyticsData?.priorityDistribution?.map((item) => ({
     name: item.priority,
     count: parseInt(item.count),
   })) || [];
 
-  const entryLengthData = analyticsData?.entryLengthDistribution.map((item) => ({
+  const entryLengthData = analyticsData?.entryLengthDistribution?.map((item) => ({
     name: item.length_range,
     count: parseInt(item.count),
   })) || [];

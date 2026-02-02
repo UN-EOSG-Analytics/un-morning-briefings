@@ -46,9 +46,13 @@ export default function RootLayout({
         <AuthProvider>
           <PopupProvider>
             <UnsavedChangesProvider>
-              <Navbar />
-              <div className="flex-1 pt-16">{children}</div>
-              <Footer />
+              <div className="flex min-h-screen flex-col">
+                <Navbar />
+                <main className="flex-1 pt-16">
+                  {children}
+                </main>
+                <Footer />
+              </div>
               <PopupContainer />
             </UnsavedChangesProvider>
           </PopupProvider>

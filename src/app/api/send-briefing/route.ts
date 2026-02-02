@@ -131,19 +131,17 @@ export async function POST(request: NextRequest) {
                     <!-- Content -->
                     <tr>
                       <td>
-                        <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#374151;">
-                          Please find the daily morning briefing for <strong>${formattedDate}</strong> attached to this email.
+                        <p style="margin:0 0 12px;font-size:15px;line-height:1.6;color:#374151;">
+                          This is an automated notice that today's Morning Meeting Notes compiled by the PU Team are attached.
                         </p>
-                        <p style="margin:16px 0;font-size:15px;line-height:1.6;color:#374151;">
-                          The document contains all approved entries organized by priority with full content and formatting.
+                        <p style="margin:0 0 12px;font-size:15px;line-height:1.6;color:#374151;">
+                          Best regards,
                         </p>
-                      </td>
-                    </tr>
-                    <!-- Footer -->
-                    <tr>
-                      <td style="padding:32px 0 0;">
-                        <p style="margin:0;font-size:12px;color:#9ca3af;line-height:1.5;">
-                          This email was sent from the United Nations Morning Briefing System.
+                        <p style="margin:0 0 12px;font-size:15px;line-height:1.6;color:#374151;">
+                          EOSG Services
+                        </p>
+                        <p style="margin:0;font-size:15px;line-height:1.6;color:#374151;">
+                          For technical assistance, please email SPMU-Support@un.org
                         </p>
                       </td>
                     </tr>
@@ -157,9 +155,10 @@ export async function POST(request: NextRequest) {
       text: `
         United Nations | Morning Briefings
 
-        Please find the daily morning briefing for ${formattedDate} attached to this email.
-
-        The document contains all approved entries organized by priority with full content and formatting.
+        This is an automated notice that today's Morning Meeting Notes compiled by the PU Team are attached.
+        Best regards,
+        EOSG Services
+        For technical assistance, please email SPMU-Support@un.org
       `,
       attachments: [
         {

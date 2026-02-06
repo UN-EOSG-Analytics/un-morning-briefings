@@ -331,12 +331,12 @@ export function EntriesTable({
                       className="cursor-pointer rounded px-1 py-1 hover:bg-slate-100"
                       onClick={() => handleSort("country")}
                     >
-                      Country{" "}
+                      Tag{" "}
                       {sortField === "country" &&
                         (sortDirection === "asc" ? "↑" : "↓")}
                     </span>
                     <ColumnFilter
-                      columnName="Country"
+                      columnName="Tag"
                       options={availableCountries}
                       selectedValue={filterCountry}
                       onValueChange={setFilterCountry}

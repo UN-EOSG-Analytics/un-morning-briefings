@@ -798,10 +798,10 @@ export function MorningMeetingForm({
                     searchable={false}
                   />
 
-                  {/* Country */}
+                  {/* Tag */}
                   <MultiSelectField
-                    label="Countries"
-                    placeholder="Select countries..."
+                    label="Tags"
+                    placeholder="Select tags..."
                     value={
                       Array.isArray(formData.country)
                         ? formData.country

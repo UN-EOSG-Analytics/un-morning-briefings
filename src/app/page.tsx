@@ -30,7 +30,7 @@ export default function HomePage() {
         <div className="mb-8 flex flex-col gap-4 sm:mb-12 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
           <div className="px-2 text-left sm:px-0">
             <h1 className="mb-1 text-3xl font-bold text-foreground sm:text-4xl">
-                Hello, {session?.user?.name?.split(" ")[0] || "Officer"}!
+                Hello, {session?.user?.name?.split(" ")[0] || "..."}!
             </h1>
             <p className="hidden text-base text-slate-600 sm:block sm:text-lg">
               Create and manage Morning Meeting Update entries

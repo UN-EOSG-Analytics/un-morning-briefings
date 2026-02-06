@@ -203,7 +203,6 @@ export function getCutoffRange(briefingDateStr: string): {
 export function useEntriesFilter(entries: any[], initialDateFilter?: string) {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterRegion, setFilterRegion] = useState<string>("all");
-  const [filterCategory, setFilterCategory] = useState<string>("all");
   const [filterPriority, setFilterPriority] = useState<string>("all");
   const [filterCountry, setFilterCountry] = useState<string>("all");
 
@@ -243,8 +242,6 @@ export function useEntriesFilter(entries: any[], initialDateFilter?: string) {
 
       const matchesRegion =
         filterRegion === "all" || entry.region === filterRegion;
-      const matchesCategory =
-        filterCategory === "all" || entry.category === filterCategory;
       const matchesPriority =
         filterPriority === "all" || entry.priority === filterPriority;
       
@@ -263,7 +260,6 @@ export function useEntriesFilter(entries: any[], initialDateFilter?: string) {
       return (
         matchesSearch &&
         matchesRegion &&
-        matchesCategory &&
         matchesPriority &&
         matchesCountry &&
         matchesDate
@@ -273,7 +269,6 @@ export function useEntriesFilter(entries: any[], initialDateFilter?: string) {
     entries,
     searchTerm,
     filterRegion,
-    filterCategory,
     filterPriority,
     filterCountry,
     filterDate,
@@ -318,7 +313,6 @@ export function useEntriesFilter(entries: any[], initialDateFilter?: string) {
   const handleResetFilters = () => {
     setSearchTerm("");
     setFilterRegion("all");
-    setFilterCategory("all");
     setFilterPriority("all");
     setFilterCountry("all");
     setFilterDate("");
@@ -328,7 +322,6 @@ export function useEntriesFilter(entries: any[], initialDateFilter?: string) {
     // State
     searchTerm,
     filterRegion,
-    filterCategory,
     filterPriority,
     filterCountry,
     filterDate,
@@ -337,7 +330,6 @@ export function useEntriesFilter(entries: any[], initialDateFilter?: string) {
     // Setters
     setSearchTerm,
     setFilterRegion,
-    setFilterCategory,
     setFilterPriority,
     setFilterCountry,
     setFilterDate,

@@ -10,15 +10,13 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { REGIONS, CATEGORIES, PRIORITIES } from "@/types/morning-meeting";
+import { REGIONS, PRIORITIES } from "@/types/morning-meeting";
 
 interface FilterBarProps {
   searchTerm: string;
   onSearchChange: (value: string) => void;
   filterRegion: string;
   onRegionChange: (value: string) => void;
-  filterCategory: string;
-  onCategoryChange: (value: string) => void;
   filterPriority: string;
   onPriorityChange: (value: string) => void;
   filterDate: string;
@@ -33,8 +31,6 @@ export function FilterBar({
   onSearchChange,
   filterRegion,
   onRegionChange,
-  filterCategory,
-  onCategoryChange,
   filterPriority,
   onPriorityChange,
   filterDate,
@@ -68,21 +64,6 @@ export function FilterBar({
             {REGIONS.map((region) => (
               <SelectItem key={region} value={region}>
                 {region}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        {/* Category Filter */}
-        <Select value={filterCategory} onValueChange={onCategoryChange}>
-          <SelectTrigger className="h-9 w-full text-sm sm:w-[180px]">
-            <SelectValue placeholder="All Categories" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Categories</SelectItem>
-            {CATEGORIES.map((category) => (
-              <SelectItem key={category} value={category}>
-                {category}
               </SelectItem>
             ))}
           </SelectContent>

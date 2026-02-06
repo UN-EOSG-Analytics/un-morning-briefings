@@ -7,7 +7,6 @@ import {
   MorningMeetingEntry,
   PRIORITIES,
   REGIONS,
-  CATEGORIES,
   COUNTRIES,
 } from "@/types/morning-meeting";
 import {
@@ -36,7 +35,6 @@ import {
   useEntriesFilter,
   getPriorityBadgeClass,
   getRegionBadgeClass,
-  formatCategoryForDisplay,
   getBriefingDate,
   isWithinCutoffRange,
 } from "@/lib/useEntriesFilter";
@@ -84,7 +82,6 @@ export function EntriesTable({
   const {
     searchTerm,
     filterRegion,
-    filterCategory,
     filterPriority,
     filterCountry,
     filterDate,
@@ -92,7 +89,6 @@ export function EntriesTable({
     sortDirection,
     setSearchTerm,
     setFilterRegion,
-    setFilterCategory,
     setFilterPriority,
     setFilterCountry,
     setFilterDate,
@@ -235,7 +231,6 @@ export function EntriesTable({
         <SearchBar searchTerm={searchTerm} onSearchChange={setSearchTerm} />
         {(searchTerm ||
           filterRegion !== "all" ||
-          filterCategory !== "all" ||
           filterPriority !== "all" ||
           filterCountry !== "all" ||
           filterDate ||
@@ -345,17 +340,6 @@ export function EntriesTable({
                       options={availableCountries}
                       selectedValue={filterCountry}
                       onValueChange={setFilterCountry}
-                    />
-                  </div>
-                </th>
-                <th className="hidden px-2 py-3 text-left text-xs font-semibold tracking-wide text-slate-700 uppercase lg:table-cell">
-                  <div className="flex items-center gap-2">
-                    Category
-                    <ColumnFilter
-                      columnName="Category"
-                      options={CATEGORIES}
-                      selectedValue={filterCategory}
-                      onValueChange={setFilterCategory}
                     />
                   </div>
                 </th>
@@ -505,11 +489,6 @@ export function EntriesTable({
                                 <span className="text-xs text-slate-500">—</span>
                               )}
                         </div>
-                      </td>
-                      <td className="hidden px-2 py-3 text-sm whitespace-nowrap lg:table-cell">
-                        <span className="inline-block rounded bg-gray-100 px-2 py-1 text-xs font-medium text-gray-800">
-                          {formatCategoryForDisplay(entry.category)}
-                        </span>
                       </td>
                       {showApprovedColumn && (
                         <td

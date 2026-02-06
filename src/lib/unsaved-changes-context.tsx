@@ -21,6 +21,7 @@ const UnsavedChangesContext = createContext<
 
 export function UnsavedChangesProvider({ children }: { children: ReactNode }) {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [pendingConfirmation, setPendingConfirmation] = useState<Promise<boolean> | null>(null);
   const { confirm: showConfirm } = usePopup();
 
   const confirmNavigation = useCallback(async (): Promise<boolean> => {
@@ -28,11 +29,25 @@ export function UnsavedChangesProvider({ children }: { children: ReactNode }) {
       return true;
     }
 
-    return showConfirm(
+    // If a confirmation is already in progress, return the same promise
+    if (pendingConfirmation) {
+      return pendingConfirmation;
+    }
+
+    // Create the confirmation promise
+    const confirmPromise = showConfirm(
       "Unsaved Changes",
       "You have unsaved changes. Are you sure you want to leave? Your changes will be lost.",
     );
-  }, [hasUnsavedChanges, showConfirm]);
+
+    // Store it so subsequent calls return the same promise
+    setPendingConfirmation(confirmPromise);
+
+    // Clean up after confirmation completes
+    const result = await confirmPromise;
+    setPendingConfirmation(null);
+    return result;
+  }, [hasUnsavedChanges, pendingConfirmation, showConfirm]);
 
   return (
     <UnsavedChangesContext.Provider

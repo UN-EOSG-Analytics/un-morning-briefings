@@ -336,7 +336,7 @@ export async function PATCH(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { id, approvalStatus, aiSummary, action } = body;
+    const { id, approvalStatus, aiSummary, action, status } = body;
 
     if (!id) {
       return NextResponse.json(
@@ -358,6 +358,13 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
+    if (status && !["draft", "submitted"].includes(status)) {
+      return NextResponse.json(
+        { error: "Invalid status" },
+        { status: 400 },
+      );
+    }
+
     let updateQuery = "UPDATE pu_morning_briefings.entries SET";
     const params: any[] = [];
     let paramIndex = 1;
@@ -371,6 +378,12 @@ export async function PATCH(request: NextRequest) {
 
       updateParts.push(`date = (date + INTERVAL '1 day')`);
     } else {
+      if (status) {
+        updateParts.push(`status = $${paramIndex}`);
+        params.push(status);
+        paramIndex++;
+      }
+
       if (approvalStatus) {
         updateParts.push(`approval_status = $${paramIndex}`);
         params.push(approvalStatus);

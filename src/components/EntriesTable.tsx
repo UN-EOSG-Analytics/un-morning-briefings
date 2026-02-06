@@ -24,6 +24,7 @@ import {
   FastForward,
   FileDown,
   FileText,
+  Send,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -50,6 +51,7 @@ interface EntriesTableProps {
   onDelete: (id: string) => void;
   onToggleApproval?: (entry: MorningMeetingEntry) => void;
   onPostpone?: () => void;
+  onSubmit?: (id: string) => Promise<void>;
   showApprovedColumn?: boolean;
   emptyMessage?: string;
   resultLabel?: string;
@@ -61,6 +63,7 @@ export function EntriesTable({
   onDelete,
   onToggleApproval,
   onPostpone,
+  onSubmit,
   showApprovedColumn = false,
   emptyMessage = "No entries found.",
   resultLabel = "entries",
@@ -75,6 +78,7 @@ export function EntriesTable({
   );
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
   const [exportingDate, setExportingDate] = useState<string | null>(null);
+  const [submittingId, setSubmittingId] = useState<string | null>(null);
 
   const {
     searchTerm,
@@ -167,6 +171,19 @@ export function EntriesTable({
     } finally {
       setUpdatingStatus(null);
       setOpenStatusDropdown(null);
+    }
+  };
+
+  const handleSubmitEntry = async (entryId: string) => {
+    if (!onSubmit) return;
+
+    setSubmittingId(entryId);
+    try {
+      await onSubmit(entryId);
+    } catch (error) {
+      console.error("Error submitting entry:", error);
+    } finally {
+      setSubmittingId(null);
     }
   };
 
@@ -378,50 +395,52 @@ export function EntriesTable({
                               ▼ Briefing for{" "}
                               {formatDateWithWeekday(currentBriefingDate)}
                             </span>
-                            <div
-                              className="ml-auto flex gap-1.5"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <button
-                                onClick={() =>
-                                  router.push(
-                                    `/briefing?date=${currentBriefingDate}`,
-                                  )
-                                }
-                                className="p-1 text-slate-600 transition-colors hover:text-un-blue"
-                                title="View briefing"
+                            {!onSubmit && (
+                              <div
+                                className="ml-auto flex gap-1.5"
+                                onClick={(e) => e.stopPropagation()}
                               >
-                                <FileText className="h-5 w-5" />
-                              </button>
-                              <button
-                                onClick={async () => {
-                                  setExportingDate(currentBriefingDate);
-                                  try {
-                                    // Filter entries for this briefing date
-                                    const entriesForDate = entries.filter(
-                                      (e) => isWithinCutoffRange(e.date, currentBriefingDate)
-                                    );
-                                    // Generate and download the document
-                                    const blob = await generateDocumentBlob(
-                                      entriesForDate,
-                                      currentBriefingDate,
-                                      true, // includeImages
-                                      createDocumentHeader
-                                    );
-                                    saveAs(blob, formatExportFilename(currentBriefingDate));
-                                  } catch (error) {
-                                    console.error("Error exporting briefing:", error);
-                                  } finally {
-                                    setExportingDate(null);
+                                <button
+                                  onClick={() =>
+                                    router.push(
+                                      `/briefing?date=${currentBriefingDate}`,
+                                    )
                                   }
-                                }}
-                                disabled={exportingDate === currentBriefingDate}
-                                className="p-1 text-slate-600 transition-colors hover:text-un-blue disabled:opacity-50"
-                                title="Export to Word"
-                              >
-                                <FileDown className="h-5 w-5" />
-                              </button>
-                            </div>
+                                  className="p-1 text-slate-600 transition-colors hover:text-un-blue"
+                                  title="View briefing"
+                                >
+                                  <FileText className="h-5 w-5" />
+                                </button>
+                                <button
+                                  onClick={async () => {
+                                    setExportingDate(currentBriefingDate);
+                                    try {
+                                      // Filter entries for this briefing date
+                                      const entriesForDate = entries.filter(
+                                        (e) => isWithinCutoffRange(e.date, currentBriefingDate)
+                                      );
+                                      // Generate and download the document
+                                      const blob = await generateDocumentBlob(
+                                        entriesForDate,
+                                        currentBriefingDate,
+                                        true, // includeImages
+                                        createDocumentHeader
+                                      );
+                                      saveAs(blob, formatExportFilename(currentBriefingDate));
+                                    } catch (error) {
+                                      console.error("Error exporting briefing:", error);
+                                    } finally {
+                                      setExportingDate(null);
+                                    }
+                                  }}
+                                  disabled={exportingDate === currentBriefingDate}
+                                  className="p-1 text-slate-600 transition-colors hover:text-un-blue disabled:opacity-50"
+                                  title="Export to Word"
+                                >
+                                  <FileDown className="h-5 w-5" />
+                                </button>
+                              </div>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -579,6 +598,20 @@ export function EntriesTable({
                       )}
                       <td className="hidden px-2 py-3 text-right whitespace-nowrap sm:table-cell sm:px-3 lg:px-4">
                         <div className="flex justify-end gap-0">
+                          {onSubmit && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0 text-un-blue hover:bg-blue-50 hover:text-un-blue"
+                              onClick={(e) =>
+                                handleActionClick(e, () => handleSubmitEntry(entry.id))
+                              }
+                              disabled={submittingId === entry.id}
+                              title="Submit entry"
+                            >
+                              <Send className="h-5 w-5" />
+                            </Button>
+                          )}
                           <Link
                             href={`/form?edit=${entry.id}`}
                             onClick={(e) => e.stopPropagation()}

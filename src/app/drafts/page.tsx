@@ -11,7 +11,7 @@ import type { MorningMeetingEntry } from "@/types/morning-meeting";
 
 export default function DraftsPage() {
   const { data: session } = useSession();
-  const { confirm: showConfirm, success: showSuccess } = usePopup();
+  const { confirm: showConfirm, success: showSuccess, error: showError } = usePopup();
   const [entries, setEntries] = useState<MorningMeetingEntry[]>([]);
 
   // Get current user's full name
@@ -54,6 +54,32 @@ export default function DraftsPage() {
     }
   };
 
+  const handleSubmit = async (id: string) => {
+    try {
+      const response = await fetch(`/api/entries`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ id, status: "submitted" }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.error || "Failed to submit entry"
+        );
+      }
+
+      showSuccess("Success", "Draft submitted successfully!");
+      await loadEntries();
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to submit draft";
+      showError("Error", errorMessage);
+    }
+  };
+
   return (
     <div className="bg-background">
       <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
@@ -81,6 +107,7 @@ export default function DraftsPage() {
           <EntriesTable
             entries={entries}
             onDelete={handleDelete}
+            onSubmit={handleSubmit}
             showApprovedColumn={false}
             emptyMessage="No drafts found."
             resultLabel="drafts"

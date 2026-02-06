@@ -145,6 +145,13 @@ export function ProfileEntries() {
     return { total, discussed, pending, drafts, submitted };
   }, [entries]);
 
+  // Get discussed entries with comments (sorted by date, newest first)
+  const discussedEntriesWithComments = useMemo(() => {
+    return entries
+      .filter(e => e.approvalStatus === "discussed" && e.comment)
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [entries]);
+
   if (status === "loading") {
     return (
       <div className="flex items-center justify-center py-12">
@@ -223,6 +230,55 @@ export function ProfileEntries() {
           </div>
         </div>
       </Card>
+
+      {/* Discussed Entries with Comments */}
+      {discussedEntriesWithComments.length > 0 && (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 px-2 sm:px-4">
+            <h2 className="text-sm font-semibold text-slate-700 uppercase tracking-wide">
+              Entries with Feedback
+            </h2>
+            <span className="inline-flex items-center justify-center rounded-full bg-green-100 h-6 w-6 text-xs font-bold text-green-700">
+              {discussedEntriesWithComments.length}
+            </span>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {discussedEntriesWithComments.map((entry) => (
+              <Card
+                key={entry.id}
+                className="border-green-200 bg-green-50 p-4 hover:border-green-400 transition-colors"
+              >
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-xs font-semibold text-green-700 uppercase tracking-wide">
+                      {formatDateDesktop(entry.date)}
+                    </p>
+                    <h3 className="mt-1 line-clamp-2 text-sm font-semibold text-slate-900">
+                      {entry.headline}
+                    </h3>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <span className={`inline-block rounded px-2 py-1 text-xs font-medium ${getRegionBadgeClass(entry.region)}`}>
+                      {entry.region}
+                    </span>
+                    {entry.country && (
+                      <span className="inline-block rounded bg-slate-200 px-2 py-1 text-xs text-slate-700">
+                        {Array.isArray(entry.country) ? entry.country.join(", ") : entry.country}
+                      </span>
+                    )}
+                  </div>
+                  <div className="border-t border-green-200 pt-3">
+                    <p className="text-xs font-medium text-green-900">Feedback:</p>
+                    <p className="mt-1 line-clamp-3 text-sm text-slate-700">
+                      {entry.comment}
+                    </p>
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Search Bar */}
       <Card className="border-slate-200 p-3">

@@ -9,6 +9,7 @@ import {
   Archive,
   ArrowRight,
   Download,
+  FileDown,
 } from "lucide-react";
 import { useState } from "react";
 import { ExportDailyBriefingDialog } from "@/components/ExportDailyBriefingDialog";
@@ -32,15 +33,15 @@ export default function HomePage() {
               Create and manage daily briefing entries
             </p>
           </div>
-          <Button
-            onClick={() => setShowExportDialog(true)}
-            className="w-full shrink-0 bg-un-blue px-2 hover:bg-un-blue/90 sm:w-auto sm:whitespace-nowrap"
-            size="lg"
-          >
-            <Download className="mr-2 h-4 w-4" />
-            <span className="hidden sm:inline">Export Morning Briefing</span>
-            <span className="sm:hidden">Export Briefing</span>
-          </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowExportDialog(true)}
+              className="w-full justify-center sm:h-10 sm:w-auto sm:px-6"
+            >
+              <FileDown className="h-4 w-4" />
+              <span className="sm:inline">Export Daily Briefing</span>
+            </Button>
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-3">

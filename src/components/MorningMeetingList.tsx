@@ -4,9 +4,8 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { deleteEntry, getSubmittedEntries } from "@/lib/storage";
-import { Download, FileDown, FileText, List, RefreshCw } from "lucide-react";
+import { Download, FileDown, List, RefreshCw } from "lucide-react";
 import { ExportDailyBriefingDialog } from "./ExportDailyBriefingDialog";
-import { BriefingModeDialog } from "./BriefingModeDialog";
 import { EntriesTable } from "./EntriesTable";
 import { usePopup } from "@/lib/popup-context";
 import type { MorningMeetingEntry } from "@/types/morning-meeting";
@@ -21,7 +20,6 @@ export function MorningMeetingList({
   } = usePopup();
   const [entries, setEntries] = useState<MorningMeetingEntry[]>([]);
   const [showExportDialog, setShowExportDialog] = useState(false);
-  const [showBriefingDialog, setShowBriefingDialog] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const loadEntries = async () => {
@@ -136,15 +134,6 @@ export function MorningMeetingList({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setShowBriefingDialog(true)}
-              className="w-full justify-center sm:h-10 sm:w-auto sm:px-6"
-            >
-              <FileText className="h-4 w-4" />
-              <span className="sm:inline">View Briefing</span>
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
               onClick={() => setShowExportDialog(true)}
               className="w-full justify-center sm:h-10 sm:w-auto sm:px-6"
             >
@@ -174,12 +163,6 @@ export function MorningMeetingList({
         emptyMessage="No entries found."
         resultLabel="entries"
         initialDateFilter={initialDateFilter}
-      />
-
-      {/* Briefing Mode Dialog */}
-      <BriefingModeDialog
-        open={showBriefingDialog}
-        onOpenChange={setShowBriefingDialog}
       />
 
       {/* Export Dialog */}

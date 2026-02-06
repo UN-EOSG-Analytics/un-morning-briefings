@@ -5,8 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { getSubmittedEntries } from "@/lib/storage";
 import { isWithinCutoffRange } from "@/lib/useEntriesFilter";
-import { Button } from "@/components/ui/button";
-import { FileDown, X } from "lucide-react";
+import { X } from "lucide-react";
 import {
   Document,
   Paragraph,
@@ -803,6 +802,8 @@ function BriefingContent() {
           />
         </div>
       )}
+
+
 
       {/* Agenda Sidebar - Hidden on mobile and when printing */}
       <div className="fixed top-20 left-4 hidden w-56 lg:block print:hidden">

@@ -4,6 +4,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useSession } from "next-auth/react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -32,7 +33,7 @@ import {
   ExternalHyperlink,
 } from "docx";
 import { saveAs } from "file-saver";
-import { FileText, Calendar, CheckCircle2, Mail, Download } from "lucide-react";
+import { FileText, Calendar, Mail, Download, Eye } from "lucide-react";
 import { parseHtmlContent } from "@/lib/html-to-docx";
 import { usePopup } from "@/lib/popup-context";
 import type { MorningMeetingEntry } from "@/types/morning-meeting";
@@ -816,6 +817,7 @@ export function ExportDailyBriefingDialog({
   );
   const [isLoadingEntries, setIsLoadingEntries] = useState(false);
   const [includeImages, setIncludeImages] = useState(true);
+  const [selectedEntryIds, setSelectedEntryIds] = useState<Set<string>>(new Set());
 
   // Unified function to get all entries for a date using 8AM cutoff (regardless of approval status)
   const getApprovedEntriesForDate = useCallback(
@@ -847,12 +849,16 @@ export function ExportDailyBriefingDialog({
       try {
         const entriesForDate = await getApprovedEntriesForDate(selectedDate);
         setApprovedEntries(entriesForDate);
+        // Initialize all entries as selected (checked)
+        const allEntryIds = new Set(entriesForDate.map((e) => e.id).filter((id): id is string => Boolean(id)));
+        setSelectedEntryIds(allEntryIds);
       } catch (error) {
         const errorMessage =
           error instanceof Error ? error.message : String(error);
         console.error("Error loading entries:", errorMessage);
         showError("Failed to Load Entries", errorMessage);
         setApprovedEntries([]);
+        setSelectedEntryIds(new Set());
       } finally {
         setIsLoadingEntries(false);
       }
@@ -864,14 +870,25 @@ export function ExportDailyBriefingDialog({
   }, [selectedDate, open, session?.user, showError, getApprovedEntriesForDate]);
 
   const handleExport = async () => {
+    if (selectedEntryIds.size === 0) {
+      showInfo(
+        "No Entries Selected",
+        "Please select at least one entry to export.",
+      );
+      return;
+    }
+
     setIsExporting(true);
     try {
       const entriesForDate = await getApprovedEntriesForDate(selectedDate);
+      const selectedEntries = entriesForDate.filter(
+        (entry) => entry.id && selectedEntryIds.has(entry.id),
+      );
 
-      if (entriesForDate.length === 0) {
+      if (selectedEntries.length === 0) {
         showInfo(
-          "No Approved Entries",
-          "No approved entries found for the selected date.",
+          "No Entries Selected",
+          "Please select at least one entry to export.",
         );
         setIsExporting(false);
         return;
@@ -879,7 +896,7 @@ export function ExportDailyBriefingDialog({
 
       // Generate document blob using shared function
       const blob = await generateDocumentBlob(
-        entriesForDate,
+        selectedEntries,
         selectedDate,
         includeImages,
         createDocumentHeader,
@@ -907,19 +924,33 @@ export function ExportDailyBriefingDialog({
       return;
     }
 
-    if (approvedEntries.length === 0) {
+    if (selectedEntryIds.size === 0) {
       showError(
-        "No Entries",
-        "No approved entries found for the selected date.",
+        "No Entries Selected",
+        "Please select at least one entry to send.",
       );
       return;
     }
 
     setIsSendingEmail(true);
     try {
+      const entriesForDate = await getApprovedEntriesForDate(selectedDate);
+      const selectedEntries = entriesForDate.filter(
+        (entry) => entry.id && selectedEntryIds.has(entry.id),
+      );
+
+      if (selectedEntries.length === 0) {
+        showError(
+          "No Entries Selected",
+          "Please select at least one entry to send.",
+        );
+        setIsSendingEmail(false);
+        return;
+      }
+
       // Generate document blob using shared function
       const blob = await generateDocumentBlob(
-        [...approvedEntries],
+        selectedEntries,
         selectedDate,
         includeImages,
         createDocumentHeader,
@@ -975,12 +1006,11 @@ export function ExportDailyBriefingDialog({
         <DialogHeader className="px-4 pt-4 text-left sm:px-0 sm:pt-0 sm:text-left">
           <DialogTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5 text-un-blue" />
-            Export Daily Briefing
+            Daily Briefing
           </DialogTitle>
           <DialogDescription className="text-left">
-            The exported document will include all entries from the previous day
-            at 8:00 AM until the selected day at 8:00 AM, organized by priority
-            with full content and formatting.
+            Select entries to include, then view the briefing, export to Word, or send via email. 
+            Entries are from the previous day at 8:00 AM until the selected day at 8:00 AM.
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-1 flex-col space-y-4 overflow-y-auto px-4 py-4 sm:px-0">
@@ -1019,14 +1049,14 @@ export function ExportDailyBriefingDialog({
 
           <div className="flex max-h-80 min-h-0 flex-1 flex-col space-y-2">
             <label className="text-sm font-medium text-foreground">
-              Assigned Entries ({approvedEntries.length})
+              Entries ({selectedEntryIds.size}/{approvedEntries.length})
             </label>
             <div className="flex-1 overflow-y-auto rounded border border-slate-200 bg-slate-50 p-3">
               {isLoadingEntries ? (
                 <p className="text-xs text-slate-500">Loading entries...</p>
               ) : approvedEntries.length === 0 ? (
                 <p className="text-xs text-slate-500">
-                  No assigned entries for this date
+                  No entries for this date
                 </p>
               ) : (
                 <ul className="space-y-2">
@@ -1035,10 +1065,26 @@ export function ExportDailyBriefingDialog({
                       key={entry.id}
                       className="flex items-start gap-2 text-sm"
                     >
-                      <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-green-600" />
-                      <span className="line-clamp-2 text-slate-700">
+                      <Checkbox
+                        id={`entry-${entry.id}`}
+                        checked={selectedEntryIds.has(entry.id || "")}
+                        onCheckedChange={(checked) => {
+                          const newSelected = new Set(selectedEntryIds);
+                          if (checked) {
+                            newSelected.add(entry.id || "");
+                          } else {
+                            newSelected.delete(entry.id || "");
+                          }
+                          setSelectedEntryIds(newSelected);
+                        }}
+                        className="mt-0.5"
+                      />
+                      <label
+                        htmlFor={`entry-${entry.id}`}
+                        className="flex-1 cursor-pointer line-clamp-2 text-slate-700"
+                      >
                         {entry.headline}
-                      </span>
+                      </label>
                     </li>
                   ))}
                 </ul>
@@ -1046,29 +1092,31 @@ export function ExportDailyBriefingDialog({
             </div>
           </div>
         </div>
-        <DialogFooter className="flex w-full flex-shrink-0 flex-col gap-2 px-4 pb-4 sm:flex-row sm:px-0 sm:pb-0">
-          <Button
-            onClick={handleOpenChange.bind(null, false)}
-            variant="outline"
-            className="order-3 w-full sm:order-1 sm:w-auto"
-          >
-            Cancel
-          </Button>
+        <DialogFooter className="flex w-full flex-shrink-0 flex-col gap-3 px-4 pb-4 sm:flex-row sm:px-0 sm:pb-0">
+          <Link href={`/briefing?date=${selectedDate}`} className="flex-1">
+            <Button
+              className="w-full gap-2 bg-slate-900 text-white hover:bg-slate-800"
+              onClick={() => handleOpenChange(false)}
+            >
+              <Eye className="h-4 w-4" />
+              View Briefing
+            </Button>
+          </Link>
           <Button
             onClick={handleExport}
             disabled={isExporting || isSendingEmail}
-            className="order-1 w-full sm:order-2 sm:w-auto"
+            className="flex-1 gap-2"
           >
             <Download className="h-4 w-4" />
-            {isExporting ? "Exporting..." : "Export to Word"}
+            {isExporting ? "Exporting..." : "Export Word"}
           </Button>
           <Button
             onClick={handleSendViaEmail}
             disabled={isSendingEmail || isExporting}
-            className="order-2 w-full sm:order-3 sm:w-auto"
+            className="flex-1 gap-2"
           >
             <Mail className="h-4 w-4" />
-            {isSendingEmail ? "Sending..." : "Send via Email"}
+            {isSendingEmail ? "Sending..." : "Send Email"}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -56,6 +56,7 @@ interface EntriesTableProps {
   emptyMessage?: string;
   resultLabel?: string;
   initialDateFilter?: string;
+  hideCommentAction?: boolean;
 }
 
 export function EntriesTable({
@@ -68,6 +69,7 @@ export function EntriesTable({
   emptyMessage = "No entries found.",
   resultLabel = "entries",
   initialDateFilter,
+  hideCommentAction = false,
 }: EntriesTableProps) {
   const router = useRouter();
   const [selectedEntry, setSelectedEntry] =
@@ -628,13 +630,15 @@ export function EntriesTable({
                               <Send className="h-5 w-5" />
                             </Button>
                           )}
-                          <div onClick={(e) => e.stopPropagation()}>
-                            <CommentDialog
-                              entryId={entry.id}
-                              initialComment={entry.comment || ""}
-                              onSave={(comment) => handleSaveComment(entry.id, comment)}
-                            />
-                          </div>
+                          {!hideCommentAction && (
+                            <div onClick={(e) => e.stopPropagation()}>
+                              <CommentDialog
+                                entryId={entry.id}
+                                initialComment={entry.comment || ""}
+                                onSave={(comment) => handleSaveComment(entry.id, comment)}
+                              />
+                            </div>
+                          )}
                           <Link
                             href={`/form?edit=${entry.id}`}
                             onClick={(e) => e.stopPropagation()}

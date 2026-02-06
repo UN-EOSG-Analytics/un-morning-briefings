@@ -105,6 +105,7 @@ export default function DraftsPage() {
             showApprovedColumn={false}
             emptyMessage="No drafts found."
             resultLabel="drafts"
+            hideCommentAction={true}
           />
         </div>
       </main>

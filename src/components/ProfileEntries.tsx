@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { User, TrendingUp, RefreshCw, Clock, Check } from "lucide-react";
+import { User, TrendingUp, RefreshCw, Clock, Check, Send } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { usePopup } from "@/lib/popup-context";
 import type { MorningMeetingEntry } from "@/types/morning-meeting";
@@ -195,10 +195,18 @@ export function ProfileEntries() {
               </div>
               <p className="mt-2 text-2xl font-bold text-slate-900">{stats.total}</p>
             </div>
+
+                        <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+              <div className="flex items-center gap-2">
+                <Send className="h-4 w-4 text-blue-600" />
+                <p className="text-xs font-medium text-blue-900">Submitted</p>
+              </div>
+              <p className="mt-2 text-2xl font-bold text-blue-900">{stats.submitted}</p>
+            </div>
             
             <div className="rounded-lg border border-green-200 bg-green-50 p-4">
               <div className="flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-green-600" />
+                <Check className="h-4 w-4 text-green-600" />
                 <p className="text-xs font-medium text-green-900">Discussed</p>
               </div>
               <p className="mt-2 text-2xl font-bold text-green-900">{stats.discussed}</p>
@@ -206,19 +214,12 @@ export function ProfileEntries() {
             
             <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4">
               <div className="flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-yellow-600" />
+                <Clock className="h-4 w-4 text-yellow-600" />
                 <p className="text-xs font-medium text-yellow-900">Pending</p>
               </div>
               <p className="mt-2 text-2xl font-bold text-yellow-900">{stats.pending}</p>
             </div>
             
-            <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
-              <div className="flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-blue-600" />
-                <p className="text-xs font-medium text-blue-900">Submitted</p>
-              </div>
-              <p className="mt-2 text-2xl font-bold text-blue-900">{stats.submitted}</p>
-            </div>
           </div>
         </div>
       </Card>

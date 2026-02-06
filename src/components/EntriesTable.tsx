@@ -79,9 +79,6 @@ export function EntriesTable({
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
   const [exportingDate, setExportingDate] = useState<string | null>(null);
   const [submittingId, setSubmittingId] = useState<string | null>(null);
-  const [commentDialogOpen, setCommentDialogOpen] = useState(false);
-  const [selectedEntryForComment, setSelectedEntryForComment] =
-    useState<MorningMeetingEntry | null>(null);
 
   const {
     searchTerm,
@@ -212,15 +209,13 @@ export function EntriesTable({
     callback();
   };
 
-  const handleSaveComment = async (comment: string) => {
-    if (!selectedEntryForComment?.id) return;
-
+  const handleSaveComment = async (entryId: string, comment: string) => {
     try {
       const response = await fetch("/api/entries/comment", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          entryId: selectedEntryForComment.id,
+          entryId,
           comment,
         }),
       });
@@ -228,13 +223,6 @@ export function EntriesTable({
       if (!response.ok) {
         throw new Error("Failed to save comment");
       }
-
-      // Update the entry in the local state
-      const updatedEntries = entries.map((entry) =>
-        entry.id === selectedEntryForComment.id
-          ? { ...entry, comment }
-          : entry
-      );
 
       // Force a re-render by triggering a route refresh
       router.refresh();
@@ -642,16 +630,9 @@ export function EntriesTable({
                           )}
                           <div onClick={(e) => e.stopPropagation()}>
                             <CommentDialog
-                              open={selectedEntryForComment?.id === entry.id && commentDialogOpen}
-                              onOpenChange={(open) => {
-                                setCommentDialogOpen(open);
-                                if (open) {
-                                  setSelectedEntryForComment(entry);
-                                }
-                              }}
                               entryId={entry.id}
                               initialComment={entry.comment || ""}
-                              onSave={handleSaveComment}
+                              onSave={(comment) => handleSaveComment(entry.id, comment)}
                             />
                           </div>
                           <Link
@@ -709,14 +690,6 @@ export function EntriesTable({
         allEntries={sortedEntries}
       />
 
-      {/* Comment Dialog */}
-      <CommentDialog
-        open={commentDialogOpen}
-        onOpenChange={setCommentDialogOpen}
-        entryId={selectedEntryForComment?.id || ""}
-        initialComment={selectedEntryForComment?.comment || ""}
-        onSave={handleSaveComment}
-      />
     </>
   );
 }

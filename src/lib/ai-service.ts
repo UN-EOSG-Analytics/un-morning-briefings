@@ -69,11 +69,11 @@ Do not include empty HTML tags
 
 SECTION STRUCTURE:
 Each thematic section must start with:
-<p><strong>Section Title:</strong></p>
-Immediately after a section title:
+<p><strong>[Section Title]</strong></p>
+Immediately after a section title
 Use a <ul> if the section contains multiple points
 Use a single <p> only if there is one standalone statement
-The majority of the text should be written text, not bullet point lists. use them wisely.
+The majority of the text should be written text, not bullet point lists. Use them wisely.
 LISTS:
 Bullet points must always follow this exact structure:
 <ul> <li><p>Bullet text here.</p></li> </ul>

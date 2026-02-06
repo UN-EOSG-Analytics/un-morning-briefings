@@ -179,7 +179,7 @@ export function Navbar() {
                     onClick={() => router.push("/profile")}
                   >
                     <UserCircle className="h-4 w-4" />
-                    <span>Go to Profile</span>
+                    <span>Profile</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     className="cursor-pointer gap-2"
@@ -231,7 +231,7 @@ export function Navbar() {
                     onClick={() => router.push("/profile")}
                   >
                     <UserCircle className="h-4 w-4" />
-                    <span>Go to Profile</span>
+                    <span>Profile</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     className="cursor-pointer gap-2"

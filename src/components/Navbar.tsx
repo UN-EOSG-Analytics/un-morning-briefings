@@ -88,6 +88,19 @@ export function Navbar() {
     // For non-form pages, navigate normally (default Link behavior)
   };
 
+  const handleProfileClick = async () => {
+    // Only check for unsaved changes when leaving the form page
+    if (pathname === "/form") {
+      const confirmed = await confirmNavigation();
+      if (confirmed) {
+        router.push("/profile");
+      }
+    } else {
+      // For non-form pages, navigate normally
+      router.push("/profile");
+    }
+  };
+
   return (
     <>
       <nav className="fixed top-0 right-0 left-0 z-50 border-b border-slate-200 bg-white">
@@ -176,7 +189,7 @@ export function Navbar() {
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     className="cursor-pointer gap-2"
-                    onClick={() => router.push("/profile")}
+                    onClick={handleProfileClick}
                   >
                     <UserCircle className="h-4 w-4" />
                     <span>Profile</span>
@@ -228,7 +241,7 @@ export function Navbar() {
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     className="cursor-pointer gap-2"
-                    onClick={() => router.push("/profile")}
+                    onClick={handleProfileClick}
                   >
                     <UserCircle className="h-4 w-4" />
                     <span>Profile</span>
@@ -302,6 +315,16 @@ export function Navbar() {
                 <PlusCircle className="h-4 w-4" />
                 <span>New Entry</span>
               </Link>
+              <button
+                onClick={async () => {
+                  await handleProfileClick();
+                  setIsOpen(false);
+                }}
+                className="flex w-full items-center gap-2 rounded px-3 py-2 text-sm hover:bg-slate-50"
+              >
+                <UserCircle className="h-4 w-4 text-slate-600" />
+                <span>Profile</span>
+              </button>
             </div>
           </div>
         )}

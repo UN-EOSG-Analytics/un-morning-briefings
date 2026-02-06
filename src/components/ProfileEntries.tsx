@@ -165,10 +165,10 @@ export function ProfileEntries() {
               </div>
               <div className="min-w-0">
                 <h1 className="text-xl font-semibold text-foreground sm:text-2xl">
-                  My Profile
+                  {userName}
                 </h1>
                 <p className="text-xs text-slate-600 sm:text-sm">
-                  {userName} • {userEmail}
+                  Officer • {userEmail}
                 </p>
               </div>
             </div>

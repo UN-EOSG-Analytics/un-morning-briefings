@@ -349,6 +349,95 @@ const createPlainPuNoteParagraph = (puNote: string): Paragraph =>
   });
 
 /**
+ * Build table of contents from the structured entries
+ */
+const buildTableOfContents = (
+  entriesByRegionAndCountry: Record<string, Record<string, MorningMeetingEntry[]>>,
+  sortedRegions: string[],
+): Paragraph[] => {
+  const tocParagraphs: Paragraph[] = [
+    // TOC Title
+    new Paragraph({
+      heading: HeadingLevel.HEADING_2,
+      spacing: { before: 200, after: 300 },
+      children: [
+        new TextRun({
+          text: "TABLE OF CONTENTS",
+          bold: true,
+          size: 24,
+          font: "Roboto",
+          color: "009edb",
+        }),
+      ],
+    }),
+  ];
+
+  let regionIndex = 1;
+  sortedRegions.forEach((region) => {
+    // Add region entry
+    tocParagraphs.push(
+      new Paragraph({
+        spacing: { after: 100, before: 50 },
+        indent: { left: 0 },
+        children: [
+          new TextRun({
+            text: `${regionIndex}. ${region}`,
+            bold: true,
+            size: 22,
+            font: "Roboto",
+          }),
+        ],
+      }),
+    );
+
+    // Get countries for this region
+    const countries = Object.keys(entriesByRegionAndCountry[region]).sort(
+      (a, b) => {
+        if (a === "") return 1;
+        if (b === "") return -1;
+        return a.localeCompare(b);
+      },
+    );
+
+    let entryIndex = 1;
+    countries.forEach((country) => {
+      const countryLabel = country || "(No country specified)";
+      const entries = entriesByRegionAndCountry[region][country];
+
+      entries.forEach((entry) => {
+        tocParagraphs.push(
+          new Paragraph({
+            spacing: { after: 50 },
+            indent: { left: 720 }, // 0.5 inch indent
+            children: [
+              new TextRun({
+                text: `${regionIndex}.${entryIndex}. ${entry.headline} (${countryLabel})`,
+                size: 22,
+                font: "Roboto",
+              }),
+            ],
+          }),
+        );
+
+        entryIndex++;
+      });
+    });
+
+    regionIndex++;
+  });
+
+  tocParagraphs.push(
+    new Paragraph({
+      spacing: { after: 200 },
+      children: [new TextRun("")],
+    }),
+    createSeparator(),
+  );
+
+  return tocParagraphs;
+};
+
+/**
  * Build document children (paragraphs) from entries
  */
 const buildDocumentChildren = (
@@ -433,6 +522,8 @@ const buildDocumentChildren = (
     }),
     // Separator
     createSeparator(),
+    // Add Table of Contents
+    ...buildTableOfContents(entriesByRegionAndCountry, sortedRegions),
   ];
 
   // Add entries grouped by region and country

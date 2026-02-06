@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const date = searchParams.get("date");
     const status = searchParams.get("status");
-    const author = searchParams.get("author");
+    const author = searchParams.get("author"); // Can be email or name
     const noConvert = searchParams.get("noConvert") === "true";
 
     let sql = `
@@ -64,7 +64,9 @@ export async function GET(request: NextRequest) {
         e.source_url as "sourceUrl",
         e.source_date as "sourceDate",
         e.pu_note as "puNote",
-        e.author,
+        COALESCE(CONCAT(u.first_name, ' ', u.last_name), 'Unknown') as author,
+        e.author_id as "authorId",
+        u.email as "authorEmail",
         e.comment,
         e.status,
         e.ai_summary as "aiSummary",
@@ -85,6 +87,7 @@ export async function GET(request: NextRequest) {
           '[]'
         ) as images
       FROM pu_morning_briefings.entries e
+      LEFT JOIN pu_morning_briefings.users u ON e.author_id = u.id
       LEFT JOIN pu_morning_briefings.images i ON e.id = i.entry_id
     `;
 
@@ -102,7 +105,8 @@ export async function GET(request: NextRequest) {
     }
 
     if (author) {
-      conditions.push(`e.author = $${params.length + 1}`);
+      // Support filtering by email (for profile/drafts pages) or by user id
+      conditions.push(`(u.email = $${params.length + 1} OR CONCAT(u.first_name, ' ', u.last_name) = $${params.length + 1})`);
       params.push(author);
     }
 
@@ -110,7 +114,7 @@ export async function GET(request: NextRequest) {
       sql += ` WHERE ${conditions.join(" AND ")}`;
     }
 
-    sql += ` GROUP BY e.id ORDER BY e.date DESC`;
+    sql += ` GROUP BY e.id, u.id ORDER BY e.date DESC`;
 
     const result = await query(sql, params);
 
@@ -206,12 +210,25 @@ export async function POST(request: NextRequest) {
     const id = crypto.randomUUID();
     const now = new Date();
 
-    // Insert entry
+    // Look up author_id from session user email
+    let authorId: number | null = null;
+    const userEmail = auth.session?.user?.email;
+    if (userEmail) {
+      const userResult = await query(
+        `SELECT id FROM pu_morning_briefings.users WHERE email = $1`,
+        [userEmail]
+      );
+      if (userResult.rows.length > 0) {
+        authorId = userResult.rows[0].id;
+      }
+    }
+
+    // Insert entry with author_id foreign key
     // Store date as-is without timezone conversion
     await query(
       `INSERT INTO pu_morning_briefings.entries (
         id, category, priority, region, country, headline, date, entry,
-        source_name, source_url, source_date, pu_note, author, status, approval_status
+        source_name, source_url, source_date, pu_note, author_id, status, approval_status
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`,
       [
         id,
@@ -226,7 +243,7 @@ export async function POST(request: NextRequest) {
         data.sourceUrl || null,
         data.sourceDate || null,
         data.puNote || null,
-        data.author || null,
+        authorId,
         data.status || null,
         "pending",
       ],
@@ -253,7 +270,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Fetch created entry with images
+    // Fetch created entry with images and author info
     const result = await query(
       `SELECT 
         e.id,
@@ -268,7 +285,8 @@ export async function POST(request: NextRequest) {
         e.source_url as "sourceUrl",
         e.source_date as "sourceDate",
         e.pu_note as "puNote",
-        e.author,
+        COALESCE(CONCAT(u.first_name, ' ', u.last_name), 'Unknown') as author,
+        e.author_id as "authorId",
         e.status,
         COALESCE(e.approval_status, 'pending') as "approvalStatus",
         COALESCE(
@@ -287,9 +305,10 @@ export async function POST(request: NextRequest) {
           '[]'
         ) as images
       FROM pu_morning_briefings.entries e
+      LEFT JOIN pu_morning_briefings.users u ON e.author_id = u.id
       LEFT JOIN pu_morning_briefings.images i ON e.id = i.entry_id
       WHERE e.id = $1
-      GROUP BY e.id`,
+      GROUP BY e.id, u.id`,
       [id],
     );
 
@@ -411,27 +430,29 @@ export async function PATCH(request: NextRequest) {
     // Update entry
     await query(updateQuery, params);
 
-    // Fetch updated entry
+    // Fetch updated entry with author info
     const result = await query(
       `SELECT 
-        id,
-        category,
-        priority,
-        region,
-        country,
-        headline,
-        date,
-        entry,
-        source_name as "sourceName",
-        source_url as "sourceUrl",
-        source_date as "sourceDate",
-        pu_note as "puNote",
-        author,
-        status,
-        ai_summary as "aiSummary",
-        COALESCE(approval_status, 'pending') as "approvalStatus"
-      FROM pu_morning_briefings.entries
-      WHERE id = $1`,
+        e.id,
+        e.category,
+        e.priority,
+        e.region,
+        e.country,
+        e.headline,
+        e.date,
+        e.entry,
+        e.source_name as "sourceName",
+        e.source_url as "sourceUrl",
+        e.source_date as "sourceDate",
+        e.pu_note as "puNote",
+        COALESCE(CONCAT(u.first_name, ' ', u.last_name), 'Unknown') as author,
+        e.author_id as "authorId",
+        e.status,
+        e.ai_summary as "aiSummary",
+        COALESCE(e.approval_status, 'pending') as "approvalStatus"
+      FROM pu_morning_briefings.entries e
+      LEFT JOIN pu_morning_briefings.users u ON e.author_id = u.id
+      WHERE e.id = $1`,
       [id],
     );
 

@@ -52,11 +52,24 @@ export async function POST(request: NextRequest) {
           continue;
         }
 
-        // Insert the entry
+        // Look up author_id by email (from entry or current user)
+        let authorId: number | null = null;
+        const authorEmail = entry.authorEmail || auth.session?.user?.email;
+        if (authorEmail) {
+          const userResult = await query(
+            `SELECT id FROM pu_morning_briefings.users WHERE email = $1`,
+            [authorEmail]
+          );
+          if (userResult.rows.length > 0) {
+            authorId = userResult.rows[0].id;
+          }
+        }
+
+        // Insert the entry with author_id foreign key
         await query(
           `INSERT INTO pu_morning_briefings.entries (
             id, category, priority, region, country, headline, date, entry,
-            source_name, source_url, source_date, pu_note, author, status, ai_summary, approval_status
+            source_name, source_url, source_date, pu_note, author_id, status, ai_summary, approval_status
           ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)`,
           [
             entry.id,
@@ -71,7 +84,7 @@ export async function POST(request: NextRequest) {
             entry.sourceUrl || null,
             entry.sourceDate || null,
             entry.puNote || null,
-            entry.author || auth.session?.user?.email,
+            authorId,
             entry.status || "draft",
             entry.aiSummary || null,
             entry.approvalStatus || "pending",

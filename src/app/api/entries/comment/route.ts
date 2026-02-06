@@ -21,7 +21,7 @@ export async function PUT(request: NextRequest) {
 
     // Update the comment in the database
     const result = await query(
-      "UPDATE entries SET comment = $1 WHERE id = $2 RETURNING id, comment",
+      "UPDATE pu_morning_briefings.entries SET comment = $1 WHERE id = $2 RETURNING id, comment",
       [comment || null, entryId]
     );
 

@@ -364,10 +364,11 @@ export function MorningMeetingForm({
         
         if (!Array.isArray(entries) || entries.length === 0) return;
         
-        // Filter entries from last 2 weeks by current user
+        // Filter entries from last 2 weeks by current user (compare by email for reliability)
+        const userEmail = session?.user?.email;
         const recentEntries = entries.filter((entry: any) => {
           const entryDate = new Date(entry.date);
-          return entryDate >= twoWeeksAgo && entry.author === formData.author;
+          return entryDate >= twoWeeksAgo && entry.authorEmail === userEmail;
         });
 
         if (recentEntries.length === 0) return;
@@ -414,10 +415,10 @@ export function MorningMeetingForm({
       }
     };
 
-    if (formData.author && formData.author !== "Current User") {
+    if (session?.user?.email) {
       fetchFrequentSelections();
     }
-  }, [formData.author]);
+  }, [session?.user?.email]);
 
   // Fetch source names used by this user
   useEffect(() => {

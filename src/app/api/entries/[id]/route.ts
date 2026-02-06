@@ -59,7 +59,9 @@ export async function GET(
         e.source_url as "sourceUrl",
         e.source_date as "sourceDate",
         e.pu_note as "puNote",
-        e.author,
+        COALESCE(CONCAT(u.first_name, ' ', u.last_name), 'Unknown') as author,
+        e.author_id as "authorId",
+        u.email as "authorEmail",
         e.status,
         e.approval_status as "approvalStatus",
         e.ai_summary as "aiSummary",
@@ -79,9 +81,10 @@ export async function GET(
           '[]'
         ) as images
       FROM pu_morning_briefings.entries e
+      LEFT JOIN pu_morning_briefings.users u ON e.author_id = u.id
       LEFT JOIN pu_morning_briefings.images i ON e.id = i.entry_id
       WHERE e.id = $1
-      GROUP BY e.id`,
+      GROUP BY e.id, u.id`,
       [id],
     );
 
@@ -228,10 +231,6 @@ export async function PUT(
       updateFields.push(`pu_note = $${paramCount++}`);
       updateValues.push(data.puNote);
     }
-    if (data.author !== undefined) {
-      updateFields.push(`author = $${paramCount++}`);
-      updateValues.push(data.author);
-    }
     if (data.status !== undefined) {
       updateFields.push(`status = $${paramCount++}`);
       updateValues.push(data.status);
@@ -275,7 +274,7 @@ export async function PUT(
       }
     }
 
-    // Fetch updated entry with images
+    // Fetch updated entry with images and author info
     const result = await query(
       `SELECT 
         e.id,
@@ -290,7 +289,8 @@ export async function PUT(
         e.source_url as "sourceUrl",
         COALESCE(e.source_date, NULL) as "sourceDate",
         e.pu_note as "puNote",
-        e.author,
+        COALESCE(CONCAT(u.first_name, ' ', u.last_name), 'Unknown') as author,
+        e.author_id as "authorId",
         e.status,
         e.approval_status as "approvalStatus",
         e.ai_summary as "aiSummary",
@@ -310,9 +310,10 @@ export async function PUT(
           '[]'
         ) as images
       FROM pu_morning_briefings.entries e
+      LEFT JOIN pu_morning_briefings.users u ON e.author_id = u.id
       LEFT JOIN pu_morning_briefings.images i ON e.id = i.entry_id
       WHERE e.id = $1
-      GROUP BY e.id`,
+      GROUP BY e.id, u.id`,
       [id],
     );
 

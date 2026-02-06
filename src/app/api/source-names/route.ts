@@ -10,23 +10,23 @@ export async function GET() {
       return auth.response;
     }
 
-    const user = auth.session.user;
-    // Determine author value (same logic as MorningMeetingForm)
-    const fullName = user?.firstName && user?.lastName 
-      ? `${user.firstName} ${user.lastName}`.trim()
-      : "";
-    const authorValue = fullName || user?.email || "Current User";
+    const userEmail = auth.session.user?.email;
+    
+    if (!userEmail) {
+      return NextResponse.json({ sourceNames: [] });
+    }
 
-    // Get unique source names used by this user
+    // Get unique source names used by this user via author_id foreign key
     const result = await db.query(
-      `SELECT DISTINCT source_name
-       FROM pu_morning_briefings.entries
-       WHERE author = $1
-         AND source_name IS NOT NULL
-         AND source_name != ''
-       ORDER BY source_name ASC
+      `SELECT DISTINCT e.source_name
+       FROM pu_morning_briefings.entries e
+       INNER JOIN pu_morning_briefings.users u ON e.author_id = u.id
+       WHERE u.email = $1
+         AND e.source_name IS NOT NULL
+         AND e.source_name != ''
+       ORDER BY e.source_name ASC
        LIMIT 50`,
-      [authorValue]
+      [userEmail]
     );
 
     const sourceNames = result.rows.map((row: any) => row.source_name);

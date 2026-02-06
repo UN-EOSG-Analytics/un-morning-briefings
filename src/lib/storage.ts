@@ -224,17 +224,18 @@ export async function getEntryById(id: string): Promise<any> {
 }
 
 /**
- * Fetch draft entries for a specific author
+ * Fetch draft entries for a specific user by email
  * Converts image references for display
  *
- * @param author - Author name to filter by
+ * @param authorEmail - Author email to filter by (looks up user via foreign key)
  * @returns Promise that resolves to array of draft entries
  */
-export async function getDraftEntries(author: string): Promise<any[]> {
+export async function getDraftEntries(authorEmail: string): Promise<any[]> {
   try {
     // Use noConvert=true to skip expensive image conversion for list view
+    // API filters by author email (foreign key lookup)
     const response = await fetch(
-      `/api/entries?status=draft&author=${encodeURIComponent(author)}&noConvert=true`,
+      `/api/entries?status=draft&author=${encodeURIComponent(authorEmail)}&noConvert=true`,
     );
 
     if (!response.ok) {

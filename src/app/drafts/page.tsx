@@ -14,21 +14,15 @@ export default function DraftsPage() {
   const { confirm: showConfirm, success: showSuccess, error: showError } = usePopup();
   const [entries, setEntries] = useState<MorningMeetingEntry[]>([]);
 
-  // Get current user's full name
-  const currentUserName = session?.user
-    ? `${session.user.firstName || ""} ${session.user.lastName || ""}`.trim() ||
-      session.user.email
-    : "Current User";
+  // Get current user's email for API filtering
+  const userEmail = session?.user?.email || "";
 
   const loadEntries = useCallback(async () => {
-    if (!currentUserName || currentUserName === "Current User") return;
-    const data = await getDraftEntries(currentUserName);
-    // Filter to only show drafts by the current user
-    const userDrafts = data.filter(
-      (entry: MorningMeetingEntry) => entry.author === currentUserName,
-    );
-    setEntries(userDrafts);
-  }, [currentUserName]);
+    if (!userEmail) return;
+    // API now filters by user email via foreign key join
+    const data = await getDraftEntries(userEmail);
+    setEntries(data);
+  }, [userEmail]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect

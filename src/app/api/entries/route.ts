@@ -350,7 +350,7 @@ export async function PATCH(request: NextRequest) {
     // Build update query based on what fields are provided
     if (
       approvalStatus &&
-      !["pending", "discussed", "left-out"].includes(approvalStatus)
+      !["pending", "discussed"].includes(approvalStatus)
     ) {
       return NextResponse.json(
         { error: "Invalid approval status" },

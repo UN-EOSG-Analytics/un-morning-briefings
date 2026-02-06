@@ -1,6 +1,6 @@
 import labels from "@/lib/labels.json";
 
-export type ApprovalStatus = "pending" | "discussed" | "left-out";
+export type ApprovalStatus = "pending" | "discussed";
 
 // Morning Meeting Form Types
 export interface MorningMeetingEntry {

@@ -500,12 +500,6 @@ export function EntriesTable({
                                   icon: Check,
                                   label: "Discussed",
                                 },
-                                "left-out": {
-                                  bg: "bg-red-50",
-                                  text: "text-red-700",
-                                  icon: X,
-                                  label: "Left out",
-                                },
                               };
                               const config =
                                 badgeConfig[
@@ -530,7 +524,7 @@ export function EntriesTable({
                                   </button>
                                   {openStatusDropdown === entry.id && (
                                     <div className="absolute top-full left-0 z-50 mt-1.5 w-max rounded-lg border border-slate-200 bg-white py-1 shadow-lg">
-                                      {["pending", "discussed", "left-out"]
+                                      {["pending", "discussed"]
                                         .filter((s) => s !== status)
                                         .map((statusOption) => {
                                           const statusConfig =

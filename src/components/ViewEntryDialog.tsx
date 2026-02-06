@@ -117,7 +117,7 @@ export function ViewEntryDialog({
     }
   }, [displayEntry?.id]);
 
-  const handleApprove = useCallback(async (status: 'pending' | 'discussed' | 'left-out') => {
+  const handleApprove = useCallback(async (status: 'pending' | 'discussed') => {
     if (!displayEntry?.id) return;
     
     setIsUpdatingApproval(true);
@@ -134,7 +134,6 @@ export function ViewEntryDialog({
 
       const statusLabels = {
         discussed: 'Discussed',
-        'left-out': 'Left out',
         pending: 'Pending'
       };
 
@@ -577,29 +576,11 @@ export function ViewEntryDialog({
                 className={`gap-1 flex-1 h-8 text-xs ${
                   displayEntry.approvalStatus === 'discussed'
                     ? 'bg-green-600 hover:bg-green-700 text-white'
-                    : displayEntry.approvalStatus === 'left-out'
-                    ? 'opacity-50 text-green-600 hover:opacity-100 hover:bg-green-50 hover:text-green-700'
                     : 'text-green-600 hover:bg-green-50 hover:text-green-700'
                 }`}
               >
                 <Check className="h-3 w-3" />
                 Discussed
-              </Button>
-              
-              <Button
-                variant={displayEntry.approvalStatus === 'left-out' ? 'default' : 'outline'}
-                onClick={() => handleApprove('left-out')}
-                disabled={isUpdatingApproval}
-                className={`gap-1 flex-1 h-8 text-xs ${
-                  displayEntry.approvalStatus === 'left-out'
-                    ? 'bg-red-600 hover:bg-red-700 text-white'
-                    : displayEntry.approvalStatus === 'discussed'
-                    ? 'opacity-50 text-red-600 hover:opacity-100 hover:bg-red-50 hover:text-red-700'
-                    : 'text-red-600 hover:bg-red-50 hover:text-red-700'
-                }`}
-              >
-                <X className="h-3 w-3" />
-                Left out
               </Button>
               
               {displayEntry.approvalStatus !== 'discussed' && (
@@ -704,29 +685,11 @@ export function ViewEntryDialog({
                     className={`gap-2 h-8 text-xs ${
                       displayEntry.approvalStatus === 'discussed'
                         ? 'bg-green-600 hover:bg-green-700 text-white'
-                        : displayEntry.approvalStatus === 'left-out'
-                        ? 'opacity-50 text-green-600 hover:opacity-100 hover:bg-green-50 hover:text-green-700'
                         : 'text-green-600 hover:bg-green-50 hover:text-green-700'
                     }`}
                   >
                     <Check className="h-4 w-4" />
                     Discussed
-                  </Button>
-                  
-                  <Button
-                    variant={displayEntry.approvalStatus === 'left-out' ? 'default' : 'outline'}
-                    onClick={() => handleApprove('left-out')}
-                    disabled={isUpdatingApproval}
-                    className={`gap-2 h-8 text-xs ${
-                      displayEntry.approvalStatus === 'left-out'
-                        ? 'bg-red-600 hover:bg-red-700 text-white'
-                        : displayEntry.approvalStatus === 'discussed'
-                        ? 'opacity-50 text-red-600 hover:opacity-100 hover:bg-red-50 hover:text-red-700'
-                        : 'text-red-600 hover:bg-red-50 hover:text-red-700'
-                    }`}
-                  >
-                    <X className="h-4 w-4" />
-                    Left out
                   </Button>
                   
                   {displayEntry.approvalStatus !== 'discussed' && (

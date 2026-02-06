@@ -103,7 +103,7 @@ export function MorningMeetingList({
   return (
     <div className="mx-auto w-full max-w-6xl space-y-4">
       {/* Header */}
-      <Card className="border-slate-200 py-0 ">
+      <Card className="border-slate-200 sm:p-0 px-4">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:p-6">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded bg-slate-700">

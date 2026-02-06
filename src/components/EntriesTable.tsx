@@ -31,6 +31,7 @@ import { useRouter } from "next/navigation";
 import { ViewEntryDialog } from "./ViewEntryDialog";
 import { SearchBar } from "./SearchBar";
 import { ColumnFilter } from "./ColumnFilter";
+import { CommentDialog } from "./CommentDialog";
 import {
   useEntriesFilter,
   getPriorityBadgeClass,
@@ -78,6 +79,9 @@ export function EntriesTable({
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
   const [exportingDate, setExportingDate] = useState<string | null>(null);
   const [submittingId, setSubmittingId] = useState<string | null>(null);
+  const [commentDialogOpen, setCommentDialogOpen] = useState(false);
+  const [selectedEntryForComment, setSelectedEntryForComment] =
+    useState<MorningMeetingEntry | null>(null);
 
   const {
     searchTerm,
@@ -206,6 +210,38 @@ export function EntriesTable({
   const handleActionClick = (e: React.MouseEvent, callback: () => void) => {
     e.stopPropagation();
     callback();
+  };
+
+  const handleSaveComment = async (comment: string) => {
+    if (!selectedEntryForComment?.id) return;
+
+    try {
+      const response = await fetch("/api/entries/comment", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          entryId: selectedEntryForComment.id,
+          comment,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to save comment");
+      }
+
+      // Update the entry in the local state
+      const updatedEntries = entries.map((entry) =>
+        entry.id === selectedEntryForComment.id
+          ? { ...entry, comment }
+          : entry
+      );
+
+      // Force a re-render by triggering a route refresh
+      router.refresh();
+    } catch (error) {
+      console.error("Error saving comment:", error);
+      throw error;
+    }
   };
 
   // Extract unique briefing dates from entries
@@ -604,6 +640,20 @@ export function EntriesTable({
                               <Send className="h-5 w-5" />
                             </Button>
                           )}
+                          <div onClick={(e) => e.stopPropagation()}>
+                            <CommentDialog
+                              open={selectedEntryForComment?.id === entry.id && commentDialogOpen}
+                              onOpenChange={(open) => {
+                                setCommentDialogOpen(open);
+                                if (open) {
+                                  setSelectedEntryForComment(entry);
+                                }
+                              }}
+                              entryId={entry.id}
+                              initialComment={entry.comment || ""}
+                              onSave={handleSaveComment}
+                            />
+                          </div>
                           <Link
                             href={`/form?edit=${entry.id}`}
                             onClick={(e) => e.stopPropagation()}
@@ -657,6 +707,15 @@ export function EntriesTable({
         onPostpone={onPostpone}
         showApproveButton={showApprovedColumn}
         allEntries={sortedEntries}
+      />
+
+      {/* Comment Dialog */}
+      <CommentDialog
+        open={commentDialogOpen}
+        onOpenChange={setCommentDialogOpen}
+        entryId={selectedEntryForComment?.id || ""}
+        initialComment={selectedEntryForComment?.comment || ""}
+        onSave={handleSaveComment}
       />
     </>
   );

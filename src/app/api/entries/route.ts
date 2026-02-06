@@ -65,6 +65,7 @@ export async function GET(request: NextRequest) {
         e.source_date as "sourceDate",
         e.pu_note as "puNote",
         e.author,
+        e.comment,
         e.status,
         e.ai_summary as "aiSummary",
         e.approval_status as "approvalStatus",

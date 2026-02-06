@@ -17,6 +17,7 @@ export interface MorningMeetingEntry {
   sourceUrl?: string;
   puNote?: string;
   author?: string;
+  comment?: string;
   aiSummary?: string[] | null;
   images?: Array<{
     id: string;

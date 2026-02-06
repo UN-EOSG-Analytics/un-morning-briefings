@@ -219,6 +219,15 @@ export function EntriesTable({
     .sort()
     .reverse();
 
+  // Extract unique countries from entries
+  const availableCountries = Array.from(
+    new Set(
+      entries.flatMap((entry) => 
+        Array.isArray(entry.country) ? entry.country : [entry.country]
+      ).filter(Boolean)
+    )
+  ).sort();
+
   return (
     <>
       {/* Search Bar and Reset Button */}
@@ -333,7 +342,7 @@ export function EntriesTable({
                     </span>
                     <ColumnFilter
                       columnName="Country"
-                      options={COUNTRIES}
+                      options={availableCountries}
                       selectedValue={filterCountry}
                       onValueChange={setFilterCountry}
                     />
@@ -476,12 +485,26 @@ export function EntriesTable({
                           {entry.region}
                         </span>
                       </td>
-                      <td className="hidden px-2 py-3 whitespace-nowrap sm:table-cell sm:px-3 lg:px-4">
-                        <span className="text-sm text-slate-700">
-                          {Array.isArray(entry.country)
-                            ? entry.country.join(", ")
-                            : entry.country || "—"}
-                        </span>
+                      <td className="hidden px-2 py-3 sm:table-cell sm:px-3 lg:px-4 max-w-48">
+                        <div className="flex gap-1 overflow-hidden">
+                          {Array.isArray(entry.country) && entry.country.length > 0
+                            ? entry.country.map((country: string) => (
+                                <span
+                                  key={country}
+                                  className="inline-block rounded bg-gray-100 px-2 py-1 text-xs font-medium text-gray-800 whitespace-nowrap truncate max-w-24"
+                                  title={country}
+                                >
+                                  {country}
+                                </span>
+                              ))
+                            : entry.country ? (
+                                <span className="inline-block rounded bg-gray-100 px-2 py-1 text-xs font-medium text-gray-800 whitespace-nowrap truncate max-w-24" title={entry.country}>
+                                  {entry.country}
+                                </span>
+                              ) : (
+                                <span className="text-xs text-slate-500">—</span>
+                              )}
+                        </div>
                       </td>
                       <td className="hidden px-2 py-3 text-sm whitespace-nowrap lg:table-cell">
                         <span className="inline-block rounded bg-gray-100 px-2 py-1 text-xs font-medium text-gray-800">

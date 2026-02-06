@@ -583,7 +583,7 @@ export function MorningMeetingForm({
     if (confirmed) {
       setFormData({
         category: "",
-        priority: "situational-awareness",
+        priority: "Situational Awareness",
         region: "",
         country: [],
         headline: "",
@@ -776,7 +776,7 @@ export function MorningMeetingForm({
                     onValueChange={(value) =>
                       handleSelectChange(
                         "priority",
-                        value as "sg-attention" | "situational-awareness",
+                        value as "Secretary-General's Attention" | "Situational Awareness",
                       )
                     }
                     options={PRIORITIES}

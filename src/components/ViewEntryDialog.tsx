@@ -301,7 +301,7 @@ export function ViewEntryDialog({
             </span>
             {/* Priority Badge */}
             <span className={`inline-flex items-center gap-1 rounded-full px-2 sm:px-2.5 py-1 sm:py-1.5 text-xs sm:text-sm font-medium ${getPriorityBadgeClass(displayEntry.priority)}`}>
-              <span className={`h-1.5 w-1.5 rounded-full ${displayEntry.priority === 'sg-attention' ? 'bg-red-600' : 'bg-blue-600'}`} />
+              <span className={`h-1.5 w-1.5 rounded-full ${displayEntry.priority === "Secretary-General's Attention" ? 'bg-red-600' : 'bg-blue-600'}`} />
               {PRIORITIES.find(p => p.value === displayEntry.priority)?.label}
             </span>
             {/* Region Badge */}

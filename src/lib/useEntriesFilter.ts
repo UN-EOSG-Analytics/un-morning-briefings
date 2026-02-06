@@ -205,6 +205,7 @@ export function useEntriesFilter(entries: any[], initialDateFilter?: string) {
   const [filterRegion, setFilterRegion] = useState<string>("all");
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [filterPriority, setFilterPriority] = useState<string>("all");
+  const [filterCountry, setFilterCountry] = useState<string>("all");
 
   // Convert initialDateFilter to briefing date format if provided
   let briefingDateFilter = "";
@@ -246,6 +247,13 @@ export function useEntriesFilter(entries: any[], initialDateFilter?: string) {
         filterCategory === "all" || entry.category === filterCategory;
       const matchesPriority =
         filterPriority === "all" || entry.priority === filterPriority;
+      
+      let matchesCountry = true;
+      if (filterCountry !== "all") {
+        matchesCountry = Array.isArray(entry.country)
+          ? entry.country.includes(filterCountry)
+          : entry.country === filterCountry;
+      }
 
       let matchesDate = true;
       if (filterDate) {
@@ -257,6 +265,7 @@ export function useEntriesFilter(entries: any[], initialDateFilter?: string) {
         matchesRegion &&
         matchesCategory &&
         matchesPriority &&
+        matchesCountry &&
         matchesDate
       );
     });
@@ -266,6 +275,7 @@ export function useEntriesFilter(entries: any[], initialDateFilter?: string) {
     filterRegion,
     filterCategory,
     filterPriority,
+    filterCountry,
     filterDate,
   ]);
 
@@ -310,6 +320,7 @@ export function useEntriesFilter(entries: any[], initialDateFilter?: string) {
     setFilterRegion("all");
     setFilterCategory("all");
     setFilterPriority("all");
+    setFilterCountry("all");
     setFilterDate("");
   };
 
@@ -319,6 +330,7 @@ export function useEntriesFilter(entries: any[], initialDateFilter?: string) {
     filterRegion,
     filterCategory,
     filterPriority,
+    filterCountry,
     filterDate,
     sortField,
     sortDirection,
@@ -327,6 +339,7 @@ export function useEntriesFilter(entries: any[], initialDateFilter?: string) {
     setFilterRegion,
     setFilterCategory,
     setFilterPriority,
+    setFilterCountry,
     setFilterDate,
     setSortField,
     setSortDirection,
@@ -343,7 +356,7 @@ export function useEntriesFilter(entries: any[], initialDateFilter?: string) {
  * Common badge styling functions for entries
  */
 export function getPriorityBadgeClass(priority: string): string {
-  if (priority === "sg-attention") return "bg-red-100 text-red-800";
+  if (priority === "Secretary-General's Attention") return "bg-red-100 text-red-800";
   return "bg-blue-100 text-blue-800";
 }
 

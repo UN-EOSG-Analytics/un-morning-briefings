@@ -8,6 +8,7 @@ import {
   PRIORITIES,
   REGIONS,
   CATEGORIES,
+  COUNTRIES,
 } from "@/types/morning-meeting";
 import {
   formatDateResponsive,
@@ -85,6 +86,7 @@ export function EntriesTable({
     filterRegion,
     filterCategory,
     filterPriority,
+    filterCountry,
     filterDate,
     sortField,
     sortDirection,
@@ -92,6 +94,7 @@ export function EntriesTable({
     setFilterRegion,
     setFilterCategory,
     setFilterPriority,
+    setFilterCountry,
     setFilterDate,
     setSortField,
     setSortDirection,
@@ -225,6 +228,7 @@ export function EntriesTable({
           filterRegion !== "all" ||
           filterCategory !== "all" ||
           filterPriority !== "all" ||
+          filterCountry !== "all" ||
           filterDate ||
           sortField !== "date" ||
           sortDirection !== "desc") && (
@@ -319,22 +323,19 @@ export function EntriesTable({
                 </th>
                 <th className="hidden px-2 py-3 text-left text-xs font-semibold tracking-wide text-slate-700 uppercase sm:table-cell sm:px-3 lg:px-4">
                   <div className="flex items-center gap-2">
-                    Priority
+                    <span
+                      className="cursor-pointer rounded px-1 py-1 hover:bg-slate-100"
+                      onClick={() => handleSort("country")}
+                    >
+                      Country{" "}
+                      {sortField === "country" &&
+                        (sortDirection === "asc" ? "↑" : "↓")}
+                    </span>
                     <ColumnFilter
-                      columnName="Priority"
-                      options={PRIORITIES.map((p) => p.label)}
-                      selectedValue={
-                        filterPriority === "all"
-                          ? "all"
-                          : PRIORITIES.find((p) => p.value === filterPriority)
-                              ?.label || "all"
-                      }
-                      onValueChange={(label) => {
-                        const value =
-                          PRIORITIES.find((p) => p.label === label)?.value ||
-                          "all";
-                        setFilterPriority(value);
-                      }}
+                      columnName="Country"
+                      options={COUNTRIES}
+                      selectedValue={filterCountry}
+                      onValueChange={setFilterCountry}
                     />
                   </div>
                 </th>
@@ -476,21 +477,10 @@ export function EntriesTable({
                         </span>
                       </td>
                       <td className="hidden px-2 py-3 whitespace-nowrap sm:table-cell sm:px-3 lg:px-4">
-                        <span
-                          className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${getPriorityBadgeClass(entry.priority)}`}
-                        >
-                          <span
-                            className={`h-1.5 w-1.5 rounded-full ${entry.priority === "sg-attention" ? "bg-red-600" : "bg-blue-600"}`}
-                          />
-                          <span className="lg:hidden">
-                            {entry.priority === "sg-attention" ? "SG" : "Sit."}
-                          </span>
-                          <span className="hidden lg:inline">
-                            {
-                              PRIORITIES.find((p) => p.value === entry.priority)
-                                ?.label
-                            }
-                          </span>
+                        <span className="text-sm text-slate-700">
+                          {Array.isArray(entry.country)
+                            ? entry.country.join(", ")
+                            : entry.country || "—"}
                         </span>
                       </td>
                       <td className="hidden px-2 py-3 text-sm whitespace-nowrap lg:table-cell">

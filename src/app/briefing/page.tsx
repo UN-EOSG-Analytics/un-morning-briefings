@@ -304,9 +304,9 @@ const generateBriefingDocument = async (
 ): Promise<Blob> => {
   // Sort by priority
   const sortedEntries = [...entries].sort((a, b) => {
-    if (a.priority === "sg-attention" && b.priority !== "sg-attention")
+    if (a.priority === "Secretary-General's Attention" && b.priority !== "Secretary-General's Attention")
       return -1;
-    if (a.priority !== "sg-attention" && b.priority === "sg-attention")
+    if (a.priority !== "Secretary-General's Attention" && b.priority === "Secretary-General's Attention")
       return 1;
     return 0;
   });
@@ -454,7 +454,7 @@ const generateBriefingDocument = async (
               children: [
                 new TextRun({
                   text:
-                    entry.priority === "sg-attention"
+                    entry.priority === "Secretary-General's Attention"
                       ? "SG Attention"
                       : "Situational Awareness",
                   italics: true,
@@ -638,9 +638,9 @@ function BriefingContent() {
 
   // Sort by priority (SG Attention first)
   const sortedEntries = [...entries].sort((a, b) => {
-    if (a.priority === "sg-attention" && b.priority !== "sg-attention")
+    if (a.priority === "Secretary-General's Attention" && b.priority !== "Secretary-General's Attention")
       return -1;
-    if (a.priority !== "sg-attention" && b.priority === "sg-attention")
+    if (a.priority !== "Secretary-General's Attention" && b.priority === "Secretary-General's Attention")
       return 1;
     return 0;
   });
@@ -919,7 +919,7 @@ function BriefingContent() {
 
                               {/* Priority & Category */}
                               <p className="text-sm leading-relaxed text-slate-700 italic">
-                                {entry.priority === "sg-attention"
+                                {entry.priority === "Secretary-General's Attention"
                                   ? "SG Attention"
                                   : "Situational Awareness"}
                                 {" | "}

@@ -675,6 +675,7 @@ export function MorningMeetingForm({
         date: result.date || prev.date,
         entry: result.entry || prev.entry,
         sourceDate: result.sourceDate || prev.sourceDate,
+        sourceName: result.sourceName || prev.sourceName,
       }));
 
       setShowAutoFillDialog(false);

@@ -17,6 +17,7 @@ interface AutoFillResult {
   date?: string;
   entry: string;
   sourceDate?: string;
+  sourceName?: string;
 }
 
 // Initialize Azure OpenAI client
@@ -101,6 +102,11 @@ Priorities: ${priorityList}
 Regions: ${regionList}
 Countries: ${countryList}
 
+SOURCE NAME EXTRACTION:
+- Extract the name of the news source or publication (e.g., "BBC", "Reuters", "The Guardian", "AFP")
+- Look for attribution phrases like "(Source Name)", "via Source Name", "Source Name reported", or similar
+- If no explicit source is mentioned, leave sourceName empty
+
 Now, return the JSON:
 {
   "category": "best matching category from list - ONLY if clearly supported by content",
@@ -109,6 +115,7 @@ Now, return the JSON:
   "country": "best matching countries from list, or left empty if no countries involved",
   "headline": "concise headline (max 300 chars) - derived directly from content, not invented",
   "sourceDate": "YYYY-MM-DD if explicitly stated in content, otherwise null",
+  "sourceName": "name of news source/publication if mentioned, otherwise empty string",
   "entry": "reorganized content with formatting as defined above"
 }`;
 
@@ -134,6 +141,7 @@ Now, return the JSON:
       date: parsed.date,
       entry: parsed.entry || content,
       sourceDate: parsed.sourceDate || "",
+      sourceName: parsed.sourceName || "",
     };
   } catch (error) {
     console.error("[AI SERVICE] Error details:", error);

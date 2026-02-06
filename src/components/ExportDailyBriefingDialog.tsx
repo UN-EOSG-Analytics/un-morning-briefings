@@ -689,42 +689,10 @@ const generateDocumentBlob = async (
 };
 
 /**
- * Create a header section with UN logo and classification text
+ * Create a header section with classification text only (UN logo removed)
  */
 export const createDocumentHeader = async (): Promise<Table> => {
-  // Load UN logo from public folder
-  let logoParagraphChildren: (ImageRun | TextRun)[] = [];
-
-  try {
-    const response = await fetch("/images/UN_Logo_Black.png");
-    const blob = await response.blob();
-    const arrayBuffer = await blob.arrayBuffer();
-    const imageData = new Uint8Array(arrayBuffer);
-
-    logoParagraphChildren = [
-      new ImageRun({
-        data: imageData,
-        transformation: {
-          width: 43,
-          height: 36,
-        },
-        type: "png",
-      }),
-    ];
-  } catch (error) {
-    console.error("Failed to load UN logo:", error);
-    // Fallback to text if image fails to load
-    logoParagraphChildren = [
-      new TextRun({
-        text: "[UN Logo]",
-        size: 16,
-        color: "666666",
-        font: "Roboto",
-      }),
-    ];
-  }
-
-  // Create a table-based header with logo on left and classification on right
+  // Create a table-based header with classification text
   const headerTable = new Table({
     width: { size: 100, type: "pct" },
     borders: {
@@ -737,35 +705,18 @@ export const createDocumentHeader = async (): Promise<Table> => {
     },
     rows: [
       new TableRow({
-        height: { value: 720, rule: "atLeast" },
+        height: { value: 400, rule: "atLeast" },
         children: [
-          // Left cell with logo
+          // Full-width cell with classification text
           new TableCell({
-            width: { size: 50, type: "pct" },
+            width: { size: 100, type: "pct" },
             borders: {
               top: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
               bottom: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
               left: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
               right: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
             },
-            margins: { top: 100, bottom: 0, left: 0, right: 100 },
-            verticalAlign: "top",
-            children: [
-              new Paragraph({
-                children: logoParagraphChildren,
-              }),
-            ],
-          }),
-          // Right cell with classification
-          new TableCell({
-            width: { size: 50, type: "pct" },
-            borders: {
-              top: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
-              bottom: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
-              left: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
-              right: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
-            },
-            margins: { top: 0, bottom: 0, left: 100, right: 0 },
+            margins: { top: 0, bottom: 0, left: 0, right: 0 },
             verticalAlign: "center",
             children: [
               new Paragraph({

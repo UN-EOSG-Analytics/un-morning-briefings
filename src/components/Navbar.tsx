@@ -13,6 +13,7 @@ import {
   User,
   Users,
   Settings,
+  UserCircle,
 } from "lucide-react";
 import { useState } from "react";
 import { signOut, useSession } from "next-auth/react";
@@ -175,6 +176,13 @@ export function Navbar() {
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     className="cursor-pointer gap-2"
+                    onClick={() => router.push("/profile")}
+                  >
+                    <UserCircle className="h-4 w-4" />
+                    <span>Go to Profile</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="cursor-pointer gap-2"
                     onClick={() => setShowSettings(true)}
                   >
                     <Settings className="h-4 w-4" />
@@ -218,6 +226,13 @@ export function Navbar() {
                     <span className="text-xs text-slate-600">{userEmail}</span>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    className="cursor-pointer gap-2"
+                    onClick={() => router.push("/profile")}
+                  >
+                    <UserCircle className="h-4 w-4" />
+                    <span>Go to Profile</span>
+                  </DropdownMenuItem>
                   <DropdownMenuItem
                     className="cursor-pointer gap-2"
                     onClick={() => setShowSettings(true)}

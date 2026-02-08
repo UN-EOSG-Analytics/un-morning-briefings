@@ -154,16 +154,16 @@ export function ProfileEntries() {
   // Get entries with comments that have been followed up on (are referenced as previousEntryId)
   const addressedFollowUps = useMemo(() => {
     const entriesWithFollowUps = entries
-      .filter(e => e.approvalStatus === "discussed" && e.comment && entries.some(other => other.previousEntryId === e.id))
+      .filter(e => (e.approvalStatus === "discussed" || e.approvalStatus === "pending") && e.comment && entries.some(other => other.previousEntryId === e.id))
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     return entriesWithFollowUps;
   }, [entries]);
 
-  // Get entries with comments that haven't been followed up on yet
+  // Get entries with comments that haven't been followed up on yet (discussed or pending)
   const discussedEntriesWithComments = useMemo(() => {
     const addressedIds = new Set(addressedFollowUps.map(e => e.id));
     return entries
-      .filter(e => e.approvalStatus === "discussed" && e.comment && !addressedIds.has(e.id))
+      .filter(e => (e.approvalStatus === "discussed" || e.approvalStatus === "pending") && e.comment && !addressedIds.has(e.id))
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [entries, addressedFollowUps]);
 
@@ -258,55 +258,66 @@ export function ProfileEntries() {
             </span>
           </div>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {discussedEntriesWithComments.map((entry) => (
-              <Card
-                key={entry.id}
-                className="border-green-200 bg-green-50 p-4 hover:border-green-400 transition-colors cursor-pointer"
-                onClick={() => {
-                  setSelectedEntry(entry);
-                  setShowViewDialog(true);
-                }}
-              >
-                <div className="space-y-3">
-                  <div>
-                    <p className="text-xs font-semibold text-green-700 uppercase tracking-wide">
-                      {formatDateDesktop(entry.date)}
-                    </p>
-                    <h3 className="mt-1 line-clamp-2 text-sm font-semibold text-slate-900">
-                      {entry.headline}
-                    </h3>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    <span className={`inline-block rounded px-2 py-1 text-xs font-medium ${getRegionBadgeClass(entry.region)}`}>
-                      {entry.region}
-                    </span>
-                    {entry.country && (
-                      <span className="inline-block rounded bg-slate-200 px-2 py-1 text-xs text-slate-700">
-                        {Array.isArray(entry.country) ? entry.country.join(", ") : entry.country}
+            {discussedEntriesWithComments.map((entry) => {
+              const isPending = entry.approvalStatus === "pending";
+              const borderColor = isPending ? "border-yellow-200" : "border-green-200";
+              const bgColor = isPending ? "bg-yellow-50" : "bg-green-50";
+              const hoverColor = isPending ? "hover:border-yellow-400" : "hover:border-green-400";
+              const textColor = isPending ? "text-yellow-700" : "text-green-700";
+              const textDarkColor = isPending ? "text-yellow-900" : "text-green-900";
+              const buttonBorderColor = isPending ? "border-yellow-300" : "border-green-300";
+              const buttonBgColor = isPending ? "hover:bg-yellow-100" : "hover:bg-green-100";
+              
+              return (
+                <Card
+                  key={entry.id}
+                  className={`${borderColor} ${bgColor} p-4 ${hoverColor} transition-colors cursor-pointer`}
+                  onClick={() => {
+                    setSelectedEntry(entry);
+                    setShowViewDialog(true);
+                  }}
+                >
+                  <div className="space-y-3">
+                    <div>
+                      <p className={`text-xs font-semibold ${textColor} uppercase tracking-wide`}>
+                        {formatDateDesktop(entry.date)}
+                      </p>
+                      <h3 className="mt-1 line-clamp-2 text-sm font-semibold text-slate-900">
+                        {entry.headline}
+                      </h3>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <span className={`inline-block rounded px-2 py-1 text-xs font-medium ${getRegionBadgeClass(entry.region)}`}>
+                        {entry.region}
                       </span>
-                    )}
+                      {entry.country && (
+                        <span className="inline-block rounded bg-slate-200 px-2 py-1 text-xs text-slate-700">
+                          {Array.isArray(entry.country) ? entry.country.join(", ") : entry.country}
+                        </span>
+                      )}
+                    </div>
+                    <div className={`border-t ${borderColor} pt-3`}>
+                      <p className={`text-xs font-medium ${textDarkColor}`}>Feedback:</p>
+                      <p className="mt-1 line-clamp-3 text-sm text-slate-700">
+                        {entry.comment}
+                      </p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className={`w-full ${buttonBorderColor} ${textColor} ${buttonBgColor}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        router.push(`/form?followUp=${entry.id}`);
+                      }}
+                    >
+                      <ArrowRight className="h-3.5 w-3.5" />
+                      Follow Up
+                    </Button>
                   </div>
-                  <div className="border-t border-green-200 pt-3">
-                    <p className="text-xs font-medium text-green-900">Feedback:</p>
-                    <p className="mt-1 line-clamp-3 text-sm text-slate-700">
-                      {entry.comment}
-                    </p>
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full border-green-300 text-green-700 hover:bg-green-100"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      router.push(`/form?followUp=${entry.id}`);
-                    }}
-                  >
-                    <ArrowRight className="h-3.5 w-3.5" />
-                    Follow Up
-                  </Button>
-                </div>
-              </Card>
-            ))}
+                </Card>
+              );
+            })}
           </div>
         </div>
       )}
@@ -316,7 +327,7 @@ export function ProfileEntries() {
         <div className="space-y-3">
           <div className="flex items-center gap-2 px-2 sm:px-4">
             <h2 className="text-sm font-semibold text-slate-700 uppercase tracking-wide">
-              Addressed Follow-Ups
+              Addressed Feedback
             </h2>
             <span className="inline-flex items-center justify-center rounded-full bg-blue-100 h-6 w-6 text-xs font-bold text-blue-700">
               {addressedFollowUps.length}

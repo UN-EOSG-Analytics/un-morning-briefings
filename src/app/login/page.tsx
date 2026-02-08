@@ -42,9 +42,12 @@ function LoginPageContent() {
     const errorParam = searchParams.get("error");
     const message = searchParams.get("message");
     const deleted = searchParams.get("deleted");
+    const reset = searchParams.get("reset");
 
     if (deleted === "true") {
       setSuccess("Your account has been deleted successfully.");
+    } else if (reset === "success") {
+      setSuccess("Password reset successful! You can now log in with your new password.");
     } else if (verified === "true") {
       if (message === "already") {
         setSuccess("Your email is verified! You can log in now.");
@@ -378,7 +381,6 @@ function LoginPageContent() {
 
             <div className="mt-8 text-center text-xs text-slate-500">
               <p>© {new Date().getFullYear()} United Nations</p>
-              <p className="mt-1">Executive Office of the Secretary-General</p>
             </div>
           </div>
         ) : (
@@ -423,12 +425,20 @@ function LoginPageContent() {
               </div>
 
               <div>
-                <label
-                  htmlFor="password"
-                  className="mb-2 block text-sm font-medium text-slate-700"
-                >
-                  Password
-                </label>
+                <div className="mb-2 flex items-center justify-between">
+                  <label
+                    htmlFor="password"
+                    className="block text-sm font-medium text-slate-700"
+                  >
+                    Password
+                  </label>
+                  <a
+                    href="/forgot-password"
+                    className="text-xs text-un-blue hover:text-un-blue/80 transition-colors"
+                  >
+                    Forgot password?
+                  </a>
+                </div>
                 <div className="relative">
                   <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                     <Lock className="h-5 w-5 text-slate-400" />
@@ -491,7 +501,6 @@ function LoginPageContent() {
             {/* Footer */}
             <div className="mt-8 text-center text-xs text-slate-500">
               <p>© {new Date().getFullYear()} United Nations</p>
-              <p className="mt-1">Executive Office of the Secretary-General</p>
             </div>
           </div>
         )}

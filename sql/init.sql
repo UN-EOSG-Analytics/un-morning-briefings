@@ -59,4 +59,33 @@ CREATE TABLE
     );
 
 -- Create index for images table
--- TODO
+CREATE INDEX IF NOT EXISTS idx_images_entry_id ON pu_morning_briefings.images(entry_id);
+
+-- Create user_whitelist table (for managing authorized emails)
+CREATE TABLE IF NOT EXISTS pu_morning_briefings.user_whitelist (
+    id SERIAL PRIMARY KEY,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    user_id INTEGER REFERENCES pu_morning_briefings.users(id) ON DELETE SET NULL,
+    added_by INTEGER REFERENCES pu_morning_briefings.users(id) ON DELETE SET NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT whitelist_email_format CHECK (email LIKE '%@un.org')
+);
+
+CREATE INDEX IF NOT EXISTS idx_whitelist_email ON pu_morning_briefings.user_whitelist(email);
+CREATE INDEX IF NOT EXISTS idx_whitelist_user_id ON pu_morning_briefings.user_whitelist(user_id);
+
+-- Create password_resets table (for secure password recovery)
+CREATE TABLE IF NOT EXISTS pu_morning_briefings.password_resets (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES pu_morning_briefings.users(id) ON DELETE CASCADE,
+    token_hash VARCHAR(255) NOT NULL UNIQUE,
+    expires_at TIMESTAMP NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    used_at TIMESTAMP,
+    ip_address VARCHAR(45)
+);
+
+CREATE INDEX IF NOT EXISTS idx_password_resets_token ON pu_morning_briefings.password_resets(token_hash);
+CREATE INDEX IF NOT EXISTS idx_password_resets_user_id ON pu_morning_briefings.password_resets(user_id);
+CREATE INDEX IF NOT EXISTS idx_password_resets_expires ON pu_morning_briefings.password_resets(expires_at);
+CREATE INDEX IF NOT EXISTS idx_password_resets_used_at ON pu_morning_briefings.password_resets(used_at);

@@ -28,6 +28,7 @@ export interface MorningMeetingEntry {
   }>;
   status?: "draft" | "submitted";
   approvalStatus?: ApprovalStatus;
+  previousEntryId?: string | null;
 }
 
 export interface FormFieldError {

@@ -65,6 +65,7 @@ export async function GET(
         e.status,
         e.approval_status as "approvalStatus",
         e.ai_summary as "aiSummary",
+        e.previous_entry_id as "previousEntryId",
         COALESCE(
           json_agg(
             json_build_object(
@@ -243,6 +244,10 @@ export async function PUT(
       updateFields.push(`ai_summary = $${paramCount++}`);
       updateValues.push(data.aiSummary ? JSON.stringify(data.aiSummary) : null);
     }
+    if (data.previousEntryId !== undefined) {
+      updateFields.push(`previous_entry_id = $${paramCount++}`);
+      updateValues.push(data.previousEntryId || null);
+    }
 
     updateValues.push(id);
 
@@ -294,6 +299,7 @@ export async function PUT(
         e.status,
         e.approval_status as "approvalStatus",
         e.ai_summary as "aiSummary",
+        e.previous_entry_id as "previousEntryId",
         COALESCE(
           json_agg(
             json_build_object(

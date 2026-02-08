@@ -71,6 +71,7 @@ export async function GET(request: NextRequest) {
         e.status,
         e.ai_summary as "aiSummary",
         e.approval_status as "approvalStatus",
+        e.previous_entry_id as "previousEntryId",
         COALESCE(
           json_agg(
             json_build_object(
@@ -228,8 +229,8 @@ export async function POST(request: NextRequest) {
     await query(
       `INSERT INTO pu_morning_briefings.entries (
         id, category, priority, region, country, headline, date, entry,
-        source_name, source_url, source_date, pu_note, author_id, status, approval_status
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`,
+        source_name, source_url, source_date, pu_note, author_id, status, approval_status, previous_entry_id
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)`,
       [
         id,
         data.category,
@@ -246,6 +247,7 @@ export async function POST(request: NextRequest) {
         authorId,
         data.status || null,
         "pending",
+        data.previousEntryId || null,
       ],
     );
 
@@ -289,6 +291,7 @@ export async function POST(request: NextRequest) {
         e.author_id as "authorId",
         e.status,
         COALESCE(e.approval_status, 'pending') as "approvalStatus",
+        e.previous_entry_id as "previousEntryId",
         COALESCE(
           json_agg(
             json_build_object(
@@ -449,7 +452,8 @@ export async function PATCH(request: NextRequest) {
         e.author_id as "authorId",
         e.status,
         e.ai_summary as "aiSummary",
-        COALESCE(e.approval_status, 'pending') as "approvalStatus"
+        COALESCE(e.approval_status, 'pending') as "approvalStatus",
+        e.previous_entry_id as "previousEntryId"
       FROM pu_morning_briefings.entries e
       LEFT JOIN pu_morning_briefings.users u ON e.author_id = u.id
       WHERE e.id = $1`,

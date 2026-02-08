@@ -28,6 +28,8 @@ function FormContent() {
     setSearchParams(params);
 
     const editId = params.get("edit");
+    const followUpId = params.get("followUp");
+
     if (editId) {
       // Load entry data for editing
       const loadEntry = async () => {
@@ -44,6 +46,36 @@ function FormContent() {
         }
       };
       loadEntry();
+    } else if (followUpId) {
+      // Load previous entry data for follow-up (prefill tags, set previous entry reference)
+      const loadFollowUp = async () => {
+        try {
+          const previousEntry = await getEntryById(followUpId);
+          if (previousEntry) {
+            setInitialData({
+              category: previousEntry.category,
+              priority: previousEntry.priority,
+              region: previousEntry.region,
+              country: previousEntry.country,
+              previousEntryId: previousEntry.id,
+              // Leave other fields empty for the new entry
+              headline: "",
+              date: "",
+              entry: "",
+              sourceName: "",
+              sourceDate: "",
+              sourceUrl: "",
+              puNote: "",
+            });
+          }
+        } catch (error) {
+          console.error("Error loading follow-up entry:", error);
+          showError("Failed to Load", "Unable to load previous entry data");
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      loadFollowUp();
     } else {
       setIsLoading(false);
     }

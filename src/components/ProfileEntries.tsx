@@ -1,12 +1,14 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { User, TrendingUp, RefreshCw, Clock, Check, Send } from "lucide-react";
+import { User, TrendingUp, RefreshCw, Clock, Check, Send, ArrowRight } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { usePopup } from "@/lib/popup-context";
 import type { MorningMeetingEntry } from "@/types/morning-meeting";
+import { ViewEntryDialog } from "./ViewEntryDialog";
 import { SearchBar } from "./SearchBar";
 import { ColumnFilter } from "./ColumnFilter";
 import { REGIONS } from "@/types/morning-meeting";
@@ -21,12 +23,15 @@ import {
 export function ProfileEntries() {
   const { data: session, status } = useSession();
   const { info: showInfo, success: showSuccess } = usePopup();
+  const router = useRouter();
   const [entries, setEntries] = useState<MorningMeetingEntry[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterRegion, setFilterRegion] = useState("all");
   const [sortField, setSortField] = useState("date");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
+  const [selectedEntry, setSelectedEntry] = useState<MorningMeetingEntry | null>(null);
+  const [showViewDialog, setShowViewDialog] = useState(false);
 
   const userName =
     session?.user?.firstName && session?.user?.lastName
@@ -246,7 +251,11 @@ export function ProfileEntries() {
             {discussedEntriesWithComments.map((entry) => (
               <Card
                 key={entry.id}
-                className="border-green-200 bg-green-50 p-4 hover:border-green-400 transition-colors"
+                className="border-green-200 bg-green-50 p-4 hover:border-green-400 transition-colors cursor-pointer"
+                onClick={() => {
+                  setSelectedEntry(entry);
+                  setShowViewDialog(true);
+                }}
               >
                 <div className="space-y-3">
                   <div>
@@ -273,6 +282,18 @@ export function ProfileEntries() {
                       {entry.comment}
                     </p>
                   </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full border-green-300 text-green-700 hover:bg-green-100"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      router.push(`/form?followUp=${entry.id}`);
+                    }}
+                  >
+                    <ArrowRight className="h-3.5 w-3.5" />
+                    Follow Up
+                  </Button>
                 </div>
               </Card>
             ))}
@@ -421,6 +442,13 @@ export function ProfileEntries() {
       <div className="text-sm text-slate-600">
         Showing {filteredAndSortedEntries.length} of {entries.length} entries
       </div>
+
+      {/* View Entry Dialog */}
+      <ViewEntryDialog
+        open={showViewDialog}
+        onOpenChange={setShowViewDialog}
+        entry={selectedEntry}
+      />
     </div>
   );
 }

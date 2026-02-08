@@ -191,6 +191,7 @@ export function MorningMeetingForm({
     sourceUrl: initialData?.sourceUrl || "",
     puNote: initialData?.puNote || "",
     author: initialData?.author || "Current User",
+    previousEntryId: initialData?.previousEntryId || null,
   });
 
   const [errors, setErrors] = useState<FormFieldError>({});
@@ -218,6 +219,9 @@ export function MorningMeetingForm({
 
   // Source name suggestions for autocomplete
   const [sourceNames, setSourceNames] = useState<string[]>([]);
+
+  // User's entries for "Previous Entry" selector
+  const [userEntries, setUserEntries] = useState<{ id: string; headline: string; date: string; country: string | string[]; region: string }[]>([]);
 
   // Compute region options with frequent region at top with star
   const regionOptions = useMemo(() => {
@@ -270,6 +274,40 @@ export function MorningMeetingForm({
 
     return options;
   }, [availableCountries, frequentCountries]);
+
+  // Build previous entry options with matching tags highlighted
+  const previousEntryOptions = useMemo(() => {
+    const options = userEntries.map((e) => {
+      const dateStr = typeof e.date === 'string' ? e.date : new Date(e.date).toISOString();
+      return {
+        value: e.id,
+        label: `${e.headline} (${dateStr.split("T")[0]})`,
+        showStar: false,
+        country: e.country,
+        region: e.region,
+      };
+    });
+
+    // Separate entries that match current tags
+    const matchingEntries: typeof options = [];
+    const otherEntries: typeof options = [];
+
+    options.forEach((opt) => {
+      const countryMatch = Array.isArray(formData.country)
+        ? formData.country.some((c) => c === opt.country || (Array.isArray(opt.country) && opt.country.includes(c)))
+        : formData.country === opt.country || (Array.isArray(opt.country) && opt.country.includes(formData.country as string));
+      const regionMatch = formData.region === opt.region;
+
+      if ((countryMatch || regionMatch) && formData.country && formData.region) {
+        opt.showStar = true;
+        matchingEntries.push(opt);
+      } else {
+        otherEntries.push(opt);
+      }
+    });
+
+    return [{ value: "none", label: "None" }, ...matchingEntries, ...otherEntries];
+  }, [userEntries, formData.country, formData.region]);
 
   // Track if form has been modified
   const [initialFormData] = useState(formData);
@@ -437,6 +475,33 @@ export function MorningMeetingForm({
       fetchSourceNames();
     }
   }, [session]);
+
+  // Fetch user's entries for Previous Entry selector
+  useEffect(() => {
+    const fetchUserEntries = async () => {
+      try {
+        const email = session?.user?.email;
+        if (!email) return;
+        const response = await fetch(`/api/entries?author=${encodeURIComponent(email)}&noConvert=true`);
+        if (!response.ok) return;
+        const data = await response.json();
+        const entries = Array.isArray(data) ? data : [];
+        // Only include submitted entries with an id and headline, exclude current entry if editing
+        const editId = new URLSearchParams(window.location.search).get("edit");
+        setUserEntries(
+          entries
+            .filter((e: any) => e.id && e.headline && e.id !== editId)
+            .map((e: any) => ({ id: e.id, headline: e.headline, date: e.date, country: e.country, region: e.region }))
+        );
+      } catch (error) {
+        console.error("Failed to fetch user entries:", error);
+      }
+    };
+
+    if (session?.user?.email) {
+      fetchUserEntries();
+    }
+  }, [session?.user?.email]);
 
   // No coordination needed - region and country are independent
 
@@ -1074,6 +1139,20 @@ export function MorningMeetingForm({
                       placeholder="HH:MM"
                       value={(formData.date.split("T")[1] || "").slice(0, 5)}
                       onChange={handleInputChange}
+                    />
+                  </div>
+                )}
+
+                {showMetadata && (
+                  <div className="mt-4">
+                    <SelectField
+                      label="Previous Entry"
+                      value={formData.previousEntryId || "none"}
+                      onValueChange={(value) =>
+                        setFormData((prev) => ({ ...prev, previousEntryId: value === "none" ? null : value }))
+                      }
+                      options={previousEntryOptions}
+                      searchable={true}
                     />
                   </div>
                 )}

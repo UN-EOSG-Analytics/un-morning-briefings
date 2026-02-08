@@ -34,7 +34,8 @@ CREATE TABLE
         author_id INTEGER REFERENCES pu_morning_briefings.users(id) ON DELETE SET NULL,
         status TEXT NOT NULL DEFAULT 'submitted',
         ai_summary TEXT,
-        approval_status TEXT DEFAULT 'pending'
+        approval_status TEXT DEFAULT 'pending',
+        previous_entry_id TEXT REFERENCES pu_morning_briefings.entries(id) ON DELETE SET NULL
     );
 
 -- Create indices for entries table

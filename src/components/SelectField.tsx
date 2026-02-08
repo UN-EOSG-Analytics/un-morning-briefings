@@ -76,15 +76,16 @@ export function SelectField({
         >
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent className="max-h-64">
           {searchable && (
-            <div className="sticky top-0 flex items-center gap-2 border-b bg-slate-50 px-2 py-2">
+            <div className="sticky top-0 z-10 flex items-center gap-2 border-b bg-slate-50 px-2 py-2">
               <Search className="h-4 w-4 shrink-0 text-slate-400" />
               <input
                 type="text"
                 placeholder="Search..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => e.stopPropagation()}
                 className="flex-1 bg-transparent text-sm placeholder-slate-400 outline-none"
                 onClick={(e) => e.stopPropagation()}
               />
@@ -101,10 +102,10 @@ export function SelectField({
           {filteredOptions.length > 0 ? (
             filteredOptions.map((option) => (
               <SelectItem key={option.value} value={option.value}>
-                <div className="flex items-center gap-2 relative">
+                <div className="flex items-center gap-2 max-w-5xl">
                   <span>{option.label}</span>
                   {option.showStar && (
-                    <Sparkles className="h-3 w-3 text-un-blue/30 fill-un-blue/20 -ml-1" />
+                    <Sparkles className="h-3 w-3 shrink-0 text-un-blue/30 fill-un-blue/20 -ml-1" />
                   )}
                 </div>
               </SelectItem>

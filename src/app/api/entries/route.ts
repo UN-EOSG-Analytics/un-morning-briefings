@@ -146,22 +146,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(entries);
   } catch (error) {
     console.error("Error fetching entries:", error);
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
-
-    const isDatabaseError =
-      errorMessage.includes("connect") ||
-      errorMessage.includes("ECONNREFUSED") ||
-      errorMessage.includes("FATAL") ||
-      errorMessage.includes("password");
-
     return NextResponse.json(
-      {
-        error: "Failed to fetch entries",
-        details: errorMessage,
-        isDatabaseError,
-        hint: isDatabaseError ? "Check DATABASE_URL in .env.local" : undefined,
-      },
+      { error: "Failed to fetch entries" },
       { status: 500 },
     );
   }
@@ -329,18 +315,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(createdEntry, { status: 201 });
   } catch (error) {
     console.error("Error creating entry:", error);
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
-    const errorStack = error instanceof Error ? error.stack : undefined;
-    console.error("Error details:", {
-      message: errorMessage,
-      stack: errorStack,
-    });
     return NextResponse.json(
-      {
-        error: "Failed to create entry",
-        details: errorMessage,
-      },
+      { error: "Failed to create entry" },
       { status: 500 },
     );
   }
@@ -467,13 +443,8 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json(result.rows[0]);
   } catch (error) {
     console.error("Error updating entry:", error);
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(
-      {
-        error: "Failed to update entry",
-        details: errorMessage,
-      },
+      { error: "Failed to update entry" },
       { status: 500 },
     );
   }

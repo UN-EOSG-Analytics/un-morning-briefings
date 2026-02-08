@@ -29,6 +29,9 @@ const azure = createAzure({
   ).replace(".openai.azure.com/", ""),
 });
 
+// Maximum input content length to prevent abuse (100KB)
+const MAX_CONTENT_LENGTH = 100_000;
+
 export async function autoFillFromContent(
   content: string,
 ): Promise<AutoFillResult> {
@@ -43,15 +46,18 @@ export async function autoFillFromContent(
     );
   }
 
+  // Truncate excessively long content
+  const safeContent = content.length > MAX_CONTENT_LENGTH
+    ? content.slice(0, MAX_CONTENT_LENGTH)
+    : content;
+
   // Build lists for the prompt
   const categoryList = CATEGORIES.join(", ");
   const priorityList = PRIORITIES.map((p) => p.value).join(", ");
   const regionList = REGIONS.join(", ");
   const countryList = COUNTRIES.join(", ");
 
-  const prompt = `Create a JSON object to auto-fill the fields of a UN Morning Meeting briefing entry based on the provided content, which will be pasted from a news source
-
-Content: ${content}
+  const systemPrompt = `You are a UN briefing assistant. Create a JSON object to auto-fill the fields of a UN Morning Meeting briefing entry based on provided news content.
 
 COUNTRY SELECTION (STRICT):
 - Extract ONLY countries explicitly mentioned in the content (use the name from the provided country list)
@@ -107,7 +113,7 @@ SOURCE NAME EXTRACTION:
 - Look for attribution phrases like "(Source Name)", "via Source Name", "Source Name reported", or similar
 - If no explicit source is mentioned, leave sourceName empty
 
-Now, return the JSON:
+Return ONLY valid JSON with these fields:
 {
   "category": "best matching category from list - ONLY if clearly supported by content",
   "priority": "sg-attention or situational-awareness - ONLY if explicitly indicated in content",
@@ -122,7 +128,8 @@ Now, return the JSON:
   try {
     const { text } = await generateText({
       model: azure("gpt-4o"),
-      prompt,
+      system: systemPrompt,
+      prompt: safeContent,
     });
 
     // Remove markdown code blocks if present
@@ -186,15 +193,18 @@ Each bullet should be:
 - Maximum 20 words each
 - Do not invent any additional information or interpret / analyze the content
 
-Return ONLY the bullet points, one per line, without bullet symbols or numbering.
+Return ONLY the bullet points, one per line, without bullet symbols or numbering.`;
 
-Content:
-${plainText}`;
+  // Truncate excessively long content
+  const safeContent = plainText.length > MAX_CONTENT_LENGTH
+    ? plainText.slice(0, MAX_CONTENT_LENGTH)
+    : plainText;
 
   try {
     const { text } = await generateText({
       model: azure("gpt-4o"),
-      prompt,
+      system: prompt,
+      prompt: safeContent,
     });
 
     // Split into lines and clean up

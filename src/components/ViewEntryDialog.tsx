@@ -8,6 +8,7 @@ import { MorningMeetingEntry, PRIORITIES } from '@/types/morning-meeting';
 import { getPriorityBadgeClass } from '@/lib/useEntriesFilter';
 import { usePopup } from '@/lib/popup-context';
 import { formatDateResponsive } from '@/lib/format-date';
+import { sanitizeHtml } from '@/lib/sanitize';
 import { Edit, Trash2, Check, X, Sparkles, ChevronLeft, ChevronRight, FastForward, ArrowUp, ArrowDown } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
@@ -389,7 +390,7 @@ export function ViewEntryDialog({
             <div
               className="entry-content"
               dangerouslySetInnerHTML={{
-                __html: displayEntry.entry,
+                __html: sanitizeHtml(displayEntry.entry),
               }}
             />
             <style jsx global>{`
@@ -519,7 +520,7 @@ export function ViewEntryDialog({
               </div>
               <div 
                 className="text-xs sm:text-sm text-slate-700 break-words entry-content"
-                dangerouslySetInnerHTML={{ __html: displayEntry.puNote }}
+                dangerouslySetInnerHTML={{ __html: sanitizeHtml(displayEntry.puNote) }}
               />
             </div>
           )}

@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { checkAuth } from "@/lib/auth-helper";
 
 export async function GET(request: NextRequest) {
+  // Check authentication
+  const auth = await checkAuth();
+  if (!auth.authenticated) {
+    return auth.response;
+  }
+
   try {
     const searchParams = request.nextUrl.searchParams;
     const startDate = searchParams.get("startDate");
@@ -312,7 +319,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error("Error fetching analytics:", error);
     return NextResponse.json(
-      { error: "Failed to fetch analytics data", details: String(error) },
+      { error: "Failed to fetch analytics data" },
       { status: 500 }
     );
   }

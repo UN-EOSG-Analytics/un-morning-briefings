@@ -341,18 +341,8 @@ export async function PUT(
     return NextResponse.json(entry);
   } catch (error) {
     console.error("Error updating entry:", error);
-    console.error(
-      "Error stack:",
-      error instanceof Error ? error.stack : "No stack trace",
-    );
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(
-      {
-        error: "Failed to update entry",
-        details: errorMessage,
-        stack: error instanceof Error ? error.stack : undefined,
-      },
+      { error: "Failed to update entry" },
       { status: 500 },
     );
   }
@@ -402,13 +392,8 @@ export async function DELETE(
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Error deleting entry:", error);
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(
-      {
-        error: "Failed to delete entry",
-        details: errorMessage,
-      },
+      { error: "Failed to delete entry" },
       { status: 500 },
     );
   }

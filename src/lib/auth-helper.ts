@@ -26,10 +26,7 @@ export async function checkAuth() {
     return {
       authenticated: false,
       response: NextResponse.json(
-        {
-          error: "Authentication error",
-          details: error instanceof Error ? error.message : "Failed to verify session",
-        },
+        { error: "Authentication error" },
         { status: 500 },
       ),
     };

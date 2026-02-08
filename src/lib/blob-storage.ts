@@ -148,7 +148,13 @@ class BlobStorageService {
 
   private async downloadLocal(url: string): Promise<Buffer> {
     const filename = url.replace("/uploads/", "");
-    const filePath = path.join(this.localStoragePath, filename);
+    const filePath = path.resolve(this.localStoragePath, filename);
+
+    // Prevent path traversal: ensure resolved path is within upload directory
+    const resolvedBase = path.resolve(this.localStoragePath);
+    if (!filePath.startsWith(resolvedBase)) {
+      throw new Error("Invalid file path");
+    }
 
     if (!existsSync(filePath)) {
       throw new Error(`File not found: ${filePath}`);
@@ -160,7 +166,14 @@ class BlobStorageService {
 
   private async deleteLocal(url: string): Promise<void> {
     const filename = url.replace("/uploads/", "");
-    const filePath = path.join(this.localStoragePath, filename);
+    const filePath = path.resolve(this.localStoragePath, filename);
+
+    // Prevent path traversal: ensure resolved path is within upload directory
+    const resolvedBase = path.resolve(this.localStoragePath);
+    if (!filePath.startsWith(resolvedBase)) {
+      throw new Error("Invalid file path");
+    }
+
     if (existsSync(filePath)) {
       await unlink(filePath);
     }

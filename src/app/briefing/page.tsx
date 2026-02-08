@@ -23,6 +23,7 @@ import {
 } from "docx";
 import { saveAs } from "file-saver";
 import { parseHtmlContent } from "@/lib/html-to-docx";
+import { sanitizeHtml } from "@/lib/sanitize";
 import type { MorningMeetingEntry } from "@/types/morning-meeting";
 
 /**
@@ -885,7 +886,7 @@ function BriefingContent() {
                                 <div
                                   className="text-base leading-relaxed text-slate-900 [&_img]:cursor-pointer [&_img]:transition-opacity [&_img]:hover:opacity-80 [&_strong]:font-semibold [&>blockquote]:my-3 [&>blockquote]:border-l-4 [&>blockquote]:border-slate-300 [&>blockquote]:pl-4 [&>blockquote]:italic [&>p]:mb-3 [&>ul]:mb-3 [&>ul]:ml-6 [&>ul>li]:mb-1.5"
                                   dangerouslySetInnerHTML={{
-                                    __html: entry.entry,
+                                    __html: sanitizeHtml(entry.entry),
                                   }}
                                 />
                               )}
@@ -919,7 +920,7 @@ function BriefingContent() {
                                   <span className="font-bold">PU Note: </span>
                                   <span
                                     dangerouslySetInnerHTML={{
-                                      __html: entry.puNote,
+                                      __html: sanitizeHtml(entry.puNote),
                                     }}
                                   />
                                 </div>

@@ -136,14 +136,8 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error("Error importing entries:", error);
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
-
     return NextResponse.json(
-      {
-        error: "Failed to import entries",
-        details: errorMessage,
-      },
+      { error: "Failed to import entries" },
       { status: 500 },
     );
   }

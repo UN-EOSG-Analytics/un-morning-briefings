@@ -71,10 +71,8 @@ export async function POST(req: NextRequest) {
     );
 
     // Send verification email
-    // Use the request origin for production domains, fallback to NEXTAUTH_URL
-    const protocol = process.env.NODE_ENV === "production" ? "https" : "http";
-    const host = req.headers.get("host") || "localhost:3000";
-    const baseUrl = `${protocol}://${host}`;
+    // Use NEXTAUTH_URL for consistent, trusted base URL (never trust Host header)
+    const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
     await sendVerificationEmail(email, verificationToken, firstName, baseUrl);
 
     return NextResponse.json({

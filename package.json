@@ -45,6 +45,7 @@
     "file-saver": "^2.0.5",
     "heatmap.js": "^2.0.5",
     "html-to-text": "^9.0.5",
+    "isomorphic-dompurify": "^3.0.0-rc.2",
     "jsonwebtoken": "^9.0.3",
     "lucide-react": "^0.555.0",
     "next": "^16.0.6",

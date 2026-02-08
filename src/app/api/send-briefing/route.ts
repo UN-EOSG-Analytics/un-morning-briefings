@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
+import { checkAuth } from "@/lib/auth-helper";
 import nodemailer from "nodemailer";
 import * as fs from "fs";
 import * as path from "path";
@@ -54,9 +54,9 @@ const transporter = nodemailer.createTransport({
 export async function POST(request: NextRequest) {
   try {
     // Check authentication
-    const session = await getServerSession();
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const auth = await checkAuth();
+    if (!auth.authenticated || !auth.session?.user?.email) {
+      return auth.response ?? NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { docxBlob, fileName, briefingDate } = await request.json();
@@ -91,7 +91,7 @@ export async function POST(request: NextRequest) {
     // Send email with attachment
     await transporter.sendMail({
       from: process.env.SMTP_FROM,
-      to: session.user.email,
+      to: auth.session.user.email,
       subject: `Morning Briefing - ${formattedDate}`,
       html: `
         <!DOCTYPE html>

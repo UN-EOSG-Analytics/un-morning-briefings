@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import labelsData from "@/lib/labels.json";
+import { checkAuth } from "@/lib/auth-helper";
 
 // Get predefined countries list
 const PREDEFINED_COUNTRIES: string[] = (
@@ -9,6 +10,12 @@ const PREDEFINED_COUNTRIES: string[] = (
 
 // GET /api/countries - Fetch all unique custom countries from the database
 export async function GET() {
+  // Check authentication
+  const auth = await checkAuth();
+  if (!auth.authenticated) {
+    return auth.response;
+  }
+
   try {
     const result = await db.query(
       `SELECT DISTINCT country 

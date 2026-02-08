@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateSummary } from "@/lib/ai-service";
+import { checkAuth } from "@/lib/auth-helper";
 
 export async function POST(request: NextRequest) {
+  // Check authentication
+  const auth = await checkAuth();
+  if (!auth.authenticated) {
+    return auth.response;
+  }
+
   try {
     const { content } = await request.json();
 

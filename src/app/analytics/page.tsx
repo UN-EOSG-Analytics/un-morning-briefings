@@ -223,10 +223,10 @@ export default function AnalyticsPage() {
               </div>
               <div>
                 <h1 className="text-2xl font-semibold text-foreground">
-                  Analytics Dashboard
+                  {labelsData.analytics.title}
                 </h1>
                 <p className="text-sm text-slate-600">
-                  Comprehensive insights into your morning briefing entries
+                  {labelsData.analytics.subtitle}
                 </p>
               </div>
             </div>
@@ -238,18 +238,18 @@ export default function AnalyticsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Filter className="h-5 w-5" />
-              Filters
+              {labelsData.analytics.filters.title}
             </CardTitle>
-            <CardDescription>Filter data by date range, regions, and countries</CardDescription>
+            <CardDescription>{labelsData.analytics.filters.description}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <div>
                 <label className="mb-2 block text-sm font-medium text-slate-700">
-                  Region
+                  {labelsData.analytics.filters.region}
                 </label>
                 <SelectField
-                  placeholder="All regions"
+                  placeholder={labelsData.analytics.filters.allRegions}
                   value={selectedRegion}
                   onValueChange={setSelectedRegion}
                   options={regionOptions}
@@ -258,10 +258,10 @@ export default function AnalyticsPage() {
               </div>
               <div>
                 <label className="mb-2 block text-sm font-medium text-slate-700">
-                  Countries
+                  {labelsData.analytics.filters.countries}
                 </label>
                 <MultiSelectField
-                  placeholder="All countries"
+                  placeholder={labelsData.analytics.filters.allCountries}
                   value={selectedCountries}
                   onValueChange={setSelectedCountries}
                   options={countryOptions}
@@ -270,7 +270,7 @@ export default function AnalyticsPage() {
               </div>
               <div>
                 <label className="mb-2 block text-sm font-medium text-slate-700">
-                  Date Range
+                  {labelsData.analytics.filters.dateRange}
                 </label>
                 <div className="space-y-2">
                   <Slider
@@ -289,10 +289,10 @@ export default function AnalyticsPage() {
             </div>
             <div className="mt-4 flex gap-2">
               <Button onClick={handleApplyFilters} className="bg-un-blue hover:bg-un-blue/90">
-                Apply Filters
+                {labelsData.analytics.filters.apply}
               </Button>
               <Button onClick={handleClearFilters} variant="outline">
-                Clear All
+                {labelsData.analytics.filters.clearAll}
               </Button>
             </div>
           </CardContent>
@@ -307,7 +307,7 @@ export default function AnalyticsPage() {
                 size="sm"
                 onClick={() => setIsMapFullscreen(true)}
                 className="h-8 w-8 p-0 bg-white/90 hover:bg-white"
-                title="Expand to fullscreen"
+                title={labelsData.analytics.map.expandFullscreen}
               >
                 <Maximize2 className="h-4 w-4" />
               </Button>
@@ -316,7 +316,7 @@ export default function AnalyticsPage() {
                 size="sm"
                 onClick={() => setShowConnections(!showConnections)}
                 className={`h-8 w-8 p-0 ${showConnections ? 'bg-un-blue text-white hover:bg-un-blue/90' : 'bg-white/90 hover:bg-white'}`}
-                title="Toggle country connections"
+                title={labelsData.analytics.map.toggleConnections}
               >
                 <Network className="h-4 w-4" />
               </Button>
@@ -325,7 +325,7 @@ export default function AnalyticsPage() {
               <div className="flex items-center justify-center h-[400px]">
                 <div className="text-center">
                   <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-un-blue"></div>
-                  <p className="mt-2 text-sm text-slate-600">Loading map...</p>
+                  <p className="mt-2 text-sm text-slate-600">{labelsData.analytics.loading.map}</p>
                 </div>
               </div>
             ) : (
@@ -348,7 +348,7 @@ export default function AnalyticsPage() {
                   size="sm"
                   onClick={() => setIsMapFullscreen(false)}
                   className="h-8 w-8 p-0 bg-white/90 hover:bg-white"
-                  title="Exit fullscreen"
+                  title={labelsData.analytics.map.exitFullscreen}
                 >
                   <span className="text-xl leading-none">×</span>
                 </Button>
@@ -357,7 +357,7 @@ export default function AnalyticsPage() {
                   size="sm"
                   onClick={() => setShowConnections(!showConnections)}
                   className={`h-8 w-8 p-0 ${showConnections ? 'bg-un-blue text-white hover:bg-un-blue/90' : 'bg-white/90 hover:bg-white'}`}
-                  title="Toggle country connections"
+                  title={labelsData.analytics.map.toggleConnections}
                 >
                   <Network className="h-4 w-4" />
                 </Button>
@@ -366,7 +366,7 @@ export default function AnalyticsPage() {
                 <div className="flex items-center justify-center h-full">
                   <div className="text-center">
                     <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-un-blue"></div>
-                    <p className="mt-2 text-sm text-slate-600">Loading map...</p>
+                    <p className="mt-2 text-sm text-slate-600">{labelsData.analytics.loading.map}</p>
                   </div>
                 </div>
               ) : (
@@ -384,7 +384,7 @@ export default function AnalyticsPage() {
           <div className="flex items-center justify-center py-12">
             <div className="text-center">
               <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-slate-200 border-t-un-blue"></div>
-              <p className="mt-4 text-sm text-slate-600">Loading analytics...</p>
+              <p className="mt-4 text-sm text-slate-600">{labelsData.analytics.loading.data}</p>
             </div>
           </div>
         ) : analyticsData && analyticsData.totalStats ? (
@@ -395,7 +395,7 @@ export default function AnalyticsPage() {
                 <CardHeader className="pb-3">
                   <CardTitle className="flex items-center gap-2 text-sm font-medium text-slate-600">
                     <FileText className="h-4 w-4" />
-                    Total Entries
+                    {labelsData.analytics.stats.totalEntries}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -411,7 +411,7 @@ export default function AnalyticsPage() {
                 <CardHeader className="pb-3">
                   <CardTitle className="flex items-center gap-2 text-sm font-medium text-slate-600">
                     <Globe className="h-4 w-4" />
-                    Regions Covered
+                    {labelsData.analytics.stats.regionsCovered}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -425,14 +425,14 @@ export default function AnalyticsPage() {
                 <CardHeader className="pb-3">
                   <CardTitle className="flex items-center gap-2 text-sm font-medium text-slate-600">
                     <TrendingUp className="h-4 w-4" />
-                    Avg Entry Length
+                    {labelsData.analytics.stats.avgEntryLength}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold text-slate-900">
                     {analyticsData.totalStats?.avg_entry_length
-                      ? `${Math.round(parseFloat(analyticsData.totalStats.avg_entry_length) / 5)} words`
-                      : "0 words"}
+                      ? `${Math.round(parseFloat(analyticsData.totalStats.avg_entry_length) / 5)} ${labelsData.analytics.stats.words}`
+                      : `0 ${labelsData.analytics.stats.words}`}
                   </div>
                 </CardContent>
               </Card>
@@ -441,7 +441,7 @@ export default function AnalyticsPage() {
                 <CardHeader className="pb-3">
                   <CardTitle className="flex items-center gap-2 text-sm font-medium text-slate-600">
                     <Calendar className="h-4 w-4" />
-                    Contributors
+                    {labelsData.analytics.stats.contributors}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -457,8 +457,8 @@ export default function AnalyticsPage() {
               {/* Regional Distribution */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Regional Distribution</CardTitle>
-                  <CardDescription>Total entries by region</CardDescription>
+                  <CardTitle>{labelsData.analytics.charts.regionalDistribution}</CardTitle>
+                  <CardDescription>{labelsData.analytics.charts.regionalDistributionDesc}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
@@ -482,8 +482,8 @@ export default function AnalyticsPage() {
               {/* Top 5 Regions */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Top 5 Regions</CardTitle>
-                  <CardDescription>Most active regions in selected period</CardDescription>
+                  <CardTitle>{labelsData.analytics.charts.topRegions}</CardTitle>
+                  <CardDescription>{labelsData.analytics.charts.topRegionsDesc}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
@@ -517,8 +517,8 @@ export default function AnalyticsPage() {
               {/* Category Distribution */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Category Distribution</CardTitle>
-                  <CardDescription>Entries by category</CardDescription>
+                  <CardTitle>{labelsData.analytics.charts.categoryDistribution}</CardTitle>
+                  <CardDescription>{labelsData.analytics.charts.categoryDistributionDesc}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
@@ -542,8 +542,8 @@ export default function AnalyticsPage() {
               {/* Entry Length Distribution */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Entry Length Distribution</CardTitle>
-                  <CardDescription>Entries by length category</CardDescription>
+                  <CardTitle>{labelsData.analytics.charts.entryLengthDistribution}</CardTitle>
+                  <CardDescription>{labelsData.analytics.charts.entryLengthDistributionDesc}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
@@ -567,8 +567,8 @@ export default function AnalyticsPage() {
               {/* Top Countries */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Top 10 Countries</CardTitle>
-                  <CardDescription>Most mentioned countries</CardDescription>
+                  <CardTitle>{labelsData.analytics.charts.topCountries}</CardTitle>
+                  <CardDescription>{labelsData.analytics.charts.topCountriesDesc}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
@@ -592,8 +592,8 @@ export default function AnalyticsPage() {
               {/* Monthly Entry Trends */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Monthly Entry Trends</CardTitle>
-                  <CardDescription>Total entries per month</CardDescription>
+                  <CardTitle>{labelsData.analytics.charts.monthlyTrends}</CardTitle>
+                  <CardDescription>{labelsData.analytics.charts.monthlyTrendsDesc}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
@@ -616,7 +616,7 @@ export default function AnalyticsPage() {
                         strokeWidth={2}
                         dot={{ fill: "#0066CC", r: 4 }}
                         activeDot={{ r: 6 }}
-                        name="Entries"
+                        name={labelsData.analytics.charts.entries}
                       />
                     </LineChart>
                   </ResponsiveContainer>
@@ -628,8 +628,8 @@ export default function AnalyticsPage() {
             <div className="mt-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>Regional Activity Over Time</CardTitle>
-                  <CardDescription>Daily entry distribution by region (weekdays only)</CardDescription>
+                  <CardTitle>{labelsData.analytics.charts.regionalActivity}</CardTitle>
+                  <CardDescription>{labelsData.analytics.charts.regionalActivityDesc}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={400}>
@@ -680,10 +680,9 @@ export default function AnalyticsPage() {
           </>
         ) : (
           <div className="py-12 text-center">
-            <p className="text-slate-600 mb-2">No analytics data available</p>
+            <p className="text-slate-600 mb-2">{labelsData.analytics.empty.title}</p>
             <p className="text-sm text-slate-500">
-              This could mean there are no entries in the database, or there was an error loading the data.
-              Check the browser console for more details.
+              {labelsData.analytics.empty.description}
             </p>
           </div>
         )}

@@ -16,6 +16,7 @@ import { useSession } from "next-auth/react";
 import { ExportDailyBriefingDialog } from "@/components/ExportDailyBriefingDialog";
 import { getCurrentBriefingDate } from "@/lib/useEntriesFilter";
 import { formatDateDesktop } from "@/lib/format-date";
+import labels from "@/lib/labels.json";
 
 export default function HomePage() {
   const [showExportDialog, setShowExportDialog] = useState(false);
@@ -30,10 +31,10 @@ export default function HomePage() {
         <div className="mb-8 flex flex-col gap-4 sm:mb-12 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
           <div className="px-2 text-left sm:px-0">
             <h1 className="mb-1 text-3xl font-bold text-foreground sm:text-4xl">
-                Hello, {session?.user?.name?.split(" ")[0] || "..."}!
+                {labels.home.greeting.replace("{name}", session?.user?.name?.split(" ")[0] || "...")}
             </h1>
             <p className="hidden text-base text-slate-600 sm:block sm:text-lg">
-              Create and manage Morning Meeting Update entries
+              {labels.home.subtitle}
             </p>
           </div>
             <Button
@@ -43,7 +44,7 @@ export default function HomePage() {
               className="w-full justify-center sm:h-10 sm:w-auto sm:px-6"
             >
               <FileDown className="h-4 w-4" />
-              <span className="sm:inline">Export Daily Briefing</span>
+              <span className="sm:inline">{labels.entries.actions.exportBriefing}</span>
             </Button>
         </div>
 
@@ -58,10 +59,10 @@ export default function HomePage() {
                   </div>
                   <div className="flex flex-1 flex-col">
                     <h2 className="text-lg font-semibold text-foreground">
-                      Create Entry
+                      {labels.home.cards.create.title}
                     </h2>
                     <p className="text-xs text-slate-600">
-                      Submit a new morning meeting briefing entry
+                      {labels.home.cards.create.descriptionShort}
                     </p>
                   </div>
                 </div>
@@ -70,18 +71,17 @@ export default function HomePage() {
                     <PlusCircle className="h-8 w-8 text-white" />
                   </div>
                   <h2 className="mt-4 text-xl font-semibold text-foreground sm:text-2xl">
-                    Create Entry
+                    {labels.home.cards.create.title}
                   </h2>
                   <p className="mt-2 text-sm text-slate-600 sm:text-base">
-                    Submit a new morning meeting briefing entry with key updates
-                    and information
+                    {labels.home.cards.create.descriptionLong}
                   </p>
                 </div>
                 <Button
                   className="mt-auto hidden w-full bg-un-blue hover:bg-un-blue/90 sm:flex"
                   size="lg"
                 >
-                  Create
+                  {labels.home.cards.create.button}
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </div>
@@ -98,11 +98,10 @@ export default function HomePage() {
                   </div>
                   <div className="flex flex-1 flex-col">
                     <h2 className="text-lg font-semibold text-foreground">
-                      Current Briefing{" "}
+                      {labels.home.cards.currentBriefing.title}{" "}
                     </h2>
                     <p className="text-xs text-slate-600">
-                      View briefing entries for{" "}
-                      {formatDateDesktop(currentBriefingDate)}
+                      {labels.home.cards.currentBriefing.descriptionShort.replace("{date}", formatDateDesktop(currentBriefingDate))}
                     </p>
                   </div>
                 </div>
@@ -111,10 +110,10 @@ export default function HomePage() {
                     <FileText className="h-8 w-8 text-white" />
                   </div>
                   <h2 className="mt-4 text-xl font-semibold text-foreground sm:text-2xl">
-                    Current Briefing
+                    {labels.home.cards.currentBriefing.title}
                   </h2>
                   <p className="mt-2 text-sm text-slate-600 sm:text-base">
-                    View briefing entries for the Morning Meeting on{" "}
+                    {labels.home.cards.currentBriefing.descriptionLong.replace("{date}", "")}
                     <span className="font-semibold">
                       {formatDateDesktop(currentBriefingDate)}
                     </span>
@@ -125,7 +124,7 @@ export default function HomePage() {
                   className="mt-auto hidden w-full bg-slate-700 hover:bg-slate-700/90 sm:flex"
                   size="lg"
                 >
-                  View
+                  {labels.home.cards.currentBriefing.button}
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </div>
@@ -142,9 +141,9 @@ export default function HomePage() {
                   </div>
                   <div className="flex flex-1 flex-col">
                     <h2 className="text-lg font-semibold text-foreground">
-                      Archive
+                      {labels.home.cards.archive.title}
                     </h2>
-                    <p className="text-xs text-slate-600">Browse all entries</p>
+                    <p className="text-xs text-slate-600">{labels.home.cards.archive.descriptionShort}</p>
                   </div>
                 </div>
                 <div className="hidden flex-col sm:flex">
@@ -152,18 +151,17 @@ export default function HomePage() {
                     <Archive className="h-8 w-8 text-slate-700" />
                   </div>
                   <h2 className="mt-4 text-xl font-semibold text-foreground sm:text-2xl">
-                    Archive
+                    {labels.home.cards.archive.title}
                   </h2>
                   <p className="mt-2 text-sm text-slate-600 sm:text-base">
-                    Browse, filter, and manage all submitted morning meeting
-                    briefing entries
+                    {labels.home.cards.archive.descriptionLong}
                   </p>
                 </div>
                 <Button
                   className="mt-auto hidden w-full bg-slate-200 text-slate-700 hover:bg-slate-300 sm:flex"
                   size="lg"
                 >
-                  View All
+                  {labels.home.cards.archive.button}
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </div>

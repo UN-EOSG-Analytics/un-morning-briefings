@@ -36,6 +36,7 @@ import { saveAs } from "file-saver";
 import { FileText, Calendar, Mail, Download, Eye } from "lucide-react";
 import { parseHtmlContent } from "@/lib/html-to-docx";
 import { usePopup } from "@/lib/popup-context";
+import { formatDateLong, formatDateFull, getCurrentDateTime } from "@/lib/format-date";
 import type { MorningMeetingEntry } from "@/types/morning-meeting";
 
 interface ExportDialogProps {
@@ -43,88 +44,8 @@ interface ExportDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-/**
- * Format a date string (YYYY-MM-DD) to long format without timezone conversion
- * Example: "2026-01-15" → "Wednesday, January 15, 2026"
- */
-const formatDateLong = (dateStr: string): string => {
-  const [year, month, day] = dateStr.split("-").map(Number);
-  const monthNames = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
-  ];
-  const dayNames = [
-    "Sunday",
-    "Monday",
-    "Tuesday",
-    "Wednesday",
-    "Thursday",
-    "Friday",
-    "Saturday",
-  ];
-
-  // Create date object without timezone issues (use UTC components)
-  const date = new Date(Date.UTC(year, month - 1, day));
-  const dayOfWeek = dayNames[date.getUTCDay()];
-
-  return `${dayOfWeek}, ${monthNames[month - 1]} ${day}, ${year}`;
-};
-
-/**
- * Format a source date (ISO or YYYY-MM-DD format) to readable format
- * Example: "2026-01-20T05:00:00.000Z" or "2026-01-20" → "January 20, 2026"
- */
-const formatSourceDate = (dateStr: string): string => {
-  const monthNames = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
-  ];
-
-  // Extract YYYY-MM-DD from ISO format or direct date string
-  const dateMatch = dateStr.match(/(\d{4})-(\d{2})-(\d{2})/);
-  if (!dateMatch) return dateStr;
-
-  const [, year, month, day] = dateMatch;
-  const monthNum = parseInt(month, 10) - 1;
-
-  return `${monthNames[monthNum]} ${parseInt(day, 10)}, ${year}`;
-};
-
-/**
- * Get current datetime string without timezone conversion
- */
-const getCurrentDateTime = (): string => {
-  const now = new Date();
-  const month = now.getMonth() + 1;
-  const day = now.getDate();
-  const year = now.getFullYear();
-  const hours = now.getHours();
-  const minutes = now.getMinutes();
-  const ampm = hours >= 12 ? "PM" : "AM";
-  const displayHours = hours % 12 || 12;
-
-  return `${month}/${day}/${year}, ${displayHours}:${String(minutes).padStart(2, "0")} ${ampm}`;
-};
+// formatDateLong, formatDateFull (replaces formatSourceDate), getCurrentDateTime
+// are now imported from @/lib/format-date
 
 const createSeparator = (
   length: number = 63,
@@ -692,7 +613,7 @@ const buildDocumentChildren = (
             if (entry.sourceDate) {
               sourceChildren.push(
                 new TextRun({
-                  text: formatSourceDate(entry.sourceDate),
+                  text: formatDateFull(entry.sourceDate),
                   italics: true,
                   font: "Roboto",
                 }),

@@ -51,6 +51,20 @@ const MONTH_NAMES = [
   "Nov",
   "Dec",
 ];
+const MONTH_NAMES_FULL = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
 const WEEKDAY_NAMES = [
   "Sunday",
   "Monday",
@@ -114,4 +128,45 @@ export function formatTime(date: string | Date): string {
   const dateStr = typeof date === "string" ? date : date.toISOString();
   const { hour, minute } = parseDateString(dateStr);
   return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+}
+
+/**
+ * Format date with full month name: "January 14, 2026"
+ * Used in documents, emails, and source date display.
+ * NO timezone conversion.
+ */
+export function formatDateFull(date: string | Date): string {
+  const dateStr = typeof date === "string" ? date : date.toISOString();
+  const { year, month, day } = parseDateString(dateStr);
+  if (!year || !month) return dateStr.toString();
+  return `${MONTH_NAMES_FULL[month - 1]} ${day}, ${year}`;
+}
+
+/**
+ * Format date with weekday and full month: "Wednesday, January 14, 2026"
+ * Used in document headers and briefing titles.
+ * NO timezone conversion.
+ */
+export function formatDateLong(date: string | Date): string {
+  const dateStr = typeof date === "string" ? date : date.toISOString();
+  const { year, month, day } = parseDateString(dateStr);
+  if (!year || !month) return dateStr.toString();
+  const dateObj = new Date(year, month - 1, day);
+  const weekday = WEEKDAY_NAMES[dateObj.getDay()];
+  return `${weekday}, ${MONTH_NAMES_FULL[month - 1]} ${day}, ${year}`;
+}
+
+/**
+ * Format current date/time as localized string: "1/15/2026, 3:45 PM"
+ * Used for document generation timestamps.
+ */
+export function getCurrentDateTime(): string {
+  return new Date().toLocaleString("en-US", {
+    year: "numeric",
+    month: "numeric",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
 }

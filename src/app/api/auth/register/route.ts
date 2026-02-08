@@ -3,6 +3,7 @@ import { query } from "@/lib/db";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { sendVerificationEmail } from "@/lib/email-service";
+import labels from "@/lib/labels.json";
 
 export async function POST(req: NextRequest) {
   try {
@@ -12,7 +13,7 @@ export async function POST(req: NextRequest) {
     // Validate all fields
     if (!email || !password || !firstName || !lastName || !team) {
       return NextResponse.json(
-        { error: "All fields are required" },
+        { error: labels.auth.validation.allFieldsRequired },
         { status: 400 },
       );
     }
@@ -20,7 +21,7 @@ export async function POST(req: NextRequest) {
     // Validate email domain
     if (!email.endsWith("@un.org")) {
       return NextResponse.json(
-        { error: "Only @un.org email addresses are allowed" },
+        { error: labels.auth.validation.onlyUnEmail },
         { status: 400 },
       );
     }
@@ -33,7 +34,7 @@ export async function POST(req: NextRequest) {
 
     if (whitelistCheck.rows.length === 0) {
       return NextResponse.json(
-        { error: "This email address is not authorized to register. Please contact an administrator." },
+        { error: labels.auth.validation.emailNotAuthorized },
         { status: 403 },
       );
     }
@@ -41,7 +42,7 @@ export async function POST(req: NextRequest) {
     // Validate password strength
     if (password.length < 8) {
       return NextResponse.json(
-        { error: "Password must be at least 8 characters long" },
+        { error: labels.auth.validation.passwordMinLength },
         { status: 400 },
       );
     }
@@ -54,7 +55,7 @@ export async function POST(req: NextRequest) {
 
     if (existingUser.rows.length > 0) {
       return NextResponse.json(
-        { error: "An account with this email already exists" },
+        { error: labels.auth.validation.accountExists },
         { status: 409 },
       );
     }
@@ -98,14 +99,13 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message:
-        "Registration successful. Please check your email to verify your account.",
+      message: labels.auth.validation.registrationSuccess,
       userId: result.rows[0].id,
     });
   } catch (error) {
     console.error("Registration error:", error);
     return NextResponse.json(
-      { error: "An error occurred during registration" },
+      { error: labels.auth.validation.registrationFailed },
       { status: 500 },
     );
   }

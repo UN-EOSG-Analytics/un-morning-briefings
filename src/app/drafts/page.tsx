@@ -8,6 +8,7 @@ import { FileEdit } from "lucide-react";
 import { EntriesTable } from "@/components/EntriesTable";
 import { usePopup } from "@/lib/popup-context";
 import type { MorningMeetingEntry } from "@/types/morning-meeting";
+import labels from "@/lib/labels.json";
 
 export default function DraftsPage() {
   const { data: session } = useSession();
@@ -31,14 +32,14 @@ export default function DraftsPage() {
 
   const handleDelete = async (id: string) => {
     const confirmed = await showConfirm(
-      "Delete Draft",
-      "Are you sure you want to delete this draft? This action cannot be undone.",
+      labels.entries.confirm.deleteDraftTitle,
+      labels.entries.confirm.deleteDraftMessage,
     );
 
     if (confirmed) {
       try {
         await deleteEntry(id);
-        showSuccess("Deleted", "Draft deleted successfully");
+        showSuccess(labels.entries.success.deleted, labels.entries.success.draftDeleted);
         await loadEntries();
       } catch (error) {
         const errorMessage =
@@ -65,7 +66,7 @@ export default function DraftsPage() {
         );
       }
 
-      showSuccess("Success", "Draft submitted successfully!");
+      showSuccess(labels.common.success, labels.entries.success.draftSubmitted);
       await loadEntries();
     } catch (error) {
       const errorMessage =
@@ -87,10 +88,10 @@ export default function DraftsPage() {
                 </div>
                 <div>
                   <h1 className="text-2xl font-semibold text-foreground">
-                    My Drafts
+                    {labels.entries.drafts.title}
                   </h1>
                   <p className="text-sm text-slate-600">
-                    View and manage your unsubmitted draft entries
+                    {labels.entries.drafts.subtitle}
                   </p>
                 </div>
               </div>
@@ -103,7 +104,7 @@ export default function DraftsPage() {
             onDelete={handleDelete}
             onSubmit={handleSubmit}
             showApprovedColumn={false}
-            emptyMessage="No drafts found."
+            emptyMessage={labels.entries.empty.noDrafts}
             resultLabel="drafts"
             hideCommentAction={true}
           />

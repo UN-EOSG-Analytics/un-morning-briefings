@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Mail, ArrowLeft, CheckCircle2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import labels from "@/lib/labels.json";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -34,10 +35,10 @@ export default function ForgotPasswordPage() {
         setSuccess(true);
         setEmail(""); // Clear the form
       } else {
-        setError(data.message || "An error occurred. Please try again.");
+        setError(data.message || labels.auth.messages.genericError);
       }
     } catch {
-      setError("An error occurred. Please try again.");
+      setError(labels.auth.messages.genericError);
     } finally {
       setIsLoading(false);
     }
@@ -51,10 +52,10 @@ export default function ForgotPasswordPage() {
             <Mail className="h-8 w-8 text-white" />
           </div>
           <h1 className="text-3xl font-bold text-slate-900">
-            Reset Your Password
+            {labels.auth.forgotPassword.title}
           </h1>
           <p className="mt-2 text-sm text-slate-600">
-            Enter your email address and we'll send you a link to reset your password.
+            {labels.auth.forgotPassword.subtitle}
           </p>
         </div>
 
@@ -65,11 +66,10 @@ export default function ForgotPasswordPage() {
                 <CheckCircle2 className="h-5 w-5 flex-shrink-0 text-green-600" />
                 <div>
                   <p className="text-sm font-medium text-green-900">
-                    Check your email
+                    {labels.auth.forgotPassword.successTitle}
                   </p>
                   <p className="mt-1 text-xs text-green-700">
-                    If an account exists with that email, we've sent a password reset link.
-                    The link will expire in 30 minutes.
+                    {labels.auth.forgotPassword.successMessage}
                   </p>
                 </div>
               </div>
@@ -78,7 +78,7 @@ export default function ForgotPasswordPage() {
                 className="w-full bg-un-blue hover:bg-un-blue/90"
               >
                 <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Login
+                {labels.common.backToLogin}
               </Button>
             </div>
           ) : (
@@ -106,11 +106,11 @@ export default function ForgotPasswordPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="block w-full rounded-lg border border-slate-300 py-2.5 pl-10 pr-3 text-slate-900 placeholder-slate-400 focus:border-un-blue focus:outline-none focus:ring-2 focus:ring-un-blue/20"
-                    placeholder="your.email@un.org"
+                    placeholder={labels.auth.login.emailPlaceholder}
                   />
                 </div>
                 <p className="mt-1 text-xs text-slate-500">
-                  Must be a valid @un.org email address
+                  {labels.auth.forgotPassword.emailHelper}
                 </p>
               </div>
 
@@ -120,7 +120,7 @@ export default function ForgotPasswordPage() {
                   disabled={isLoading}
                   className="w-full bg-un-blue hover:bg-un-blue/90"
                 >
-                  {isLoading ? "Sending..." : "Send Reset Link"}
+                  {isLoading ? labels.auth.forgotPassword.submitLoading : labels.auth.forgotPassword.submitButton}
                 </Button>
 
                 <Link href="/login" className="block">
@@ -130,7 +130,7 @@ export default function ForgotPasswordPage() {
                     className="w-full"
                   >
                     <ArrowLeft className="mr-2 h-4 w-4" />
-                    Back to Login
+                    {labels.common.backToLogin}
                   </Button>
                 </Link>
               </div>
@@ -140,8 +140,7 @@ export default function ForgotPasswordPage() {
 
         <div className="mt-6 text-center">
           <p className="text-xs text-slate-500">
-            For security reasons, password reset links expire after 30 minutes
-            and can only be used once.
+            {labels.auth.forgotPassword.securityNote}
           </p>
         </div>
       </div>

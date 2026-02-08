@@ -306,7 +306,7 @@ export function MorningMeetingForm({
       }
     });
 
-    return [{ value: "none", label: "None" }, ...matchingEntries, ...otherEntries];
+    return [{ value: "none", label: labelsData.form.labels.none }, ...matchingEntries, ...otherEntries];
   }, [userEntries, formData.country, formData.region]);
 
   // Track if form has been modified
@@ -575,28 +575,28 @@ export function MorningMeetingForm({
     const newErrors: FormFieldError = {};
 
     if (!formData.region) {
-      newErrors.region = "Region is required";
+      newErrors.region = labelsData.form.validation.regionRequired;
     }
 
     if (!formData.headline.trim()) {
-      newErrors.headline = "Headline is required";
+      newErrors.headline = labelsData.form.validation.headlineRequired;
     }
 
     if (!formData.category) {
-      newErrors.category = "Category is required";
+      newErrors.category = labelsData.form.validation.categoryRequired;
     }
 
     if (!formData.priority) {
-      newErrors.priority = "Priority is required";
+      newErrors.priority = labelsData.form.validation.priorityRequired;
     }
 
     if (!formData.date) {
-      newErrors.date = "Date is required";
+      newErrors.date = labelsData.form.validation.dateRequired;
     }
 
     const entryValue = formData.entry.trim();
     if (!entryValue || entryValue.length < 50) {
-      newErrors.entry = "Entry must be at least 50 characters";
+      newErrors.entry = labelsData.form.validation.entryMinLength;
     }
 
     setErrors(newErrors);
@@ -642,8 +642,8 @@ export function MorningMeetingForm({
 
   const handleReset = async () => {
     const confirmed = await showConfirm(
-      "Reset Form",
-      "Are you sure you want to reset the form? All entered data will be lost.",
+      labelsData.form.popups.resetTitle,
+      labelsData.form.popups.resetMessage,
     );
 
     if (confirmed) {
@@ -670,8 +670,8 @@ export function MorningMeetingForm({
 
   const handleCancel = async () => {
     const confirmed = await showConfirm(
-      "Cancel",
-      "Are you sure you want to cancel? Any unsaved changes will be lost.",
+      labelsData.form.popups.cancelTitle,
+      labelsData.form.popups.cancelMessage,
     );
 
     if (confirmed) {
@@ -686,7 +686,7 @@ export function MorningMeetingForm({
 
   const handleAutoFill = async () => {
     if (!autoFillContent.trim()) {
-      showWarning("No Content", "Please paste some content to analyze");
+      showWarning(labelsData.form.popups.noContent, labelsData.form.popups.noContentMessage);
       return;
     }
 
@@ -709,9 +709,9 @@ export function MorningMeetingForm({
           errorMessage.includes("GEMINI_API_KEY") ||
           errorMessage.includes("not configured")
         ) {
-          showWarning("AI Usage not enabled", "Please wait for Update");
+          showWarning(labelsData.form.popups.aiDisabled, labelsData.form.popups.aiDisabledMessage);
         } else {
-          showWarning("Auto-Fill Failed", errorMessage);
+          showWarning(labelsData.form.popups.autoFillFailed, errorMessage);
         }
         return;
       }
@@ -746,12 +746,12 @@ export function MorningMeetingForm({
       setShowAutoFillDialog(false);
       setAutoFillContent("");
       showSuccess(
-        "Form Auto-Filled",
-        "The form has been filled with AI-analyzed data. Please review and adjust as needed.",
+        labelsData.form.popups.autoFillSuccess,
+        labelsData.form.popups.autoFillSuccessMessage,
       );
     } catch (error) {
       console.error("[AUTO-FILL] Error:", error);
-      showWarning("AI Usage not enabled", "Please wait for Update");
+      showWarning(labelsData.form.popups.aiDisabled, labelsData.form.popups.aiDisabledMessage);
     } finally {
       setIsAutoFilling(false);
     }
@@ -777,11 +777,10 @@ export function MorningMeetingForm({
                 </div>
                 <div className="min-w-0">
                   <CardTitle className="text-lg sm:text-2xl">
-                    Morning Meeting Form
+                    {labelsData.form.title}
                   </CardTitle>
                   <CardDescription className="text-xs sm:text-sm">
-                    Submit a new entry to be used in the next Morning Meeting
-                    Update
+                    {labelsData.form.subtitle}
                   </CardDescription>
                 </div>
               </div>
@@ -791,10 +790,10 @@ export function MorningMeetingForm({
                 variant="outline"
                 onClick={() => setShowAutoFillDialog(true)}
                 className="shrink-0"
-                title="Paste content to auto-fill form with AI"
+                title={labelsData.form.autoFill.dialogTitle}
               >
                 <Sparkles className="mr-1.5 h-4 w-4" />
-                <span className="hidden sm:inline">Auto-Fill</span>
+                <span className="hidden sm:inline">{labelsData.form.actions.autoFill}</span>
               </Button>
             </div>
             <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-500 sm:mt-4 sm:gap-4">
@@ -805,7 +804,7 @@ export function MorningMeetingForm({
               {draftSaved && (
                 <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-amber-800">
                   <Check className="h-3 w-3" />
-                  Draft Saved
+                  {labelsData.form.actions.draftSaved}
                 </span>
               )}
             </div>
@@ -821,8 +820,8 @@ export function MorningMeetingForm({
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 md:grid-cols-4">
                   {/* Category */}
                   <SelectField
-                    label="Category"
-                    placeholder="Select category..."
+                    label={labelsData.form.labels.category}
+                    placeholder={labelsData.form.placeholders.category}
                     value={formData.category}
                     onValueChange={(value) =>
                       handleSelectChange("category", value)
@@ -837,8 +836,8 @@ export function MorningMeetingForm({
 
                   {/* Priority */}
                   <SelectField
-                    label="Priority"
-                    placeholder="Select priority..."
+                    label={labelsData.form.labels.priority}
+                    placeholder={labelsData.form.placeholders.priority}
                     value={formData.priority}
                     onValueChange={(value) =>
                       handleSelectChange(
@@ -853,8 +852,8 @@ export function MorningMeetingForm({
 
                   {/* Region */}
                   <SelectField
-                    label="Region"
-                    placeholder="Select region..."
+                    label={labelsData.form.labels.region}
+                    placeholder={labelsData.form.placeholders.region}
                     value={formData.region}
                     onValueChange={(value) =>
                       handleSelectChange("region", value)
@@ -867,8 +866,8 @@ export function MorningMeetingForm({
 
                   {/* Tag */}
                   <MultiSelectField
-                    label="Tags"
-                    placeholder="Select tags..."
+                    label={labelsData.form.labels.tags}
+                    placeholder={labelsData.form.placeholders.tags}
                     value={
                       Array.isArray(formData.country)
                         ? formData.country
@@ -889,14 +888,14 @@ export function MorningMeetingForm({
               {/* Entry Details Section */}
               <section className="space-y-4 border-b pb-4 sm:pb-6">
                 <h2 className="text-xs font-semibold tracking-wider text-slate-700 uppercase">
-                  Entry Details
+                  {labelsData.form.sections.entryDetails}
                 </h2>
 
                 <div className="grid grid-cols-4 gap-3 sm:gap-4">
                   {/* Headline - Full width */}
                   <div className="col-span-4 space-y-2">
                     <label className="text-sm font-medium text-slate-700">
-                      Headline <span className="text-red-500">*</span>
+                      {labelsData.form.labels.headline} <span className="text-red-500">*</span>
                       <span className="ml-2 text-xs text-slate-500">
                         ({formData.headline.length}/300)
                       </span>
@@ -905,7 +904,7 @@ export function MorningMeetingForm({
                       name="headline"
                       value={formData.headline}
                       onChange={handleInputChange}
-                      placeholder="Enter a concise, descriptive headline..."
+                      placeholder={labelsData.form.placeholders.headline}
                       maxLength={300}
                       rows={1}
                       className={`w-full resize-none overflow-hidden rounded border px-3 py-2 text-sm transition outline-none ${
@@ -937,7 +936,7 @@ export function MorningMeetingForm({
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <label className="text-sm font-medium text-slate-700">
-                      Entry Content <span className="text-red-500">*</span>
+                      {labelsData.form.labels.entryContent} <span className="text-red-500">*</span>
                     </label>
                     {/* Text Mode Toggle Switch */}
                     <div className="inline-flex gap-1 rounded-lg border border-slate-300 bg-slate-100 p-1">
@@ -954,7 +953,7 @@ export function MorningMeetingForm({
                         }`}
                       >
                         <Type className="h-3.5 w-3.5" />
-                        Plain Text
+                        {labelsData.form.editorMode.plainText}
                       </button>
                       <button
                         type="button"
@@ -969,7 +968,7 @@ export function MorningMeetingForm({
                         }`}
                       >
                         <Zap className="h-3.5 w-3.5" />
-                        Rich Text
+                        {labelsData.form.editorMode.richText}
                       </button>
                     </div>
                   </div>
@@ -990,7 +989,7 @@ export function MorningMeetingForm({
                           });
                         }
                       }}
-                      placeholder="Provide a comprehensive summary of the development. Include key facts, actors involved, implications, and any recommended actions..."
+                      placeholder={labelsData.form.placeholders.entry}
                       error={!!errors.entry}
                       minHeight="min-h-[250px]"
                     />
@@ -1010,7 +1009,7 @@ export function MorningMeetingForm({
                           });
                         }
                       }}
-                      placeholder="Provide a comprehensive summary of the development. Include key facts, actors involved, implications, and any recommended actions..."
+                      placeholder={labelsData.form.placeholders.entry}
                       className={`min-h-[250px] w-full resize-none rounded border px-3 py-2 text-sm transition outline-none ${
                         errors.entry
                           ? "border-red-500 bg-red-50 focus:border-red-500 focus:ring-2 focus:ring-red-500/15"
@@ -1031,19 +1030,19 @@ export function MorningMeetingForm({
                 {/* Source Data Row: Name, Date, URL */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                   <AutocompleteField
-                    label="Source Name"
+                    label={labelsData.form.labels.sourceName}
                     optional
                     value={formData.sourceName || ""}
                     onChange={(value) =>
                       setFormData((prev) => ({ ...prev, sourceName: value }))
                     }
                     suggestions={sourceNames}
-                    placeholder="Add source name..."
+                    placeholder={labelsData.form.placeholders.sourceName}
                   />
 
                   <TextField
                     type="date"
-                    label="Source Date"
+                    label={labelsData.form.labels.sourceDate}
                     optional
                     name="sourceDate"
                     value={formData.sourceDate || ""}
@@ -1052,7 +1051,7 @@ export function MorningMeetingForm({
 
                   <TextField
                     type="url"
-                    label="Source URL"
+                    label={labelsData.form.labels.sourceUrl}
                     optional
                     name="sourceUrl"
                     value={formData.sourceUrl || ""}
@@ -1078,7 +1077,7 @@ export function MorningMeetingForm({
                       htmlFor="puNoteCheck"
                       className="text-sm font-medium text-slate-700"
                     >
-                      PU Note/Comment{" "}
+                      {labelsData.form.labels.puNote}{" "}
                       <span className="text-xs text-slate-500">(optional)</span>
                     </label>
                   </div>
@@ -1089,7 +1088,7 @@ export function MorningMeetingForm({
                         setFormData((prev) => ({ ...prev, puNote: value }));
                         setHasUnsavedChanges(true);
                       }}
-                      placeholder="Add Political Unit note or comment..."
+                      placeholder={labelsData.form.placeholders.puNote}
                       minHeight="min-h-[120px]"
                       minimalMode={true}
                     />
@@ -1105,7 +1104,7 @@ export function MorningMeetingForm({
                   className="-m-2 flex items-center gap-2 rounded p-2 transition hover:bg-slate-50"
                 >
                   <h2 className="text-xs font-semibold tracking-wider text-slate-700 uppercase">
-                    Metadata
+                    {labelsData.form.sections.metadata}
                   </h2>
                   <ChevronDown
                     className={`h-4 w-4 text-slate-600 transition-transform ${
@@ -1117,7 +1116,7 @@ export function MorningMeetingForm({
                 {showMetadata && (
                   <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <TextField
-                      label="Author"
+                      label={labelsData.form.labels.author}
                       value={formData.author || "Current User"}
                       readOnly
                       inputClassName="bg-slate-100 text-slate-600"
@@ -1125,7 +1124,7 @@ export function MorningMeetingForm({
 
                     <TextField
                       type="date"
-                      label="Creation Date"
+                      label={labelsData.form.labels.creationDate}
                       name="dateOnly"
                       value={formData.date.split("T")[0] || ""}
                       onChange={handleInputChange}
@@ -1134,7 +1133,7 @@ export function MorningMeetingForm({
 
                     <TextField
                       type="text"
-                      label="Creation Time"
+                      label={labelsData.form.labels.creationTime}
                       name="timeOnly"
                       placeholder="HH:MM"
                       value={(formData.date.split("T")[1] || "").slice(0, 5)}
@@ -1146,7 +1145,7 @@ export function MorningMeetingForm({
                 {showMetadata && (
                   <div className="mt-4">
                     <SelectField
-                      label="Previous Entry"
+                      label={labelsData.form.labels.previousEntry}
                       value={formData.previousEntryId || "none"}
                       onValueChange={(value) =>
                         setFormData((prev) => ({ ...prev, previousEntryId: value === "none" ? null : value }))
@@ -1160,7 +1159,7 @@ export function MorningMeetingForm({
                 {showMetadata && (
                   <div className="mt-3 flex items-center gap-1 text-xs text-slate-500">
                     <Info className="h-3.5 w-3.5" />
-                    Author automatically populated from your account
+                    {labelsData.form.popups.authorHint}
                   </div>
                 )}
               </section>
@@ -1179,7 +1178,7 @@ export function MorningMeetingForm({
               className="w-full justify-center gap-2 sm:w-auto"
             >
               <Save className="h-4 w-4" />
-              Save Draft
+              {labelsData.form.actions.saveDraft}
             </Button>
             <Button
               type="button"
@@ -1189,7 +1188,7 @@ export function MorningMeetingForm({
               className="w-full justify-center gap-2 sm:w-auto"
             >
               <RotateCcw className="h-4 w-4" />
-              Reset
+              {labelsData.form.actions.reset}
             </Button>
           </div>
           <div className="order-1 flex flex-col gap-2 sm:order-2 sm:flex-row">
@@ -1201,7 +1200,7 @@ export function MorningMeetingForm({
               className="w-full justify-center gap-2 sm:w-auto"
             >
               <X className="h-4 w-4" />
-              Cancel
+              {labelsData.form.actions.cancel}
             </Button>
             <Button
               type="submit"
@@ -1213,11 +1212,11 @@ export function MorningMeetingForm({
               <Send className="h-4 w-4" />
               {isSubmitting
                 ? isEditing
-                  ? "Updating..."
-                  : "Submitting..."
+                  ? labelsData.form.actions.updating
+                  : labelsData.form.actions.submitting
                 : isEditing
-                  ? "Update Entry"
-                  : "Submit Entry"}
+                  ? labelsData.form.actions.update
+                  : labelsData.form.actions.submit}
             </Button>
           </div>
         </div>
@@ -1232,27 +1231,25 @@ export function MorningMeetingForm({
               Auto-Fill Form with AI
             </DialogTitle>
             <DialogDescription>
-              Paste news content, article text, or briefing information below.
-              AI will analyze it and automatically fill the form fields.
+              {labelsData.form.autoFill.contentDescription}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
             <div>
               <label className="mb-2 block text-sm font-medium text-slate-700">
-                Content to Analyze
+                {labelsData.form.autoFill.contentLabel}
               </label>
               <textarea
                 value={autoFillContent}
                 onChange={(e) => setAutoFillContent(e.target.value)}
-                placeholder="Paste your content here... (news article, briefing text, report excerpt, etc.)"
+                placeholder={labelsData.form.autoFill.contentPlaceholder}
                 className="min-h-[200px] w-full resize-none rounded border border-slate-300 bg-slate-50 px-3 py-2 text-sm transition outline-none focus:border-un-blue focus:ring-2 focus:ring-un-blue/15"
                 disabled={isAutoFilling}
               />
             </div>
             <div className="rounded border border-slate-200 bg-slate-50 p-3 text-xs text-slate-500">
-              <strong>AI will extract:</strong> Category, Priority, Region,
-              Country, Headline, Source Date, Date, and Entry Content
+              <strong>AI will extract:</strong> {labelsData.form.autoFill.extractionHint.replace("AI will extract: ", "")}
             </div>
           </div>
 
@@ -1266,7 +1263,7 @@ export function MorningMeetingForm({
               }}
               disabled={isAutoFilling}
             >
-              Cancel
+              {labelsData.common.cancel}
             </Button>
             <Button
               type="button"
@@ -1275,7 +1272,7 @@ export function MorningMeetingForm({
               className="gap-2"
             >
               <Sparkles className="h-4 w-4" />
-              {isAutoFilling ? "Processing..." : "Auto-Fill Form"}
+              {isAutoFilling ? labelsData.form.autoFill.submitLoading : labelsData.form.autoFill.submitButton}
             </Button>
           </DialogFooter>
         </DialogContent>

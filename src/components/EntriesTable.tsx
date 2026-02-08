@@ -45,6 +45,7 @@ import {
   createDocumentHeader,
 } from "@/components/ExportDailyBriefingDialog";
 import { saveAs } from "file-saver";
+import labels from "@/lib/labels.json";
 
 interface EntriesTableProps {
   entries: MorningMeetingEntry[];
@@ -66,7 +67,7 @@ export function EntriesTable({
   onPostpone,
   onSubmit,
   showApprovedColumn = false,
-  emptyMessage = "No entries found.",
+  emptyMessage = labels.entries.empty.noEntries,
   resultLabel = "entries",
   initialDateFilter,
   hideCommentAction = false,
@@ -270,7 +271,7 @@ export function EntriesTable({
             }}
             className="animate-[fadeIn_0.3s_ease-in_forwards] rounded-md bg-slate-100 px-3 py-2 text-sm font-medium whitespace-nowrap text-slate-700 opacity-0 transition-all duration-200 hover:bg-slate-200"
           >
-            Reset Filters
+            {labels.entries.filters.resetFilters}
           </button>
         )}
       </div>
@@ -287,7 +288,7 @@ export function EntriesTable({
                       className="hidden cursor-pointer rounded px-1 py-1 whitespace-nowrap hover:bg-slate-100 sm:inline"
                       onClick={() => handleSort("date")}
                     >
-                      Date{" "}
+                      {labels.entries.columns.date}{" "}
                       {sortField === "date" &&
                         (sortDirection === "asc" ? "↑" : "↓")}
                     </span>
@@ -295,11 +296,11 @@ export function EntriesTable({
                       className="cursor-pointer rounded px-1 py-1 hover:bg-slate-100 sm:hidden"
                       onClick={() => handleSort("date")}
                     >
-                      Date
+                      {labels.entries.columns.date}
                     </span>
                     <div className="hidden sm:block">
                       <ColumnFilter
-                        columnName="Briefing Date"
+                        columnName={labels.entries.filters.briefingDate}
                         options={uniqueDates.map((date) =>
                           formatDateDesktop(date),
                         )}
@@ -328,7 +329,7 @@ export function EntriesTable({
                     className="inline-block cursor-pointer rounded px-1 py-1 hover:bg-slate-100"
                     onClick={() => handleSort("headline")}
                   >
-                    Headline{" "}
+                    {labels.entries.columns.headline}{" "}
                     {sortField === "headline" &&
                       (sortDirection === "asc" ? "↑" : "↓")}
                   </span>
@@ -339,12 +340,12 @@ export function EntriesTable({
                       className="cursor-pointer rounded px-1 py-1 hover:bg-slate-100"
                       onClick={() => handleSort("region")}
                     >
-                      Region{" "}
+                      {labels.entries.columns.region}{" "}
                       {sortField === "region" &&
                         (sortDirection === "asc" ? "↑" : "↓")}
                     </span>
                     <ColumnFilter
-                      columnName="Region"
+                      columnName={labels.entries.columns.region}
                       options={REGIONS}
                       selectedValue={filterRegion}
                       onValueChange={setFilterRegion}
@@ -357,12 +358,12 @@ export function EntriesTable({
                       className="cursor-pointer rounded px-1 py-1 hover:bg-slate-100"
                       onClick={() => handleSort("country")}
                     >
-                      Tag{" "}
+                      {labels.entries.columns.tag}{" "}
                       {sortField === "country" &&
                         (sortDirection === "asc" ? "↑" : "↓")}
                     </span>
                     <ColumnFilter
-                      columnName="Tag"
+                      columnName={labels.entries.columns.tag}
                       options={availableCountries}
                       selectedValue={filterCountry}
                       onValueChange={setFilterCountry}
@@ -371,11 +372,11 @@ export function EntriesTable({
                 </th>
                 {showApprovedColumn && (
                   <th className="hidden px-2 py-3 text-left text-xs font-semibold tracking-wide text-slate-700 uppercase sm:table-cell sm:px-3 lg:px-4">
-                    Status
+                    {labels.entries.columns.status}
                   </th>
                 )}
                 <th className="hidden rounded-tr-xl px-2 py-3 text-right text-xs font-semibold tracking-wide text-slate-700 uppercase sm:table-cell sm:px-3 lg:px-4">
-                  Actions
+                  {labels.entries.columns.actions}
                 </th>
               </tr>
             </thead>
@@ -388,7 +389,7 @@ export function EntriesTable({
                   >
                     {emptyMessage}{" "}
                     <Link href="/form" className="text-un-blue hover:underline">
-                      Create your first entry
+                      {labels.entries.empty.createFirst}
                     </Link>
                   </td>
                 </tr>
@@ -412,7 +413,7 @@ export function EntriesTable({
                         >
                           <div className="flex items-center gap-4">
                             <span className="text-xs font-semibold text-un-blue">
-                              ▼ Briefing for{" "}
+                              ▼ {labels.entries.briefingFor}{" "}
                               {formatDateWithWeekday(currentBriefingDate)}
                             </span>
                             {!onSubmit && (
@@ -529,13 +530,13 @@ export function EntriesTable({
                                   bg: "bg-amber-50",
                                   text: "text-amber-700",
                                   icon: Clock,
-                                  label: "Pending",
+                                  label: labels.entries.status.pending,
                                 },
                                 discussed: {
                                   bg: "bg-green-50",
                                   text: "text-green-700",
                                   icon: Check,
-                                  label: "Discussed",
+                                  label: labels.entries.status.discussed,
                                 },
                               };
                               const config =
@@ -602,7 +603,7 @@ export function EntriesTable({
                                         >
                                           <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-700">
                                             <FastForward className="h-3.5 w-3.5" />
-                                            Postpone
+                                            {labels.entries.actions.postpone}
                                           </span>
                                         </button>
                                       )}

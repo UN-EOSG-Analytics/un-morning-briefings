@@ -7,41 +7,14 @@ import { Button } from '@/components/ui/button';
 import { MorningMeetingEntry, PRIORITIES } from '@/types/morning-meeting';
 import { getPriorityBadgeClass } from '@/lib/useEntriesFilter';
 import { usePopup } from '@/lib/popup-context';
-import { formatDateResponsive } from '@/lib/format-date';
+import labels from '@/lib/labels.json';
+import { formatDateResponsive, formatDateFull } from '@/lib/format-date';
 import { sanitizeHtml } from '@/lib/sanitize';
 import { Edit, Trash2, Check, X, Sparkles, ChevronLeft, ChevronRight, FastForward, ArrowUp, ArrowDown } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 
-/**
- * Format a source date (ISO or YYYY-MM-DD format) to readable format
- * Example: "2026-01-20T05:00:00.000Z" or "2026-01-20" → "January 20, 2026"
- */
-const formatSourceDate = (dateStr: string): string => {
-  const monthNames = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
-  ];
-
-  // Extract YYYY-MM-DD from ISO format or direct date string
-  const dateMatch = dateStr.match(/(\d{4})-(\d{2})-(\d{2})/);
-  if (!dateMatch) return dateStr;
-
-  const [, year, month, day] = dateMatch;
-  const monthNum = parseInt(month, 10) - 1;
-
-  return `${monthNames[monthNum]} ${parseInt(day, 10)}, ${year}`;
-};
+// formatSourceDate replaced by formatDateFull from @/lib/format-date
 
 interface ViewEntryDialogProps {
   open: boolean;
@@ -150,8 +123,8 @@ export function ViewEntryDialog({
       }
 
       const statusLabels = {
-        discussed: 'Discussed',
-        pending: 'Pending'
+        discussed: labels.entries.status.discussed,
+        pending: labels.entries.status.pending
       };
 
       showSuccess(
@@ -165,7 +138,7 @@ export function ViewEntryDialog({
       }
     } catch (error) {
       console.error('Approval update error:', error);
-      showWarning('Update Failed', 'Failed to update approval status. Please try again.');
+      showWarning(labels.viewEntry.approval.updateFailed, labels.viewEntry.approval.updateFailedMessage);
     } finally {
       setIsUpdatingApproval(false);
     }
@@ -187,8 +160,8 @@ export function ViewEntryDialog({
       }
 
       showSuccess(
-        'Postponed',
-        'Entry has been postponed to the next day and set to pending'
+        labels.viewEntry.approval.postponed,
+        labels.viewEntry.approval.postponedMessage
       );
 
       // Update the entry with new date and status
@@ -204,7 +177,7 @@ export function ViewEntryDialog({
       }
     } catch (error) {
       console.error('Postpone error:', error);
-      showWarning('Postpone Failed', 'Failed to postpone entry. Please try again.');
+      showWarning(labels.viewEntry.approval.postponeFailed, labels.viewEntry.approval.postponeFailedMessage);
     } finally {
       setIsUpdatingApproval(false);
     }
@@ -251,9 +224,9 @@ export function ViewEntryDialog({
         
         // Check if it's an API key configuration error
         if (errorMessage.includes('GEMINI_API_KEY') || errorMessage.includes('not configured')) {
-          showWarning('AI Usage not enabled', 'Please wait for Update');
+          showWarning(labels.form.popups.aiDisabled, labels.form.popups.aiDisabledMessage);
         } else {
-          showWarning('Summary Failed', 'Failed to generate summary. Please try again.');
+          showWarning(labels.viewEntry.summary.failed, labels.viewEntry.summary.failedMessage);
         }
         return;
       }
@@ -276,10 +249,10 @@ export function ViewEntryDialog({
         // Don't show error to user - summary was still generated, just not saved
       }
       
-      showSuccess('Summary Generated', 'AI summary created successfully.');
+      showSuccess(labels.viewEntry.summary.success, labels.viewEntry.summary.successMessage);
     } catch (error) {
       console.error('Summary generation error:', error);
-      showWarning('AI Usage not enabled', 'Please wait for Update');
+      showWarning(labels.form.popups.aiDisabled, labels.form.popups.aiDisabledMessage);
     } finally {
       setIsGeneratingSummary(false);
     }
@@ -340,7 +313,7 @@ export function ViewEntryDialog({
             </span>
             {/* Author Badge */}
             <span className="inline-flex items-center rounded-full bg-slate-100 px-2 sm:px-2.5 py-1 sm:py-1.5 text-xs sm:text-sm font-medium text-slate-700">
-              {displayEntry.author || 'N/A'}
+              {displayEntry.author || labels.viewEntry.notAvailable}
             </span>
           </div>
           <Button
@@ -350,8 +323,8 @@ export function ViewEntryDialog({
             className={`bg-[#009edb] hover:bg-[#0080b8] text-white gap-1 text-xs sm:text-sm px-2.5 sm:px-3 shrink-0 h-full flex items-center justify-center ${summary ? 'opacity-50' : ''}`}
           >
             <Sparkles className="h-3 w-3 sm:h-4 sm:w-4" />
-            <span className="hidden sm:inline">{isGeneratingSummary ? 'Generating...' : 'Create Summary'}</span>
-            <span className="sm:hidden">{isGeneratingSummary ? '...' : 'AI'}</span>
+            <span className="hidden sm:inline">{isGeneratingSummary ? labels.viewEntry.generating : labels.viewEntry.createSummary}</span>
+            <span className="sm:hidden">{isGeneratingSummary ? '...' : labels.viewEntry.ai}</span>
           </Button>
         </div>
         
@@ -369,7 +342,7 @@ export function ViewEntryDialog({
               <div className="rounded-lg border-2 border-[#009edb] bg-[#009edb]/5 p-3">
                 <div className="text-xs sm:text-sm font-semibold text-[#009edb] mb-2 flex items-center gap-2">
                   <Sparkles className="h-3 w-3 sm:h-4 sm:w-4" />
-                  Key Points
+                  {labels.viewEntry.keyPoints}
                 </div>
                 <ul className="space-y-1">
                   {summary.map((point, index) => (
@@ -516,7 +489,7 @@ export function ViewEntryDialog({
           {displayEntry.puNote && (
             <div className="mb-2 pb-2 border-b border-slate-200">
               <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">
-                PU Notes
+                {labels.viewEntry.puNotes}
               </div>
               <div 
                 className="text-xs sm:text-sm text-slate-700 break-words entry-content"
@@ -546,7 +519,7 @@ export function ViewEntryDialog({
                 <span className="text-slate-400">|</span>
               )}
               {displayEntry.sourceDate && (
-                <span>{formatSourceDate(displayEntry.sourceDate)}</span>
+                <span>{formatDateFull(displayEntry.sourceDate)}</span>
               )}
             </div>
           )}
@@ -565,10 +538,10 @@ export function ViewEntryDialog({
                 className="gap-1 h-8 text-xs"
               >
                 <ChevronLeft className="h-3 w-3" />
-                Previous
+                {labels.entries.actions.previous}
               </Button>
               <span className="flex items-center text-xs text-slate-600">
-                {currentIndex + 1} of {allEntries.length}
+                {currentIndex + 1} {labels.entries.xOfY.split(" ")[1] || "of"} {allEntries.length}
               </span>
               <Button
                 variant="outline"
@@ -577,7 +550,7 @@ export function ViewEntryDialog({
                 disabled={currentIndex >= allEntries.length - 1}
                 className="gap-1 h-8 text-xs"
               >
-                Next
+                {labels.entries.actions.next}
                 <ChevronRight className="h-3 w-3" />
               </Button>
             </div>
@@ -597,7 +570,7 @@ export function ViewEntryDialog({
                 }`}
               >
                 <Check className="h-3 w-3" />
-                Discussed
+                {labels.entries.actions.discussed}
               </Button>
               
               {displayEntry.approvalStatus !== 'discussed' && (
@@ -608,7 +581,7 @@ export function ViewEntryDialog({
                   className="gap-1 flex-1 h-8 text-xs text-blue-600 hover:bg-blue-50 hover:text-blue-700"
                 >
                   <FastForward className="h-3 w-3" />
-                  Postpone
+                  {labels.entries.actions.postpone}
                 </Button>
               )}
             </div>
@@ -623,7 +596,7 @@ export function ViewEntryDialog({
                   className="gap-2 h-8 text-xs px-3 w-full"
                 >
                   <Edit className="h-3 w-3" />
-                  Edit
+                  {labels.entries.actions.edit}
                 </Button>
               </Link>
               
@@ -633,7 +606,7 @@ export function ViewEntryDialog({
                 className="gap-2 h-8 text-xs px-3"
               >
                 <X className="h-3 w-3" />
-                Close
+                {labels.entries.actions.close}
               </Button>
             </div>
           </div>
@@ -648,7 +621,7 @@ export function ViewEntryDialog({
                   className="gap-2 h-8 text-xs px-3"
                 >
                   <Edit className="h-3 w-3" />
-                  Edit
+                  {labels.entries.actions.edit}
                 </Button>
               </Link>
               
@@ -658,7 +631,7 @@ export function ViewEntryDialog({
                 className="gap-2 h-8 text-xs px-3"
               >
                 <X className="h-3 w-3" />
-                Close
+                {labels.entries.actions.close}
               </Button>
             </div>
 
@@ -678,7 +651,7 @@ export function ViewEntryDialog({
                       className="gap-1 h-8 text-xs text-slate-600 hover:text-slate-900"
                     >
                       <ArrowUp className="h-3 w-3" />
-                      Previous
+                      {labels.entries.actions.previous}
                     </Button>
                   )}
                   
@@ -692,7 +665,7 @@ export function ViewEntryDialog({
                       }}
                       className="gap-1 h-8 text-xs text-slate-600 hover:text-slate-900"
                     >
-                      Follow-up
+                      {labels.entries.actions.followUp}
                       <ArrowDown className="h-3 w-3" />
                     </Button>
                   )}
@@ -710,10 +683,10 @@ export function ViewEntryDialog({
                     className="gap-1 h-8 text-xs"
                   >
                     <ChevronLeft className="h-3 w-3" />
-                    Previous
+                    {labels.entries.actions.previous}
                   </Button>
                   <span className="text-xs text-slate-600 whitespace-nowrap">
-                    {currentIndex + 1} of {allEntries.length}
+                    {currentIndex + 1} {labels.entries.xOfY.split(" ")[1] || "of"} {allEntries.length}
                   </span>
                   <Button
                     variant="outline"
@@ -722,7 +695,7 @@ export function ViewEntryDialog({
                     disabled={currentIndex >= allEntries.length - 1}
                     className="gap-1 h-8 text-xs"
                   >
-                    Next
+                    {labels.entries.actions.next}
                     <ChevronRight className="h-3 w-3" />
                   </Button>
                 </div>
@@ -744,7 +717,7 @@ export function ViewEntryDialog({
                     }`}
                   >
                     <Check className="h-4 w-4" />
-                    Discussed
+                    {labels.entries.actions.discussed}
                   </Button>
                   
                   {displayEntry.approvalStatus !== 'discussed' && (
@@ -755,7 +728,7 @@ export function ViewEntryDialog({
                       className="gap-2 h-8 text-xs text-blue-600 hover:bg-blue-50 hover:text-blue-700"
                     >
                       <FastForward className="h-4 w-4" />
-                      Postpone
+                      {labels.entries.actions.postpone}
                     </Button>
                   )}
                 </>
@@ -768,7 +741,7 @@ export function ViewEntryDialog({
                   className="gap-2 h-8 text-xs text-red-600 hover:bg-red-50 hover:text-red-700"
                 >
                   <Trash2 className="h-4 w-4" />
-                  Delete
+                  {labels.entries.actions.delete}
                 </Button>
               )}
             </div>

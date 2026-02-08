@@ -3,6 +3,7 @@ import { query } from "@/lib/db";
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import { sendPasswordResetEmail } from "@/lib/email-service";
+import labels from "@/lib/labels.json";
 
 // Rate limiting map (in production, use Redis or similar)
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
@@ -43,7 +44,7 @@ export async function POST(request: NextRequest) {
     // Validate email format
     if (!email || typeof email !== "string" || !email.includes("@")) {
       return NextResponse.json(
-        { message: "Invalid email address" },
+        { message: labels.auth.validation.invalidEmailAddress },
         { status: 400 }
       );
     }
@@ -52,8 +53,7 @@ export async function POST(request: NextRequest) {
     if (!checkRateLimit(email.toLowerCase())) {
       return NextResponse.json(
         {
-          message:
-            "Too many password reset requests. Please try again in 15 minutes.",
+          message: labels.auth.rateLimit.tooManyEmailRequests,
         },
         { status: 429 }
       );
@@ -64,8 +64,7 @@ export async function POST(request: NextRequest) {
     if (!checkRateLimit(`ip:${ip}`)) {
       return NextResponse.json(
         {
-          message:
-            "Too many requests from this IP. Please try again in 15 minutes.",
+          message: labels.auth.rateLimit.tooManyIpRequests,
         },
         { status: 429 }
       );
@@ -83,8 +82,7 @@ export async function POST(request: NextRequest) {
       console.log("[PASSWORD RESET] Request for non-existent or unverified user:", email);
       return NextResponse.json(
         {
-          message:
-            "If an account with that email exists, a password reset link has been sent.",
+          message: labels.auth.rateLimit.resetEmailSent,
         },
         { status: 200 }
       );
@@ -139,15 +137,14 @@ export async function POST(request: NextRequest) {
     // Always return generic success message
     return NextResponse.json(
       {
-        message:
-          "If an account with that email exists, a password reset link has been sent.",
+        message: labels.auth.rateLimit.resetEmailSent,
       },
       { status: 200 }
     );
   } catch (error) {
     console.error("[PASSWORD RESET ERROR]", error);
     return NextResponse.json(
-      { message: "An error occurred processing your request" },
+      { message: labels.auth.messages.serverError },
       { status: 500 }
     );
   }

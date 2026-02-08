@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { query } from "@/lib/db";
 import bcrypt from "bcryptjs";
+import labels from "@/lib/labels.json";
 
 export async function POST(request: NextRequest) {
   try {
@@ -9,14 +10,14 @@ export async function POST(request: NextRequest) {
     // Validate inputs
     if (!token || typeof token !== "string") {
       return NextResponse.json(
-        { message: "Invalid reset token" },
+        { message: labels.auth.validation.invalidToken },
         { status: 400 }
       );
     }
 
     if (!password || typeof password !== "string" || password.length < 8) {
       return NextResponse.json(
-        { message: "Password must be at least 8 characters long" },
+        { message: labels.auth.validation.passwordMinLength },
         { status: 400 }
       );
     }
@@ -34,7 +35,7 @@ export async function POST(request: NextRequest) {
 
     if (tokensResult.rows.length === 0) {
       return NextResponse.json(
-        { message: "Invalid or expired reset token" },
+        { message: labels.auth.validation.invalidOrExpiredToken },
         { status: 400 }
       );
     }
@@ -51,7 +52,7 @@ export async function POST(request: NextRequest) {
 
     if (!matchedToken) {
       return NextResponse.json(
-        { message: "Invalid or expired reset token" },
+        { message: labels.auth.validation.invalidOrExpiredToken },
         { status: 400 }
       );
     }
@@ -81,14 +82,14 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(
       {
-        message: "Password reset successfully. You can now log in with your new password.",
+        message: labels.auth.validation.passwordResetComplete,
       },
       { status: 200 }
     );
   } catch (error) {
     console.error("[PASSWORD RESET ERROR]", error);
     return NextResponse.json(
-      { message: "An error occurred processing your request" },
+      { message: labels.auth.messages.serverError },
       { status: 500 }
     );
   }
@@ -101,7 +102,7 @@ export async function GET(request: NextRequest) {
 
     if (!token) {
       return NextResponse.json(
-        { valid: false, message: "No token provided" },
+        { valid: false, message: labels.auth.validation.noTokenProvided },
         { status: 400 }
       );
     }
@@ -117,7 +118,7 @@ export async function GET(request: NextRequest) {
 
     if (tokensResult.rows.length === 0) {
       return NextResponse.json(
-        { valid: false, message: "Invalid or expired token" },
+        { valid: false, message: labels.auth.validation.invalidOrExpiredToken },
         { status: 200 }
       );
     }
@@ -134,19 +135,19 @@ export async function GET(request: NextRequest) {
 
     if (!isValid) {
       return NextResponse.json(
-        { valid: false, message: "Invalid or expired token" },
+        { valid: false, message: labels.auth.validation.invalidOrExpiredToken },
         { status: 200 }
       );
     }
 
     return NextResponse.json(
-      { valid: true, message: "Token is valid" },
+      { valid: true, message: labels.auth.validation.tokenValid },
       { status: 200 }
     );
   } catch (error) {
     console.error("[PASSWORD RESET TOKEN VALIDATION ERROR]", error);
     return NextResponse.json(
-      { valid: false, message: "Error validating token" },
+      { valid: false, message: labels.auth.validation.tokenValidationError },
       { status: 500 }
     );
   }

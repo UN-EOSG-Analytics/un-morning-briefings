@@ -5,31 +5,13 @@ import { query } from "@/lib/db";
 import { blobStorage } from "@/lib/blob-storage";
 import { convertImageReferencesServerSide } from "@/lib/image-conversion";
 import { checkAuth } from "@/lib/auth-helper";
-
-// Helper function to serialize country field for database storage
-function serializeCountry(country: string | string[]): string {
-  if (Array.isArray(country)) {
-    return JSON.stringify(country);
-  }
-  return country;
-}
-
-// Helper function to parse country field from database
-function parseCountry(country: string): string | string[] {
-  if (!country) return country;
-  // Try to parse as JSON array
-  if (country.startsWith("[")) {
-    try {
-      const parsed = JSON.parse(country);
-      if (Array.isArray(parsed)) {
-        return parsed;
-      }
-    } catch (e) {
-      // Not valid JSON, return as is
-    }
-  }
-  return country;
-}
+import {
+  serializeCountry,
+  fetchEntries,
+  fetchEntryById,
+  getAuthorId,
+} from "@/lib/entry-queries";
+import labels from "@/lib/labels.json";
 
 /**
  * GET /api/entries
@@ -47,83 +29,10 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const date = searchParams.get("date");
     const status = searchParams.get("status");
-    const author = searchParams.get("author"); // Can be email or name
+    const author = searchParams.get("author");
     const noConvert = searchParams.get("noConvert") === "true";
 
-    let sql = `
-      SELECT 
-        e.id,
-        e.category,
-        e.priority,
-        e.region,
-        e.country,
-        e.headline,
-        e.date,
-        e.entry,
-        e.source_name as "sourceName",
-        e.source_url as "sourceUrl",
-        e.source_date as "sourceDate",
-        e.pu_note as "puNote",
-        COALESCE(CONCAT(u.first_name, ' ', u.last_name), 'Unknown') as author,
-        e.author_id as "authorId",
-        u.email as "authorEmail",
-        e.comment,
-        e.status,
-        e.ai_summary as "aiSummary",
-        e.approval_status as "approvalStatus",
-        e.previous_entry_id as "previousEntryId",
-        COALESCE(
-          json_agg(
-            json_build_object(
-              'id', i.id,
-              'entryId', i.entry_id,
-              'filename', i.filename,
-              'mimeType', i.mime_type,
-              'blobUrl', i.blob_url,
-              'width', i.width,
-              'height', i.height,
-              'position', i.position
-            ) ORDER BY i.position NULLS LAST
-          ) FILTER (WHERE i.id IS NOT NULL),
-          '[]'
-        ) as images
-      FROM pu_morning_briefings.entries e
-      LEFT JOIN pu_morning_briefings.users u ON e.author_id = u.id
-      LEFT JOIN pu_morning_briefings.images i ON e.id = i.entry_id
-    `;
-
-    const params: any[] = [];
-    const conditions: string[] = [];
-
-    if (date) {
-      conditions.push(`DATE(e.date) = $${params.length + 1}`);
-      params.push(date);
-    }
-
-    if (status) {
-      conditions.push(`e.status = $${params.length + 1}`);
-      params.push(status);
-    }
-
-    if (author) {
-      // Support filtering by email (for profile/drafts pages) or by user id
-      conditions.push(`(u.email = $${params.length + 1} OR CONCAT(u.first_name, ' ', u.last_name) = $${params.length + 1})`);
-      params.push(author);
-    }
-
-    if (conditions.length > 0) {
-      sql += ` WHERE ${conditions.join(" AND ")}`;
-    }
-
-    sql += ` GROUP BY e.id, u.id ORDER BY e.date DESC`;
-
-    const result = await query(sql, params);
-
-    // Parse country field for all entries
-    const entries = result.rows.map((row) => ({
-      ...row,
-      country: parseCountry(row.country),
-    }));
+    const entries = await fetchEntries({ date, status, author });
 
     // Skip image conversion for list views (performance optimization)
     if (noConvert) {
@@ -147,7 +56,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error("Error fetching entries:", error);
     return NextResponse.json(
-      { error: "Failed to fetch entries" },
+      { error: labels.entries.errors.fetchFailed },
       { status: 500 },
     );
   }
@@ -198,17 +107,8 @@ export async function POST(request: NextRequest) {
     const now = new Date();
 
     // Look up author_id from session user email
-    let authorId: number | null = null;
     const userEmail = auth.session?.user?.email;
-    if (userEmail) {
-      const userResult = await query(
-        `SELECT id FROM pu_morning_briefings.users WHERE email = $1`,
-        [userEmail]
-      );
-      if (userResult.rows.length > 0) {
-        authorId = userResult.rows[0].id;
-      }
-    }
+    const authorId = userEmail ? await getAuthorId(userEmail) : null;
 
     // Insert entry with author_id foreign key
     // Store date as-is without timezone conversion
@@ -259,52 +159,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Fetch created entry with images and author info
-    const result = await query(
-      `SELECT 
-        e.id,
-        e.category,
-        e.priority,
-        e.region,
-        e.country,
-        e.headline,
-        e.date,
-        e.entry,
-        e.source_name as "sourceName",
-        e.source_url as "sourceUrl",
-        e.source_date as "sourceDate",
-        e.pu_note as "puNote",
-        COALESCE(CONCAT(u.first_name, ' ', u.last_name), 'Unknown') as author,
-        e.author_id as "authorId",
-        e.status,
-        COALESCE(e.approval_status, 'pending') as "approvalStatus",
-        e.previous_entry_id as "previousEntryId",
-        COALESCE(
-          json_agg(
-            json_build_object(
-              'id', i.id,
-              'entryId', i.entry_id,
-              'filename', i.filename,
-              'mimeType', i.mime_type,
-              'blobUrl', i.blob_url,
-              'width', i.width,
-              'height', i.height,
-              'position', i.position
-            ) ORDER BY i.position NULLS LAST
-          ) FILTER (WHERE i.id IS NOT NULL),
-          '[]'
-        ) as images
-      FROM pu_morning_briefings.entries e
-      LEFT JOIN pu_morning_briefings.users u ON e.author_id = u.id
-      LEFT JOIN pu_morning_briefings.images i ON e.id = i.entry_id
-      WHERE e.id = $1
-      GROUP BY e.id, u.id`,
-      [id],
-    );
-
-    const createdEntry = {
-      ...result.rows[0],
-      country: parseCountry(result.rows[0].country),
-    };
+    const createdEntry = await fetchEntryById(id);
     createdEntry.entry = await convertImageReferencesServerSide(
       createdEntry.entry,
       createdEntry.images,
@@ -316,7 +171,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("Error creating entry:", error);
     return NextResponse.json(
-      { error: "Failed to create entry" },
+      { error: labels.entries.errors.createFailed },
       { status: 500 },
     );
   }
@@ -339,7 +194,7 @@ export async function PATCH(request: NextRequest) {
 
     if (!id) {
       return NextResponse.json(
-        { error: "Entry ID is required" },
+        { error: labels.entries.errors.idRequired },
         { status: 400 },
       );
     }
@@ -352,14 +207,14 @@ export async function PATCH(request: NextRequest) {
       !["pending", "discussed"].includes(approvalStatus)
     ) {
       return NextResponse.json(
-        { error: "Invalid approval status" },
+        { error: labels.entries.errors.invalidApprovalStatus },
         { status: 400 },
       );
     }
 
     if (status && !["draft", "submitted"].includes(status)) {
       return NextResponse.json(
-        { error: "Invalid status" },
+        { error: labels.entries.errors.invalidStatus },
         { status: 400 },
       );
     }
@@ -398,7 +253,7 @@ export async function PATCH(request: NextRequest) {
 
     if (updateParts.length === 0) {
       return NextResponse.json(
-        { error: "No fields to update" },
+        { error: labels.entries.errors.noFieldsToUpdate },
         { status: 400 },
       );
     }
@@ -410,41 +265,16 @@ export async function PATCH(request: NextRequest) {
     await query(updateQuery, params);
 
     // Fetch updated entry with author info
-    const result = await query(
-      `SELECT 
-        e.id,
-        e.category,
-        e.priority,
-        e.region,
-        e.country,
-        e.headline,
-        e.date,
-        e.entry,
-        e.source_name as "sourceName",
-        e.source_url as "sourceUrl",
-        e.source_date as "sourceDate",
-        e.pu_note as "puNote",
-        COALESCE(CONCAT(u.first_name, ' ', u.last_name), 'Unknown') as author,
-        e.author_id as "authorId",
-        e.status,
-        e.ai_summary as "aiSummary",
-        COALESCE(e.approval_status, 'pending') as "approvalStatus",
-        e.previous_entry_id as "previousEntryId"
-      FROM pu_morning_briefings.entries e
-      LEFT JOIN pu_morning_briefings.users u ON e.author_id = u.id
-      WHERE e.id = $1`,
-      [id],
-    );
-
-    if (result.rows.length === 0) {
-      return NextResponse.json({ error: "Entry not found" }, { status: 404 });
+    const entry = await fetchEntryById(id);
+    if (!entry) {
+      return NextResponse.json({ error: labels.entries.errors.notFound }, { status: 404 });
     }
 
-    return NextResponse.json(result.rows[0]);
+    return NextResponse.json(entry);
   } catch (error) {
     console.error("Error updating entry:", error);
     return NextResponse.json(
-      { error: "Failed to update entry" },
+      { error: labels.entries.errors.updateFailed },
       { status: 500 },
     );
   }

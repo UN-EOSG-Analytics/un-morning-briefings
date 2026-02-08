@@ -4,6 +4,7 @@ import { useState, FormEvent, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Lock, ArrowLeft, CheckCircle2, AlertCircle, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import labels from "@/lib/labels.json";
 
 function ResetPasswordContent() {
   const [password, setPassword] = useState("");
@@ -23,7 +24,7 @@ function ResetPasswordContent() {
     // Validate token on page load
     const validateToken = async () => {
       if (!token) {
-        setError("No reset token provided. Please request a new password reset link.");
+        setError(labels.auth.validation.noTokenProvided);
         setIsValidating(false);
         return;
       }
@@ -37,10 +38,10 @@ function ResetPasswordContent() {
         if (data.valid) {
           setTokenValid(true);
         } else {
-          setError(data.message || "Invalid or expired reset token");
+          setError(data.message || labels.auth.validation.invalidOrExpiredToken);
         }
       } catch {
-        setError("Error validating reset token. Please try again.");
+        setError(labels.auth.validation.tokenValidationError);
       } finally {
         setIsValidating(false);
       }
@@ -86,10 +87,10 @@ function ResetPasswordContent() {
           router.push("/login?reset=success");
         }, 2000);
       } else {
-        setError(data.message || "An error occurred. Please try again.");
+        setError(data.message || labels.auth.messages.genericError);
       }
     } catch {
-      setError("An error occurred. Please try again.");
+      setError(labels.auth.messages.genericError);
     } finally {
       setIsLoading(false);
     }
@@ -103,10 +104,10 @@ function ResetPasswordContent() {
             <Lock className="h-8 w-8 text-white" />
           </div>
           <h1 className="text-3xl font-bold text-slate-900">
-            Set New Password
+            {labels.auth.resetPassword.title}
           </h1>
           <p className="mt-2 text-sm text-slate-600">
-            Enter your new password below
+            {labels.auth.resetPassword.subtitle}
           </p>
         </div>
 
@@ -114,7 +115,7 @@ function ResetPasswordContent() {
           {isValidating ? (
             <div className="flex flex-col items-center justify-center py-8">
               <div className="h-8 w-8 animate-spin rounded-full border-4 border-un-blue border-t-transparent"></div>
-              <p className="mt-4 text-sm text-slate-600">Validating reset token...</p>
+              <p className="mt-4 text-sm text-slate-600">{labels.auth.resetPassword.validating}</p>
             </div>
           ) : success ? (
             <div className="space-y-4">
@@ -122,10 +123,10 @@ function ResetPasswordContent() {
                 <CheckCircle2 className="h-5 w-5 flex-shrink-0 text-green-600" />
                 <div>
                   <p className="text-sm font-medium text-green-900">
-                    Password reset successful!
+                    {labels.auth.resetPassword.successTitle}
                   </p>
                   <p className="mt-1 text-xs text-green-700">
-                    Redirecting you to login...
+                    {labels.auth.resetPassword.successRedirect}
                   </p>
                 </div>
               </div>
@@ -136,7 +137,7 @@ function ResetPasswordContent() {
                 <AlertCircle className="h-5 w-5 flex-shrink-0 text-red-600" />
                 <div>
                   <p className="text-sm font-medium text-red-900">
-                    Invalid Reset Link
+                    {labels.auth.resetPassword.invalidTitle}
                   </p>
                   <p className="mt-1 text-xs text-red-700">{error}</p>
                 </div>
@@ -145,7 +146,7 @@ function ResetPasswordContent() {
                 onClick={() => router.push("/forgot-password")}
                 className="w-full bg-un-blue hover:bg-un-blue/90"
               >
-                Request New Reset Link
+                {labels.auth.resetPassword.requestNewLink}
               </Button>
               <Button
                 onClick={() => router.push("/login")}
@@ -153,7 +154,7 @@ function ResetPasswordContent() {
                 className="w-full"
               >
                 <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Login
+                {labels.common.backToLogin}
               </Button>
             </div>
           ) : (
@@ -170,7 +171,7 @@ function ResetPasswordContent() {
                   htmlFor="password"
                   className="block text-sm font-medium text-slate-700"
                 >
-                  New Password
+                  {labels.auth.resetPassword.newPassword}
                 </label>
                 <div className="relative mt-1">
                   <Lock className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
@@ -181,7 +182,7 @@ function ResetPasswordContent() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="block w-full rounded-lg border border-slate-300 py-2.5 pl-10 pr-10 text-slate-900 placeholder-slate-400 focus:border-un-blue focus:outline-none focus:ring-2 focus:ring-un-blue/20"
-                    placeholder="Enter new password"
+                    placeholder={labels.auth.resetPassword.newPasswordPlaceholder}
                     minLength={8}
                   />
                   <button
@@ -197,7 +198,7 @@ function ResetPasswordContent() {
                   </button>
                 </div>
                 <p className="mt-1 text-xs text-slate-500">
-                  Must be at least 8 characters long
+                  {labels.auth.resetPassword.passwordHelper}
                 </p>
               </div>
 
@@ -206,7 +207,7 @@ function ResetPasswordContent() {
                   htmlFor="confirmPassword"
                   className="block text-sm font-medium text-slate-700"
                 >
-                  Confirm New Password
+                  {labels.auth.resetPassword.confirmPassword}
                 </label>
                 <div className="relative mt-1">
                   <Lock className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
@@ -217,7 +218,7 @@ function ResetPasswordContent() {
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     className="block w-full rounded-lg border border-slate-300 py-2.5 pl-10 pr-10 text-slate-900 placeholder-slate-400 focus:border-un-blue focus:outline-none focus:ring-2 focus:ring-un-blue/20"
-                    placeholder="Confirm new password"
+                    placeholder={labels.auth.resetPassword.confirmPlaceholder}
                     minLength={8}
                   />
                   <button
@@ -240,7 +241,7 @@ function ResetPasswordContent() {
                   disabled={isLoading}
                   className="w-full bg-un-blue hover:bg-un-blue/90"
                 >
-                  {isLoading ? "Resetting Password..." : "Reset Password"}
+                  {isLoading ? labels.auth.resetPassword.submitLoading : labels.auth.resetPassword.submitButton}
                 </Button>
 
                 <Button
@@ -250,7 +251,7 @@ function ResetPasswordContent() {
                   onClick={() => router.push("/login")}
                 >
                   <ArrowLeft className="mr-2 h-4 w-4" />
-                  Back to Login
+                  {labels.common.backToLogin}
                 </Button>
               </div>
             </form>
@@ -259,7 +260,7 @@ function ResetPasswordContent() {
 
         <div className="mt-6 text-center">
           <p className="text-xs text-slate-500">
-            Your password will be securely encrypted and stored.
+            {labels.auth.resetPassword.securityNote}
           </p>
         </div>
       </div>

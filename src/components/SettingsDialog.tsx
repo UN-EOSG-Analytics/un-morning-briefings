@@ -24,6 +24,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePopup } from "@/lib/popup-context";
+import labels from "@/lib/labels.json";
 
 interface SettingsDialogProps {
   open: boolean;
@@ -98,13 +99,13 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
         throw new Error(data.error || "Failed to add email");
       }
 
-      showSuccess("Email Added", `${newWhitelistEmail} has been whitelisted`);
+      showSuccess(labels.settings.whitelist.addSuccess, `${newWhitelistEmail} has been whitelisted`);
       setNewWhitelistEmail("");
       await loadWhitelist();
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : "Failed to add email";
       setError(errorMsg);
-      showWarning("Add Failed", errorMsg);
+      showWarning(labels.settings.whitelist.addFailed, errorMsg);
     } finally {
       setIsAddingWhitelist(false);
     }
@@ -122,11 +123,11 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
         throw new Error(data.error || "Failed to remove email");
       }
 
-      showSuccess("Email Removed", `${email} has been removed from whitelist`);
+      showSuccess(labels.settings.whitelist.removeSuccess, `${email} has been removed from whitelist`);
       await loadWhitelist();
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : "Failed to remove email";
-      showWarning("Remove Failed", errorMsg);
+      showWarning(labels.settings.whitelist.removeFailed, errorMsg);
     }
   };
 
@@ -160,7 +161,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
 
   const handleSaveName = async () => {
     if (!firstName.trim() || !lastName.trim()) {
-      setError("First and last name are required");
+      setError(labels.settings.account.nameRequired);
       return;
     }
 
@@ -256,7 +257,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
 
       // Validate backup structure
       if (!backup.entries || !Array.isArray(backup.entries)) {
-        throw new Error("Invalid backup file format");
+        throw new Error(labels.settings.data.invalidFormat);
       }
 
       // Send to API for import
@@ -276,8 +277,8 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
 
       // Show success message
       showSuccess(
-        "Import Successful",
-        `Imported ${result.imported} entries. ${result.skipped} duplicates were skipped.`,
+        labels.settings.data.importSuccess,
+        labels.settings.data.importSuccessMessage.replace("{count}", String(result.imported)).replace("{skipped}", String(result.skipped)),
       );
 
       // Close dialog after successful import
@@ -288,7 +289,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
       const errorMsg =
         err instanceof Error ? err.message : "Failed to import backup";
       setError(errorMsg);
-      showWarning("Import Failed", errorMsg);
+      showWarning(labels.settings.data.importFailed, errorMsg);
     } finally {
       setIsImporting(false);
       // Reset file input
@@ -314,7 +315,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
             Settings
           </DialogTitle>
           <DialogDescription>
-            Manage your account, data, and email preferences
+            {labels.settings.subtitle}
           </DialogDescription>
         </DialogHeader>
 
@@ -323,10 +324,10 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
           className="flex min-h-0 w-full flex-1 flex-col"
         >
           <TabsList className="grid w-full flex-shrink-0 grid-cols-4">
-            <TabsTrigger value="account">Account</TabsTrigger>
-            <TabsTrigger value="data">Data Management</TabsTrigger>
-            <TabsTrigger value="whitelist">Whitelist</TabsTrigger>
-            <TabsTrigger value="email">E-Mail Workflow</TabsTrigger>
+            <TabsTrigger value="account">{labels.settings.tabs.account}</TabsTrigger>
+            <TabsTrigger value="data">{labels.settings.tabs.dataManagement}</TabsTrigger>
+            <TabsTrigger value="whitelist">{labels.settings.tabs.whitelist}</TabsTrigger>
+            <TabsTrigger value="email">{labels.settings.tabs.emailWorkflow}</TabsTrigger>
           </TabsList>
 
           {/* Account Tab */}
@@ -337,7 +338,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
             {/* Account Information */}
             <div className="space-y-3 rounded-lg bg-slate-50 p-4">
               <div>
-                <p className="text-xs text-slate-600">Email</p>
+                <p className="text-xs text-slate-600">{labels.settings.account.email}</p>
                 <p className="text-sm font-medium">{session?.user?.email}</p>
               </div>
 
@@ -347,25 +348,25 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                   <div className="grid grid-cols-2 gap-2">
                     <div>
                       <label className="text-xs text-slate-600">
-                        First Name
+                        {labels.settings.account.firstName}
                       </label>
                       <input
                         type="text"
                         value={firstName}
                         onChange={(e) => setFirstName(e.target.value)}
-                        placeholder="First name"
+                        placeholder={labels.settings.account.firstNamePlaceholder}
                         className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-sm focus:border-un-blue focus:ring-2 focus:ring-un-blue/20 focus:outline-none"
                       />
                     </div>
                     <div>
                       <label className="text-xs text-slate-600">
-                        Last Name
+                        {labels.settings.account.lastName}
                       </label>
                       <input
                         type="text"
                         value={lastName}
                         onChange={(e) => setLastName(e.target.value)}
-                        placeholder="Last name"
+                        placeholder={labels.settings.account.lastNamePlaceholder}
                         className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-sm focus:border-un-blue focus:ring-2 focus:ring-un-blue/20 focus:outline-none"
                       />
                     </div>
@@ -387,7 +388,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                       className="flex-1"
                     >
                       <X className="mr-1 h-4 w-4" />
-                      Cancel
+                      {labels.common.cancel}
                     </Button>
                     <Button
                       size="sm"
@@ -396,7 +397,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                       className="flex-1 bg-un-blue hover:bg-un-blue/90"
                     >
                       <Check className="mr-1 h-4 w-4" />
-                      {isSavingName ? "Saving..." : "Save"}
+                      {isSavingName ? labels.settings.account.saving : labels.common.save}
                     </Button>
                   </div>
                 </div>
@@ -413,7 +414,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                     variant="outline"
                     onClick={() => setIsEditingName(true)}
                   >
-                    Edit
+                    {labels.settings.account.edit}
                   </Button>
                 </div>
               )}
@@ -432,7 +433,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                 onClick={() => setShowDeleteConfirm(true)}
               >
                 <Trash2 className="mr-2 h-4 w-4" />
-                Delete Account
+                {labels.settings.account.deleteAccount}
               </Button>
             ) : (
               <div className="space-y-3 rounded-lg border border-red-200 bg-red-50 p-4">
@@ -440,12 +441,10 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                   <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-600" />
                   <div className="space-y-1">
                     <p className="text-sm font-semibold text-red-900">
-                      Are you absolutely sure?
+                      {labels.settings.account.deleteConfirmTitle}
                     </p>
                     <p className="text-xs text-red-700">
-                      This action cannot be undone. This will delete your
-                      account for the UN Morning Briefing Tool and remove all of
-                      your drafts from our servers.
+                      {labels.settings.account.deleteConfirmMessage}
                     </p>
                   </div>
                 </div>
@@ -474,7 +473,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                     disabled={isDeleting}
                     className="flex-1 bg-red-600 hover:bg-red-700"
                   >
-                    {isDeleting ? "Deleting..." : "Yes, delete my account"}
+                    {isDeleting ? labels.settings.account.deleting : labels.settings.account.deleteButton}
                   </Button>
                 </div>
               </div>
@@ -489,7 +488,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
             <div className="space-y-4 rounded-lg bg-slate-50 p-4">
               <div>
                 <h3 className="mb-3 text-sm font-semibold text-slate-900">
-                  Backup & Restore
+                  {labels.settings.data.title}
                 </h3>
                 <div className="mb-2 grid grid-cols-1 gap-2">
                   <Button
@@ -498,7 +497,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                     disabled={isCreatingBackup}
                   >
                     <Download className="mr-2 h-4 w-4" />
-                    {isCreatingBackup ? "Creating..." : "Download Backup"}
+                    {isCreatingBackup ? labels.settings.data.downloading : labels.settings.data.download}
                   </Button>
                   <Button
                     variant="outline"
@@ -506,7 +505,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                     disabled={isImporting}
                   >
                     <Upload className="mr-2 h-4 w-4" />
-                    {isImporting ? "Importing..." : "Import Backup"}
+                    {isImporting ? labels.settings.data.importing : labels.settings.data.import}
                   </Button>
                 </div>
                 <input
@@ -517,8 +516,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                   className="hidden"
                 />
                 <p className="text-xs text-slate-600">
-                  Download all entries as JSON backup or import a backup file to
-                  restore entries.
+                  {labels.settings.data.description}
                 </p>
               </div>
             </div>
@@ -532,10 +530,10 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
             <div className="space-y-4 rounded-lg bg-slate-50 p-4">
               <div>
                 <h3 className="mb-2 text-sm font-semibold text-slate-900">
-                  Authorized Email Addresses
+                  {labels.settings.whitelist.title}
                 </h3>
                 <p className="mb-3 text-xs text-slate-600">
-                  Only whitelisted @un.org email addresses can register and sign in. All authenticated users can manage this list.
+                  {labels.settings.whitelist.description}
                 </p>
 
                 {/* Add Email Form */}
@@ -550,7 +548,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                           handleAddWhitelistEmail();
                         }
                       }}
-                      placeholder="email@un.org"
+                      placeholder={labels.settings.whitelist.placeholder}
                       className="flex-1 rounded border border-slate-300 px-3 py-2 text-sm focus:border-un-blue focus:ring-2 focus:ring-un-blue/20 focus:outline-none"
                       disabled={isAddingWhitelist}
                     />
@@ -561,7 +559,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                       className="bg-un-blue hover:bg-un-blue/90"
                     >
                       <Plus className="mr-1 h-4 w-4" />
-                      Add
+                      {labels.settings.whitelist.addButton}
                     </Button>
                   </div>
                   {error && (
@@ -573,20 +571,20 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                 <div className="max-h-64 overflow-y-auto rounded border border-slate-200 bg-white">
                   {isLoadingWhitelist ? (
                     <div className="p-4 text-center text-sm text-slate-600">
-                      Loading...
+                      {labels.settings.whitelist.loading}
                     </div>
                   ) : whitelistEmails.length === 0 ? (
                     <div className="p-4 text-center text-sm text-slate-600">
-                      No whitelisted emails yet
+                      {labels.settings.whitelist.empty}
                     </div>
                   ) : (
                     <table className="w-full text-sm">
                       <thead className="bg-slate-50 text-xs uppercase text-slate-600">
                         <tr>
-                          <th className="px-3 py-2 text-left font-medium">Email</th>
-                          <th className="px-3 py-2 text-left font-medium">Status</th>
-                          <th className="px-3 py-2 text-left font-medium">Added By</th>
-                          <th className="px-3 py-2 text-right font-medium">Actions</th>
+                          <th className="px-3 py-2 text-left font-medium">{labels.settings.whitelist.columns.email}</th>
+                          <th className="px-3 py-2 text-left font-medium">{labels.settings.whitelist.columns.status}</th>
+                          <th className="px-3 py-2 text-left font-medium">{labels.settings.whitelist.columns.addedBy}</th>
+                          <th className="px-3 py-2 text-right font-medium">{labels.settings.whitelist.columns.actions}</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-200">
@@ -604,12 +602,12 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                               {item.userId ? (
                                 <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800">
                                   <Check className="h-3 w-3" />
-                                  Registered
+                                  {labels.settings.whitelist.status.registered}
                                 </span>
                               ) : (
                                 <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
                                   <UserPlus className="h-3 w-3" />
-                                  Pending
+                                  {labels.settings.whitelist.status.pending}
                                 </span>
                               )}
                             </td>
@@ -625,8 +623,8 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                                 className="h-7 px-2 text-red-600 hover:bg-red-50 hover:text-red-700 disabled:opacity-50"
                                 title={
                                   item.userId
-                                    ? "Cannot remove - user account exists"
-                                    : "Remove from whitelist"
+                                    ? labels.settings.whitelist.cannotRemove
+                                    : labels.settings.whitelist.removeTooltip
                                 }
                               >
                                 <Trash2 className="h-3.5 w-3.5" />
@@ -640,7 +638,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                 </div>
 
                 <p className="mt-3 text-xs text-slate-500">
-                  Emails with registered accounts cannot be removed. Delete the user account first if needed.
+                  {labels.settings.whitelist.protectedNote}
                 </p>
               </div>
             </div>
@@ -654,16 +652,16 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
             <div className="space-y-4 rounded-lg bg-slate-50 p-4">
               <div>
                 <h3 className="mb-3 text-sm font-semibold text-slate-900">
-                  Scheduled Briefing
+                  {labels.settings.email.title}
                 </h3>
                 <p className="mb-3 text-xs text-slate-600">
-                  Configure automatic daily briefing emails.
+                  {labels.settings.email.description}
                 </p>
 
                 <div className="space-y-3">
                   <div>
                     <label className="mb-1 block text-xs text-slate-600">
-                      Send Time
+                      {labels.settings.email.sendTime}
                     </label>
                     <input
                       type="time"
@@ -675,19 +673,19 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
 
                   <div>
                     <label className="mb-1 block text-xs text-slate-600">
-                      Recipient Email Address
+                      {labels.settings.email.recipient}
                     </label>
                     <input
                       type="email"
                       value={emailAddress}
                       onChange={(e) => setEmailAddress(e.target.value)}
-                      placeholder="recipient@un.org"
+                      placeholder={labels.settings.email.recipientPlaceholder}
                       className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-un-blue focus:ring-2 focus:ring-un-blue/20 focus:outline-none"
                     />
                   </div>
 
                   <Button variant="outline" className="w-full" disabled>
-                    Save Email Settings
+                    {labels.settings.email.save}
                   </Button>
                 </div>
               </div>

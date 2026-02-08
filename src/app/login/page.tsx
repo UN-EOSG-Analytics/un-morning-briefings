@@ -14,6 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { SelectField } from "@/components/SelectField";
 import { TEAMS } from "@/lib/teams";
+import labels from "@/lib/labels.json";
 
 function LoginPageContent() {
   const [email, setEmail] = useState("");
@@ -45,23 +46,21 @@ function LoginPageContent() {
     const reset = searchParams.get("reset");
 
     if (deleted === "true") {
-      setSuccess("Your account has been deleted successfully.");
+      setSuccess(labels.auth.messages.accountDeleted);
     } else if (reset === "success") {
-      setSuccess("Password reset successful! You can now log in with your new password.");
+      setSuccess(labels.auth.messages.passwordResetSuccess);
     } else if (verified === "true") {
       if (message === "already") {
-        setSuccess("Your email is verified! You can log in now.");
+        setSuccess(labels.auth.messages.emailAlreadyVerified);
       } else {
-        setSuccess("Email verified successfully! You can now log in.");
+        setSuccess(labels.auth.messages.emailVerified);
       }
     } else if (errorParam === "invalid_token") {
-      setError(
-        "Invalid verification link. Please try again or request a new link.",
-      );
+      setError(labels.auth.messages.invalidVerificationLink);
     } else if (errorParam === "token_expired") {
-      setError("Verification link has expired. Please register again.");
+      setError(labels.auth.messages.tokenExpired);
     } else if (errorParam === "verification_failed") {
-      setError("Email verification failed. Please try again.");
+      setError(labels.auth.messages.verificationFailed);
     }
   }, [searchParams]);
 
@@ -80,13 +79,13 @@ function LoginPageContent() {
 
       if (result?.error) {
         setError(
-          "Invalid email or password. Please check your credentials and try again.",
+          labels.auth.messages.invalidCredentials,
         );
       } else if (result?.ok) {
         window.location.href = "https://briefings.eosg.dev/";
       }
     } catch {
-      setError("An error occurred. Please try again.");
+      setError(labels.auth.messages.genericError);
     } finally {
       setIsLoading(false);
     }
@@ -98,22 +97,22 @@ function LoginPageContent() {
 
     // Validate fields
     if (!regFormData.email.endsWith("@un.org")) {
-      setError("Please use a valid @un.org email address");
+      setError(labels.auth.validation.invalidEmail);
       return;
     }
 
     if (regFormData.password.length < 8) {
-      setError("Password must be at least 8 characters long");
+      setError(labels.auth.validation.passwordMinLength);
       return;
     }
 
     if (regFormData.password !== regFormData.confirmPassword) {
-      setError("Passwords do not match");
+      setError(labels.auth.validation.passwordMismatch);
       return;
     }
 
     if (!regFormData.firstName || !regFormData.lastName || !regFormData.team) {
-      setError("All fields are required");
+      setError(labels.auth.validation.allFieldsRequired);
       return;
     }
 
@@ -135,14 +134,14 @@ function LoginPageContent() {
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data.error || "Registration failed");
+        setError(data.error || labels.auth.messages.genericError);
         return;
       }
 
       setRegistrationEmail(regFormData.email);
       setRegistrationSuccess(true);
     } catch {
-      setError("An error occurred. Please try again.");
+      setError(labels.auth.messages.genericError);
     } finally {
       setIsLoading(false);
     }
@@ -174,19 +173,18 @@ function LoginPageContent() {
               </div>
             </div>
             <h2 className="mb-2 text-center text-xl font-semibold text-slate-900">
-              Check Your Email
+              {labels.auth.register.checkEmail}
             </h2>
             <p className="mb-6 text-center text-sm text-slate-600">
-              We&apos;ve sent a verification link to{" "}
+              {labels.auth.register.verificationSent}{" "}
               <strong>{registrationEmail}</strong>
             </p>
             <div className="mb-6 flex items-start gap-3 rounded-md bg-blue-50 p-4">
               <Mail className="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600" />
               <div className="text-sm text-slate-700">
-                <p className="mb-1 font-medium">Please verify your email</p>
+                <p className="mb-1 font-medium">{labels.auth.register.verifyPrompt}</p>
                 <p className="text-slate-600">
-                  Click the link in the email we sent you to activate your
-                  account. The link will expire in 24 hours.
+                  {labels.auth.register.verifyDescription}
                 </p>
               </div>
             </div>
@@ -194,7 +192,7 @@ function LoginPageContent() {
               onClick={handleBackToLogin}
               className="w-full bg-un-blue hover:bg-un-blue/90"
             >
-              Back to Login
+              {labels.auth.register.backToLogin}
             </Button>
           </div>
         ) : showRegister ? (
@@ -207,13 +205,13 @@ function LoginPageContent() {
                 className="mb-4 -ml-2 text-slate-600 hover:text-slate-900"
               >
                 <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Login
+                {labels.auth.register.backToLogin}
               </Button>
               <h1 className="mb-2 text-2xl font-semibold text-slate-900">
-                Create Account
+                {labels.auth.register.title}
               </h1>
               <p className="text-sm text-slate-600">
-                Register with your @un.org email address
+                {labels.auth.register.subtitle}
               </p>
             </div>
 
@@ -231,7 +229,7 @@ function LoginPageContent() {
                     htmlFor="firstName"
                     className="mb-2 block text-sm font-medium text-slate-700"
                   >
-                    First Name
+                    {labels.auth.register.firstName}
                   </label>
                   <input
                     id="firstName"
@@ -253,7 +251,7 @@ function LoginPageContent() {
                     htmlFor="lastName"
                     className="mb-2 block text-sm font-medium text-slate-700"
                   >
-                    Last Name
+                    {labels.auth.register.lastName}
                   </label>
                   <input
                     id="lastName"
@@ -292,7 +290,7 @@ function LoginPageContent() {
                       setRegFormData({ ...regFormData, email: e.target.value })
                     }
                     className="block w-full rounded-md border border-slate-300 py-2 pr-3 pl-10 focus:border-transparent focus:ring-2 focus:ring-un-blue focus:outline-none"
-                    placeholder="your.name@un.org"
+                    placeholder={labels.auth.login.emailPlaceholder}
                     disabled={isLoading}
                   />
                 </div>
@@ -317,7 +315,7 @@ function LoginPageContent() {
                   htmlFor="regPassword"
                   className="mb-2 block text-sm font-medium text-slate-700"
                 >
-                  Password
+                  {labels.auth.register.password}
                 </label>
                 <div className="relative">
                   <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
@@ -335,7 +333,7 @@ function LoginPageContent() {
                       })
                     }
                     className="block w-full rounded-md border border-slate-300 py-2 pr-3 pl-10 focus:border-transparent focus:ring-2 focus:ring-un-blue focus:outline-none"
-                    placeholder="Minimum 8 characters"
+                    placeholder={labels.auth.register.passwordPlaceholder}
                     disabled={isLoading}
                   />
                 </div>
@@ -346,7 +344,7 @@ function LoginPageContent() {
                   htmlFor="confirmPassword"
                   className="mb-2 block text-sm font-medium text-slate-700"
                 >
-                  Confirm Password
+                  {labels.auth.register.confirmPassword}
                 </label>
                 <div className="relative">
                   <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
@@ -364,7 +362,7 @@ function LoginPageContent() {
                       })
                     }
                     className="block w-full rounded-md border border-slate-300 py-2 pr-3 pl-10 focus:border-transparent focus:ring-2 focus:ring-un-blue focus:outline-none"
-                    placeholder="Re-enter password"
+                    placeholder={labels.auth.register.confirmPlaceholder}
                     disabled={isLoading}
                   />
                 </div>
@@ -375,12 +373,12 @@ function LoginPageContent() {
                 disabled={isLoading}
                 className="w-full bg-un-blue py-2 text-white hover:bg-un-blue/95"
               >
-                {isLoading ? "Creating Account..." : "Create Account"}
+                {isLoading ? labels.auth.register.submitLoading : labels.auth.register.submitButton}
               </Button>
             </form>
 
             <div className="mt-8 text-center text-xs text-slate-500">
-              <p>© {new Date().getFullYear()} United Nations</p>
+              <p>© {new Date().getFullYear()} {labels.app.org}</p>
             </div>
           </div>
         ) : (
@@ -389,10 +387,10 @@ function LoginPageContent() {
             {/* Title */}
             <div className="mb-8 text-left">
               <h1 className="mb-2 text-2xl font-semibold text-slate-900">
-                Morning Briefing System
+                {labels.auth.login.title}
               </h1>
               <p className="text-sm text-slate-600">
-                Sign in with your UN account
+                {labels.auth.login.subtitle}
               </p>
             </div>
 
@@ -403,7 +401,7 @@ function LoginPageContent() {
                   htmlFor="email"
                   className="mb-2 block text-sm font-medium text-slate-700"
                 >
-                  Email Address
+                  {labels.auth.login.emailLabel}
                 </label>
                 <div className="relative">
                   <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
@@ -418,7 +416,7 @@ function LoginPageContent() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="block w-full rounded-md border border-slate-300 py-2 pr-3 pl-10 focus:border-transparent focus:ring-2 focus:ring-un-blue focus:outline-none"
-                    placeholder="your.name@un.org"
+                    placeholder={labels.auth.login.emailPlaceholder}
                     disabled={isLoading}
                   />
                 </div>
@@ -430,13 +428,13 @@ function LoginPageContent() {
                     htmlFor="password"
                     className="block text-sm font-medium text-slate-700"
                   >
-                    Password
+                    {labels.auth.login.passwordLabel}
                   </label>
                   <a
                     href="/forgot-password"
                     className="text-xs text-un-blue hover:text-un-blue/80 transition-colors"
                   >
-                    Forgot password?
+                    {labels.auth.login.forgotPassword}
                   </a>
                 </div>
                 <div className="relative">
@@ -452,7 +450,7 @@ function LoginPageContent() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="block w-full rounded-md border border-slate-300 py-2 pr-3 pl-10 focus:border-transparent focus:ring-2 focus:ring-un-blue focus:outline-none"
-                    placeholder="Enter your password"
+                    placeholder={labels.auth.login.passwordPlaceholder}
                     disabled={isLoading}
                   />
                 </div>
@@ -477,14 +475,14 @@ function LoginPageContent() {
                 disabled={isLoading}
                 className="w-full bg-un-blue py-2 text-white hover:bg-un-blue/95"
               >
-                {isLoading ? "Logging in..." : "Login"}
+                {isLoading ? labels.auth.login.loginLoading : labels.auth.login.loginButton}
               </Button>
             </form>
 
             {/* Register Section */}
             <div className="mt-6 border-t border-slate-200 pt-6">
               <p className="mb-3 text-center text-sm text-slate-600">
-                Don&apos;t have an account?
+                {labels.auth.login.noAccount}
               </p>
               <Button
                 type="button"
@@ -494,13 +492,13 @@ function LoginPageContent() {
                 disabled={isLoading}
               >
                 <UserPlus className="mr-2 h-4 w-4" />
-                Create Account
+                {labels.auth.login.createAccount}
               </Button>
             </div>
 
             {/* Footer */}
             <div className="mt-8 text-center text-xs text-slate-500">
-              <p>© {new Date().getFullYear()} United Nations</p>
+              <p>© {new Date().getFullYear()} {labels.app.org}</p>
             </div>
           </div>
         )}

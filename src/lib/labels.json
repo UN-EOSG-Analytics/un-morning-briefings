@@ -1,4 +1,501 @@
 {
+  "app": {
+    "name": "Morning Briefing System",
+    "fullName": "United Nations | Morning Briefings",
+    "org": "United Nations",
+    "copyright": "© {year} United Nations. All rights reserved.",
+    "confidential": "INTERNAL | NOT FOR FURTHER DISTRIBUTION",
+    "defaultTeam": "Political Unit (EOSG)"
+  },
+
+  "nav": {
+    "home": "Home",
+    "viewEntries": "View Entries",
+    "myDrafts": "My Drafts",
+    "newEntry": "New Entry",
+    "profile": "Profile",
+    "settings": "Settings",
+    "logout": "Logout",
+    "toggleMenu": "Toggle menu"
+  },
+
+  "auth": {
+    "login": {
+      "title": "Morning Briefing System",
+      "subtitle": "Sign in with your UN account",
+      "emailLabel": "Email Address",
+      "emailPlaceholder": "your.name@un.org",
+      "passwordLabel": "Password",
+      "passwordPlaceholder": "Enter your password",
+      "forgotPassword": "Forgot password?",
+      "loginButton": "Login",
+      "loginLoading": "Logging in...",
+      "noAccount": "Don't have an account?",
+      "createAccount": "Create Account"
+    },
+    "register": {
+      "title": "Create Account",
+      "subtitle": "Register with your @un.org email address",
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "email": "Email Address",
+      "password": "Password",
+      "confirmPassword": "Confirm Password",
+      "passwordPlaceholder": "Minimum 8 characters",
+      "confirmPlaceholder": "Re-enter password",
+      "submitButton": "Create Account",
+      "submitLoading": "Creating Account...",
+      "backToLogin": "Back to Login",
+      "checkEmail": "Check Your Email",
+      "verificationSent": "We've sent a verification link to",
+      "verifyPrompt": "Please verify your email",
+      "verifyDescription": "Click the link in the email we sent you to activate your account. The link will expire in 24 hours."
+    },
+    "forgotPassword": {
+      "title": "Reset Your Password",
+      "subtitle": "Enter your email address and we'll send you a link to reset your password.",
+      "emailHelper": "Must be a valid @un.org email address",
+      "submitButton": "Send Reset Link",
+      "submitLoading": "Sending...",
+      "successTitle": "Check your email",
+      "successMessage": "If an account exists with that email, we've sent a password reset link. The link will expire in 30 minutes.",
+      "securityNote": "For security reasons, password reset links expire after 30 minutes and can only be used once."
+    },
+    "resetPassword": {
+      "title": "Set New Password",
+      "subtitle": "Enter your new password below",
+      "newPassword": "New Password",
+      "confirmPassword": "Confirm New Password",
+      "newPasswordPlaceholder": "Enter new password",
+      "confirmPlaceholder": "Confirm new password",
+      "passwordHelper": "Must be at least 8 characters long",
+      "submitButton": "Reset Password",
+      "submitLoading": "Resetting Password...",
+      "validating": "Validating reset token...",
+      "successTitle": "Password reset successful!",
+      "successRedirect": "Redirecting you to login...",
+      "invalidTitle": "Invalid Reset Link",
+      "requestNewLink": "Request New Reset Link",
+      "securityNote": "Your password will be securely encrypted and stored."
+    },
+    "messages": {
+      "accountDeleted": "Your account has been deleted successfully.",
+      "passwordResetSuccess": "Password reset successful! You can now log in with your new password.",
+      "emailVerified": "Email verified successfully! You can now log in.",
+      "emailAlreadyVerified": "Your email is verified! You can log in now.",
+      "invalidVerificationLink": "Invalid verification link. Please try again or request a new link.",
+      "tokenExpired": "Verification link has expired. Please register again.",
+      "verificationFailed": "Email verification failed. Please try again.",
+      "invalidCredentials": "Invalid email or password. Please check your credentials and try again.",
+      "genericError": "An error occurred. Please try again.",
+      "serverError": "An error occurred processing your request"
+    },
+    "validation": {
+      "invalidEmail": "Please use a valid @un.org email address",
+      "passwordMinLength": "Password must be at least 8 characters long",
+      "passwordMismatch": "Passwords do not match",
+      "allFieldsRequired": "All fields are required",
+      "invalidEmailAddress": "Invalid email address",
+      "emailNotAuthorized": "This email address is not authorized to register. Please contact an administrator.",
+      "onlyUnEmail": "Only @un.org email addresses are allowed",
+      "accountExists": "An account with this email already exists",
+      "registrationSuccess": "Registration successful. Please check your email to verify your account.",
+      "registrationFailed": "An error occurred during registration",
+      "invalidToken": "Invalid reset token",
+      "invalidOrExpiredToken": "Invalid or expired reset token",
+      "noTokenProvided": "No reset token provided. Please request a new password reset link.",
+      "tokenValidationError": "Error validating reset token. Please try again.",
+      "tokenValid": "Token is valid",
+      "passwordResetComplete": "Password reset successfully. You can now log in with your new password."
+    },
+    "rateLimit": {
+      "tooManyEmailRequests": "Too many password reset requests. Please try again in 15 minutes.",
+      "tooManyIpRequests": "Too many requests from this IP. Please try again in 15 minutes.",
+      "resetEmailSent": "If an account with that email exists, a password reset link has been sent."
+    }
+  },
+
+  "form": {
+    "title": "Morning Meeting Form",
+    "subtitle": "Submit a new entry to be used in the next Morning Meeting Update",
+    "labels": {
+      "category": "Category",
+      "priority": "Priority",
+      "region": "Region",
+      "tags": "Tags",
+      "headline": "Headline",
+      "entryContent": "Entry Content",
+      "sourceName": "Source Name",
+      "sourceDate": "Source Date",
+      "sourceUrl": "Source URL",
+      "puNote": "PU Note/Comment",
+      "author": "Author",
+      "creationDate": "Creation Date",
+      "creationTime": "Creation Time",
+      "previousEntry": "Previous Entry",
+      "none": "None"
+    },
+    "placeholders": {
+      "category": "Select category...",
+      "priority": "Select priority...",
+      "region": "Select region...",
+      "tags": "Select tags...",
+      "headline": "Enter a concise, descriptive headline...",
+      "entry": "Provide a comprehensive summary of the development...",
+      "sourceName": "Add source name...",
+      "puNote": "Add Political Unit note or comment..."
+    },
+    "sections": {
+      "entryDetails": "Entry Details",
+      "metadata": "Metadata"
+    },
+    "editorMode": {
+      "plainText": "Plain Text",
+      "richText": "Rich Text"
+    },
+    "validation": {
+      "regionRequired": "Region is required",
+      "headlineRequired": "Headline is required",
+      "categoryRequired": "Category is required",
+      "priorityRequired": "Priority is required",
+      "dateRequired": "Date is required",
+      "entryMinLength": "Entry must be at least 50 characters"
+    },
+    "actions": {
+      "saveDraft": "Save Draft",
+      "reset": "Reset",
+      "cancel": "Cancel",
+      "submit": "Submit Entry",
+      "update": "Update Entry",
+      "submitting": "Submitting...",
+      "updating": "Updating...",
+      "autoFill": "Auto-Fill",
+      "draftSaved": "Draft Saved"
+    },
+    "autoFill": {
+      "dialogTitle": "Auto-Fill Form with AI",
+      "contentLabel": "Content to Analyze",
+      "contentPlaceholder": "Paste your content here...",
+      "contentDescription": "Paste news content, article text, or briefing information below...",
+      "extractionHint": "AI will extract: Category, Priority, Region, Country, Headline, Source Date, Date, and Entry Content",
+      "submitButton": "Auto-Fill Form",
+      "submitLoading": "Processing..."
+    },
+    "popups": {
+      "resetTitle": "Reset Form",
+      "resetMessage": "Are you sure you want to reset the form? All entered data will be lost.",
+      "cancelTitle": "Cancel",
+      "cancelMessage": "Are you sure you want to cancel? Any unsaved changes will be lost.",
+      "noContent": "No Content",
+      "noContentMessage": "Please paste some content to analyze",
+      "aiDisabled": "AI Usage not enabled",
+      "aiDisabledMessage": "Please wait for Update",
+      "autoFillFailed": "Auto-Fill Failed",
+      "autoFillSuccess": "Form Auto-Filled",
+      "autoFillSuccessMessage": "The form has been filled with AI-analyzed data. Please review the extracted information.",
+      "authorHint": "Author automatically populated from your account"
+    }
+  },
+
+  "entries": {
+    "title": "Morning Meeting Entries",
+    "subtitle": "View and manage submitted entries",
+    "columns": {
+      "date": "Date",
+      "headline": "Headline",
+      "region": "Region",
+      "tag": "Tag",
+      "status": "Status",
+      "actions": "Actions",
+      "comment": "Comment",
+      "country": "Country"
+    },
+    "filters": {
+      "briefingDate": "Briefing Date",
+      "allRegions": "All Regions",
+      "allPriorities": "All Priorities",
+      "resetFilters": "Reset Filters",
+      "searchPlaceholder": "Search entries..."
+    },
+    "status": {
+      "pending": "Pending",
+      "discussed": "Discussed"
+    },
+    "actions": {
+      "refresh": "Refresh",
+      "exportBriefing": "Export Daily Briefing",
+      "exportJson": "Export JSON",
+      "edit": "Edit",
+      "delete": "Delete",
+      "close": "Close",
+      "create": "Create",
+      "view": "View",
+      "viewAll": "View All",
+      "previous": "Previous",
+      "next": "Next",
+      "followUp": "Follow Up",
+      "postpone": "Postpone",
+      "discussed": "Discussed"
+    },
+    "empty": {
+      "noEntries": "No entries found.",
+      "noMatch": "No entries match your filters.",
+      "noDrafts": "No drafts found.",
+      "noExport": "There are no entries to export.",
+      "createFirst": "Create your first entry"
+    },
+    "briefingFor": "Briefing for",
+    "showingCount": "Showing {shown} of {total} entries",
+    "xOfY": "{current} of {total}",
+    "confirm": {
+      "deleteTitle": "Delete Entry",
+      "deleteMessage": "Are you sure you want to delete this entry? This action cannot be undone.",
+      "deleteDraftTitle": "Delete Draft",
+      "deleteDraftMessage": "Are you sure you want to delete this draft? This action cannot be undone."
+    },
+    "success": {
+      "refreshed": "Refreshed",
+      "refreshedMessage": "Table data refreshed successfully",
+      "deleted": "Deleted",
+      "deletedMessage": "Entry deleted successfully",
+      "draftDeleted": "Draft deleted successfully",
+      "draftSubmitted": "Draft submitted successfully!",
+      "entryUpdated": "Entry updated successfully!",
+      "entrySubmitted": "Entry submitted successfully!"
+    },
+    "errors": {
+      "fetchFailed": "Failed to fetch entries",
+      "createFailed": "Failed to create entry",
+      "updateFailed": "Failed to update entry",
+      "deleteFailed": "Failed to delete entry",
+      "submitFailed": "Unable to submit entry. Please try again.",
+      "loadFailed": "Unable to load entry for editing",
+      "loadPreviousFailed": "Unable to load previous entry data",
+      "saveDraftFailed": "Unable to save draft. Please try again.",
+      "idRequired": "Entry ID is required",
+      "invalidApprovalStatus": "Invalid approval status",
+      "invalidStatus": "Invalid status",
+      "noFieldsToUpdate": "No fields to update",
+      "notFound": "Entry not found"
+    },
+    "drafts": {
+      "title": "My Drafts",
+      "subtitle": "View and manage your unsubmitted draft entries",
+      "savedMessage": "Your draft has been saved successfully!",
+      "updatedMessage": "Your draft has been updated successfully!"
+    }
+  },
+
+  "viewEntry": {
+    "keyPoints": "Key Points",
+    "puNotes": "PU Notes",
+    "notAvailable": "N/A",
+    "createSummary": "Create Summary",
+    "generating": "Generating...",
+    "ai": "AI",
+    "summary": {
+      "success": "Summary Generated",
+      "successMessage": "AI summary created successfully.",
+      "failed": "Summary Failed",
+      "failedMessage": "Failed to generate summary. Please try again."
+    },
+    "approval": {
+      "updateFailed": "Update Failed",
+      "updateFailedMessage": "Failed to update approval status. Please try again.",
+      "postponed": "Postponed",
+      "postponedMessage": "Entry has been postponed to the next day and set to pending",
+      "postponeFailed": "Postpone Failed",
+      "postponeFailedMessage": "Failed to postpone entry. Please try again."
+    }
+  },
+
+  "profile": {
+    "role": "Officer",
+    "stats": {
+      "totalEntries": "Total Entries",
+      "submitted": "Submitted",
+      "discussed": "Discussed",
+      "pending": "Pending"
+    },
+    "sections": {
+      "entriesWithFeedback": "Entries with Feedback",
+      "addressedFeedback": "Addressed Follow-Ups",
+      "feedback": "Feedback:"
+    },
+    "refreshed": "Refreshed",
+    "refreshedMessage": "Profile data refreshed successfully"
+  },
+
+  "settings": {
+    "title": "Settings",
+    "subtitle": "Manage your account, data, and email preferences",
+    "tabs": {
+      "account": "Account",
+      "dataManagement": "Data Management",
+      "whitelist": "User Management",
+      "emailWorkflow": "E-Mail Workflow"
+    },
+    "account": {
+      "email": "Email",
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "firstNamePlaceholder": "First name",
+      "lastNamePlaceholder": "Last name",
+      "nameRequired": "First and last name are required",
+      "edit": "Edit",
+      "save": "Save",
+      "saving": "Saving...",
+      "deleteAccount": "Delete Account",
+      "deleteConfirmTitle": "Are you absolutely sure?",
+      "deleteConfirmMessage": "This action cannot be undone. This will delete your account for the UN Morning Briefing Tool and remove all of your drafts from our servers.",
+      "deleteButton": "Yes, delete my account",
+      "deleting": "Deleting..."
+    },
+    "data": {
+      "title": "Backup & Restore",
+      "description": "Download all entries as JSON backup or import a backup file to restore entries.",
+      "download": "Download Backup",
+      "downloading": "Creating...",
+      "import": "Import Backup",
+      "importing": "Importing...",
+      "importSuccess": "Import Successful",
+      "importSuccessMessage": "Imported {count} entries. {skipped} duplicates were skipped.",
+      "importFailed": "Import Failed",
+      "invalidFormat": "Invalid backup file format"
+    },
+    "whitelist": {
+      "title": "Authorized Email Addresses",
+      "description": "Only whitelisted @un.org email addresses can register and sign in. Add email addresses below to authorize access.",
+      "placeholder": "email@un.org",
+      "addButton": "Add",
+      "columns": {
+        "email": "Email",
+        "status": "Status",
+        "addedBy": "Added By",
+        "actions": "Actions"
+      },
+      "status": {
+        "registered": "Registered",
+        "pending": "Pending"
+      },
+      "empty": "No whitelisted emails yet",
+      "loading": "Loading...",
+      "addSuccess": "Email Added",
+      "removeSuccess": "Email Removed",
+      "addFailed": "Add Failed",
+      "removeFailed": "Remove Failed",
+      "cannotRemove": "Cannot remove - user account exists",
+      "removeTooltip": "Remove from whitelist",
+      "protectedNote": "Emails with registered accounts cannot be removed from the whitelist."
+    },
+    "email": {
+      "title": "Scheduled Briefing",
+      "siteTitle": "United Nations | Morning Briefings",
+      "description": "Configure automatic daily briefing emails.",
+      "sendTime": "Send Time",
+      "recipient": "Recipient Email Address",
+      "recipientPlaceholder": "recipient@un.org",
+      "save": "Save Email Settings"
+    }
+  },
+
+  "home": {
+    "greeting": "Hello, {name}!",
+    "subtitle": "Create and manage Morning Meeting Update entries",
+    "cards": {
+      "create": {
+        "title": "Create Entry",
+        "descriptionShort": "Submit a new morning meeting briefing entry",
+        "descriptionLong": "Submit a new morning meeting briefing entry with key updates and information",
+        "button": "Create"
+      },
+      "currentBriefing": {
+        "title": "Current Briefing",
+        "descriptionShort": "View briefing entries for {date}",
+        "descriptionLong": "View briefing entries for the Morning Meeting on {date}.",
+        "button": "View"
+      },
+      "archive": {
+        "title": "Archive",
+        "descriptionShort": "Browse all entries",
+        "descriptionLong": "Browse, filter, and manage all submitted morning meeting briefing entries",
+        "button": "View All"
+      }
+    }
+  },
+
+  "analytics": {
+    "title": "Analytics Dashboard",
+    "subtitle": "Comprehensive insights into your morning briefing entries",
+    "filters": {
+      "title": "Filters",
+      "description": "Filter data by date range, regions, and countries",
+      "region": "Region",
+      "countries": "Countries",
+      "dateRange": "Date Range",
+      "allRegions": "All regions",
+      "allCountries": "All countries",
+      "apply": "Apply Filters",
+      "clearAll": "Clear All"
+    },
+    "loading": {
+      "map": "Loading map...",
+      "data": "Loading analytics..."
+    },
+    "stats": {
+      "totalEntries": "Total Entries",
+      "regionsCovered": "Regions Covered",
+      "avgEntryLength": "Avg Entry Length",
+      "contributors": "Contributors",
+      "words": "words"
+    },
+    "charts": {
+      "regionalDistribution": "Regional Distribution",
+      "regionalDistributionDesc": "Total entries by region",
+      "topRegions": "Top 5 Regions",
+      "topRegionsDesc": "Most active regions in selected period",
+      "categoryDistribution": "Category Distribution",
+      "categoryDistributionDesc": "Entries by category",
+      "entryLengthDistribution": "Entry Length Distribution",
+      "entryLengthDistributionDesc": "Entries by length category",
+      "topCountries": "Top 10 Countries",
+      "topCountriesDesc": "Most mentioned countries",
+      "monthlyTrends": "Monthly Entry Trends",
+      "monthlyTrendsDesc": "Total entries per month",
+      "regionalActivity": "Regional Activity Over Time",
+      "regionalActivityDesc": "Daily entry distribution by region (weekdays only)",
+      "entries": "Entries"
+    },
+    "empty": {
+      "title": "No analytics data available",
+      "description": "This could mean there are no entries in the database yet, or the filters are too restrictive."
+    },
+    "map": {
+      "expandFullscreen": "Expand to fullscreen",
+      "exitFullscreen": "Exit fullscreen",
+      "toggleConnections": "Toggle country connections"
+    }
+  },
+
+  "document": {
+    "morningMeetingUpdate": "MORNING MEETING UPDATE",
+    "tableOfContents": "TABLE OF CONTENTS",
+    "noCountry": "(No country specified)",
+    "puNotePrefix": "PU Note: "
+  },
+
+  "common": {
+    "loading": "Loading...",
+    "cancel": "Cancel",
+    "save": "Save",
+    "backToLogin": "Back to Login",
+    "success": "Success",
+    "failed": "Failed",
+    "failedToLoad": "Failed to Load",
+    "failedToSave": "Failed to Save",
+    "failedToSubmit": "Failed to Submit"
+  },
+
   "categories": [
     "Article",
     "Meeting Note",

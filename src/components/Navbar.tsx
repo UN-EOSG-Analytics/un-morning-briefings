@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import NavButton from "./NavButton";
 import { SettingsDialog } from "./SettingsDialog";
 import { useUnsavedChanges } from "@/lib/unsaved-changes-context";
+import labels from "@/lib/labels.json";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,6 +31,57 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+
+/** Shared user account dropdown used in both desktop and mobile Navbar */
+function UserDropdownContent({
+  userName,
+  userEmail,
+  onProfile,
+  onSettings,
+}: {
+  userName: string;
+  userEmail: string;
+  onProfile: () => void;
+  onSettings: () => void;
+}) {
+  return (
+    <DropdownMenuContent align="end" className="w-56" suppressHydrationWarning>
+      <DropdownMenuLabel className="flex flex-col gap-1">
+        <span className="text-sm font-semibold">{userName}</span>
+        <span className="text-xs text-slate-600">{userEmail}</span>
+      </DropdownMenuLabel>
+      <DropdownMenuSeparator />
+      <DropdownMenuItem className="cursor-pointer gap-2" onClick={onProfile}>
+        <UserCircle className="h-4 w-4" />
+        <span>{labels.nav.profile}</span>
+      </DropdownMenuItem>
+      <DropdownMenuItem className="cursor-pointer gap-2" onClick={onSettings}>
+        <Settings className="h-4 w-4" />
+        <span>{labels.nav.settings}</span>
+      </DropdownMenuItem>
+      <DropdownMenuItem
+        className="cursor-pointer gap-2 text-red-600"
+        onClick={() => signOut({ callbackUrl: "/login" })}
+      >
+        <LogOut className="h-4 w-4" />
+        <span>{labels.nav.logout}</span>
+      </DropdownMenuItem>
+    </DropdownMenuContent>
+  );
+}
+
+/** Shared user avatar trigger button */
+function UserAvatarTrigger() {
+  return (
+    <DropdownMenuTrigger asChild suppressHydrationWarning>
+      <Button variant="ghost" size="sm" className="h-9 w-9 rounded-full p-0">
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-200">
+          <User className="h-4 w-4 text-slate-600" />
+        </div>
+      </Button>
+    </DropdownMenuTrigger>
+  );
+}
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -137,7 +189,7 @@ export function Navbar() {
                 className="text-foreground hover:bg-slate-50 hover:text-un-blue"
               >
                 <Home className="h-4 w-4 text-slate-600" />
-                <span>Home</span>
+                <span>{labels.nav.home}</span>
               </NavButton>
 
               <NavButton
@@ -145,7 +197,7 @@ export function Navbar() {
                 className="text-foreground hover:bg-slate-50 hover:text-un-blue"
               >
                 <List className="h-4 w-4 text-slate-600" />
-                <span>View Entries</span>
+                <span>{labels.nav.viewEntries}</span>
               </NavButton>
 
               <NavButton
@@ -153,7 +205,7 @@ export function Navbar() {
                 className="text-foreground hover:bg-slate-50 hover:text-un-blue"
               >
                 <FileEdit className="h-4 w-4 text-slate-600" />
-                <span>My Drafts</span>
+                <span>{labels.nav.myDrafts}</span>
               </NavButton>
 
               <NavButton
@@ -161,54 +213,18 @@ export function Navbar() {
                 className="bg-un-blue text-white hover:bg-un-blue/95"
               >
                 <PlusCircle className="h-4 w-4 text-white" />
-                <span>New Entry</span>
+                <span>{labels.nav.newEntry}</span>
               </NavButton>
 
               {/* User Account Menu */}
               <DropdownMenu>
-                <DropdownMenuTrigger asChild suppressHydrationWarning>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-9 w-9 rounded-full p-0"
-                  >
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-200">
-                      <User className="h-4 w-4 text-slate-600" />
-                    </div>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  align="end"
-                  className="w-56"
-                  suppressHydrationWarning
-                >
-                  <DropdownMenuLabel className="flex flex-col gap-1">
-                    <span className="text-sm font-semibold">{userName}</span>
-                    <span className="text-xs text-slate-600">{userEmail}</span>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    className="cursor-pointer gap-2"
-                    onClick={handleProfileClick}
-                  >
-                    <UserCircle className="h-4 w-4" />
-                    <span>Profile</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    className="cursor-pointer gap-2"
-                    onClick={() => setShowSettings(true)}
-                  >
-                    <Settings className="h-4 w-4" />
-                    <span>Settings</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    className="cursor-pointer gap-2 text-red-600"
-                    onClick={() => signOut({ callbackUrl: "/login" })}
-                  >
-                    <LogOut className="h-4 w-4" />
-                    <span>Logout</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
+                <UserAvatarTrigger />
+                <UserDropdownContent
+                  userName={userName}
+                  userEmail={userEmail}
+                  onProfile={handleProfileClick}
+                  onSettings={() => setShowSettings(true)}
+                />
               </DropdownMenu>
             </div>
           )}
@@ -218,49 +234,13 @@ export function Navbar() {
             {/* User Account Menu - Mobile - Only show if logged in */}
             {session && (
               <DropdownMenu>
-                <DropdownMenuTrigger asChild suppressHydrationWarning>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-9 w-9 rounded-full p-0"
-                  >
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-200">
-                      <User className="h-4 w-4 text-slate-600" />
-                    </div>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  align="end"
-                  className="w-56"
-                  suppressHydrationWarning
-                >
-                  <DropdownMenuLabel className="flex flex-col gap-1">
-                    <span className="text-sm font-semibold">{userName}</span>
-                    <span className="text-xs text-slate-600">{userEmail}</span>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    className="cursor-pointer gap-2"
-                    onClick={handleProfileClick}
-                  >
-                    <UserCircle className="h-4 w-4" />
-                    <span>Profile</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    className="cursor-pointer gap-2"
-                    onClick={() => setShowSettings(true)}
-                  >
-                    <Settings className="h-4 w-4" />
-                    <span>Settings</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    className="cursor-pointer gap-2 text-red-600"
-                    onClick={() => signOut({ callbackUrl: "/login" })}
-                  >
-                    <LogOut className="h-4 w-4" />
-                    <span>Logout</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
+                <UserAvatarTrigger />
+                <UserDropdownContent
+                  userName={userName}
+                  userEmail={userEmail}
+                  onProfile={handleProfileClick}
+                  onSettings={() => setShowSettings(true)}
+                />
               </DropdownMenu>
             )}
 
@@ -289,7 +269,7 @@ export function Navbar() {
                 className="flex items-center gap-2 rounded px-3 py-2 text-sm hover:bg-slate-50"
               >
                 <Home className="h-4 w-4 text-slate-600" />
-                <span>Home</span>
+                <span>{labels.nav.home}</span>
               </Link>
               <Link
                 href="/list"
@@ -297,7 +277,7 @@ export function Navbar() {
                 className="flex items-center gap-2 rounded px-3 py-2 text-sm hover:bg-slate-50"
               >
                 <List className="h-4 w-4 text-slate-600" />
-                <span>View Entries</span>
+                <span>{labels.nav.viewEntries}</span>
               </Link>
               <Link
                 href="/drafts"
@@ -305,7 +285,7 @@ export function Navbar() {
                 className="flex items-center gap-2 rounded px-3 py-2 text-sm hover:bg-slate-50"
               >
                 <FileEdit className="h-4 w-4 text-slate-600" />
-                <span>My Drafts</span>
+                <span>{labels.nav.myDrafts}</span>
               </Link>
               <Link
                 href="/form"
@@ -313,7 +293,7 @@ export function Navbar() {
                 className="flex items-center gap-2 rounded bg-un-blue px-3 py-2 text-sm text-white hover:bg-un-blue/95"
               >
                 <PlusCircle className="h-4 w-4" />
-                <span>New Entry</span>
+                <span>{labels.nav.newEntry}</span>
               </Link>
               <button
                 onClick={async () => {
@@ -323,7 +303,7 @@ export function Navbar() {
                 className="flex w-full items-center gap-2 rounded px-3 py-2 text-sm hover:bg-slate-50"
               >
                 <UserCircle className="h-4 w-4 text-slate-600" />
-                <span>Profile</span>
+                <span>{labels.nav.profile}</span>
               </button>
             </div>
           </div>

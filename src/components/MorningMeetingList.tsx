@@ -9,6 +9,7 @@ import { ExportDailyBriefingDialog } from "./ExportDailyBriefingDialog";
 import { EntriesTable } from "./EntriesTable";
 import { usePopup } from "@/lib/popup-context";
 import type { MorningMeetingEntry } from "@/types/morning-meeting";
+import labels from "@/lib/labels.json";
 
 export function MorningMeetingList({
   initialDateFilter,
@@ -31,7 +32,7 @@ export function MorningMeetingList({
     setIsRefreshing(true);
     try {
       await loadEntries();
-      showSuccess("Refreshed", "Table data refreshed successfully");
+      showSuccess(labels.entries.success.refreshed, labels.entries.success.refreshedMessage);
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Failed to refresh data";
@@ -48,14 +49,14 @@ export function MorningMeetingList({
 
   const handleDelete = async (id: string) => {
     const confirmed = await showConfirm(
-      "Delete Entry",
-      "Are you sure you want to delete this entry? This action cannot be undone.",
+      labels.entries.confirm.deleteTitle,
+      labels.entries.confirm.deleteMessage,
     );
 
     if (confirmed) {
       try {
         await deleteEntry(id);
-        showSuccess("Deleted", "Entry deleted successfully");
+        showSuccess(labels.entries.success.deleted, labels.entries.success.deletedMessage);
         await loadEntries();
       } catch (error) {
         const errorMessage =
@@ -68,14 +69,14 @@ export function MorningMeetingList({
   const handleToggleApproval = async (entry: MorningMeetingEntry) => {
     try {
       if (!entry.id) {
-        showInfo("Error", "Cannot update entry without ID");
+        showInfo("Error", labels.entries.errors.idRequired);
         return;
       }
 
       // Just refresh the data - the dialog has already updated the status via API
       loadEntries();
     } catch {
-      showSuccess("Error", "Failed to update approval status");
+      showSuccess("Error", labels.viewEntry.approval.updateFailedMessage);
     }
   };
 
@@ -87,7 +88,7 @@ export function MorningMeetingList({
   const exportToJSON = () => {
     const entriesToExport = entries;
     if (entriesToExport.length === 0) {
-      showInfo("No Entries", "There are no entries to export.");
+      showInfo(labels.entries.empty.noExport.split(" ")[0] || "No Entries", labels.entries.empty.noExport);
       return;
     }
     const dataStr = JSON.stringify(entriesToExport, null, 2);
@@ -111,10 +112,10 @@ export function MorningMeetingList({
             </div>
             <div className="min-w-0">
               <h1 className="text-xl font-semibold text-foreground sm:text-2xl">
-                Morning Meeting Entries
+                {labels.entries.title}
               </h1>
               <p className="text-xs text-slate-600 sm:text-sm">
-                View and manage submitted entries
+                {labels.entries.subtitle}
               </p>
             </div>
           </div>
@@ -129,7 +130,7 @@ export function MorningMeetingList({
               <RefreshCw
                 className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
               />
-              <span className="sm:inline">Refresh</span>
+              <span className="sm:inline">{labels.entries.actions.refresh}</span>
             </Button>
             <Button
               variant="outline"
@@ -138,7 +139,7 @@ export function MorningMeetingList({
               className="w-full justify-center sm:h-10 sm:w-auto sm:px-6"
             >
               <FileDown className="h-4 w-4" />
-              <span className="sm:inline">Export Daily Briefing</span>
+              <span className="sm:inline">{labels.entries.actions.exportBriefing}</span>
             </Button>
             <Button
               variant="outline"
@@ -147,7 +148,7 @@ export function MorningMeetingList({
               className="hidden w-full justify-center sm:h-10 sm:w-auto sm:px-6"
             >
               <Download className="h-4 w-4" />
-              <span className="sm:inline">Export JSON</span>
+              <span className="sm:inline">{labels.entries.actions.exportJson}</span>
             </Button>
           </div>
         </div>
@@ -160,7 +161,7 @@ export function MorningMeetingList({
         onToggleApproval={handleToggleApproval}
         onPostpone={handlePostpone}
         showApprovedColumn={true}
-        emptyMessage="No entries found."
+        emptyMessage={labels.entries.empty.noEntries}
         resultLabel="entries"
         initialDateFilter={initialDateFilter}
       />

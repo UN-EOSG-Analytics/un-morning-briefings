@@ -1137,7 +1137,7 @@ export function ExportDailyBriefingDialog({
         <DialogFooter className="flex w-full flex-shrink-0 flex-col gap-3 px-4 pb-4 sm:flex-row sm:px-0 sm:pb-0">
           <Link href={`/briefing?date=${selectedDate}`} className="flex-1">
             <Button
-              className="w-full gap-2 bg-slate-900 text-white hover:bg-slate-800"
+              className="flex-1 gap-2"
               onClick={() => handleOpenChange(false)}
             >
               <Eye className="h-4 w-4" />

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useSession, signOut } from "next-auth/react";
 import {
   Settings,
@@ -10,6 +10,9 @@ import {
   X,
   Download,
   Upload,
+  Mail,
+  Plus,
+  UserPlus,
 } from "lucide-react";
 import {
   Dialog,
@@ -44,6 +47,88 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   // Email workflow settings
   const [emailTime, setEmailTime] = useState("09:00");
   const [emailAddress, setEmailAddress] = useState("");
+
+  // Whitelist settings
+  const [whitelistEmails, setWhitelistEmails] = useState<
+    Array<{
+      id: number;
+      email: string;
+      userId: number | null;
+      userName: string | null;
+      addedBy: string;
+      createdAt: string;
+    }>
+  >([]);
+  const [newWhitelistEmail, setNewWhitelistEmail] = useState("");
+  const [isLoadingWhitelist, setIsLoadingWhitelist] = useState(false);
+  const [isAddingWhitelist, setIsAddingWhitelist] = useState(false);
+
+  // Load whitelist when dialog opens
+  const loadWhitelist = async () => {
+    setIsLoadingWhitelist(true);
+    try {
+      const response = await fetch("/api/whitelist");
+      if (response.ok) {
+        const data = await response.json();
+        setWhitelistEmails(data);
+      }
+    } catch (err) {
+      console.error("Failed to load whitelist:", err);
+    } finally {
+      setIsLoadingWhitelist(false);
+    }
+  };
+
+  const handleAddWhitelistEmail = async () => {
+    if (!newWhitelistEmail.trim()) return;
+
+    setIsAddingWhitelist(true);
+    setError("");
+
+    try {
+      const response = await fetch("/api/whitelist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: newWhitelistEmail.trim() }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to add email");
+      }
+
+      showSuccess("Email Added", `${newWhitelistEmail} has been whitelisted`);
+      setNewWhitelistEmail("");
+      await loadWhitelist();
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : "Failed to add email";
+      setError(errorMsg);
+      showWarning("Add Failed", errorMsg);
+    } finally {
+      setIsAddingWhitelist(false);
+    }
+  };
+
+  const handleRemoveWhitelistEmail = async (email: string) => {
+    try {
+      const response = await fetch(`/api/whitelist?email=${encodeURIComponent(email)}`, {
+        method: "DELETE",
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to remove email");
+      }
+
+      showSuccess("Email Removed", `${email} has been removed from whitelist`);
+      await loadWhitelist();
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : "Failed to remove email";
+      showWarning("Remove Failed", errorMsg);
+    }
+  };
 
   const handleDeleteAccount = async () => {
     if (!session?.user?.email) return;
@@ -213,9 +298,16 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
     }
   };
 
+  // Load whitelist when dialog opens
+  useEffect(() => {
+    if (open) {
+      loadWhitelist();
+    }
+  }, [open]);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex h-[420px] flex-col sm:max-w-[600px]">
+      <DialogContent className="flex flex-col sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Settings className="h-5 w-5" />
@@ -230,9 +322,10 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
           defaultValue="account"
           className="flex min-h-0 w-full flex-1 flex-col"
         >
-          <TabsList className="grid w-full flex-shrink-0 grid-cols-3">
+          <TabsList className="grid w-full flex-shrink-0 grid-cols-4">
             <TabsTrigger value="account">Account</TabsTrigger>
             <TabsTrigger value="data">Data Management</TabsTrigger>
+            <TabsTrigger value="whitelist">Whitelist</TabsTrigger>
             <TabsTrigger value="email">E-Mail Workflow</TabsTrigger>
           </TabsList>
 
@@ -426,6 +519,128 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                 <p className="text-xs text-slate-600">
                   Download all entries as JSON backup or import a backup file to
                   restore entries.
+                </p>
+              </div>
+            </div>
+          </TabsContent>
+
+          {/* Whitelist Tab */}
+          <TabsContent
+            value="whitelist"
+            className="mt-4 flex-1 space-y-4 overflow-y-auto"
+          >
+            <div className="space-y-4 rounded-lg bg-slate-50 p-4">
+              <div>
+                <h3 className="mb-2 text-sm font-semibold text-slate-900">
+                  Authorized Email Addresses
+                </h3>
+                <p className="mb-3 text-xs text-slate-600">
+                  Only whitelisted @un.org email addresses can register and sign in. All authenticated users can manage this list.
+                </p>
+
+                {/* Add Email Form */}
+                <div className="mb-4 space-y-2">
+                  <div className="flex gap-2">
+                    <input
+                      type="email"
+                      value={newWhitelistEmail}
+                      onChange={(e) => setNewWhitelistEmail(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && !isAddingWhitelist) {
+                          handleAddWhitelistEmail();
+                        }
+                      }}
+                      placeholder="email@un.org"
+                      className="flex-1 rounded border border-slate-300 px-3 py-2 text-sm focus:border-un-blue focus:ring-2 focus:ring-un-blue/20 focus:outline-none"
+                      disabled={isAddingWhitelist}
+                    />
+                    <Button
+                      size="sm"
+                      onClick={handleAddWhitelistEmail}
+                      disabled={isAddingWhitelist || !newWhitelistEmail.trim()}
+                      className="bg-un-blue hover:bg-un-blue/90"
+                    >
+                      <Plus className="mr-1 h-4 w-4" />
+                      Add
+                    </Button>
+                  </div>
+                  {error && (
+                    <p className="text-xs font-medium text-red-600">{error}</p>
+                  )}
+                </div>
+
+                {/* Whitelist Table */}
+                <div className="max-h-64 overflow-y-auto rounded border border-slate-200 bg-white">
+                  {isLoadingWhitelist ? (
+                    <div className="p-4 text-center text-sm text-slate-600">
+                      Loading...
+                    </div>
+                  ) : whitelistEmails.length === 0 ? (
+                    <div className="p-4 text-center text-sm text-slate-600">
+                      No whitelisted emails yet
+                    </div>
+                  ) : (
+                    <table className="w-full text-sm">
+                      <thead className="bg-slate-50 text-xs uppercase text-slate-600">
+                        <tr>
+                          <th className="px-3 py-2 text-left font-medium">Email</th>
+                          <th className="px-3 py-2 text-left font-medium">Status</th>
+                          <th className="px-3 py-2 text-left font-medium">Added By</th>
+                          <th className="px-3 py-2 text-right font-medium">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-200">
+                        {whitelistEmails.map((item) => (
+                          <tr key={item.id} className="hover:bg-slate-50">
+                            <td className="px-3 py-2">
+                              <div className="flex items-center gap-2">
+                                <Mail className="h-4 w-4 text-slate-400" />
+                                <span className="font-medium text-slate-900">
+                                  {item.email}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="px-3 py-2">
+                              {item.userId ? (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800">
+                                  <Check className="h-3 w-3" />
+                                  Registered
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
+                                  <UserPlus className="h-3 w-3" />
+                                  Pending
+                                </span>
+                              )}
+                            </td>
+                            <td className="px-3 py-2 text-slate-600">
+                              {item.addedBy}
+                            </td>
+                            <td className="px-3 py-2 text-right">
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleRemoveWhitelistEmail(item.email)}
+                                disabled={item.userId !== null}
+                                className="h-7 px-2 text-red-600 hover:bg-red-50 hover:text-red-700 disabled:opacity-50"
+                                title={
+                                  item.userId
+                                    ? "Cannot remove - user account exists"
+                                    : "Remove from whitelist"
+                                }
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+
+                <p className="mt-3 text-xs text-slate-500">
+                  Emails with registered accounts cannot be removed. Delete the user account first if needed.
                 </p>
               </div>
             </div>

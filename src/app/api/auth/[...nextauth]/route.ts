@@ -35,6 +35,17 @@ export const authOptions: NextAuthOptions = {
         }
 
         try {
+          // Check if email is whitelisted
+          const whitelistCheck = await query(
+            `SELECT id FROM pu_morning_briefings.user_whitelist WHERE email = $1`,
+            [credentials.email.toLowerCase()],
+          );
+
+          if (whitelistCheck.rows.length === 0) {
+            console.log("Login denied: email not whitelisted");
+            return null;
+          }
+
           // Query user from database
           const result = await query(
             `SELECT id, email, password_hash, first_name, last_name, team, email_verified 

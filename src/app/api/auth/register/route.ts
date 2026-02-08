@@ -25,6 +25,19 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Check if email is whitelisted
+    const whitelistCheck = await query(
+      "SELECT id FROM pu_morning_briefings.user_whitelist WHERE email = $1",
+      [email.toLowerCase()],
+    );
+
+    if (whitelistCheck.rows.length === 0) {
+      return NextResponse.json(
+        { error: "This email address is not authorized to register. Please contact an administrator." },
+        { status: 403 },
+      );
+    }
+
     // Validate password strength
     if (password.length < 8) {
       return NextResponse.json(
@@ -68,6 +81,14 @@ export async function POST(req: NextRequest) {
         verificationToken,
         tokenExpires,
       ],
+    );
+
+    // Update whitelist entry to link the user
+    await query(
+      `UPDATE pu_morning_briefings.user_whitelist 
+       SET user_id = $1 
+       WHERE email = $2`,
+      [result.rows[0].id, email.toLowerCase()],
     );
 
     // Send verification email

@@ -8,9 +8,9 @@ import { MorningMeetingEntry, PRIORITIES } from '@/types/morning-meeting';
 import { getPriorityBadgeClass } from '@/lib/useEntriesFilter';
 import { usePopup } from '@/lib/popup-context';
 import { formatDateResponsive } from '@/lib/format-date';
-import { Edit, Trash2, Check, X, Sparkles, ChevronLeft, ChevronRight, FastForward } from 'lucide-react';
+import { Edit, Trash2, Check, X, Sparkles, ChevronLeft, ChevronRight, FastForward, ArrowUp, ArrowDown } from 'lucide-react';
 import Link from 'next/link';
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 
 /**
  * Format a source date (ISO or YYYY-MM-DD format) to readable format
@@ -109,6 +109,22 @@ export function ViewEntryDialog({
 
   // Get the current entry from allEntries if available
   const displayEntry = allEntries.length > 0 ? allEntries[currentIndex] : entry;
+
+  // Find previous entry - use useMemo instead of useCallback, depends on displayEntry
+  const previousEntry = useMemo(() => {
+    if (displayEntry?.previousEntryId && allEntries.length > 0) {
+      return allEntries.find(e => e.id === displayEntry.previousEntryId);
+    }
+    return undefined;
+  }, [displayEntry?.previousEntryId, allEntries]);
+
+  // Find follow-up entries (entries that reference this entry as previous) - use useMemo
+  const followUpEntries = useMemo(() => {
+    if (displayEntry?.id && allEntries.length > 0) {
+      return allEntries.filter(e => e.previousEntryId === displayEntry.id);
+    }
+    return [];
+  }, [displayEntry?.id, allEntries]);
 
   // Reset scroll position when entry changes
   useEffect(() => {
@@ -645,34 +661,72 @@ export function ViewEntryDialog({
               </Button>
             </div>
 
-            {/* Middle: Navigation - Only show on large screens, hidden on iPad */}
-            {allEntries.length > 1 && (
-              <div className="hidden lg:flex gap-2 items-center">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handlePrevious}
-                  disabled={currentIndex === 0}
-                  className="gap-1 h-8 text-xs"
-                >
-                  <ChevronLeft className="h-3 w-3" />
-                  Previous
-                </Button>
-                <span className="text-xs text-slate-600 whitespace-nowrap">
-                  {currentIndex + 1} of {allEntries.length}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleNext}
-                  disabled={currentIndex >= allEntries.length - 1}
-                  className="gap-1 h-8 text-xs"
-                >
-                  Next
-                  <ChevronRight className="h-3 w-3" />
-                </Button>
-              </div>
-            )}
+            {/* Middle: Navigation and Related Entries */}
+            <div className="flex gap-2 items-center">
+              {/* Previous/Follow-up buttons */}
+              {(previousEntry || followUpEntries.length > 0) && (
+                <div className="flex gap-2 items-center">
+                  {previousEntry && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const prevIdx = allEntries.findIndex(e => e.id === previousEntry?.id);
+                        if (prevIdx >= 0) setCurrentIndex(prevIdx);
+                      }}
+                      className="gap-1 h-8 text-xs text-slate-600 hover:text-slate-900"
+                    >
+                      <ArrowUp className="h-3 w-3" />
+                      Previous
+                    </Button>
+                  )}
+                  
+                  {followUpEntries.length > 0 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const nextIdx = allEntries.findIndex(e => e.id === followUpEntries[0].id);
+                        if (nextIdx >= 0) setCurrentIndex(nextIdx);
+                      }}
+                      className="gap-1 h-8 text-xs text-slate-600 hover:text-slate-900"
+                    >
+                      Follow-up
+                      <ArrowDown className="h-3 w-3" />
+                    </Button>
+                  )}
+                </div>
+              )}
+
+              {/* Entry navigation */}
+              {allEntries.length > 1 && (
+                <div className="flex gap-2 items-center">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handlePrevious}
+                    disabled={currentIndex === 0}
+                    className="gap-1 h-8 text-xs"
+                  >
+                    <ChevronLeft className="h-3 w-3" />
+                    Previous
+                  </Button>
+                  <span className="text-xs text-slate-600 whitespace-nowrap">
+                    {currentIndex + 1} of {allEntries.length}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleNext}
+                    disabled={currentIndex >= allEntries.length - 1}
+                    className="gap-1 h-8 text-xs"
+                  >
+                    Next
+                    <ChevronRight className="h-3 w-3" />
+                  </Button>
+                </div>
+              )}
+            </div>
 
             {/* Right: Approve/Deny/Delete */}
             <div className="flex gap-2">

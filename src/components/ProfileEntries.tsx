@@ -151,11 +151,21 @@ export function ProfileEntries() {
   }, [entries]);
 
   // Get discussed entries with comments (sorted by date, newest first)
-  const discussedEntriesWithComments = useMemo(() => {
-    return entries
-      .filter(e => e.approvalStatus === "discussed" && e.comment)
+  // Get entries with comments that have been followed up on (are referenced as previousEntryId)
+  const addressedFollowUps = useMemo(() => {
+    const entriesWithFollowUps = entries
+      .filter(e => e.approvalStatus === "discussed" && e.comment && entries.some(other => other.previousEntryId === e.id))
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    return entriesWithFollowUps;
   }, [entries]);
+
+  // Get entries with comments that haven't been followed up on yet
+  const discussedEntriesWithComments = useMemo(() => {
+    const addressedIds = new Set(addressedFollowUps.map(e => e.id));
+    return entries
+      .filter(e => e.approvalStatus === "discussed" && e.comment && !addressedIds.has(e.id))
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [entries, addressedFollowUps]);
 
   if (status === "loading") {
     return (
@@ -294,6 +304,59 @@ export function ProfileEntries() {
                     <ArrowRight className="h-3.5 w-3.5" />
                     Follow Up
                   </Button>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Addressed Follow-Ups */}
+      {addressedFollowUps.length > 0 && (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 px-2 sm:px-4">
+            <h2 className="text-sm font-semibold text-slate-700 uppercase tracking-wide">
+              Addressed Follow-Ups
+            </h2>
+            <span className="inline-flex items-center justify-center rounded-full bg-blue-100 h-6 w-6 text-xs font-bold text-blue-700">
+              {addressedFollowUps.length}
+            </span>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {addressedFollowUps.map((entry) => (
+              <Card
+                key={entry.id}
+                className="border-blue-200 bg-blue-50 p-4 hover:border-blue-400 transition-colors cursor-pointer"
+                onClick={() => {
+                  setSelectedEntry(entry);
+                  setShowViewDialog(true);
+                }}
+              >
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-xs font-semibold text-blue-700 uppercase tracking-wide">
+                      {formatDateDesktop(entry.date)}
+                    </p>
+                    <h3 className="mt-1 line-clamp-2 text-sm font-semibold text-slate-900">
+                      {entry.headline}
+                    </h3>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <span className={`inline-block rounded px-2 py-1 text-xs font-medium ${getRegionBadgeClass(entry.region)}`}>
+                      {entry.region}
+                    </span>
+                    {entry.country && (
+                      <span className="inline-block rounded bg-slate-200 px-2 py-1 text-xs text-slate-700">
+                        {Array.isArray(entry.country) ? entry.country.join(", ") : entry.country}
+                      </span>
+                    )}
+                  </div>
+                  <div className="border-t border-blue-200 pt-3">
+                    <p className="text-xs font-medium text-blue-900">Feedback:</p>
+                    <p className="mt-1 line-clamp-3 text-sm text-slate-700">
+                      {entry.comment}
+                    </p>
+                  </div>
                 </div>
               </Card>
             ))}

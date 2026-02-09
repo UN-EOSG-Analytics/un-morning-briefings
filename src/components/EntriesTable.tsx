@@ -25,6 +25,8 @@ import {
   FileDown,
   FileText,
   Send,
+  ChevronDown,
+  ChevronRight,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -82,6 +84,9 @@ export function EntriesTable({
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
   const [exportingDate, setExportingDate] = useState<string | null>(null);
   const [submittingId, setSubmittingId] = useState<string | null>(null);
+  const [collapsedBriefings, setCollapsedBriefings] = useState<Set<string>>(
+    new Set() // All briefings expanded by default
+  );
 
   const {
     searchTerm,
@@ -106,6 +111,18 @@ export function EntriesTable({
   const handleRowClick = (entry: MorningMeetingEntry) => {
     setSelectedEntry(entry);
     setShowViewDialog(true);
+  };
+
+  const toggleBriefingCollapse = (date: string) => {
+    setCollapsedBriefings((prev) => {
+      const next = new Set(prev);
+      if (next.has(date)) {
+        next.delete(date);
+      } else {
+        next.add(date);
+      }
+      return next;
+    });
   };
 
   const handleStatusChange = async (entryId: string, newStatus: string) => {
@@ -412,10 +429,19 @@ export function EntriesTable({
                           className="px-2 py-2 sm:px-4"
                         >
                           <div className="flex items-center gap-4">
-                            <span className="text-xs font-semibold text-un-blue">
-                              ▼ {labels.entries.briefingFor}{" "}
+                            <button
+                              onClick={() => toggleBriefingCollapse(currentBriefingDate)}
+                              className="flex items-center gap-2 text-xs font-semibold text-un-blue transition-colors hover:text-un-blue/80 -ml-2 p-2"
+                              title={collapsedBriefings.has(currentBriefingDate) ? "Expand" : "Collapse"}
+                            >
+                              {collapsedBriefings.has(currentBriefingDate) ? (
+                                <ChevronRight className="h-4 w-4" />
+                              ) : (
+                                <ChevronDown className="h-4 w-4" />
+                              )}
+                              {labels.entries.briefingFor}{" "}
                               {formatDateWithWeekday(currentBriefingDate)}
-                            </span>
+                            </button>
                             {!onSubmit && (
                               <div
                                 className="ml-auto flex gap-1.5"
@@ -466,11 +492,12 @@ export function EntriesTable({
                         </td>
                       </tr>
                     ),
-                    <tr
-                      key={entry.id}
-                      className="cursor-pointer border-b border-slate-100 hover:bg-slate-50"
-                      onClick={() => handleRowClick(entry)}
-                    >
+                    !collapsedBriefings.has(currentBriefingDate) && (
+                      <tr
+                        key={entry.id}
+                        className="cursor-pointer border-b border-slate-100 hover:bg-slate-50"
+                        onClick={() => handleRowClick(entry)}
+                      >
                       <td className="px-2 py-3 text-sm whitespace-nowrap text-slate-600 sm:px-4">
                         <div className="flex flex-col gap-1">
                           <span className="hidden sm:inline">
@@ -664,7 +691,8 @@ export function EntriesTable({
                           </Button>
                         </div>
                       </td>
-                    </tr>,
+                    </tr>
+                    ),
                   ].filter(Boolean);
                 })
               )}

@@ -750,7 +750,7 @@ export function EntriesTable({
 
       {/* Briefing Agenda Dialog */}
       <Dialog open={showAgendaDialog} onOpenChange={setShowAgendaDialog}>
-        <DialogContent className="sm:!max-w-[60vw] max-w-full h-screen md:h-auto flex flex-col p-0">
+        <DialogContent className="sm:!max-w-[60vw] max-w-full h-screen md:h-auto md:max-h-[40vw] flex flex-col p-0">
           <DialogHeader className="border-b border-slate-200 px-4 md:px-6 py-3 flex-shrink-0">
             <DialogTitle className="text-xl font-semibold text-un-blue">
               Briefing Agenda for {agendaDate && formatDateWithWeekday(agendaDate)}

@@ -116,8 +116,7 @@ export default function HomePage() {
                     {labels.home.cards.currentBriefing.descriptionLong.replace("{date}", "")}
                     <span className="font-semibold">
                       {formatDateDesktop(currentBriefingDate)}
-                    </span>
-                    .
+                    </span>.
                   </p>
                 </div>
                 <Button

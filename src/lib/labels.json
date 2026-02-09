@@ -411,7 +411,7 @@
       "currentBriefing": {
         "title": "Current Briefing",
         "descriptionShort": "View briefing entries for {date}",
-        "descriptionLong": "View briefing entries for the Morning Meeting on {date}.",
+        "descriptionLong": "View briefing entries for the Morning Meeting on {date}",
         "button": "View"
       },
       "archive": {

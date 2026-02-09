@@ -431,7 +431,7 @@ export function EntriesTable({
                           <div className="flex items-center gap-4">
                             <button
                               onClick={() => toggleBriefingCollapse(currentBriefingDate)}
-                              className="flex items-center gap-2 text-xs font-semibold text-un-blue transition-colors hover:text-un-blue/80 -ml-2 p-2"
+                              className="flex items-center gap-2 text-sm font-semibold text-un-blue transition-colors hover:text-un-blue/80 -ml-2 p-1"
                               title={collapsedBriefings.has(currentBriefingDate) ? "Expand" : "Collapse"}
                             >
                               {collapsedBriefings.has(currentBriefingDate) ? (

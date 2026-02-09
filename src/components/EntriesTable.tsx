@@ -750,14 +750,14 @@ export function EntriesTable({
 
       {/* Briefing Agenda Dialog */}
       <Dialog open={showAgendaDialog} onOpenChange={setShowAgendaDialog}>
-        <DialogContent className="!w-screen !max-w-none h-[90vh] overflow-y-auto p-4 md:p-6">
-          <DialogHeader>
+        <DialogContent className="sm:!max-w-[60vw] max-w-full h-screen md:h-[90vh] flex flex-col p-0">
+          <DialogHeader className="border-b border-slate-200 px-4 md:px-6 py-3 flex-shrink-0">
             <DialogTitle className="text-xl font-semibold text-un-blue">
               Briefing Agenda - {agendaDate && formatDateWithWeekday(agendaDate)}
             </DialogTitle>
           </DialogHeader>
           
-          <div className="mt-4">
+          <div className="mt-0 overflow-y-auto flex-1 px-4 md:px-6">
             {(() => {
               // Sort entries by priority (SG attention first) and date
               const sortedAgendaEntries = [...agendaEntries].sort((a, b) => {
@@ -815,12 +815,6 @@ export function EntriesTable({
                         <th className="border border-slate-300 px-3 py-2 text-left text-sm font-semibold">
                           Headline
                         </th>
-                        <th className="border border-slate-300 px-3 py-2 text-left text-sm font-semibold">
-                          Category
-                        </th>
-                        <th className="border border-slate-300 px-3 py-2 text-left text-sm font-semibold">
-                          Priority
-                        </th>
                       </tr>
                     </thead>
                     <tbody>
@@ -833,38 +827,57 @@ export function EntriesTable({
                           },
                         );
 
+                        // Count total entries in this region for rowspan
+                        const regionEntryCount = countries.reduce(
+                          (count, country) => count + entriesByRegionAndCountry[region][country].length,
+                          0,
+                        );
+
+                        let entryIndexInRegion = 0;
+
                         return countries.map((country) => {
                           const countryEntries = entriesByRegionAndCountry[region][country];
+                          let entryIndexInCountry = 0;
+
                           return countryEntries.map((entry, idx) => {
+                            const isFirstInRegion = entryIndexInRegion === 0;
+                            const isFirstInCountry = entryIndexInCountry === 0;
                             const displayCountry = Array.isArray(entry.country)
                               ? entry.country.join(" / ")
                               : entry.country || "(No country specified)";
 
-                            const priorityText = entry.priority === "Secretary-General's Attention"
-                              ? "Secretary-General's attention"
-                              : entry.priority === "Situational Awareness"
-                              ? "Situational awareness"
-                              : "";
+                            const truncatedCountry = displayCountry.length > 100 
+                              ? displayCountry.substring(0, 100) + '...' 
+                              : displayCountry;
 
-                            return (
+                            const result = (
                               <tr key={entry.id} className="hover:bg-slate-50">
-                                <td className="border border-slate-200 px-3 py-2 text-sm">
-                                  {region}
-                                </td>
-                                <td className="border border-slate-200 px-3 py-2 text-sm">
-                                  {displayCountry}
-                                </td>
-                                <td className="border border-slate-200 px-3 py-2 text-sm">
-                                  {entry.headline}
-                                </td>
-                                <td className="border border-slate-200 px-3 py-2 text-sm">
-                                  {entry.category}
-                                </td>
-                                <td className="border border-slate-200 px-3 py-2 text-sm">
-                                  {priorityText}
+                                {isFirstInRegion && (
+                                  <td
+                                    className="border border-slate-200 px-3 py-2 text-sm font-medium align-top"
+                                    rowSpan={regionEntryCount}
+                                  >
+                                    {region}
+                                  </td>
+                                )}
+                                {isFirstInCountry && (
+                                  <td
+                                    className="border border-slate-200 px-3 py-2 text-sm truncate align-top font-medium"
+                                    title={displayCountry}
+                                    rowSpan={countryEntries.length}
+                                  >
+                                    {truncatedCountry}
+                                  </td>
+                                )}
+                                <td className="border border-slate-200 px-3 py-2 text-sm truncate" title={entry.headline}>
+                                  {entry.headline.length > 100 ? entry.headline.substring(0, 100) + '...' : entry.headline}
                                 </td>
                               </tr>
                             );
+
+                            entryIndexInRegion++;
+                            entryIndexInCountry++;
+                            return result;
                           });
                         });
                       })}

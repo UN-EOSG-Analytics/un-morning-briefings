@@ -750,14 +750,14 @@ export function EntriesTable({
 
       {/* Briefing Agenda Dialog */}
       <Dialog open={showAgendaDialog} onOpenChange={setShowAgendaDialog}>
-        <DialogContent className="sm:!max-w-[60vw] max-w-full h-screen md:h-[90vh] flex flex-col p-0">
+        <DialogContent className="sm:!max-w-[60vw] max-w-full h-screen md:h-auto flex flex-col p-0">
           <DialogHeader className="border-b border-slate-200 px-4 md:px-6 py-3 flex-shrink-0">
             <DialogTitle className="text-xl font-semibold text-un-blue">
-              Briefing Agenda - {agendaDate && formatDateWithWeekday(agendaDate)}
+              Briefing Agenda for {agendaDate && formatDateWithWeekday(agendaDate)}
             </DialogTitle>
           </DialogHeader>
           
-          <div className="mt-0 overflow-y-auto flex-1 px-4 md:px-6">
+          <div className="mt-0 overflow-y-auto flex-1 px-4 md:px-6 pb-4">
             {(() => {
               // Sort entries by priority (SG attention first) and date
               const sortedAgendaEntries = [...agendaEntries].sort((a, b) => {
@@ -846,10 +846,6 @@ export function EntriesTable({
                               ? entry.country.join(" / ")
                               : entry.country || "(No country specified)";
 
-                            const truncatedCountry = displayCountry.length > 100 
-                              ? displayCountry.substring(0, 100) + '...' 
-                              : displayCountry;
-
                             const result = (
                               <tr key={entry.id} className="hover:bg-slate-50">
                                 {isFirstInRegion && (
@@ -862,15 +858,14 @@ export function EntriesTable({
                                 )}
                                 {isFirstInCountry && (
                                   <td
-                                    className="border border-slate-200 px-3 py-2 text-sm truncate align-top font-medium"
-                                    title={displayCountry}
+                                    className="border border-slate-200 px-3 py-2 text-sm whitespace-normal break-words align-top font-medium"
                                     rowSpan={countryEntries.length}
                                   >
-                                    {truncatedCountry}
+                                    {displayCountry}
                                   </td>
                                 )}
-                                <td className="border border-slate-200 px-3 py-2 text-sm truncate" title={entry.headline}>
-                                  {entry.headline.length > 100 ? entry.headline.substring(0, 100) + '...' : entry.headline}
+                                <td className="border border-slate-200 px-3 py-2 text-sm whitespace-normal break-words">
+                                  {entry.headline}
                                 </td>
                               </tr>
                             );

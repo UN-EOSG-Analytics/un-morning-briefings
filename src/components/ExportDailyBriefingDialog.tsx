@@ -31,6 +31,8 @@ import {
   ImageRun,
   Header,
   ExternalHyperlink,
+  WidthType,
+  VerticalAlign,
 } from "docx";
 import { saveAs } from "file-saver";
 import { FileText, Calendar, Mail, Download, Eye } from "lucide-react";
@@ -270,13 +272,13 @@ const createPlainPuNoteParagraph = (puNote: string): Paragraph =>
   });
 
 /**
- * Build table of contents from the structured entries
+ * Build table of contents from the structured entries as an actual table
  */
 const buildTableOfContents = (
   entriesByRegionAndCountry: Record<string, Record<string, MorningMeetingEntry[]>>,
   sortedRegions: string[],
-): Paragraph[] => {
-  const tocParagraphs: Paragraph[] = [
+): (Paragraph | Table)[] => {
+  const tocElements: (Paragraph | Table)[] = [
     // TOC Title
     new Paragraph({
       heading: HeadingLevel.HEADING_2,
@@ -293,24 +295,110 @@ const buildTableOfContents = (
     }),
   ];
 
-  let regionIndex = 1;
-  sortedRegions.forEach((region) => {
-    // Add region entry
-    tocParagraphs.push(
-      new Paragraph({
-        spacing: { after: 100, before: 50 },
-        indent: { left: 0 },
-        children: [
-          new TextRun({
-            text: `${regionIndex}. ${region}`,
-            bold: true,
-            size: 22,
-            font: "Roboto",
-          }),
-        ],
-      }),
-    );
+  // Collect all rows for the table
+  const tableRows: TableRow[] = [];
 
+  // Header row
+  tableRows.push(
+    new TableRow({
+      tableHeader: true,
+      children: [
+        new TableCell({
+          width: { size: 15, type: WidthType.PERCENTAGE },
+          verticalAlign: VerticalAlign.CENTER,
+          shading: { fill: "009edb" },
+          children: [
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: "Region",
+                  bold: true,
+                  color: "FFFFFF",
+                  size: 20,
+                  font: "Roboto",
+                }),
+              ],
+            }),
+          ],
+        }),
+        new TableCell({
+          width: { size: 15, type: WidthType.PERCENTAGE },
+          verticalAlign: VerticalAlign.CENTER,
+          shading: { fill: "009edb" },
+          children: [
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: "Country",
+                  bold: true,
+                  color: "FFFFFF",
+                  size: 20,
+                  font: "Roboto",
+                }),
+              ],
+            }),
+          ],
+        }),
+        new TableCell({
+          width: { size: 40, type: WidthType.PERCENTAGE },
+          verticalAlign: VerticalAlign.CENTER,
+          shading: { fill: "009edb" },
+          children: [
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: "Headline",
+                  bold: true,
+                  color: "FFFFFF",
+                  size: 20,
+                  font: "Roboto",
+                }),
+              ],
+            }),
+          ],
+        }),
+        new TableCell({
+          width: { size: 15, type: WidthType.PERCENTAGE },
+          verticalAlign: VerticalAlign.CENTER,
+          shading: { fill: "009edb" },
+          children: [
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: "Category",
+                  bold: true,
+                  color: "FFFFFF",
+                  size: 20,
+                  font: "Roboto",
+                }),
+              ],
+            }),
+          ],
+        }),
+        new TableCell({
+          width: { size: 15, type: WidthType.PERCENTAGE },
+          verticalAlign: VerticalAlign.CENTER,
+          shading: { fill: "009edb" },
+          children: [
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: "Priority",
+                  bold: true,
+                  color: "FFFFFF",
+                  size: 20,
+                  font: "Roboto",
+                }),
+              ],
+            }),
+          ],
+        }),
+      ],
+    }),
+  );
+
+  // Data rows
+  sortedRegions.forEach((region) => {
     // Get countries for this region
     const countries = Object.keys(entriesByRegionAndCountry[region]).sort(
       (a, b) => {
@@ -320,34 +408,125 @@ const buildTableOfContents = (
       },
     );
 
-    let entryIndex = 1;
     countries.forEach((country) => {
       const countryLabel = country || "(No country specified)";
       const entries = entriesByRegionAndCountry[region][country];
 
       entries.forEach((entry) => {
-        tocParagraphs.push(
-          new Paragraph({
-            spacing: { after: 50 },
-            indent: { left: 720 }, // 0.5 inch indent
+        // Format country from array if needed
+        const displayCountry = Array.isArray(entry.country)
+          ? entry.country.join("/")
+          : entry.country || countryLabel;
+
+        // Determine priority display
+        const priorityText = entry.priority === "Secretary-General's Attention"
+          ? "Secretary-General's attention"
+          : entry.priority === "Situational Awareness"
+          ? "Situational awareness"
+          : "";
+
+        tableRows.push(
+          new TableRow({
             children: [
-              new TextRun({
-                text: `${regionIndex}.${entryIndex}. ${entry.headline} (${countryLabel})`,
-                size: 22,
-                font: "Roboto",
+              new TableCell({
+                width: { size: 15, type: WidthType.PERCENTAGE },
+                verticalAlign: VerticalAlign.TOP,
+                children: [
+                  new Paragraph({
+                    children: [
+                      new TextRun({
+                        text: region,
+                        size: 20,
+                        font: "Roboto",
+                      }),
+                    ],
+                  }),
+                ],
+              }),
+              new TableCell({
+                width: { size: 15, type: WidthType.PERCENTAGE },
+                verticalAlign: VerticalAlign.TOP,
+                children: [
+                  new Paragraph({
+                    children: [
+                      new TextRun({
+                        text: displayCountry,
+                        size: 20,
+                        font: "Roboto",
+                      }),
+                    ],
+                  }),
+                ],
+              }),
+              new TableCell({
+                width: { size: 40, type: WidthType.PERCENTAGE },
+                verticalAlign: VerticalAlign.TOP,
+                children: [
+                  new Paragraph({
+                    children: [
+                      new TextRun({
+                        text: entry.headline,
+                        size: 20,
+                        font: "Roboto",
+                      }),
+                    ],
+                  }),
+                ],
+              }),
+              new TableCell({
+                width: { size: 15, type: WidthType.PERCENTAGE },
+                verticalAlign: VerticalAlign.TOP,
+                children: [
+                  new Paragraph({
+                    children: [
+                      new TextRun({
+                        text: entry.category || "",
+                        size: 20,
+                        font: "Roboto",
+                      }),
+                    ],
+                  }),
+                ],
+              }),
+              new TableCell({
+                width: { size: 15, type: WidthType.PERCENTAGE },
+                verticalAlign: VerticalAlign.TOP,
+                children: [
+                  new Paragraph({
+                    children: [
+                      new TextRun({
+                        text: priorityText,
+                        size: 20,
+                        font: "Roboto",
+                      }),
+                    ],
+                  }),
+                ],
               }),
             ],
           }),
         );
-
-        entryIndex++;
       });
     });
-
-    regionIndex++;
   });
 
-  tocParagraphs.push(
+  // Create the table
+  const table = new Table({
+    width: { size: 100, type: WidthType.PERCENTAGE },
+    borders: {
+      top: { style: BorderStyle.SINGLE, size: 1, color: "000000" },
+      bottom: { style: BorderStyle.SINGLE, size: 1, color: "000000" },
+      left: { style: BorderStyle.SINGLE, size: 1, color: "000000" },
+      right: { style: BorderStyle.SINGLE, size: 1, color: "000000" },
+      insideHorizontal: { style: BorderStyle.SINGLE, size: 1, color: "CCCCCC" },
+      insideVertical: { style: BorderStyle.SINGLE, size: 1, color: "CCCCCC" },
+    },
+    rows: tableRows,
+  });
+
+  tocElements.push(table);
+
+  tocElements.push(
     new Paragraph({
       spacing: { after: 200 },
       children: [new TextRun("")],
@@ -355,7 +534,7 @@ const buildTableOfContents = (
     createSeparator(),
   );
 
-  return tocParagraphs;
+  return tocElements;
 };
 
 /**

@@ -1144,7 +1144,7 @@ export function ExportDailyBriefingDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="flex h-dvh w-screen !max-w-none flex-col rounded-none !p-0 sm:h-auto sm:!max-w-md sm:rounded-lg sm:!p-6">
+      <DialogContent className="flex h-dvh w-screen !max-w-none flex-col rounded-none !p-0 sm:h-auto sm:!max-w-lg sm:rounded-lg sm:!p-6">
         <DialogHeader className="border-b border-slate-200 px-4 py-4 sm:border-0 sm:px-0 sm:py-0">
           <DialogTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5 text-un-blue" />

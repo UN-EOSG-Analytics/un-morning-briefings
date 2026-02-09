@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { User, TrendingUp, RefreshCw, Clock, Check, Send, ArrowRight } from "lucide-react";
+import { User, TrendingUp, RefreshCw, Clock, Check, Send, ArrowRight, Globe } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { usePopup } from "@/lib/popup-context";
 import type { MorningMeetingEntry } from "@/types/morning-meeting";
@@ -147,7 +147,16 @@ export function ProfileEntries() {
     const drafts = entries.filter(e => e.status === "draft").length;
     const submitted = entries.filter(e => e.status === "submitted").length;
     
-    return { total, discussed, pending, drafts, submitted };
+    // Calculate most used region
+    const regionCounts: Record<string, number> = {};
+    entries.forEach(e => {
+      regionCounts[e.region] = (regionCounts[e.region] || 0) + 1;
+    });
+    const mostUsedRegion = Object.entries(regionCounts).length > 0
+      ? Object.entries(regionCounts).reduce((a, b) => a[1] > b[1] ? a : b)[0]
+      : "N/A";
+    
+    return { total, discussed, pending, drafts, submitted, mostUsedRegion };
   }, [entries]);
 
   // Get discussed entries with comments (sorted by date, newest first)
@@ -209,19 +218,11 @@ export function ProfileEntries() {
           </div>
 
           {/* Statistics Grid */}
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-            <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-              <div className="flex items-center gap-2">
-                <TrendingUp className="h-4 w-4 text-slate-600" />
-                <p className="text-xs font-medium text-slate-600">Total Entries</p>
-              </div>
-              <p className="mt-2 text-2xl font-bold text-slate-900">{stats.total}</p>
-            </div>
-
-                        <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
               <div className="flex items-center gap-2">
                 <Send className="h-4 w-4 text-blue-600" />
-                <p className="text-xs font-medium text-blue-900">Submitted</p>
+                <p className="text-xs font-medium text-blue-900">Submitted Entries</p>
               </div>
               <p className="mt-2 text-2xl font-bold text-blue-900">{stats.submitted}</p>
             </div>
@@ -229,17 +230,17 @@ export function ProfileEntries() {
             <div className="rounded-lg border border-green-200 bg-green-50 p-4">
               <div className="flex items-center gap-2">
                 <Check className="h-4 w-4 text-green-600" />
-                <p className="text-xs font-medium text-green-900">Discussed</p>
+                <p className="text-xs font-medium text-green-900">Discussed Entries</p>
               </div>
               <p className="mt-2 text-2xl font-bold text-green-900">{stats.discussed}</p>
             </div>
             
-            <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4">
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
               <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-yellow-600" />
-                <p className="text-xs font-medium text-yellow-900">Pending</p>
+                <TrendingUp className="h-4 w-4 text-slate-600" />
+                <p className="text-xs font-medium text-slate-600">Most Used Region</p>
               </div>
-              <p className="mt-2 text-2xl font-bold text-yellow-900">{stats.pending}</p>
+              <p className="mt-2 text-2xl font-bold text-slate-900">{stats.mostUsedRegion}</p>
             </div>
             
           </div>

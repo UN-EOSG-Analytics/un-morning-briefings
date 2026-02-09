@@ -4,6 +4,12 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   MorningMeetingEntry,
   PRIORITIES,
   REGIONS,
@@ -88,6 +94,9 @@ export function EntriesTable({
   const [collapsedBriefings, setCollapsedBriefings] = useState<Set<string>>(
     new Set() // All briefings expanded by default
   );
+  const [showAgendaDialog, setShowAgendaDialog] = useState(false);
+  const [agendaDate, setAgendaDate] = useState<string | null>(null);
+  const [agendaEntries, setAgendaEntries] = useState<MorningMeetingEntry[]>([]);
 
   const {
     searchTerm,
@@ -449,13 +458,17 @@ export function EntriesTable({
                                 onClick={(e) => e.stopPropagation()}
                               >
                                 <button
-                                  onClick={() =>
-                                    router.push(
-                                      `/briefing?date=${currentBriefingDate}`,
-                                    )
-                                  }
+                    
+                                  onClick={() => {
+                                    const entriesForDate = entries.filter(
+                                      (e) => isWithinCutoffRange(e.date, currentBriefingDate)
+                                    );
+                                    setAgendaDate(currentBriefingDate);
+                                    setAgendaEntries(entriesForDate);
+                                    setShowAgendaDialog(true);
+                                  }}
                                   className="p-1 text-slate-600 transition-colors hover:text-un-blue"
-                                  title="View briefing"
+                                  title="View agenda"
                                 >
                                   <List className="h-5 w-5" />
                                 </button>
@@ -734,6 +747,135 @@ export function EntriesTable({
         showApproveButton={showApprovedColumn}
         allEntries={sortedEntries}
       />
+
+      {/* Briefing Agenda Dialog */}
+      <Dialog open={showAgendaDialog} onOpenChange={setShowAgendaDialog}>
+        <DialogContent className="!w-screen !max-w-none h-[90vh] overflow-y-auto p-4 md:p-6">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-semibold text-un-blue">
+              Briefing Agenda - {agendaDate && formatDateWithWeekday(agendaDate)}
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="mt-4">
+            {(() => {
+              // Sort entries by priority (SG attention first) and date
+              const sortedAgendaEntries = [...agendaEntries].sort((a, b) => {
+                if (a.priority === "Secretary-General's Attention" && b.priority !== "Secretary-General's Attention")
+                  return -1;
+                if (a.priority !== "Secretary-General's Attention" && b.priority === "Secretary-General's Attention")
+                  return 1;
+                return 0;
+              });
+
+              // Group entries by region and country
+              const entriesByRegionAndCountry = sortedAgendaEntries.reduce(
+                (acc, entry) => {
+                  if (!acc[entry.region]) {
+                    acc[entry.region] = {};
+                  }
+
+                  if (
+                    !entry.country ||
+                    entry.country === "" ||
+                    (Array.isArray(entry.country) && entry.country.length === 0)
+                  ) {
+                    if (!acc[entry.region][""]) {
+                      acc[entry.region][""] = [];
+                    }
+                    acc[entry.region][""].push(entry);
+                  } else {
+                    const countries = Array.isArray(entry.country)
+                      ? entry.country
+                      : [entry.country];
+                    const countryKey = countries.join(" / ");
+                    if (!acc[entry.region][countryKey]) {
+                      acc[entry.region][countryKey] = [];
+                    }
+                    acc[entry.region][countryKey].push(entry);
+                  }
+                  return acc;
+                },
+                {} as Record<string, Record<string, MorningMeetingEntry[]>>,
+              );
+
+              const sortedRegions = Object.keys(entriesByRegionAndCountry).sort();
+
+              return (
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse border border-slate-200">
+                    <thead className="bg-un-blue text-white">
+                      <tr>
+                        <th className="border border-slate-300 px-3 py-2 text-left text-sm font-semibold">
+                          Region
+                        </th>
+                        <th className="border border-slate-300 px-3 py-2 text-left text-sm font-semibold">
+                          Country
+                        </th>
+                        <th className="border border-slate-300 px-3 py-2 text-left text-sm font-semibold">
+                          Headline
+                        </th>
+                        <th className="border border-slate-300 px-3 py-2 text-left text-sm font-semibold">
+                          Category
+                        </th>
+                        <th className="border border-slate-300 px-3 py-2 text-left text-sm font-semibold">
+                          Priority
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {sortedRegions.map((region) => {
+                        const countries = Object.keys(entriesByRegionAndCountry[region]).sort(
+                          (a, b) => {
+                            if (a === "") return 1;
+                            if (b === "") return -1;
+                            return a.localeCompare(b);
+                          },
+                        );
+
+                        return countries.map((country) => {
+                          const countryEntries = entriesByRegionAndCountry[region][country];
+                          return countryEntries.map((entry, idx) => {
+                            const displayCountry = Array.isArray(entry.country)
+                              ? entry.country.join(" / ")
+                              : entry.country || "(No country specified)";
+
+                            const priorityText = entry.priority === "Secretary-General's Attention"
+                              ? "Secretary-General's attention"
+                              : entry.priority === "Situational Awareness"
+                              ? "Situational awareness"
+                              : "";
+
+                            return (
+                              <tr key={entry.id} className="hover:bg-slate-50">
+                                <td className="border border-slate-200 px-3 py-2 text-sm">
+                                  {region}
+                                </td>
+                                <td className="border border-slate-200 px-3 py-2 text-sm">
+                                  {displayCountry}
+                                </td>
+                                <td className="border border-slate-200 px-3 py-2 text-sm">
+                                  {entry.headline}
+                                </td>
+                                <td className="border border-slate-200 px-3 py-2 text-sm">
+                                  {entry.category}
+                                </td>
+                                <td className="border border-slate-200 px-3 py-2 text-sm">
+                                  {priorityText}
+                                </td>
+                              </tr>
+                            );
+                          });
+                        });
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              );
+            })()}
+          </div>
+        </DialogContent>
+      </Dialog>
 
     </>
   );

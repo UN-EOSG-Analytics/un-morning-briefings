@@ -59,54 +59,96 @@ export async function autoFillFromContent(
 
   const systemPrompt = `You are a UN briefing assistant. Create a JSON object to auto-fill the fields of a UN Morning Meeting briefing entry based on provided news content.
 
+CRITICAL INSTRUCTION FOR "entry" FIELD:
+You MUST preserve ALL content from the original article. Extract and include the COMPLETE article text in its entirety.
+ONLY remove:
+- Author information and bylines
+- Navigation elements
+- Advertisement content
+- Sidebar material
+- Website boilerplate (privacy notices, cookie notices, author bios, timestamps)
+- Comments sections
+- Related article teasers
+- Duplicate content
+
+KEEP everything else: all paragraphs, sentences, facts, quotes, details, statistics, analysis - the entire full article as written.
+
+FORMATTING & STRUCTURE (Apply intelligently while preserving all original content):
+Output must be valid HTML only. Do not use Markdown.
+
+INTELLIGENT FORMATTING RULES:
+1. PRESERVE ALL WORDS: Do not change, remove, paraphrase, or condense any original text
+2. ADD STRUCTURE intelligently:
+   - Identify natural section breaks in the article and create section headers
+   - Recognize when content naturally groups into lists and format accordingly
+   - Add emphasis to key terms, names, events that are important to the story
+   - Extract and highlight important quotes in blockquotes
+   - Keep logical paragraph grouping for readability
+
+SECTION HEADERS:
+- Identify major topics/themes in the article and label them as section headers
+- Format as: <h3>Section Title in Title Case</h3>
+- Only use 1-2 word headers that summarize the section (e.g., "Background", "Key Details", "International Response")
+- Place sections logically to group related content
+
+PARAGRAPHS:
+- Wrap all flowing text content in <p>...</p> tags
+- Keep paragraph breaks logical and readable
+- Maintain the flow and logic of the original article
+
+LISTS:
+- If the article contains naturally grouped items/points, format as a list:
+  <ul> <li><p>Item text here.</p></li> <li><p>Next item.</p></li> </ul>
+- Only create lists when the original content naturally groups items
+- Do not convert running text into bullet points; only use lists for already-grouped content
+- Do not place text directly inside <li> without a <p>
+
+EMPHASIS & BOLD:
+- Use <strong> for:
+  * Key figures, officials, or important names mentioned for the first time
+  * Critical dates, events, or turning points
+  * Important statistics or data points
+  * Terms crucial to understanding the story (e.g., "ceasefire agreement", "humanitarian crisis")
+  * Words/phrases already naturally emphasized in the source
+- Balance emphasis - do not over-bold; approximately 5-10% of content should be bolded
+
+QUOTES:
+- Important direct quotes from the source should be formatted as:
+  <blockquote> <p>"Exact quote here."</p> </blockquote>
+- Place quotes on separate lines
+- Select 2-5 key quotes that capture important moments, statements, or perspectives
+- Do NOT change any words in quotes
+- Do NOT add quotes that weren't in the original
+
+CONTENT PRESERVATION RULES (CRITICAL):
+- Preserve ALL facts, original wording, and quotes EXACTLY as in the source content
+- Do NOT summarize, condense, or shorten the article
+- Do NOT add, remove, or reinterpret any information
+- Do NOT include editorial commentary outside the original content
+- Do NOT omit details, background information, or supporting facts
+- Include full context for all statements and events
+- Keep all statistics, data, and specific information
+- Do not include empty HTML tags
+
+PROHIBITED:
+- Markdown syntax
+- HTML headings (<h1>, <h2>, <h4>–<h6>) - only use <h3> for section headers
+- Paraphrasing or shortening of original text
+- Omission of article content
+- Adding words or phrases not in the original
+- Author information, bylines, or author bios
+
+Categories: ${categoryList}
+Priorities: ${priorityList}
+Regions: ${regionList}
+Countries: ${countryList}
+
 COUNTRY SELECTION (STRICT):
 - Extract ONLY countries explicitly mentioned in the content (use the name from the provided country list)
 - If ONE country is mentioned, return as a string (e.g., "France")
 - If MULTIPLE countries are mentioned and involved in the topic, return as an array (e.g., ["France", "Germany"])
 - If no specific country is mentioned, return empty string
 - Do NOT infer or assume countries based on context
-
-FORMATTING INSTRUCTIONS FOR "entry" FIELD:
-Output must be valid HTML only. Do not use Markdown.
-GENERAL RULES:
-Preserve all facts, wording, and quotes exactly as in the source content
-Do not add, remove, paraphrase, or reinterpret any information
-Do not include commentary, explanations, or summaries outside the content
-Do not include empty HTML tags
-
-SECTION STRUCTURE:
-Each thematic section must start with:
-<p><strong>[Section Title]</strong></p>
-Immediately after a section title
-Use a <ul> if the section contains multiple points
-Use a single <p> only if there is one standalone statement
-The majority of the text should be written text, not bullet point lists. Use them wisely.
-LISTS:
-Bullet points must always follow this exact structure:
-<ul> <li><p>Bullet text here.</p></li> </ul>
-Do not place text directly inside <li> without a <p>
-Do not use numbered lists unless the source content is explicitly sequential
-PARAGRAPHS:
-All non-list content must be wrapped in <p> tags
-Do not combine unrelated ideas into a single paragraph
-EMPHASIS:
-Use <strong> only for:
-Section titles
-Clearly emphasized terms already implied by the content
-Do not overuse <strong>
-QUOTES:
-Direct quotes must be wrapped in:
-<blockquote> <p>"Exact quote here."</p> </blockquote> and should be in their own, seperate line. Do not put them in bullet point lists and don't include every single quote but 2-3 key quotes relevant to the content.
-PROHIBITED:
-Markdown syntax (e.g. bold, > quote, - bullets)
-Mixed formatting styles
-HTML headings (<h1>–<h6> blocks)
-Inline or compressed bullet lists
-
-Categories: ${categoryList}
-Priorities: ${priorityList}
-Regions: ${regionList}
-Countries: ${countryList}
 
 SOURCE NAME EXTRACTION:
 - Extract the name of the news source or publication (e.g., "BBC", "Reuters", "The Guardian", "AFP")
@@ -122,7 +164,7 @@ Return ONLY valid JSON with these fields:
   "headline": "concise headline (max 300 chars) - derived directly from content, not invented",
   "sourceDate": "YYYY-MM-DD if explicitly stated in content, otherwise null",
   "sourceName": "name of news source/publication if mentioned, otherwise empty string",
-  "entry": "reorganized content with formatting as defined above"
+  "entry": "COMPLETE FULL ARTICLE with all original content preserved, intelligently formatted with headers, bold emphasis, proper paragraphs, lists, and blockquotes as appropriate"
 }`;
 
   try {

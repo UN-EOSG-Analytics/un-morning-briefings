@@ -24,6 +24,7 @@ import {
   FastForward,
   FileDown,
   FileText,
+  List,
   Send,
   ChevronDown,
   ChevronRight,
@@ -447,6 +448,17 @@ export function EntriesTable({
                                 className="ml-auto flex gap-1.5"
                                 onClick={(e) => e.stopPropagation()}
                               >
+                                <button
+                                  onClick={() =>
+                                    router.push(
+                                      `/briefing?date=${currentBriefingDate}`,
+                                    )
+                                  }
+                                  className="p-1 text-slate-600 transition-colors hover:text-un-blue"
+                                  title="View briefing"
+                                >
+                                  <List className="h-5 w-5" />
+                                </button>
                                 <button
                                   onClick={() =>
                                     router.push(

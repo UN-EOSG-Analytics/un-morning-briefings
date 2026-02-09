@@ -384,9 +384,8 @@
       "removeSuccess": "Email Removed",
       "addFailed": "Add Failed",
       "removeFailed": "Remove Failed",
-      "cannotRemove": "Cannot remove - user account exists",
-      "removeTooltip": "Remove from whitelist",
-      "protectedNote": "Emails with registered accounts cannot be removed from the whitelist."
+      "removeTooltip": "Remove from whitelist - user will no longer be able to login",
+      "protectedNote": "Note: Removing a registered user from the whitelist will prevent them from logging in at their next session."
     },
     "email": {
       "title": "Scheduled Briefing",

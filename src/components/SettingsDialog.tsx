@@ -619,13 +619,8 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                                 size="sm"
                                 variant="ghost"
                                 onClick={() => handleRemoveWhitelistEmail(item.email)}
-                                disabled={item.userId !== null}
-                                className="h-7 px-2 text-red-600 hover:bg-red-50 hover:text-red-700 disabled:opacity-50"
-                                title={
-                                  item.userId
-                                    ? labels.settings.whitelist.cannotRemove
-                                    : labels.settings.whitelist.removeTooltip
-                                }
+                                className="h-7 px-2 text-red-600 hover:bg-red-50 hover:text-red-700"
+                                title={labels.settings.whitelist.removeTooltip}
                               >
                                 <Trash2 className="h-3.5 w-3.5" />
                               </Button>

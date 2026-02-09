@@ -726,7 +726,7 @@ function BriefingContent() {
       {/* Document Container */}
       <div
         ref={contentRef}
-        className="mx-auto max-w-6xl lg:max-w-4xl xl:max-w-6xl px-8 sm:px-12 lg:ml-80 lg:mr-8 xl:mx-auto py-12 sm:py-16"
+        className="mx-auto max-w-6xl px-8 sm:px-12 xl:pl-[12rem] lg:pl-[8rem] lg:pr-8 py-12 sm:py-16"
       >
         {/* Header */}
         <div className="mb-8 flex flex-col items-start justify-between gap-4 pb-6 sm:mb-10 sm:flex-row sm:items-start sm:gap-0 sm:pb-8">

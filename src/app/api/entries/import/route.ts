@@ -69,8 +69,8 @@ export async function POST(request: NextRequest) {
         await query(
           `INSERT INTO pu_morning_briefings.entries (
             id, category, priority, region, country, headline, date, entry,
-            source_name, source_url, source_date, pu_note, author_id, status, ai_summary, approval_status
-          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)`,
+            source_name, source_url, source_date, pu_note, thematic, author_id, status, ai_summary, approval_status
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)`,
           [
             entry.id,
             entry.category,
@@ -84,6 +84,7 @@ export async function POST(request: NextRequest) {
             entry.sourceUrl || null,
             entry.sourceDate || null,
             entry.puNote || null,
+            entry.thematic || null,
             authorId,
             entry.status || "draft",
             entry.aiSummary || null,

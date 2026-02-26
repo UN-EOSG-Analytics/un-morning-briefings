@@ -165,6 +165,10 @@ export async function PUT(
       updateFields.push(`pu_note = $${paramCount++}`);
       updateValues.push(data.puNote);
     }
+    if (data.thematic !== undefined) {
+      updateFields.push(`thematic = $${paramCount++}`);
+      updateValues.push(data.thematic || null);
+    }
     if (data.status !== undefined) {
       updateFields.push(`status = $${paramCount++}`);
       updateValues.push(data.status);

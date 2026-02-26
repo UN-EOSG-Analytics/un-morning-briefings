@@ -1,116 +1,204 @@
 "use client";
 
-import { useState, useEffect, useRef, InputHTMLAttributes } from "react";
-import { AlertCircle } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { useState, useMemo } from "react";
+import { AlertCircle, Search, X, Check } from "lucide-react";
 import {
-  inputBaseStyles,
-  inputDefaultStyles,
-  inputErrorStyles,
-} from "./TextField";
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+} from "@/components/ui/command";
 
-interface AutocompleteFieldProps
-  extends Omit<InputHTMLAttributes<HTMLInputElement>, "className" | "onChange"> {
+interface AutocompleteFieldProps {
   label?: string;
+  placeholder?: string;
   error?: string;
-  optional?: boolean;
+  required?: boolean;
   suggestions: string[];
   value: string;
   onChange: (value: string) => void;
   wrapperClassName?: string;
-  inputClassName?: string;
 }
 
 export function AutocompleteField({
   label,
+  placeholder = "Select or type...",
   error,
-  optional = false,
   required = false,
   suggestions,
   value,
   onChange,
   wrapperClassName,
-  inputClassName,
-  ...inputProps
 }: AutocompleteFieldProps) {
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const [filteredSuggestions, setFilteredSuggestions] = useState<string[]>([]);
-  const wrapperRef = useRef<HTMLDivElement>(null);
+  const [open, setOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
-  // Filter suggestions based on input
-  useEffect(() => {
-    if (!value || value.trim() === "") {
-      setFilteredSuggestions([]);
-      setShowSuggestions(false);
-      return;
+  const { matchingSuggestions, unmatchingSuggestions, shouldShowAddButton } = useMemo(() => {
+    const searchLower = searchQuery.toLowerCase();
+    
+    if (!searchQuery) {
+      return {
+        matchingSuggestions: [],
+        unmatchingSuggestions: suggestions,
+        shouldShowAddButton: false,
+      };
     }
 
-    const searchTerm = value.toLowerCase();
-    const filtered = suggestions.filter((s) =>
-      s.toLowerCase().includes(searchTerm)
+    const matching = suggestions.filter((s) =>
+      s.toLowerCase().includes(searchLower)
     );
-    setFilteredSuggestions(filtered);
+    const unmatching = suggestions.filter(
+      (s) => !s.toLowerCase().includes(searchLower)
+    );
 
-    if (filtered.length > 0) {
-      setShowSuggestions(true);
-    }
-  }, [value, suggestions]);
-
-  const handleFocus = () => {
-    if (value && value.trim() && filteredSuggestions.length > 0) {
-      setShowSuggestions(true);
-    }
-  };
-
-  const handleBlur = () => {
-    // Delay to allow click on suggestion
-    setTimeout(() => setShowSuggestions(false), 200);
-  };
+    return {
+      matchingSuggestions: matching,
+      unmatchingSuggestions: unmatching,
+      shouldShowAddButton: !suggestions.includes(searchQuery.trim()) && searchQuery.trim() !== "",
+    };
+  }, [suggestions, searchQuery]);
 
   const handleSelect = (selected: string) => {
     onChange(selected);
-    setShowSuggestions(false);
+    setSearchQuery("");
+    setOpen(false);
+  };
+
+  const handleAddNew = () => {
+    const trimmed = searchQuery.trim();
+    if (trimmed) {
+      handleSelect(trimmed);
+    }
+  };
+
+  const handleClear = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onChange("");
   };
 
   return (
-    <div className={cn("space-y-1 relative", wrapperClassName)} ref={wrapperRef}>
+    <div className={`space-y-2 ${wrapperClassName ?? ""}`}>
       {label && (
-        <label className="text-sm font-medium text-slate-700">
+        <label className="text-sm font-medium text-slate-900">
           {label}
-          {required && <span className="text-red-500"> *</span>}
-          {optional && (
-            <span className="text-xs text-slate-500"> (optional)</span>
-          )}
+          {required && <span className="text-red-500">*</span>}
         </label>
       )}
-      <input
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        onFocus={handleFocus}
-        onBlur={handleBlur}
-        autoComplete="off"
-        className={cn(
-          inputBaseStyles,
-          error ? inputErrorStyles : inputDefaultStyles,
-          inputClassName
-        )}
-        {...inputProps}
-      />
-      {/* Suggestions Dropdown */}
-      {showSuggestions && filteredSuggestions.length > 0 && (
-        <div className="y-0 absolute z-50 w-full mt-0 mb-0 bg-white border border-slate-300 rounded-md shadow-lg max-h-48 overflow-y-auto">
-          {filteredSuggestions.map((suggestion, index) => (
-            <button
-              key={index}
-              type="button"
-              onClick={() => handleSelect(suggestion)}
-              className="w-full text-left px-3 py-2 text-sm hover:bg-un-blue hover:text-white transition-colors cursor-pointer border-b border-slate-100 last:border-b-0"
-            >
-              {suggestion}
-            </button>
-          ))}
-        </div>
-      )}
+
+      <Popover
+        open={open}
+        onOpenChange={(o) => {
+          setOpen(o);
+          if (!o) setSearchQuery("");
+        }}
+      >
+        <PopoverTrigger asChild>
+          <Button
+            type="button"
+            variant="outline"
+            role="combobox"
+            aria-expanded={open}
+            className={`h-9 w-full justify-start gap-1 px-3 font-normal ${
+              error ? "border-red-500 bg-red-50" : ""
+            }`}
+          >
+            {value ? (
+              <>
+                <span className="flex-1 truncate text-left text-sm text-slate-900">{value}</span>
+                <X
+                  className="h-4 w-4 shrink-0 opacity-50 hover:opacity-100"
+                  onClick={handleClear}
+                />
+              </>
+            ) : (
+              <span className="text-slate-500">{placeholder}</span>
+            )}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-full p-0" align="start" side="bottom" sideOffset={4} avoidCollisions={false}>
+          <Command>
+            <CommandInput placeholder="Search or type new..." value={searchQuery} onValueChange={setSearchQuery} />
+            <CommandEmpty>
+              {searchQuery.trim() ? (
+                <div className="px-2 py-3 text-center">
+                  <p className="mb-1.5 text-xs text-slate-500">
+                    No matching options
+                  </p>
+                  <p className="text-xs text-slate-400">
+                    Press{" "}
+                    <kbd className="rounded border border-slate-300 bg-slate-100 px-1.5 py-0.5 text-xs font-medium text-slate-700 shadow-sm">
+                      Enter
+                    </kbd>{" "}
+                    or click below to add
+                  </p>
+                </div>
+              ) : (
+                <div className="px-2 py-3 text-center text-xs text-slate-500">
+                  No options found.
+                </div>
+              )}
+            </CommandEmpty>
+            <CommandGroup className="max-h-64 overflow-auto">
+              {/* Add new button when searching for non-existent option */}
+              {shouldShowAddButton && (
+                <>
+                  <CommandItem
+                    value={searchQuery.trim()}
+                    onSelect={handleAddNew}
+                    className="mx-2 my-1 cursor-pointer rounded border border-un-blue/20 bg-un-blue/5"
+                  >
+                    <Check className="mr-2 h-4 w-4 opacity-0" />
+                    <span className="font-medium text-un-blue">
+                      Add &quot;{searchQuery.trim()}&quot;
+                    </span>
+                  </CommandItem>
+                  {matchingSuggestions.length > 0 && (
+                    <div className="mx-2 my-1 h-px bg-slate-200" />
+                  )}
+                </>
+              )}
+
+              {/* Matching suggestions */}
+              {matchingSuggestions.map((s) => (
+                <CommandItem
+                  key={s}
+                  value={s}
+                  onSelect={() => handleSelect(s)}
+                  className="cursor-pointer"
+                >
+                  <Check className={`mr-2 h-4 w-4 ${value === s ? "text-un-blue opacity-100" : "opacity-0"}`} />
+                  <span>{s}</span>
+                </CommandItem>
+              ))}
+
+              {matchingSuggestions.length > 0 && unmatchingSuggestions.length > 0 && (
+                <div className="mx-2 my-1 h-px bg-slate-200" />
+              )}
+
+              {/* Unmatching suggestions */}
+              {unmatchingSuggestions.map((s) => (
+                <CommandItem
+                  key={s}
+                  value={s}
+                  onSelect={() => handleSelect(s)}
+                  className="cursor-pointer"
+                >
+                  <Check className={`mr-2 h-4 w-4 ${value === s ? "text-un-blue opacity-100" : "opacity-0"}`} />
+                  <span>{s}</span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </Command>
+        </PopoverContent>
+      </Popover>
+
       {error && (
         <div className="flex items-center gap-1 text-xs text-red-600">
           <AlertCircle className="h-3.5 w-3.5" />

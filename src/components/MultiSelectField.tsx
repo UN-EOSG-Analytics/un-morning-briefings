@@ -119,7 +119,7 @@ export function MultiSelectField({
   return (
     <div className={`space-y-2 ${className}`}>
       {label && showLabel && (
-        <label className="text-sm font-medium text-slate-700">
+        <label className="text-sm font-medium text-slate-900">
           {label}
           {required && <span className="text-red-500">*</span>}
         </label>
@@ -138,7 +138,7 @@ export function MultiSelectField({
           >
             <div className="flex items-center gap-1 overflow-x-auto">
               {value.length === 0 ? (
-                <span className="text-slate-400">{placeholder}</span>
+                <span className="text-slate-500">{placeholder}</span>
               ) : (
                 <>
                   {selectedLabels.map((label, index) => (

@@ -59,7 +59,7 @@ export function SelectField({
   return (
     <div className={`space-y-2 ${className}`}>
       {label && showLabel && (
-        <label className="text-sm font-medium text-slate-700">
+        <label className="text-sm font-medium text-slate-900">
           {label}
           {required && <span className="text-red-500">*</span>}
         </label>

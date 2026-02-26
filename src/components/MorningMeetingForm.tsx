@@ -190,6 +190,7 @@ export function MorningMeetingForm({
     sourceDate: formatSourceDateForInput(initialData?.sourceDate),
     sourceUrl: initialData?.sourceUrl || "",
     puNote: initialData?.puNote || "",
+    thematic: initialData?.thematic || "",
     author: initialData?.author || "Current User",
     previousEntryId: initialData?.previousEntryId || null,
   });
@@ -216,6 +217,9 @@ export function MorningMeetingForm({
   const [frequentRegion, setFrequentRegion] = useState<string | null>(null);
   const [frequentCountries, setFrequentCountries] = useState<string[]>([]);
   const [existingCustomCountries, setExistingCustomCountries] = useState<string[]>([]);
+  const [existingThematics, setExistingThematics] = useState<string[]>(
+    (labelsData as Record<string, any>).form?.options?.thematics || []
+  );
 
   // Source name suggestions for autocomplete
   const [sourceNames, setSourceNames] = useState<string[]>([]);
@@ -383,6 +387,37 @@ export function MorningMeetingForm({
     };
 
     fetchExistingCustomCountries();
+  }, []);
+
+  // Fetch all distinct thematic values from the database
+  useEffect(() => {
+    const fetchExistingThematics = async () => {
+      try {
+        const defaultThematics =
+          (labelsData as Record<string, any>).form?.options?.thematics || [];
+        const response = await fetch("/api/thematics");
+        if (response.ok) {
+          const data = await response.json();
+          const apiThematics = data.thematics || [];
+          // Merge defaults with API results, avoiding duplicates
+          const combined = Array.from(
+            new Set([...defaultThematics, ...apiThematics])
+          );
+          setExistingThematics(combined);
+        } else {
+          // If API fails, just use defaults
+          setExistingThematics(defaultThematics);
+        }
+      } catch (error) {
+        console.error("Failed to fetch existing thematics:", error);
+        // Fall back to defaults on error
+        setExistingThematics(
+          (labelsData as Record<string, any>).form?.options?.thematics || []
+        );
+      }
+    };
+
+    fetchExistingThematics();
   }, []);
 
   // Fetch user's recent entries to determine frequently used regions/countries
@@ -659,6 +694,7 @@ export function MorningMeetingForm({
         sourceDate: "",
         sourceUrl: "",
         puNote: "",
+        thematic: "",
         author: "Current User",
       });
       setErrors({});
@@ -817,7 +853,7 @@ export function MorningMeetingForm({
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Classification & Location Section */}
               <section className="space-y-4 border-b pb-4 sm:pb-6">
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 md:grid-cols-4">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 md:grid-cols-5">
                   {/* Category */}
                   <SelectField
                     label={labelsData.form.labels.category}
@@ -881,6 +917,17 @@ export function MorningMeetingForm({
                     required={false}
                     searchable={true}
                     existingCustomValues={existingCustomCountries}
+                  />
+
+                  {/* Thematic */}
+                  <AutocompleteField
+                    label={labelsData.form.labels.thematic}
+                    placeholder={labelsData.form.placeholders.thematic}
+                    value={formData.thematic || ""}
+                    onChange={(value) =>
+                      setFormData((prev) => ({ ...prev, thematic: value }))
+                    }
+                    suggestions={existingThematics}
                   />
                 </div>
               </section>

@@ -31,6 +31,7 @@ CREATE TABLE
         source_date TEXT,
         pu_note TEXT,
         comment TEXT,
+        thematic TEXT,
         author_id INTEGER REFERENCES pu_morning_briefings.users(id) ON DELETE SET NULL,
         status TEXT NOT NULL DEFAULT 'submitted',
         ai_summary TEXT,

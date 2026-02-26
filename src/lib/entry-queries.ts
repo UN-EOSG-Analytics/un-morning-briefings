@@ -48,6 +48,7 @@ const ENTRY_SELECT = `
     e.source_url as "sourceUrl",
     e.source_date as "sourceDate",
     e.pu_note as "puNote",
+    e.thematic,
     COALESCE(CONCAT(u.first_name, ' ', u.last_name), 'Unknown') as author,
     e.author_id as "authorId",
     u.email as "authorEmail",

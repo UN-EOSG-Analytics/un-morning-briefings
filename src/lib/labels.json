@@ -122,7 +122,8 @@
       "category": "Category",
       "priority": "Priority",
       "region": "Region",
-      "tags": "Tags",
+      "tags": "Countries/Tags",
+      "thematic": "Thematic",
       "headline": "Headline",
       "entryContent": "Entry Content",
       "sourceName": "Source Name",
@@ -140,6 +141,7 @@
       "priority": "Select priority...",
       "region": "Select region...",
       "tags": "Select tags...",
+      "thematic": "Select or type thematic...",
       "headline": "Enter a concise, descriptive headline...",
       "entry": "Provide a comprehensive summary of the development...",
       "sourceName": "Add source name...",
@@ -160,6 +162,22 @@
       "priorityRequired": "Priority is required",
       "dateRequired": "Date is required",
       "entryMinLength": "Entry must be at least 50 characters"
+    },
+    "options": {
+      "thematics": [
+        "Conflict Prevention and Mediation",
+        "Elections",
+        "Human Rights",
+        "Humanitarian",
+        "Disarmament",
+        "Peacebuilding",
+        "Peacekeeping",
+        "Counterterrorism",
+        "Drugs, Crime and Trafficking",
+        "Decolonization",
+        "Women, Peace and Security",
+        "Security Council"
+      ]
     },
     "actions": {
       "saveDraft": "Save Draft",
@@ -499,8 +517,9 @@
     "Article",
     "Meeting Note",
     "Code Cable",
-    "SitRep",
-    "UN Internal Document"
+    "Situational Update",
+    "UN Internal Document",
+    "Other"
   ],
   "priorities": [
     { "value": "Secretary-General's Attention", "label": "Secretary-General's Attention" },

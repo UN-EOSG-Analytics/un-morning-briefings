@@ -16,6 +16,7 @@ export interface MorningMeetingEntry {
   sourceDate?: string; // Date from the source
   sourceUrl?: string;
   puNote?: string;
+  thematic?: string;
   author?: string; // Joined from users table via author_id
   authorId?: number; // Foreign key to users table
   authorEmail?: string; // Author's email for convenience

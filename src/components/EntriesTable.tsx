@@ -802,82 +802,73 @@ export function EntriesTable({
               const sortedRegions = Object.keys(entriesByRegionAndCountry).sort();
 
               return (
-                <div className="overflow-x-auto">
-                  <table className="w-full border-collapse border border-slate-200">
-                    <thead className="bg-un-blue text-white">
-                      <tr>
-                        <th className="border border-slate-300 px-3 py-2 text-left text-sm font-semibold">
-                          Region
-                        </th>
-                        <th className="border border-slate-300 px-3 py-2 text-left text-sm font-semibold">
-                          Country
-                        </th>
-                        <th className="border border-slate-300 px-3 py-2 text-left text-sm font-semibold">
-                          Headline
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {sortedRegions.map((region) => {
-                        const countries = Object.keys(entriesByRegionAndCountry[region]).sort(
-                          (a, b) => {
-                            if (a === "") return 1;
-                            if (b === "") return -1;
-                            return a.localeCompare(b);
-                          },
-                        );
+                <div className="space-y-6">
+                  {sortedRegions.map((region) => {
+                    const countries = Object.keys(entriesByRegionAndCountry[region]).sort(
+                      (a, b) => {
+                        if (a === "") return 1;
+                        if (b === "") return -1;
+                        return a.localeCompare(b);
+                      },
+                    );
 
-                        // Count total entries in this region for rowspan
-                        const regionEntryCount = countries.reduce(
-                          (count, country) => count + entriesByRegionAndCountry[region][country].length,
-                          0,
-                        );
+                    return (
+                      <div key={region}>
+                        {/* Region Header */}
+                        <h3 className="border border-slate-200 bg-slate-50 px-4 py-3 text-lg font-semibold text-un-blue">
+                          {region}
+                        </h3>
 
-                        let entryIndexInRegion = 0;
-
-                        return countries.map((country) => {
-                          const countryEntries = entriesByRegionAndCountry[region][country];
-                          let entryIndexInCountry = 0;
-
-                          return countryEntries.map((entry, idx) => {
-                            const isFirstInRegion = entryIndexInRegion === 0;
-                            const isFirstInCountry = entryIndexInCountry === 0;
-                            const displayCountry = Array.isArray(entry.country)
-                              ? entry.country.join(" / ")
-                              : entry.country || "(No country specified)";
-
-                            const result = (
-                              <tr key={entry.id} className="hover:bg-slate-50">
-                                {isFirstInRegion && (
-                                  <td
-                                    className="border border-slate-200 px-3 py-2 text-sm font-medium align-top"
-                                    rowSpan={regionEntryCount}
-                                  >
-                                    {region}
-                                  </td>
-                                )}
-                                {isFirstInCountry && (
-                                  <td
-                                    className="border border-slate-200 px-3 py-2 text-sm whitespace-normal break-words align-top font-medium"
-                                    rowSpan={countryEntries.length}
-                                  >
-                                    {displayCountry}
-                                  </td>
-                                )}
-                                <td className="border border-slate-200 px-3 py-2 text-sm whitespace-normal break-words">
-                                  {entry.headline}
-                                </td>
+                        {/* Region Table */}
+                        <div className="overflow-x-auto">
+                          <table className="w-full border-collapse border border-slate-200">
+                            <thead className="bg-un-blue text-white">
+                              <tr>
+                                <th className="border border-slate-300 px-3 py-2 text-left text-sm font-semibold">
+                                  Country
+                                </th>
+                                <th className="border border-slate-300 px-3 py-2 text-left text-sm font-semibold">
+                                  Headline
+                                </th>
                               </tr>
-                            );
+                            </thead>
+                            <tbody>
+                              {countries.map((country) => {
+                                const countryEntries = entriesByRegionAndCountry[region][country];
+                                let entryIndexInCountry = 0;
 
-                            entryIndexInRegion++;
-                            entryIndexInCountry++;
-                            return result;
-                          });
-                        });
-                      })}
-                    </tbody>
-                  </table>
+                                return countryEntries.map((entry) => {
+                                  const isFirstInCountry = entryIndexInCountry === 0;
+                                  const displayCountry = Array.isArray(entry.country)
+                                    ? entry.country.join(" / ")
+                                    : entry.country || "(No country specified)";
+
+                                  const result = (
+                                    <tr key={entry.id} className="hover:bg-slate-50">
+                                      {isFirstInCountry && (
+                                        <td
+                                          className="border border-slate-200 px-3 py-2 text-sm whitespace-normal break-words align-top font-medium"
+                                          rowSpan={countryEntries.length}
+                                        >
+                                          {displayCountry}
+                                        </td>
+                                      )}
+                                      <td className="border border-slate-200 px-3 py-2 text-sm whitespace-normal break-words">
+                                        {entry.headline}
+                                      </td>
+                                    </tr>
+                                  );
+
+                                  entryIndexInCountry++;
+                                  return result;
+                                });
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               );
             })()}

@@ -255,11 +255,12 @@ const generateBriefingDocument = async (
 
   // Add entries grouped by region and country
   sortedRegions.forEach((region) => {
+    // Add region header
     children.push(
       new Paragraph({
         heading: HeadingLevel.HEADING_2,
         alignment: AlignmentType.LEFT,
-        spacing: { before: 300, after: 200 },
+        spacing: { before: 300, after: 100 },
         children: [
           new TextRun({
             text: region,
@@ -280,6 +281,115 @@ const generateBriefingDocument = async (
       },
     );
 
+    // Create agenda table for this region
+    const tableRows: TableRow[] = [
+      // Header row
+      new TableRow({
+        children: [
+          new TableCell({
+            width: { size: 25, type: "pct" },
+            shading: { fill: "009edb" },
+            margins: { top: 100, bottom: 100, left: 100, right: 100 },
+            children: [
+              new Paragraph({
+                children: [
+                  new TextRun({
+                    text: "Country",
+                    bold: true,
+                    color: "FFFFFF",
+                    font: "Roboto",
+                  }),
+                ],
+              }),
+            ],
+          }),
+          new TableCell({
+            width: { size: 75, type: "pct" },
+            shading: { fill: "009edb" },
+            margins: { top: 100, bottom: 100, left: 100, right: 100 },
+            children: [
+              new Paragraph({
+                children: [
+                  new TextRun({
+                    text: "Headline",
+                    bold: true,
+                    color: "FFFFFF",
+                    font: "Roboto",
+                  }),
+                ],
+              }),
+            ],
+          }),
+        ],
+      }),
+    ];
+
+    // Add data rows
+    countries.forEach((country) => {
+      const countryEntries = entriesByRegionAndCountry[region][country];
+      const displayCountry = Array.isArray(countryEntries[0]?.country)
+        ? countryEntries[0]?.country.join(" / ")
+        : countryEntries[0]?.country || "(No country specified)";
+
+      countryEntries.forEach((entry, index) => {
+        const isFirstInCountry = index === 0;
+        
+        tableRows.push(
+          new TableRow({
+            children: [
+              new TableCell({
+                width: { size: 25, type: "pct" },
+                margins: { top: 100, bottom: 100, left: 100, right: 100 },
+                children: [
+                  new Paragraph({
+                    children: [
+                      new TextRun({
+                        text: isFirstInCountry ? displayCountry : "",
+                        font: "Roboto",
+                      }),
+                    ],
+                  }),
+                ],
+              }),
+              new TableCell({
+                width: { size: 75, type: "pct" },
+                margins: { top: 100, bottom: 100, left: 100, right: 100 },
+                children: [
+                  new Paragraph({
+                    children: [
+                      new TextRun({
+                        text: entry.headline,
+                        font: "Roboto",
+                      }),
+                    ],
+                  }),
+                ],
+              }),
+            ],
+          }),
+        );
+      });
+    });
+
+    // Add table to document
+    children.push(
+      new Table({
+        width: { size: 100, type: "pct" },
+        rows: tableRows,
+        borders: {
+          top: { style: BorderStyle.SINGLE, size: 6, color: "d1d5db" },
+          bottom: { style: BorderStyle.SINGLE, size: 6, color: "d1d5db" },
+          left: { style: BorderStyle.SINGLE, size: 6, color: "d1d5db" },
+          right: { style: BorderStyle.SINGLE, size: 6, color: "d1d5db" },
+          insideHorizontal: { style: BorderStyle.SINGLE, size: 6, color: "d1d5db" },
+          insideVertical: { style: BorderStyle.SINGLE, size: 6, color: "d1d5db" },
+        },
+      }),
+    );
+
+    children.push(createSeparator());
+
+    // Add detailed entries for each region
     countries.forEach((country) => {
       if (country !== "") {
         // Get all countries for entries in this group

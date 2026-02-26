@@ -295,110 +295,25 @@ const buildTableOfContents = (
     }),
   ];
 
-  // Collect all rows for the table
-  const tableRows: TableRow[] = [];
-
-  // Header row
-  tableRows.push(
-    new TableRow({
-      tableHeader: true,
-      children: [
-        new TableCell({
-          width: { size: 15, type: WidthType.PERCENTAGE },
-          verticalAlign: VerticalAlign.CENTER,
-          shading: { fill: "009edb" },
-          children: [
-            new Paragraph({
-              children: [
-                new TextRun({
-                  text: "Region",
-                  bold: true,
-                  color: "FFFFFF",
-                  size: 20,
-                  font: "Roboto",
-                }),
-              ],
-            }),
-          ],
-        }),
-        new TableCell({
-          width: { size: 15, type: WidthType.PERCENTAGE },
-          verticalAlign: VerticalAlign.CENTER,
-          shading: { fill: "009edb" },
-          children: [
-            new Paragraph({
-              children: [
-                new TextRun({
-                  text: "Country",
-                  bold: true,
-                  color: "FFFFFF",
-                  size: 20,
-                  font: "Roboto",
-                }),
-              ],
-            }),
-          ],
-        }),
-        new TableCell({
-          width: { size: 40, type: WidthType.PERCENTAGE },
-          verticalAlign: VerticalAlign.CENTER,
-          shading: { fill: "009edb" },
-          children: [
-            new Paragraph({
-              children: [
-                new TextRun({
-                  text: "Headline",
-                  bold: true,
-                  color: "FFFFFF",
-                  size: 20,
-                  font: "Roboto",
-                }),
-              ],
-            }),
-          ],
-        }),
-        new TableCell({
-          width: { size: 15, type: WidthType.PERCENTAGE },
-          verticalAlign: VerticalAlign.CENTER,
-          shading: { fill: "009edb" },
-          children: [
-            new Paragraph({
-              children: [
-                new TextRun({
-                  text: "Category",
-                  bold: true,
-                  color: "FFFFFF",
-                  size: 20,
-                  font: "Roboto",
-                }),
-              ],
-            }),
-          ],
-        }),
-        new TableCell({
-          width: { size: 15, type: WidthType.PERCENTAGE },
-          verticalAlign: VerticalAlign.CENTER,
-          shading: { fill: "009edb" },
-          children: [
-            new Paragraph({
-              children: [
-                new TextRun({
-                  text: "Priority",
-                  bold: true,
-                  color: "FFFFFF",
-                  size: 20,
-                  font: "Roboto",
-                }),
-              ],
-            }),
-          ],
-        }),
-      ],
-    }),
-  );
-
-  // Data rows
+  // Build per-region header + table
   sortedRegions.forEach((region) => {
+    // Region heading paragraph
+    tocElements.push(
+      new Paragraph({
+        spacing: { before: 200, after: 0 },
+        keepNext: true,
+        children: [
+          new TextRun({
+            text: region,
+            bold: true,
+            size: 24,
+            font: "Roboto",
+            color: "009edb",
+          }),
+        ],
+      }),
+    );
+
     // Get countries for this region
     const countries = Object.keys(entriesByRegionAndCountry[region]).sort(
       (a, b) => {
@@ -408,17 +323,99 @@ const buildTableOfContents = (
       },
     );
 
+    const tableRows: TableRow[] = [];
+
+    // Header row
+    tableRows.push(
+      new TableRow({
+        tableHeader: true,
+        children: [
+          new TableCell({
+            width: { size: 25, type: WidthType.PERCENTAGE },
+            verticalAlign: VerticalAlign.CENTER,
+            shading: { fill: "009edb" },
+            children: [
+              new Paragraph({
+                children: [
+                  new TextRun({
+                    text: "Country",
+                    bold: true,
+                    color: "FFFFFF",
+                    size: 20,
+                    font: "Roboto",
+                  }),
+                ],
+              }),
+            ],
+          }),
+          new TableCell({
+            width: { size: 45, type: WidthType.PERCENTAGE },
+            verticalAlign: VerticalAlign.CENTER,
+            shading: { fill: "009edb" },
+            children: [
+              new Paragraph({
+                children: [
+                  new TextRun({
+                    text: "Headline",
+                    bold: true,
+                    color: "FFFFFF",
+                    size: 20,
+                    font: "Roboto",
+                  }),
+                ],
+              }),
+            ],
+          }),
+          new TableCell({
+            width: { size: 15, type: WidthType.PERCENTAGE },
+            verticalAlign: VerticalAlign.CENTER,
+            shading: { fill: "009edb" },
+            children: [
+              new Paragraph({
+                children: [
+                  new TextRun({
+                    text: "Category",
+                    bold: true,
+                    color: "FFFFFF",
+                    size: 20,
+                    font: "Roboto",
+                  }),
+                ],
+              }),
+            ],
+          }),
+          new TableCell({
+            width: { size: 15, type: WidthType.PERCENTAGE },
+            verticalAlign: VerticalAlign.CENTER,
+            shading: { fill: "009edb" },
+            children: [
+              new Paragraph({
+                children: [
+                  new TextRun({
+                    text: "Priority",
+                    bold: true,
+                    color: "FFFFFF",
+                    size: 20,
+                    font: "Roboto",
+                  }),
+                ],
+              }),
+            ],
+          }),
+        ],
+      }),
+    );
+
+    // Data rows
     countries.forEach((country) => {
       const countryLabel = country || "(No country specified)";
       const entries = entriesByRegionAndCountry[region][country];
 
       entries.forEach((entry) => {
-        // Format country from array if needed
         const displayCountry = Array.isArray(entry.country)
           ? entry.country.join("/")
           : entry.country || countryLabel;
 
-        // Determine priority display
         const priorityText = entry.priority === "Secretary-General's Attention"
           ? "Secretary-General's attention"
           : entry.priority === "Situational Awareness"
@@ -429,22 +426,7 @@ const buildTableOfContents = (
           new TableRow({
             children: [
               new TableCell({
-                width: { size: 15, type: WidthType.PERCENTAGE },
-                verticalAlign: VerticalAlign.TOP,
-                children: [
-                  new Paragraph({
-                    children: [
-                      new TextRun({
-                        text: region,
-                        size: 20,
-                        font: "Roboto",
-                      }),
-                    ],
-                  }),
-                ],
-              }),
-              new TableCell({
-                width: { size: 15, type: WidthType.PERCENTAGE },
+                width: { size: 25, type: WidthType.PERCENTAGE },
                 verticalAlign: VerticalAlign.TOP,
                 children: [
                   new Paragraph({
@@ -459,7 +441,7 @@ const buildTableOfContents = (
                 ],
               }),
               new TableCell({
-                width: { size: 40, type: WidthType.PERCENTAGE },
+                width: { size: 45, type: WidthType.PERCENTAGE },
                 verticalAlign: VerticalAlign.TOP,
                 children: [
                   new Paragraph({
@@ -508,23 +490,22 @@ const buildTableOfContents = (
         );
       });
     });
-  });
 
-  // Create the table
-  const table = new Table({
-    width: { size: 100, type: WidthType.PERCENTAGE },
-    borders: {
-      top: { style: BorderStyle.SINGLE, size: 1, color: "000000" },
-      bottom: { style: BorderStyle.SINGLE, size: 1, color: "000000" },
-      left: { style: BorderStyle.SINGLE, size: 1, color: "000000" },
-      right: { style: BorderStyle.SINGLE, size: 1, color: "000000" },
-      insideHorizontal: { style: BorderStyle.SINGLE, size: 1, color: "CCCCCC" },
-      insideVertical: { style: BorderStyle.SINGLE, size: 1, color: "CCCCCC" },
-    },
-    rows: tableRows,
+    tocElements.push(
+      new Table({
+        width: { size: 100, type: WidthType.PERCENTAGE },
+        borders: {
+          top: { style: BorderStyle.SINGLE, size: 1, color: "000000" },
+          bottom: { style: BorderStyle.SINGLE, size: 1, color: "000000" },
+          left: { style: BorderStyle.SINGLE, size: 1, color: "000000" },
+          right: { style: BorderStyle.SINGLE, size: 1, color: "000000" },
+          insideHorizontal: { style: BorderStyle.SINGLE, size: 1, color: "CCCCCC" },
+          insideVertical: { style: BorderStyle.SINGLE, size: 1, color: "CCCCCC" },
+        },
+        rows: tableRows,
+      }),
+    );
   });
-
-  tocElements.push(table);
 
   tocElements.push(
     new Paragraph({
@@ -634,6 +615,7 @@ const buildDocumentChildren = (
         heading: HeadingLevel.HEADING_2,
         alignment: AlignmentType.LEFT,
         spacing: { before: 300, after: 200 },
+        keepNext: true,
         children: [
           new TextRun({
             text: region,
@@ -670,6 +652,7 @@ const buildDocumentChildren = (
               }),
             ],
             spacing: { before: 300, after: 200 },
+            keepNext: true,
           }),
         );
       } else {
@@ -697,6 +680,7 @@ const buildDocumentChildren = (
                 }),
               ],
               spacing: { after: 100 },
+              keepNext: true,
             }),
           );
 

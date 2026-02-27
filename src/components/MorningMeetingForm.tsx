@@ -941,7 +941,7 @@ export function MorningMeetingForm({
                 <div className="grid grid-cols-4 gap-3 sm:gap-4">
                   {/* Headline - Full width */}
                   <div className="col-span-4 space-y-2">
-                    <label className="text-sm font-medium text-slate-700">
+                    <label className="text-sm font-medium text-slate-900">
                       {labelsData.form.labels.headline} <span className="text-red-500">*</span>
                       <span className="ml-2 text-xs text-slate-500">
                         ({formData.headline.length}/300)
@@ -982,7 +982,7 @@ export function MorningMeetingForm({
                 {/* Entry Content */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <label className="text-sm font-medium text-slate-700">
+                    <label className="text-sm font-medium text-slate-900">
                       {labelsData.form.labels.entryContent} <span className="text-red-500">*</span>
                     </label>
                     {/* Text Mode Toggle Switch */}
@@ -1122,10 +1122,9 @@ export function MorningMeetingForm({
                     />
                     <label
                       htmlFor="puNoteCheck"
-                      className="text-sm font-medium text-slate-700"
+                      className="text-sm font-medium text-slate-900"
                     >
-                      {labelsData.form.labels.puNote}{" "}
-                      <span className="text-xs text-slate-500">(optional)</span>
+                      {labelsData.form.labels.puNote}
                     </label>
                   </div>
                   {showPuNote && (
@@ -1283,7 +1282,7 @@ export function MorningMeetingForm({
 
           <div className="space-y-4">
             <div>
-              <label className="mb-2 block text-sm font-medium text-slate-700">
+              <label className="mb-2 block text-sm font-medium text-slate-900">
                 {labelsData.form.autoFill.contentLabel}
               </label>
               <textarea

@@ -39,9 +39,6 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
           <label className="text-sm font-medium text-slate-900">
             {label}
             {required && <span className="text-red-500"> *</span>}
-            {optional && (
-              <span className="text-xs text-slate-500"> (optional)</span>
-            )}
           </label>
         )}
         <input

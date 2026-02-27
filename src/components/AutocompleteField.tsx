@@ -97,7 +97,6 @@ export function AutocompleteField({
         <label className="text-sm font-medium text-slate-900">
           {label}
           {required && <span className="text-red-500">*</span>}
-          {optional && <span className="ml-1 text-xs font-normal text-slate-400">(optional)</span>}
         </label>
       )}
 

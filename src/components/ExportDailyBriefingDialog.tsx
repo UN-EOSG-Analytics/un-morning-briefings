@@ -349,7 +349,7 @@ const buildTableOfContents = (
             ],
           }),
           new TableCell({
-            width: { size: 45, type: WidthType.PERCENTAGE },
+            width: { size: 75, type: WidthType.PERCENTAGE },
             verticalAlign: VerticalAlign.CENTER,
             shading: { fill: "009edb" },
             children: [
@@ -357,42 +357,6 @@ const buildTableOfContents = (
                 children: [
                   new TextRun({
                     text: "Headline",
-                    bold: true,
-                    color: "FFFFFF",
-                    size: 20,
-                    font: "Roboto",
-                  }),
-                ],
-              }),
-            ],
-          }),
-          new TableCell({
-            width: { size: 15, type: WidthType.PERCENTAGE },
-            verticalAlign: VerticalAlign.CENTER,
-            shading: { fill: "009edb" },
-            children: [
-              new Paragraph({
-                children: [
-                  new TextRun({
-                    text: "Category",
-                    bold: true,
-                    color: "FFFFFF",
-                    size: 20,
-                    font: "Roboto",
-                  }),
-                ],
-              }),
-            ],
-          }),
-          new TableCell({
-            width: { size: 15, type: WidthType.PERCENTAGE },
-            verticalAlign: VerticalAlign.CENTER,
-            shading: { fill: "009edb" },
-            children: [
-              new Paragraph({
-                children: [
-                  new TextRun({
-                    text: "Priority",
                     bold: true,
                     color: "FFFFFF",
                     size: 20,
@@ -416,12 +380,6 @@ const buildTableOfContents = (
           ? entry.country.join("/")
           : entry.country || countryLabel;
 
-        const priorityText = entry.priority === "Secretary-General's Attention"
-          ? "Secretary-General's attention"
-          : entry.priority === "Situational Awareness"
-          ? "Situational awareness"
-          : "";
-
         tableRows.push(
           new TableRow({
             children: [
@@ -441,43 +399,13 @@ const buildTableOfContents = (
                 ],
               }),
               new TableCell({
-                width: { size: 45, type: WidthType.PERCENTAGE },
+                width: { size: 75, type: WidthType.PERCENTAGE },
                 verticalAlign: VerticalAlign.TOP,
                 children: [
                   new Paragraph({
                     children: [
                       new TextRun({
                         text: entry.headline,
-                        size: 20,
-                        font: "Roboto",
-                      }),
-                    ],
-                  }),
-                ],
-              }),
-              new TableCell({
-                width: { size: 15, type: WidthType.PERCENTAGE },
-                verticalAlign: VerticalAlign.TOP,
-                children: [
-                  new Paragraph({
-                    children: [
-                      new TextRun({
-                        text: entry.category || "",
-                        size: 20,
-                        font: "Roboto",
-                      }),
-                    ],
-                  }),
-                ],
-              }),
-              new TableCell({
-                width: { size: 15, type: WidthType.PERCENTAGE },
-                verticalAlign: VerticalAlign.TOP,
-                children: [
-                  new Paragraph({
-                    children: [
-                      new TextRun({
-                        text: priorityText,
                         size: 20,
                         font: "Roboto",
                       }),

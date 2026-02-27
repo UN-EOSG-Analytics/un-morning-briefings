@@ -85,6 +85,15 @@ export function MorningMeetingList({
     await loadEntries();
   };
 
+  const handleUpdateEntry = async (id: string, updates: any) => {
+    // Update local state immediately for responsiveness
+    setEntries((prevEntries) =>
+      prevEntries.map((entry) =>
+        entry.id === id ? { ...entry, ...updates } : entry
+      )
+    );
+  };
+
   return (
     <div className="mx-auto w-full max-w-6xl space-y-4">
       {/* Header */}
@@ -135,6 +144,7 @@ export function MorningMeetingList({
         onDelete={handleDelete}
         onToggleApproval={handleToggleApproval}
         onPostpone={handlePostpone}
+        onUpdate={handleUpdateEntry}
         showApprovedColumn={true}
         emptyMessage={labels.entries.empty.noEntries}
         resultLabel="entries"

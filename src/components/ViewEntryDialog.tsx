@@ -21,6 +21,7 @@ interface ViewEntryDialogProps {
   onDelete?: (id: string) => void;
   onApprove?: (entry: any) => void;
   onPostpone?: () => void;
+  onUpdate?: (id: string, updates: any) => void;
   showApproveButton?: boolean;
   allEntries?: MorningMeetingEntry[];
 }
@@ -32,12 +33,15 @@ export function ViewEntryDialog({
   onDelete,
   onApprove,
   onPostpone,
+  onUpdate,
   showApproveButton = false,
   allEntries = [],
 }: ViewEntryDialogProps) {
   const [summary, setSummary] = useState<string[] | null>(null);
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
   const [isUpdatingApproval, setIsUpdatingApproval] = useState(false);
+  const [isEditingHeadline, setIsEditingHeadline] = useState(false);
+  const [headlineValue, setHeadlineValue] = useState('');
   const { warning: showWarning, success: showSuccess } = usePopup();
   const [currentIndex, setCurrentIndex] = useState(0);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -68,7 +72,7 @@ export function ViewEntryDialog({
     }
   }, [currentIndex, allEntries.length]);
 
-  // Update current index when entry changes (from parent)
+  // Update current index and headline when entry changes (from parent)
   useEffect(() => {
     if (entry && allEntries.length > 0) {
       const index = allEntries.findIndex(e => e.id === entry.id);
@@ -81,6 +85,14 @@ export function ViewEntryDialog({
 
   // Get the current entry from allEntries if available
   const displayEntry = allEntries.length > 0 ? allEntries[currentIndex] : entry;
+
+  // Initialize headline value when entry changes
+  useEffect(() => {
+    if (displayEntry?.headline) {
+      setHeadlineValue(displayEntry.headline);
+      setIsEditingHeadline(false);
+    }
+  }, [displayEntry?.headline, displayEntry?.id]);
 
   // Find previous entry - use useMemo instead of useCallback, depends on displayEntry
   const previousEntry = useMemo(() => {
@@ -256,6 +268,46 @@ export function ViewEntryDialog({
     }
   };
 
+  const handleHeadlineSave = useCallback(async () => {
+    if (!displayEntry?.id || !headlineValue.trim()) return;
+
+    const newHeadline = headlineValue.trim();
+    if (newHeadline === displayEntry.headline) {
+      setIsEditingHeadline(false);
+      return;
+    }
+
+    try {
+      // Update backend
+      const response = await fetch('/api/entries', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          id: displayEntry.id,
+          headline: newHeadline,
+        }),
+      });
+
+      if (!response.ok) {
+        showWarning('Update failed', 'Could not update headline');
+        setHeadlineValue(displayEntry.headline);
+        return;
+      }
+
+      // Call parent callback to update UI
+      if (onUpdate) {
+        onUpdate(displayEntry.id, { headline: newHeadline });
+      }
+
+      setIsEditingHeadline(false);
+      showSuccess('Headline updated', '');
+    } catch (error) {
+      console.error('Error updating headline:', error);
+      showWarning('Update failed', 'Could not update headline');
+      setHeadlineValue(displayEntry.headline);
+    }
+  }, [displayEntry?.id, displayEntry?.headline, headlineValue, onUpdate, showWarning, showSuccess]);
+
   if (!displayEntry) return null;
 
   return (
@@ -269,9 +321,37 @@ export function ViewEntryDialog({
         {/* Header - Fixed at top */}
         <div className="mt-2 flex-shrink-0 bg-white border-b border-slate-200 py-2 sm:py-3 px-3 sm:px-6">
           <div className="flex items-center justify-between gap-2 mb-1">
-            <h2 className="text-lg sm:text-2xl font-bold text-slate-900 mb-0 line-clamp-2 flex-1">
-              {displayEntry.headline}
-            </h2>
+            {isEditingHeadline ? (
+              <div className="flex-1 flex items-center gap-2">
+                <input
+                  type="text"
+                  value={headlineValue}
+                  onChange={(e) => setHeadlineValue(e.target.value)}
+                  onBlur={handleHeadlineSave}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleHeadlineSave();
+                    if (e.key === 'Escape') {
+                      setHeadlineValue(displayEntry.headline);
+                      setIsEditingHeadline(false);
+                    }
+                  }}
+                  autoFocus
+                  maxLength={300}
+                  className="flex-1 text-lg sm:text-2xl font-bold text-slate-900 border border-un-blue bg-white px-2 py-1 rounded focus:outline-none focus:ring-2 focus:ring-un-blue"
+                />
+                <span className="text-xs text-slate-500 whitespace-nowrap">
+                  {headlineValue.length}/300
+                </span>
+              </div>
+            ) : (
+              <h2 
+                onClick={() => setIsEditingHeadline(true)}
+                className="text-lg sm:text-2xl font-bold text-slate-900 mb-0 line-clamp-2 flex-1 cursor-pointer hover:text-un-blue transition-colors"
+                title="Click to edit"
+              >
+                {displayEntry.headline}
+              </h2>
+            )}
           </div>
         </div>
         

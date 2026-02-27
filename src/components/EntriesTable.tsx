@@ -61,6 +61,7 @@ interface EntriesTableProps {
   onToggleApproval?: (entry: MorningMeetingEntry) => void;
   onPostpone?: () => void;
   onSubmit?: (id: string) => Promise<void>;
+  onUpdate?: (id: string, updates: any) => void;
   showApprovedColumn?: boolean;
   emptyMessage?: string;
   resultLabel?: string;
@@ -74,6 +75,7 @@ export function EntriesTable({
   onToggleApproval,
   onPostpone,
   onSubmit,
+  onUpdate,
   showApprovedColumn = false,
   emptyMessage = labels.entries.empty.noEntries,
   resultLabel = "entries",
@@ -743,6 +745,7 @@ export function EntriesTable({
         onDelete={onDelete}
         onApprove={onToggleApproval}
         onPostpone={onPostpone}
+        onUpdate={onUpdate}
         showApproveButton={showApprovedColumn}
         allEntries={sortedEntries}
       />

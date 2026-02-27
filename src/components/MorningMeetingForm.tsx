@@ -437,11 +437,30 @@ export function MorningMeetingForm({
         
         if (!Array.isArray(entries) || entries.length === 0) return;
         
-        // Filter entries from last 2 weeks by current user (compare by email for reliability)
-        const userEmail = session?.user?.email;
+        // Filter entries from last 2 weeks by current user
+        // Prefer normalized email matching, fall back to authorId when email is unavailable
+        const userEmail = session?.user?.email?.trim().toLowerCase();
+        const userId = session?.user?.id ? String(session.user.id) : null;
         const recentEntries = entries.filter((entry: any) => {
           const entryDate = new Date(entry.date);
-          return entryDate >= twoWeeksAgo && entry.authorEmail === userEmail;
+          if (Number.isNaN(entryDate.getTime())) {
+            return false;
+          }
+
+          const entryEmail =
+            typeof entry.authorEmail === "string"
+              ? entry.authorEmail.trim().toLowerCase()
+              : "";
+          const entryAuthorId =
+            entry.authorId !== null && entry.authorId !== undefined
+              ? String(entry.authorId)
+              : "";
+
+          const matchesUser =
+            (!!userEmail && !!entryEmail && entryEmail === userEmail) ||
+            (!!userId && !!entryAuthorId && entryAuthorId === userId);
+
+          return entryDate >= twoWeeksAgo && matchesUser;
         });
 
         if (recentEntries.length === 0) return;

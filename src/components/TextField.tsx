@@ -5,12 +5,11 @@ import { AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // Shared input styling - exported for use in other components
-export const inputBaseStyles =
-  "w-full rounded border px-3 py-2 text-sm transition outline-none";
-export const inputDefaultStyles =
-  "border-slate-300 bg-slate-50 focus:border-un-blue focus:ring-2 focus:ring-un-blue/15";
-export const inputErrorStyles =
-  "border-red-500 bg-red-50 focus:border-red-500 focus:ring-2 focus:ring-red-500/15";
+export const fieldSurfaceStyles = "form-field-surface";
+export const fieldFocusStyles = "form-field-focus";
+export const inputBaseStyles = "form-field";
+export const inputDefaultStyles = "form-field-focus";
+export const inputErrorStyles = "form-field-error";
 
 interface TextFieldProps
   extends Omit<InputHTMLAttributes<HTMLInputElement>, "className"> {
@@ -37,7 +36,7 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
     return (
       <div className={cn("space-y-2", wrapperClassName)}>
         {label && (
-          <label className="text-sm font-medium text-slate-700">
+          <label className="text-sm font-medium text-slate-900">
             {label}
             {required && <span className="text-red-500"> *</span>}
             {optional && (

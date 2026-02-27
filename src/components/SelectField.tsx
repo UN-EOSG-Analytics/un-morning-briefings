@@ -9,6 +9,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { AlertCircle, Search, X, Sparkles } from "lucide-react";
+import { cn } from "@/lib/utils";
+import {
+  inputBaseStyles,
+  inputDefaultStyles,
+  inputErrorStyles,
+} from "@/components/TextField";
 
 interface SelectFieldProps {
   label?: string;
@@ -70,15 +76,19 @@ export function SelectField({
         disabled={disabled}
       >
         <SelectTrigger
-          className={`w-full ${
-            error ? "border-red-500 bg-red-50" : ""
-          } ${triggerClassName}`}
+          className={cn(
+            inputBaseStyles,
+            inputDefaultStyles,
+            "data-[placeholder]:text-[var(--form-field-placeholder)]",
+            error && inputErrorStyles,
+            triggerClassName
+          )}
         >
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
-        <SelectContent className="max-h-64">
+        <SelectContent className="form-standardized-portal max-h-64">
           {searchable && (
-            <div className="sticky top-0 z-10 flex items-center gap-2 border-b bg-slate-50 px-2 py-2">
+            <div className="sticky top-0 z-10 flex items-center gap-2 border-b border-[var(--form-field-border)] bg-[var(--form-field-background)] px-2 py-2">
               <Search className="h-4 w-4 shrink-0 text-slate-400" />
               <input
                 type="text"
@@ -86,7 +96,7 @@ export function SelectField({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => e.stopPropagation()}
-                className="flex-1 bg-transparent text-sm placeholder-slate-400 outline-none"
+                className="form-field-search flex-1"
                 onClick={(e) => e.stopPropagation()}
               />
               {searchQuery && (

@@ -15,12 +15,19 @@ import {
   CommandInput,
   CommandItem,
 } from "@/components/ui/command";
+import { cn } from "@/lib/utils";
+import {
+  inputBaseStyles,
+  inputDefaultStyles,
+  inputErrorStyles,
+} from "@/components/TextField";
 
 interface AutocompleteFieldProps {
   label?: string;
   placeholder?: string;
   error?: string;
   required?: boolean;
+  optional?: boolean;
   suggestions: string[];
   value: string;
   onChange: (value: string) => void;
@@ -32,6 +39,7 @@ export function AutocompleteField({
   placeholder = "Select or type...",
   error,
   required = false,
+  optional = false,
   suggestions,
   value,
   onChange,
@@ -89,6 +97,7 @@ export function AutocompleteField({
         <label className="text-sm font-medium text-slate-900">
           {label}
           {required && <span className="text-red-500">*</span>}
+          {optional && <span className="ml-1 text-xs font-normal text-slate-400">(optional)</span>}
         </label>
       )}
 
@@ -105,26 +114,44 @@ export function AutocompleteField({
             variant="outline"
             role="combobox"
             aria-expanded={open}
-            className={`h-9 w-full justify-start gap-1 px-3 font-normal ${
-              error ? "border-red-500 bg-red-50" : ""
-            }`}
+            className={cn(
+              inputBaseStyles,
+              inputDefaultStyles,
+              "justify-start gap-1 px-3 font-normal hover:bg-[var(--form-field-background)] hover:text-[var(--form-field-text)]",
+              error && inputErrorStyles
+            )}
           >
             {value ? (
               <>
                 <span className="flex-1 truncate text-left text-sm text-slate-900">{value}</span>
-                <X
-                  className="h-4 w-4 shrink-0 opacity-50 hover:opacity-100"
+                <div
+                  className="cursor-pointer p-1 hover:opacity-100"
                   onClick={handleClear}
-                />
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      handleClear(e as any);
+                    }
+                  }}
+                >
+                  <X className="h-4 w-4 shrink-0 opacity-50 hover:opacity-100" />
+                </div>
               </>
             ) : (
-              <span className="text-slate-500">{placeholder}</span>
+              <span className="form-field-placeholder">{placeholder}</span>
             )}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-full p-0" align="start" side="bottom" sideOffset={4} avoidCollisions={false}>
+        <PopoverContent className="form-standardized-portal w-full p-0" align="start" side="bottom" sideOffset={4} avoidCollisions={false}>
           <Command>
-            <CommandInput placeholder="Search or type new..." value={searchQuery} onValueChange={setSearchQuery} />
+            <CommandInput
+              placeholder="Search or type new..."
+              value={searchQuery}
+              onValueChange={setSearchQuery}
+              className="text-[var(--form-field-text)] placeholder:text-[var(--form-field-placeholder)]"
+            />
             <CommandEmpty>
               {searchQuery.trim() ? (
                 <div className="px-2 py-3 text-center">

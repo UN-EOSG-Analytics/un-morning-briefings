@@ -801,7 +801,7 @@ export function MorningMeetingForm({
   });
 
   return (
-    <div className="w-full bg-white px-2 py-4 sm:px-4 sm:py-8">
+    <div className="form-standardized w-full bg-white px-2 py-4 sm:px-4 sm:py-8">
       <div className="mx-auto w-full max-w-6xl">
         {/* Header */}
         <Card className="mb-0 rounded-b-none border-b-0 py-4 sm:py-6">
@@ -954,10 +954,10 @@ export function MorningMeetingForm({
                       placeholder={labelsData.form.placeholders.headline}
                       maxLength={300}
                       rows={1}
-                      className={`w-full resize-none overflow-hidden rounded border px-3 py-2 text-sm transition outline-none ${
+                      className={`form-field-textarea resize-none overflow-hidden ${
                         errors.headline
-                          ? "border-red-500 bg-red-50 focus:border-red-500 focus:ring-2 focus:ring-red-500/15"
-                          : "border-slate-300 bg-slate-50 focus:border-un-blue focus:ring-2 focus:ring-un-blue/15"
+                          ? "form-field-error"
+                          : "form-field-focus"
                       }`}
                       style={{
                         minHeight: "2.5rem",
@@ -1022,7 +1022,7 @@ export function MorningMeetingForm({
 
                   {useRichText === null ? (
                     // Show plain text while loading (will switch to rich text on desktop)
-                    <div className="min-h-[250px] w-full rounded border border-slate-300 bg-slate-50 px-3 py-2 text-sm" />
+                    <div className="form-field-textarea min-h-[250px]" />
                   ) : useRichText ? (
                     <RichTextEditor
                       content={formData.entry}
@@ -1057,10 +1057,10 @@ export function MorningMeetingForm({
                         }
                       }}
                       placeholder={labelsData.form.placeholders.entry}
-                      className={`min-h-[250px] w-full resize-none rounded border px-3 py-2 text-sm transition outline-none ${
+                      className={`form-field-textarea min-h-[250px] ${
                         errors.entry
-                          ? "border-red-500 bg-red-50 focus:border-red-500 focus:ring-2 focus:ring-red-500/15"
-                          : "border-slate-300 bg-slate-50 focus:border-un-blue focus:ring-2 focus:ring-un-blue/15"
+                          ? "form-field-error"
+                          : "form-field-focus"
                       }`}
                       spellCheck="true"
                     />
@@ -1166,7 +1166,6 @@ export function MorningMeetingForm({
                       label={labelsData.form.labels.author}
                       value={formData.author || "Current User"}
                       readOnly
-                      inputClassName="bg-slate-100 text-slate-600"
                     />
 
                     <TextField
@@ -1291,7 +1290,7 @@ export function MorningMeetingForm({
                 value={autoFillContent}
                 onChange={(e) => setAutoFillContent(e.target.value)}
                 placeholder={labelsData.form.autoFill.contentPlaceholder}
-                className="min-h-[200px] w-full resize-none rounded border border-slate-300 bg-slate-50 px-3 py-2 text-sm transition outline-none focus:border-un-blue focus:ring-2 focus:ring-un-blue/15"
+                className="form-field-textarea form-field-focus min-h-[200px]"
                 disabled={isAutoFilling}
               />
             </div>

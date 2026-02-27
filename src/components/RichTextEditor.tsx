@@ -387,7 +387,7 @@ export function RichTextEditor({
       >
         <div
           className={`transition-all duration-100 ${isFullscreen ? "mx-auto max-w-[280mm] rounded-lg bg-white shadow-sm" : "rounded-t"} border p-2 ${
-            error ? "border-red-500 bg-red-50" : "border-slate-300 bg-slate-50"
+            error ? "border-[var(--form-field-error-border)] bg-[var(--form-field-error-background)]" : "border-[var(--form-field-border)] bg-[var(--form-field-background)]"
           }`}
         >
           <div
@@ -725,7 +725,7 @@ export function RichTextEditor({
                     }
                     e.target.value = "default";
                   }}
-                  className="h-8 rounded border border-slate-300 bg-white px-2 py-1 text-xs"
+                  className="editor-image-size-select h-8 rounded border border-slate-300 bg-white px-2 py-1 text-xs"
                   title="Image Size (select an image first)"
                   defaultValue="default"
                 >
@@ -795,8 +795,8 @@ export function RichTextEditor({
         <div
           className={`transition-all duration-300 ${isFullscreen ? "mx-auto min-h-[297mm] max-w-[280mm] rounded-lg bg-white p-16 shadow-lg" : "rounded-b"} ${isFullscreen ? "" : "-mt-1 border"} ${
             error
-              ? "border-t-0 border-red-500 bg-red-50"
-              : "border-t-0 border-slate-300 bg-slate-50"
+              ? "border-t-0 border-[var(--form-field-error-border)] bg-[var(--form-field-error-background)]"
+              : "border-t-0 border-[var(--form-field-border)] bg-[var(--form-field-background)]"
           }`}
         >
           <EditorContent

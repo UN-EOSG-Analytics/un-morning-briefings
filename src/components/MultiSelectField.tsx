@@ -15,6 +15,12 @@ import {
   CommandInput,
   CommandItem,
 } from "@/components/ui/command";
+import { cn } from "@/lib/utils";
+import {
+  inputBaseStyles,
+  inputDefaultStyles,
+  inputErrorStyles,
+} from "@/components/TextField";
 
 interface MultiSelectFieldProps {
   label?: string;
@@ -132,13 +138,16 @@ export function MultiSelectField({
             role="combobox"
             aria-expanded={open}
             disabled={disabled}
-            className={`h-9 w-full justify-start gap-1 overflow-hidden px-3 font-normal ${
-              error ? "border-red-500 bg-red-50" : ""
-            }`}
+            className={cn(
+              inputBaseStyles,
+              inputDefaultStyles,
+              "justify-start gap-1 overflow-hidden px-3 font-normal hover:bg-[var(--form-field-background)] hover:text-[var(--form-field-text)]",
+              error && inputErrorStyles
+            )}
           >
             <div className="flex items-center gap-1 overflow-x-auto">
               {value.length === 0 ? (
-                <span className="text-slate-500">{placeholder}</span>
+                <span className="form-field-placeholder">{placeholder}</span>
               ) : (
                 <>
                   {selectedLabels.map((label, index) => (
@@ -170,18 +179,29 @@ export function MultiSelectField({
               )}
             </div>
             {value.length > 0 && (
-              <X
-                className="ml-auto h-4 w-4 shrink-0 opacity-50 hover:opacity-100"
+              <div
+                className="ml-auto cursor-pointer p-1 hover:opacity-100"
                 onClick={(e) => {
                   e.stopPropagation();
                   handleClear();
                 }}
-              />
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleClear();
+                  }
+                }}
+              >
+                <X className="h-4 w-4 shrink-0 opacity-50 hover:opacity-100" />
+              </div>
             )}
           </Button>
         </PopoverTrigger>
         <PopoverContent 
-          className="w-full p-0" 
+          className="form-standardized-portal w-full p-0" 
           align="start" 
           side="bottom"
           sideOffset={4}
@@ -189,14 +209,14 @@ export function MultiSelectField({
         >
           <Command>
             {searchable && (
-              <div className="flex items-center border-b px-3">
+              <div className="flex items-center border-b border-[var(--form-field-border)] bg-[var(--form-field-background)] px-3">
                 <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
                 <input
                   placeholder="Search..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  className="flex h-10 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-slate-400 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="form-field-search h-9 py-2 disabled:cursor-not-allowed disabled:opacity-50"
                 />
               </div>
             )}

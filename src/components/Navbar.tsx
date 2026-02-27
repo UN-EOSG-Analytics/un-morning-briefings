@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import NavButton from "./NavButton";
 import { SettingsDialog } from "./SettingsDialog";
 import { useUnsavedChanges } from "@/lib/unsaved-changes-context";
+import { getUserDisplayName } from "@/lib/utils";
 import labels from "@/lib/labels.json";
 import {
   DropdownMenu,
@@ -91,10 +92,7 @@ export function Navbar() {
   const pathname = usePathname();
   const { confirmNavigation } = useUnsavedChanges();
 
-  const userName =
-    session?.user?.firstName && session?.user?.lastName
-      ? `${session.user.firstName} ${session.user.lastName}`
-      : session?.user?.name || "User";
+  const userName = getUserDisplayName(session);
 
   const userTeam = session?.user?.team || "Political Unit (EOSG)";
   const userEmail = session?.user?.email || "";

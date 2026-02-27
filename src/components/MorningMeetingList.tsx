@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { deleteEntry, getSubmittedEntries } from "@/lib/storage";
-import { Download, FileDown, List, RefreshCw } from "lucide-react";
+import { FileDown, List, RefreshCw } from "lucide-react";
 import { ExportDailyBriefingDialog } from "./ExportDailyBriefingDialog";
 import { EntriesTable } from "./EntriesTable";
 import { usePopup } from "@/lib/popup-context";
@@ -85,22 +85,6 @@ export function MorningMeetingList({
     await loadEntries();
   };
 
-  const exportToJSON = () => {
-    const entriesToExport = entries;
-    if (entriesToExport.length === 0) {
-      showInfo(labels.entries.empty.noExport.split(" ")[0] || "No Entries", labels.entries.empty.noExport);
-      return;
-    }
-    const dataStr = JSON.stringify(entriesToExport, null, 2);
-    const dataBlob = new Blob([dataStr], { type: "application/json" });
-    const url = URL.createObjectURL(dataBlob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `morning-meetings-${new Date().toISOString().split("T")[0]}.json`;
-    link.click();
-    URL.revokeObjectURL(url);
-  };
-
   return (
     <div className="mx-auto w-full max-w-6xl space-y-4">
       {/* Header */}
@@ -140,15 +124,6 @@ export function MorningMeetingList({
             >
               <FileDown className="h-4 w-4" />
               <span className="sm:inline">{labels.entries.actions.exportBriefing}</span>
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={exportToJSON}
-              className="hidden w-full justify-center sm:h-10 sm:w-auto sm:px-6"
-            >
-              <Download className="h-4 w-4" />
-              <span className="sm:inline">{labels.entries.actions.exportJson}</span>
             </Button>
           </div>
         </div>

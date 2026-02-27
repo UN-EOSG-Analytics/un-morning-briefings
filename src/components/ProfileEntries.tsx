@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { User, TrendingUp, RefreshCw, Clock, Check, Send, ArrowRight, Globe } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { usePopup } from "@/lib/popup-context";
+import { getUserDisplayName } from "@/lib/utils";
 import type { MorningMeetingEntry } from "@/types/morning-meeting";
 import { ViewEntryDialog } from "./ViewEntryDialog";
 import { SearchBar } from "./SearchBar";
@@ -33,26 +34,20 @@ export function ProfileEntries() {
   const [selectedEntry, setSelectedEntry] = useState<MorningMeetingEntry | null>(null);
   const [showViewDialog, setShowViewDialog] = useState(false);
 
-  const userName =
-    session?.user?.firstName && session?.user?.lastName
-      ? `${session.user.firstName} ${session.user.lastName}`
-      : session?.user?.name || "User";
+  const userName = getUserDisplayName(session);
 
   const userEmail = session?.user?.email || "";
 
   const loadEntries = async () => {
     if (!userEmail) {
-      console.log("No user email, skipping fetch");
       return;
     }
 
-    console.log("Fetching entries for:", userEmail);
     try {
       const response = await fetch(`/api/entries?author=${encodeURIComponent(userEmail)}`);
       if (!response.ok) throw new Error("Failed to fetch entries");
       
       const data = await response.json();
-      console.log("Fetched entries:", data.length);
       setEntries(data);
     } catch (error) {
       console.error("Error loading entries:", error);

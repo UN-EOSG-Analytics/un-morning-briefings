@@ -3,14 +3,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { query } from "@/lib/db";
 import { checkAuth } from "@/lib/auth-helper";
-
-// Helper function to serialize country field for database storage
-function serializeCountry(country: string | string[]): string {
-  if (Array.isArray(country)) {
-    return JSON.stringify(country);
-  }
-  return country;
-}
+import { serializeCountry } from "@/lib/entry-queries";
 
 /**
  * POST /api/entries/import

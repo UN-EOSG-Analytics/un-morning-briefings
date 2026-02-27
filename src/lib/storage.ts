@@ -199,20 +199,11 @@ export async function getEntryById(id: string): Promise<any> {
     const response = await fetch(`/api/entries/${id}`);
 
     if (!response.ok) {
-      /**
-       * Update an existing entry
-       * Extracts and uploads any new images to blob storage
-       *
-       * @param id - Entry ID to update
-       * @param updatedEntry - Partial entry data to update
-       * @returns Promise that resolves to the updated entry
-       */
       throw new Error("Failed to fetch entry");
     }
 
     const entry = await response.json();
 
-    // Note: The API already converts image-ref:// to data URLs
     // Note: The API already converts image-ref:// to data URLs
     // So entry.entry should already contain the proper image data
 

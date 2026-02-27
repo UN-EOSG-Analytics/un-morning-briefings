@@ -8,7 +8,6 @@ import {
   FileText,
   Archive,
   ArrowRight,
-  Download,
   FileDown,
 } from "lucide-react";
 import { useState } from "react";

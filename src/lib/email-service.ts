@@ -82,20 +82,30 @@ function emailFallbackLink(href: string): string {
 }
 
 /** Send an email with shared error handling and credential check */
-async function sendEmail(
+export async function sendEmail(
   to: string,
   subject: string,
   html: string,
   text: string,
-  previewExtra?: Record<string, string>,
+  options?: {
+    previewExtra?: Record<string, string>;
+    attachments?: Array<{ filename: string; content: Buffer; contentType: string }>;
+  },
 ): Promise<boolean> {
   try {
     if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
       console.warn("[EMAIL SERVICE] Warning: SMTP credentials not configured. Set SMTP_HOST, SMTP_USER, and SMTP_PASS in .env");
-      console.log("[EMAIL PREVIEW]", { to, subject, ...previewExtra });
+      console.log("[EMAIL PREVIEW]", { to, subject, ...options?.previewExtra });
       return true;
     }
-    const info = await transporter.sendMail({ from: process.env.SMTP_FROM, to, subject, html, text });
+    const info = await transporter.sendMail({
+      from: process.env.SMTP_FROM,
+      to,
+      subject,
+      html,
+      text,
+      attachments: options?.attachments,
+    });
     console.log("[EMAIL SENT]", { messageId: info.messageId, to });
     return true;
   } catch (error) {
@@ -103,6 +113,9 @@ async function sendEmail(
     return false;
   }
 }
+
+/** Build an email using the shared UN-branded template */
+export { buildEmailHtml };
 
 export async function sendVerificationEmail(
   email: string,
@@ -122,7 +135,7 @@ export async function sendVerificationEmail(
   const html = buildEmailHtml(contentHtml, footerHtml);
   const text = `United Nations | Morning Briefings\n\nClick the link below to verify your email address:\n\n${verificationUrl}\n\nThis link will expire in 24 hours.\n\nIf you did not request this email, you can safely ignore it.`;
 
-  return sendEmail(email, "Verify your UN Morning Briefing System account", html, text, { verificationUrl });
+  return sendEmail(email, "Verify your UN Morning Briefing System account", html, text, { previewExtra: { verificationUrl } });
 }
 
 export async function sendPasswordResetEmail(
@@ -149,5 +162,5 @@ export async function sendPasswordResetEmail(
   const html = buildEmailHtml(contentHtml, footerHtml);
   const text = `United Nations | Morning Briefings\n\nHi ${firstName},\n\nWe received a request to reset your password. Click the link below to create a new password:\n\n${resetUrl}\n\nThis link will expire in 30 minutes.\n\nSecurity Notice:\nIf you didn't request a password reset, please ignore this email. Your password will remain unchanged.\nFor security, this link can only be used once.`;
 
-  return sendEmail(email, "Reset your password - UN Morning Briefing System", html, text, { resetUrl });
+  return sendEmail(email, "Reset your password - UN Morning Briefing System", html, text, { previewExtra: { resetUrl } });
 }

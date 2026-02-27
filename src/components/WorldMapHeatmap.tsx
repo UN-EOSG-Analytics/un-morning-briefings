@@ -96,11 +96,9 @@ function WorldMapHeatmapComponent({ data, connections = [], className = "" }: Wo
   // Process connections
   const connectionLines = useMemo(() => {
     if (!connections || connections.length === 0) {
-      console.log("No connections data:", connections);
       return [];
     }
 
-    console.log("Processing connections:", connections.length);
     const lines = [];
     let maxConnectionCount = 0;
 
@@ -126,11 +124,10 @@ function WorldMapHeatmapComponent({ data, connections = [], className = "" }: Wo
           count,
         });
       } else {
-        console.log("Missing coordinates for:", conn.country1, "or", conn.country2);
+        // Skip connections with missing coordinates
       }
     }
 
-    console.log("Created connection lines:", lines.length);
     return lines;
   }, [connections]);
 

@@ -8,13 +8,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { AlertCircle, Search, X, Sparkles } from "lucide-react";
+import { Search, X, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   inputBaseStyles,
   inputDefaultStyles,
   inputErrorStyles,
 } from "@/components/TextField";
+import { FieldLabel } from "@/components/FieldLabel";
+import { FieldError } from "@/components/FieldError";
 
 interface SelectFieldProps {
   label?: string;
@@ -63,13 +65,8 @@ export function SelectField({
   }, [options, searchQuery]);
 
   return (
-    <div className={`space-y-2 ${className}`}>
-      {label && showLabel && (
-        <label className="text-sm font-medium text-slate-900">
-          {label}
-          {required && <span className="text-red-500">*</span>}
-        </label>
-      )}
+    <div className={cn("space-y-2", className)}>
+      {showLabel && <FieldLabel label={label} required={required} />}
       <Select
         value={value}
         onValueChange={handleValueChange}
@@ -127,12 +124,7 @@ export function SelectField({
           )}
         </SelectContent>
       </Select>
-      {error && (
-        <div className="flex items-center gap-1 text-xs text-red-600">
-          <AlertCircle className="h-3.5 w-3.5" />
-          {error}
-        </div>
-      )}
+      <FieldError error={error} />
     </div>
   );
 }

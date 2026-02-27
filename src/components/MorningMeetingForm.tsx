@@ -1097,7 +1097,6 @@ export function MorningMeetingForm({
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                   <AutocompleteField
                     label={labelsData.form.labels.sourceName}
-                    optional
                     value={formData.sourceName || ""}
                     onChange={(value) =>
                       setFormData((prev) => ({ ...prev, sourceName: value }))
@@ -1109,7 +1108,6 @@ export function MorningMeetingForm({
                   <TextField
                     type="date"
                     label={labelsData.form.labels.sourceDate}
-                    optional
                     name="sourceDate"
                     value={formData.sourceDate || ""}
                     onChange={handleInputChange}
@@ -1118,7 +1116,6 @@ export function MorningMeetingForm({
                   <TextField
                     type="url"
                     label={labelsData.form.labels.sourceUrl}
-                    optional
                     name="sourceUrl"
                     value={formData.sourceUrl || ""}
                     onChange={handleInputChange}

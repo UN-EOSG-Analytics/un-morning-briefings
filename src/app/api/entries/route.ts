@@ -200,8 +200,6 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    const now = new Date().toISOString();
-
     // Build update query based on what fields are provided
     if (
       approvalStatus &&

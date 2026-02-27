@@ -13,7 +13,6 @@ import {
   MorningMeetingEntry,
   PRIORITIES,
   REGIONS,
-  COUNTRIES,
 } from "@/types/morning-meeting";
 import {
   formatDateResponsive,

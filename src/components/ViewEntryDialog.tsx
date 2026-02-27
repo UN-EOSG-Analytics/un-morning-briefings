@@ -14,8 +14,6 @@ import { Edit, Trash2, Check, X, Sparkles, ChevronLeft, ChevronRight, FastForwar
 import Link from 'next/link';
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 
-// formatSourceDate replaced by formatDateFull from @/lib/format-date
-
 interface ViewEntryDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -320,7 +318,7 @@ export function ViewEntryDialog({
             size="sm"
             onClick={handleGenerateSummary}
             disabled={isGeneratingSummary}
-            className={`bg-[#009edb] hover:bg-[#0080b8] text-white gap-1 text-xs sm:text-sm px-2.5 sm:px-3 shrink-0 h-full flex items-center justify-center ${summary ? 'opacity-50' : ''}`}
+            className={`bg-un-blue hover:bg-un-blue/80 text-white gap-1 text-xs sm:text-sm px-2.5 sm:px-3 shrink-0 h-full flex items-center justify-center ${summary ? 'opacity-50' : ''}`}
           >
             <Sparkles className="h-3 w-3 sm:h-4 sm:w-4" />
             <span className="hidden sm:inline">{isGeneratingSummary ? labels.viewEntry.generating : labels.viewEntry.createSummary}</span>
@@ -339,15 +337,15 @@ export function ViewEntryDialog({
           {/* AI Summary Box - Inside scrollable area */}
           {summary && (
             <div className="pt-2 pb-1 border-b border-slate-200 mb-2">
-              <div className="rounded-lg border-2 border-[#009edb] bg-[#009edb]/5 p-3">
-                <div className="text-xs sm:text-sm font-semibold text-[#009edb] mb-2 flex items-center gap-2">
+              <div className="rounded-lg border-2 border-un-blue bg-un-blue/5 p-3">
+                <div className="text-xs sm:text-sm font-semibold text-un-blue mb-2 flex items-center gap-2">
                   <Sparkles className="h-3 w-3 sm:h-4 sm:w-4" />
                   {labels.viewEntry.keyPoints}
                 </div>
                 <ul className="space-y-1">
                   {summary.map((point, index) => (
                     <li key={index} className="text-xs sm:text-sm text-slate-700 flex gap-2">
-                      <span className="text-[#009edb] font-bold shrink-0">•</span>
+                      <span className="text-un-blue font-bold shrink-0">•</span>
                       <span>{point}</span>
                     </li>
                   ))}
@@ -366,123 +364,6 @@ export function ViewEntryDialog({
                 __html: sanitizeHtml(displayEntry.entry),
               }}
             />
-            <style jsx global>{`
-              .entry-content {
-                color: #1f2937;
-                line-height: 1.6;
-              }
-              .entry-content p {
-                margin-bottom: 1rem;
-              }
-              .entry-content h1,
-              .entry-content h2,
-              .entry-content h3,
-              .entry-content h4,
-              .entry-content h5,
-              .entry-content h6 {
-                margin-top: 1.25rem;
-                margin-bottom: 0.75rem;
-                font-weight: 600;
-                line-height: 1.3;
-              }
-              .entry-content h1 {
-                font-size: 1.875rem;
-              }
-              .entry-content h2 {
-                font-size: 1.5rem;
-              }
-              .entry-content h3 {
-                font-size: 1.25rem;
-              }
-              .entry-content h4 {
-                font-size: 1.125rem;
-              }
-              .entry-content strong,
-              .entry-content b {
-                font-weight: 700;
-              }
-              .entry-content em,
-              .entry-content i {
-                font-style: italic;
-              }
-              .entry-content a {
-                color: #2563eb;
-                text-decoration: underline;
-              }
-              .entry-content a:hover {
-                color: #1d4ed8;
-              }
-              .entry-content blockquote {
-                border-left: 3px solid #009edb !important;
-                padding-left: 1rem !important;
-                margin: 0.5rem 0 !important;
-                color: #495057 !important;
-                font-style: italic !important;
-              }
-              .entry-content code {
-                background-color: #f1f5f9;
-                padding: 0.125rem 0.375rem;
-                border-radius: 0.25rem;
-                font-family: monospace;
-                font-size: 0.875em;
-              }
-              .entry-content pre {
-                background-color: #1e293b;
-                color: #e2e8f0;
-                padding: 1rem;
-                border-radius: 0.5rem;
-                overflow-x: auto;
-                margin: 1rem 0;
-                font-family: monospace;
-                font-size: 0.875rem;
-                line-height: 1.5;
-              }
-              .entry-content pre code {
-                background-color: transparent;
-                padding: 0;
-                color: inherit;
-              }
-              .entry-content ul,
-              .entry-content ol {
-                margin: 1rem 0 1rem 1.5rem;
-              }
-              .entry-content li {
-                margin-bottom: 0.5rem;
-              }
-              .entry-content ul li {
-                list-style-type: disc;
-              }
-              .entry-content ol li {
-                list-style-type: decimal;
-              }
-              .entry-content img {
-                max-width: 100%;
-                height: auto;
-                display: block;
-                margin: 1rem 0;
-                border-radius: 0.375rem;
-              }
-              .entry-content hr {
-                border: none;
-                border-top: 2px solid #dee2e6;
-                margin: 1rem 0;
-              }
-              .entry-content table {
-                width: 100%;
-                border-collapse: collapse;
-                margin: 1rem 0;
-              }
-              .entry-content th,
-              .entry-content td {
-                border: 1px solid #e2e8f0;
-                padding: 0.75rem;
-                text-align: left;
-              }
-              .entry-content th {
-                background-color: #f8fafc;
-                font-weight: 600;
-              }
-            `}</style>
           </div>
 
           {/* PU notes */}

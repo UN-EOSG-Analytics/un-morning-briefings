@@ -10,10 +10,12 @@ import {
 } from "@/lib/storage";
 import { useRouter } from "next/navigation";
 import { Suspense, useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import { usePopup } from "@/lib/popup-context";
 
 function FormContent() {
   const router = useRouter();
+  const { data: session } = useSession();
   const { error: showError, success: showSuccess } = usePopup();
   const [searchParams, setSearchParams] = useState<URLSearchParams | null>(
     null,
@@ -114,7 +116,7 @@ function FormContent() {
       if (!draftData.headline || draftData.headline.trim() === "") {
         if (!editId) {
           // Only generate a draft number for new drafts, not updates
-          const allDrafts = await getDraftEntries("Current User");
+          const allDrafts = await getDraftEntries(session?.user?.email || "");
           const nextDraftNumber = allDrafts.length + 1;
           draftData.headline = `Draft #${nextDraftNumber}`;
         }

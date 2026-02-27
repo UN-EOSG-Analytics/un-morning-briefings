@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { AlertCircle, Search, X, Check } from "lucide-react";
+import { Search, X, Check } from "lucide-react";
 import {
   Popover,
   PopoverContent,
@@ -21,13 +21,14 @@ import {
   inputDefaultStyles,
   inputErrorStyles,
 } from "@/components/TextField";
+import { FieldLabel } from "@/components/FieldLabel";
+import { FieldError } from "@/components/FieldError";
 
 interface AutocompleteFieldProps {
   label?: string;
   placeholder?: string;
   error?: string;
   required?: boolean;
-  optional?: boolean;
   suggestions: string[];
   value: string;
   onChange: (value: string) => void;
@@ -39,7 +40,6 @@ export function AutocompleteField({
   placeholder = "Select or type...",
   error,
   required = false,
-  optional = false,
   suggestions,
   value,
   onChange,
@@ -92,13 +92,8 @@ export function AutocompleteField({
   };
 
   return (
-    <div className={`space-y-2 ${wrapperClassName ?? ""}`}>
-      {label && (
-        <label className="text-sm font-medium text-slate-900">
-          {label}
-          {required && <span className="text-red-500">*</span>}
-        </label>
-      )}
+    <div className={cn("space-y-2", wrapperClassName)}>
+      <FieldLabel label={label} required={required} />
 
       <Popover
         open={open}
@@ -225,12 +220,7 @@ export function AutocompleteField({
         </PopoverContent>
       </Popover>
 
-      {error && (
-        <div className="flex items-center gap-1 text-xs text-red-600">
-          <AlertCircle className="h-3.5 w-3.5" />
-          {error}
-        </div>
-      )}
+      <FieldError error={error} />
     </div>
   );
 }

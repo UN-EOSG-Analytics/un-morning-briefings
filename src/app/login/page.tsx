@@ -82,7 +82,7 @@ function LoginPageContent() {
           labels.auth.messages.invalidCredentials,
         );
       } else if (result?.ok) {
-        window.location.href = "https://briefings.eosg.dev/";
+        window.location.href = "/";
       }
     } catch {
       setError(labels.auth.messages.genericError);

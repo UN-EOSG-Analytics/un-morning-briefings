@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { AlertCircle, Search, X, Check, Sparkles } from "lucide-react";
+import { Search, X, Check, Sparkles } from "lucide-react";
 import {
   Popover,
   PopoverContent,
@@ -21,6 +21,8 @@ import {
   inputDefaultStyles,
   inputErrorStyles,
 } from "@/components/TextField";
+import { FieldLabel } from "@/components/FieldLabel";
+import { FieldError } from "@/components/FieldError";
 
 interface MultiSelectFieldProps {
   label?: string;
@@ -123,13 +125,8 @@ export function MultiSelectField({
     .filter(Boolean);
 
   return (
-    <div className={`space-y-2 ${className}`}>
-      {label && showLabel && (
-        <label className="text-sm font-medium text-slate-900">
-          {label}
-          {required && <span className="text-red-500">*</span>}
-        </label>
-      )}
+    <div className={cn("space-y-2", className)}>
+      {showLabel && <FieldLabel label={label} required={required} />}
 
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
@@ -321,12 +318,7 @@ export function MultiSelectField({
         </PopoverContent>
       </Popover>
 
-      {error && (
-        <div className="flex items-center gap-1 text-xs text-red-600">
-          <AlertCircle className="h-3.5 w-3.5" />
-          {error}
-        </div>
-      )}
+      <FieldError error={error} />
     </div>
   );
 }

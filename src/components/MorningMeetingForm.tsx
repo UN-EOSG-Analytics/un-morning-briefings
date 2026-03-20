@@ -897,7 +897,7 @@ export function MorningMeetingForm({
                     onValueChange={(value) =>
                       handleSelectChange(
                         "priority",
-                        value as "Secretary-General's Attention" | "Situational Awareness",
+                        value as "SG's attention" | "Situational Awareness",
                       )
                     }
                     options={PRIORITIES}

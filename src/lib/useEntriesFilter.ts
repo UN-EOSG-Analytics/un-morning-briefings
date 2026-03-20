@@ -348,7 +348,7 @@ export function useEntriesFilter(entries: any[], initialDateFilter?: string) {
  * Common badge styling functions for entries
  */
 export function getPriorityBadgeClass(priority: string): string {
-  if (priority === "Secretary-General's Attention") return "bg-red-100 text-red-800";
+  if (priority === "SG's attention") return "bg-red-100 text-red-800";
   return "bg-blue-100 text-blue-800";
 }
 

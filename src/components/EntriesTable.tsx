@@ -763,9 +763,9 @@ export function EntriesTable({
             {(() => {
               // Sort entries by priority (SG attention first) and date
               const sortedAgendaEntries = [...agendaEntries].sort((a, b) => {
-                if (a.priority === "Secretary-General's Attention" && b.priority !== "Secretary-General's Attention")
+                if (a.priority === "SG's attention" && b.priority !== "SG's attention")
                   return -1;
-                if (a.priority !== "Secretary-General's Attention" && b.priority === "Secretary-General's Attention")
+                if (a.priority !== "SG's attention" && b.priority === "SG's attention")
                   return 1;
                 return 0;
               });

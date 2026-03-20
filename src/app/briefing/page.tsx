@@ -181,9 +181,9 @@ const generateBriefingDocument = async (
 ): Promise<Blob> => {
   // Sort by priority
   const sortedEntries = [...entries].sort((a, b) => {
-    if (a.priority === "Secretary-General's Attention" && b.priority !== "Secretary-General's Attention")
+    if (a.priority === "SG's attention" && b.priority !== "SG's attention")
       return -1;
-    if (a.priority !== "Secretary-General's Attention" && b.priority === "Secretary-General's Attention")
+    if (a.priority !== "SG's attention" && b.priority === "SG's attention")
       return 1;
     return 0;
   });
@@ -395,7 +395,7 @@ const generateBriefingDocument = async (
               children: [
                 new TextRun({
                   text:
-                    entry.priority === "Secretary-General's Attention"
+                    entry.priority === "SG's attention"
                       ? "SG Attention"
                       : "Situational Awareness",
                   italics: true,
@@ -516,9 +516,9 @@ function BriefingContent() {
 
   // Sort by priority (SG Attention first)
   const sortedEntries = [...entries].sort((a, b) => {
-    if (a.priority === "Secretary-General's Attention" && b.priority !== "Secretary-General's Attention")
+    if (a.priority === "SG's attention" && b.priority !== "SG's attention")
       return -1;
-    if (a.priority !== "Secretary-General's Attention" && b.priority === "Secretary-General's Attention")
+    if (a.priority !== "SG's attention" && b.priority === "SG's attention")
       return 1;
     return 0;
   });
@@ -820,7 +820,7 @@ function BriefingContent() {
 
                               {/* Priority & Category */}
                               <p className="text-sm leading-relaxed text-slate-700 italic">
-                                {entry.priority === "Secretary-General's Attention"
+                                {entry.priority === "SG's attention"
                                   ? "SG Attention"
                                   : "Situational Awareness"}
                                 {" | "}

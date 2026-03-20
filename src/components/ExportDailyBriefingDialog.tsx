@@ -455,9 +455,9 @@ const buildDocumentChildren = (
 ): Paragraph[] => {
   // Sort by priority (SG Attention first)
   const sortedEntries = [...entries].sort((a, b) => {
-    if (a.priority === "Secretary-General's Attention" && b.priority !== "Secretary-General's Attention")
+    if (a.priority === "SG's attention" && b.priority !== "SG's attention")
       return -1;
-    if (a.priority !== "Secretary-General's Attention" && b.priority === "Secretary-General's Attention")
+    if (a.priority !== "SG's attention" && b.priority === "SG's attention")
       return 1;
     return 0;
   });
@@ -683,7 +683,7 @@ const buildDocumentChildren = (
               children: [
                 new TextRun({
                   text:
-                    entry.priority === "Secretary-General's Attention"
+                    entry.priority === "SG's attention"
                       ? "SG Attention"
                       : "Situational Awareness",
                   italics: true,

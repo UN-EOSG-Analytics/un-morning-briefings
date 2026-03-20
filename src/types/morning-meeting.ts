@@ -6,7 +6,7 @@ export type ApprovalStatus = "pending" | "discussed";
 export interface MorningMeetingEntry {
   id?: string;
   category: string;
-  priority: "Secretary-General's Attention" | "Situational Awareness" | "";
+  priority: "SG's attention" | "Situational Awareness" | "";
   region: string;
   country: string | string[]; // Support both single and multiple countries
   headline: string;

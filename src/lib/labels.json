@@ -522,7 +522,7 @@
     "Other"
   ],
   "priorities": [
-    { "value": "Secretary-General's Attention", "label": "Secretary-General's Attention" },
+    { "value": "SG's attention", "label": "SG's attention" },
     { "value": "Situational Awareness", "label": "Situational Awareness" }
   ],
   "regions": [

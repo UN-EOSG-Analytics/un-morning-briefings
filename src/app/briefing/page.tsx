@@ -296,6 +296,7 @@ const generateBriefingDocument = async (
                 bold: true,
                 size: 24,
                 font: "Roboto",
+                color: "009edb",
               }),
             ],
             spacing: { before: 300, after: 200 },
@@ -316,7 +317,7 @@ const generateBriefingDocument = async (
             new Paragraph({
               children: [
                 new TextRun({
-                  text: entry.headline,
+                  text: `• ${entry.headline}`,
                   bold: true,
                   size: 22,
                   font: "Roboto",
@@ -325,6 +326,69 @@ const generateBriefingDocument = async (
               spacing: { after: 100 },
             }),
           );
+
+          if (entry.sourceName || entry.sourceDate) {
+            const sourceChildren: (TextRun | ExternalHyperlink)[] = [
+              new TextRun({
+                text: "Source: ",
+                italics: true,
+                font: "Roboto",
+              }),
+            ];
+
+            if (entry.sourceName) {
+              if (entry.sourceUrl) {
+                sourceChildren.push(
+                  new ExternalHyperlink({
+                    children: [
+                      new TextRun({
+                        text: entry.sourceName,
+                        italics: true,
+                        font: "Roboto",
+                        style: "Hyperlink",
+                      }),
+                    ],
+                    link: entry.sourceUrl,
+                  })
+                );
+              } else {
+                sourceChildren.push(
+                  new TextRun({
+                    text: entry.sourceName,
+                    italics: true,
+                    font: "Roboto",
+                  }),
+                );
+              }
+            }
+
+            if (entry.sourceName && entry.sourceDate) {
+              sourceChildren.push(
+                new TextRun({
+                  text: " | ",
+                  italics: true,
+                  font: "Roboto",
+                }),
+              );
+            }
+
+            if (entry.sourceDate) {
+              sourceChildren.push(
+                new TextRun({
+                  text: formatDateFull(entry.sourceDate),
+                  italics: true,
+                  font: "Roboto",
+                }),
+              );
+            }
+
+            children.push(
+              new Paragraph({
+                children: sourceChildren,
+                spacing: { after: 100 },
+              }),
+            );
+          }
 
           children.push(
             new Paragraph({
@@ -363,69 +427,6 @@ const generateBriefingDocument = async (
                 }),
               );
             }
-          }
-
-          if (entry.sourceName || entry.sourceDate) {
-            const sourceChildren: (TextRun | ExternalHyperlink)[] = [
-              new TextRun({
-                text: "Source: ",
-                italics: true,
-                font: "Roboto",
-              }),
-            ];
-            
-            if (entry.sourceName) {
-              if (entry.sourceUrl) {
-                sourceChildren.push(
-                  new ExternalHyperlink({
-                    children: [
-                      new TextRun({
-                        text: entry.sourceName,
-                        italics: true,
-                        font: "Roboto",
-                        style: "Hyperlink",
-                      }),
-                    ],
-                    link: entry.sourceUrl,
-                  })
-                );
-              } else {
-                sourceChildren.push(
-                  new TextRun({
-                    text: entry.sourceName,
-                    italics: true,
-                    font: "Roboto",
-                  }),
-                );
-              }
-            }
-            
-            if (entry.sourceName && entry.sourceDate) {
-              sourceChildren.push(
-                new TextRun({
-                  text: " | ",
-                  italics: true,
-                  font: "Roboto",
-                }),
-              );
-            }
-            
-            if (entry.sourceDate) {
-              sourceChildren.push(
-                new TextRun({
-                  text: formatDateFull(entry.sourceDate),
-                  italics: true,
-                  font: "Roboto",
-                }),
-              );
-            }
-            
-            children.push(
-              new Paragraph({
-                children: sourceChildren,
-                spacing: { after: 100 },
-              }),
-            );
           }
 
           if (entry.puNote) {
@@ -779,7 +780,7 @@ function BriefingContent() {
                     <div key={country} className="space-y-5">
                       {/* Country Header */}
                       {country !== "" && (
-                        <h3 className="sticky top-16 z-20 border-b border-slate-300 bg-white py-2.5 text-xl font-bold tracking-tight text-slate-900 print:static print:border-none">
+                        <h3 className="sticky top-16 z-20 border-b border-slate-300 bg-white py-2.5 text-xl font-bold tracking-tight text-un-blue print:static print:border-none">
                           {country}
                         </h3>
                       )}
@@ -788,30 +789,11 @@ function BriefingContent() {
                       <div className="space-y-5">
                         {entriesByRegionAndCountry[region][country].map(
                           (entry, index) => (
-                            <div key={entry.id} className="space-y-2.5">
+                            <div key={entry.id} className="space-y-3">
                               {/* Headline */}
                               <h4 className="sticky top-28 z-10 border-b border-slate-200 bg-white py-2 text-lg leading-snug font-bold text-slate-900 print:static print:border-none">
-                                {entry.headline}
+                                • {entry.headline}
                               </h4>
-
-                              {/* Priority & Category */}
-                              <p className="text-sm leading-relaxed text-slate-700 italic">
-                                {entry.priority === "Secretary-General's Attention"
-                                  ? "SG Attention"
-                                  : "Situational Awareness"}
-                                {" | "}
-                                {entry.category}
-                              </p>
-
-                              {/* Content */}
-                              {entry.entry && (
-                                <div
-                                  className="text-base leading-relaxed text-slate-900 [&_img]:cursor-pointer [&_img]:transition-opacity [&_img]:hover:opacity-80 [&_strong]:font-semibold [&>blockquote]:my-3 [&>blockquote]:border-l-4 [&>blockquote]:border-slate-300 [&>blockquote]:pl-4 [&>blockquote]:italic [&>p]:mb-3 [&>ul]:mb-3 [&>ul]:ml-6 [&>ul>li]:mb-1.5"
-                                  dangerouslySetInnerHTML={{
-                                    __html: sanitizeHtml(entry.entry),
-                                  }}
-                                />
-                              )}
 
                               {/* Source Information */}
                               {(entry.sourceName || entry.sourceDate) && (
@@ -834,6 +816,25 @@ function BriefingContent() {
                                   {entry.sourceName && entry.sourceDate && " | "}
                                   {entry.sourceDate && formatDateFull(entry.sourceDate)}
                                 </p>
+                              )}
+
+                              {/* Priority & Category */}
+                              <p className="text-sm leading-relaxed text-slate-700 italic">
+                                {entry.priority === "Secretary-General's Attention"
+                                  ? "SG Attention"
+                                  : "Situational Awareness"}
+                                {" | "}
+                                {entry.category}
+                              </p>
+
+                              {/* Content */}
+                              {entry.entry && (
+                                <div
+                                  className="text-base leading-relaxed text-slate-900 [&_img]:cursor-pointer [&_img]:transition-opacity [&_img]:hover:opacity-80 [&_strong]:font-semibold [&>blockquote]:my-3 [&>blockquote]:border-l-4 [&>blockquote]:border-slate-300 [&>blockquote]:pl-4 [&>blockquote]:italic [&>p]:mb-3 [&>ul]:mb-3 [&>ul]:ml-6 [&>ul>li]:mb-1.5"
+                                  dangerouslySetInnerHTML={{
+                                    __html: sanitizeHtml(entry.entry),
+                                  }}
+                                />
                               )}
 
                               {/* PU Note */}

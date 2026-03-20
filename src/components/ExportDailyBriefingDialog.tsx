@@ -577,6 +577,7 @@ const buildDocumentChildren = (
                 bold: true,
                 size: 24,
                 font: "Roboto",
+                color: "009edb",
               }),
             ],
             spacing: { before: 300, after: 200 },
@@ -601,7 +602,7 @@ const buildDocumentChildren = (
             new Paragraph({
               children: [
                 new TextRun({
-                  text: entry.headline,
+                  text: `• ${entry.headline}`,
                   bold: true,
                   size: 22,
                   font: "Roboto",
@@ -611,6 +612,70 @@ const buildDocumentChildren = (
               keepNext: true,
             }),
           );
+
+          // Source Information (Name with optional hyperlink, Date)
+          if (entry.sourceName || entry.sourceDate) {
+            const sourceChildren: (TextRun | ExternalHyperlink)[] = [
+              new TextRun({
+                text: "Source: ",
+                italics: true,
+                font: "Roboto",
+              }),
+            ];
+
+            if (entry.sourceName) {
+              if (entry.sourceUrl) {
+                sourceChildren.push(
+                  new ExternalHyperlink({
+                    children: [
+                      new TextRun({
+                        text: entry.sourceName,
+                        italics: true,
+                        font: "Roboto",
+                        style: "Hyperlink",
+                      }),
+                    ],
+                    link: entry.sourceUrl,
+                  })
+                );
+              } else {
+                sourceChildren.push(
+                  new TextRun({
+                    text: entry.sourceName,
+                    italics: true,
+                    font: "Roboto",
+                  }),
+                );
+              }
+            }
+
+            if (entry.sourceName && entry.sourceDate) {
+              sourceChildren.push(
+                new TextRun({
+                  text: " | ",
+                  italics: true,
+                  font: "Roboto",
+                }),
+              );
+            }
+
+            if (entry.sourceDate) {
+              sourceChildren.push(
+                new TextRun({
+                  text: formatDateFull(entry.sourceDate),
+                  italics: true,
+                  font: "Roboto",
+                }),
+              );
+            }
+
+            children.push(
+              new Paragraph({
+                children: sourceChildren,
+                spacing: { after: 100 },
+              }),
+            );
+          }
 
           // Priority and Category
           children.push(
@@ -651,72 +716,6 @@ const buildDocumentChildren = (
                 }),
               );
             }
-          }
-
-          // Source Information (Name with optional hyperlink, Date)
-          if (entry.sourceName || entry.sourceDate) {
-            const sourceChildren: (TextRun | ExternalHyperlink)[] = [
-              new TextRun({
-                text: "Source: ",
-                italics: true,
-                font: "Roboto",
-              }),
-            ];
-            
-            if (entry.sourceName) {
-              if (entry.sourceUrl) {
-                // Create hyperlink for source name if URL is available
-                sourceChildren.push(
-                  new ExternalHyperlink({
-                    children: [
-                      new TextRun({
-                        text: entry.sourceName,
-                        italics: true,
-                        font: "Roboto",
-                        style: "Hyperlink",
-                      }),
-                    ],
-                    link: entry.sourceUrl,
-                  })
-                );
-              } else {
-                // Plain text if no URL
-                sourceChildren.push(
-                  new TextRun({
-                    text: entry.sourceName,
-                    italics: true,
-                    font: "Roboto",
-                  }),
-                );
-              }
-            }
-            
-            if (entry.sourceName && entry.sourceDate) {
-              sourceChildren.push(
-                new TextRun({
-                  text: " | ",
-                  italics: true,
-                  font: "Roboto",
-                }),
-              );
-            }
-            
-            if (entry.sourceDate) {
-              sourceChildren.push(
-                new TextRun({
-                  text: formatDateFull(entry.sourceDate),
-                  italics: true,
-                  font: "Roboto",
-                }),
-              );
-            }
-            
-            children.push(
-              new Paragraph({
-                children: sourceChildren,
-                spacing: { after: 100 },
-              }),
-            );
           }
 
           // PU Note

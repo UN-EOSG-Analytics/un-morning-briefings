@@ -28,7 +28,7 @@ export async function GET(
     // Sanitize filename to prevent directory traversal
     const sanitizedFilename = filename.replace(/[^a-zA-Z0-9.-]/g, "_");
     const uploadsPath =
-      process.env.BLOB_STORAGE_PATH || path.join(process.cwd(), "uploads");
+      process.env.BLOB_STORAGE_PATH || path.join(/*turbopackIgnore: true*/ process.cwd(), "uploads");
     const filePath = path.join(uploadsPath, sanitizedFilename);
 
     // Check if file exists

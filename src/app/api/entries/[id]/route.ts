@@ -3,13 +3,17 @@ import { query } from "@/lib/db";
 import { blobStorage } from "@/lib/blob-storage";
 import { convertImageReferencesServerSide } from "@/lib/image-conversion";
 import { checkAuth } from "@/lib/auth-helper";
-import { serializeCountry, stripHtmlToText, fetchEntryById } from "@/lib/entry-queries";
+import {
+  serializeCountry,
+  stripHtmlToText,
+  fetchEntryById,
+} from "@/lib/entry-queries";
 import labels from "@/lib/labels.json";
 
 const VALID_CATEGORIES = (labels as any).categories as string[];
-const VALID_PRIORITIES = ((labels as any).priorities as { value: string }[]).map(
-  (p) => p.value,
-);
+const VALID_PRIORITIES = (
+  (labels as any).priorities as { value: string }[]
+).map((p) => p.value);
 const VALID_REGIONS = (labels as any).regions as string[];
 const VALID_STATUSES = ["draft", "submitted"];
 const VALID_APPROVAL_STATUSES = ["pending", "discussed"];
@@ -33,7 +37,10 @@ export async function GET(
     const entry = await fetchEntryById(id);
 
     if (!entry) {
-      return NextResponse.json({ error: labels.entries.errors.notFound }, { status: 404 });
+      return NextResponse.json(
+        { error: labels.entries.errors.notFound },
+        { status: 404 },
+      );
     }
 
     // Convert blob URLs to data URLs for private blob storage
@@ -76,10 +83,16 @@ export async function PUT(
     const { entry: entryContent, images, ...data } = body;
 
     // Validate domain values
-    if (data.category !== undefined && !VALID_CATEGORIES.includes(data.category)) {
+    if (
+      data.category !== undefined &&
+      !VALID_CATEGORIES.includes(data.category)
+    ) {
       return NextResponse.json({ error: "Invalid category" }, { status: 400 });
     }
-    if (data.priority !== undefined && !VALID_PRIORITIES.includes(data.priority)) {
+    if (
+      data.priority !== undefined &&
+      !VALID_PRIORITIES.includes(data.priority)
+    ) {
       return NextResponse.json({ error: "Invalid priority" }, { status: 400 });
     }
     if (data.region !== undefined && !VALID_REGIONS.includes(data.region)) {
@@ -88,8 +101,14 @@ export async function PUT(
     if (data.status !== undefined && !VALID_STATUSES.includes(data.status)) {
       return NextResponse.json({ error: "Invalid status" }, { status: 400 });
     }
-    if (data.approvalStatus !== undefined && !VALID_APPROVAL_STATUSES.includes(data.approvalStatus)) {
-      return NextResponse.json({ error: "Invalid approval status" }, { status: 400 });
+    if (
+      data.approvalStatus !== undefined &&
+      !VALID_APPROVAL_STATUSES.includes(data.approvalStatus)
+    ) {
+      return NextResponse.json(
+        { error: "Invalid approval status" },
+        { status: 400 },
+      );
     }
 
     // Delete existing images from blob storage and database if new ones are provided
@@ -109,10 +128,9 @@ export async function PUT(
       }
 
       // Delete from database
-      await query(
-        `DELETE FROM morning_briefings.images WHERE entry_id = $1`,
-        [id],
-      );
+      await query(`DELETE FROM morning_briefings.images WHERE entry_id = $1`, [
+        id,
+      ]);
     }
 
     // Upload new images to blob storage
@@ -304,7 +322,10 @@ export async function DELETE(
     );
 
     if (deleteResult.rowCount === 0) {
-      return NextResponse.json({ error: labels.entries.errors.notFound }, { status: 404 });
+      return NextResponse.json(
+        { error: labels.entries.errors.notFound },
+        { status: 404 },
+      );
     }
 
     return NextResponse.json({ success: true });

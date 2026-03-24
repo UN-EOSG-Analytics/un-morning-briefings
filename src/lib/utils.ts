@@ -61,8 +61,10 @@ export function downloadJsonBlob(data: unknown, filename: string): void {
  * Tries firstName + lastName first, then name, then a fallback.
  */
 export function getUserDisplayName(
-  session: { user?: { firstName?: string; lastName?: string; name?: string | null } } | null,
-  fallback = "User"
+  session: {
+    user?: { firstName?: string; lastName?: string; name?: string | null };
+  } | null,
+  fallback = "User",
 ): string {
   if (session?.user?.firstName && session?.user?.lastName) {
     return `${session.user.firstName} ${session.user.lastName}`;

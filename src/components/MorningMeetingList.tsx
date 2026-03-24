@@ -32,7 +32,10 @@ export function MorningMeetingList({
     setIsRefreshing(true);
     try {
       await loadEntries();
-      showSuccess(labels.entries.success.refreshed, labels.entries.success.refreshedMessage);
+      showSuccess(
+        labels.entries.success.refreshed,
+        labels.entries.success.refreshedMessage,
+      );
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Failed to refresh data";
@@ -56,7 +59,10 @@ export function MorningMeetingList({
     if (confirmed) {
       try {
         await deleteEntry(id);
-        showSuccess(labels.entries.success.deleted, labels.entries.success.deletedMessage);
+        showSuccess(
+          labels.entries.success.deleted,
+          labels.entries.success.deletedMessage,
+        );
         await loadEntries();
       } catch (error) {
         const errorMessage =
@@ -89,15 +95,15 @@ export function MorningMeetingList({
     // Update local state immediately for responsiveness
     setEntries((prevEntries) =>
       prevEntries.map((entry) =>
-        entry.id === id ? { ...entry, ...updates } : entry
-      )
+        entry.id === id ? { ...entry, ...updates } : entry,
+      ),
     );
   };
 
   return (
     <div className="mx-auto w-full max-w-6xl space-y-4">
       {/* Header */}
-      <Card className="border-slate-200 sm:p-0 px-4">
+      <Card className="border-slate-200 px-4 sm:p-0">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:p-6">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded bg-slate-700">
@@ -118,12 +124,14 @@ export function MorningMeetingList({
               size="sm"
               onClick={handleRefresh}
               disabled={isRefreshing}
-              className="hidden lg:flex w-full justify-center sm:h-10 sm:w-auto sm:px-6"
+              className="hidden w-full justify-center sm:h-10 sm:w-auto sm:px-6 lg:flex"
             >
               <RefreshCw
                 className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
               />
-              <span className="sm:inline">{labels.entries.actions.refresh}</span>
+              <span className="sm:inline">
+                {labels.entries.actions.refresh}
+              </span>
             </Button>
             <Button
               variant="outline"
@@ -132,7 +140,9 @@ export function MorningMeetingList({
               className="w-full justify-center sm:h-10 sm:w-auto sm:px-6"
             >
               <FileDown className="h-4 w-4" />
-              <span className="sm:inline">{labels.entries.actions.exportBriefing}</span>
+              <span className="sm:inline">
+                {labels.entries.actions.exportBriefing}
+              </span>
             </Button>
           </div>
         </div>

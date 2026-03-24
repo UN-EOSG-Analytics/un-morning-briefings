@@ -25,7 +25,7 @@ export async function GET() {
       FROM morning_briefings.user_whitelist w
       LEFT JOIN morning_briefings.users u ON w.user_id = u.id
       LEFT JOIN morning_briefings.users adder ON w.added_by = adder.id
-      ORDER BY w.created_at DESC`
+      ORDER BY w.created_at DESC`,
     );
 
     return NextResponse.json(result.rows);
@@ -33,7 +33,7 @@ export async function GET() {
     console.error("Error fetching whitelist:", error);
     return NextResponse.json(
       { error: "Failed to fetch whitelist" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -53,17 +53,14 @@ export async function POST(request: NextRequest) {
     const { email } = await request.json();
 
     if (!email) {
-      return NextResponse.json(
-        { error: "Email is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Email is required" }, { status: 400 });
     }
 
     // Validate email format
     if (!email.endsWith("@un.org")) {
       return NextResponse.json(
         { error: "Only @un.org email addresses are allowed" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -73,7 +70,7 @@ export async function POST(request: NextRequest) {
     if (userEmail) {
       const userResult = await query(
         `SELECT id FROM morning_briefings.users WHERE email = $1`,
-        [userEmail]
+        [userEmail],
       );
       if (userResult.rows.length > 0) {
         addedBy = userResult.rows[0].id;
@@ -83,9 +80,10 @@ export async function POST(request: NextRequest) {
     // Check if user already exists with this email
     const existingUser = await query(
       `SELECT id FROM morning_briefings.users WHERE email = $1`,
-      [email.toLowerCase()]
+      [email.toLowerCase()],
     );
-    const userId = existingUser.rows.length > 0 ? existingUser.rows[0].id : null;
+    const userId =
+      existingUser.rows.length > 0 ? existingUser.rows[0].id : null;
 
     // Insert into whitelist
     const result = await query(
@@ -93,13 +91,13 @@ export async function POST(request: NextRequest) {
        VALUES ($1, $2, $3)
        ON CONFLICT (email) DO NOTHING
        RETURNING id, email, user_id as "userId", created_at as "createdAt"`,
-      [email.toLowerCase(), userId, addedBy]
+      [email.toLowerCase(), userId, addedBy],
     );
 
     if (result.rows.length === 0) {
       return NextResponse.json(
         { error: "Email already exists in whitelist" },
-        { status: 409 }
+        { status: 409 },
       );
     }
 
@@ -108,7 +106,7 @@ export async function POST(request: NextRequest) {
     console.error("Error adding to whitelist:", error);
     return NextResponse.json(
       { error: "Failed to add to whitelist" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -129,10 +127,7 @@ export async function DELETE(request: NextRequest) {
     const email = searchParams.get("email");
 
     if (!email) {
-      return NextResponse.json(
-        { error: "Email is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Email is required" }, { status: 400 });
     }
 
     // Check if the email is associated with an existing user
@@ -141,13 +136,16 @@ export async function DELETE(request: NextRequest) {
        FROM morning_briefings.user_whitelist w
        JOIN morning_briefings.users u ON w.user_id = u.id
        WHERE w.email = $1`,
-      [email.toLowerCase()]
+      [email.toLowerCase()],
     );
 
     if (userCheck.rows.length > 0) {
       return NextResponse.json(
-        { error: "Cannot remove email - user account already exists. Delete the user account first." },
-        { status: 400 }
+        {
+          error:
+            "Cannot remove email - user account already exists. Delete the user account first.",
+        },
+        { status: 400 },
       );
     }
 
@@ -156,13 +154,16 @@ export async function DELETE(request: NextRequest) {
       `DELETE FROM morning_briefings.user_whitelist 
        WHERE email = $1 AND user_id IS NULL
        RETURNING email`,
-      [email.toLowerCase()]
+      [email.toLowerCase()],
     );
 
     if (result.rows.length === 0) {
       return NextResponse.json(
-        { error: "Email not found in whitelist or has an associated user account" },
-        { status: 404 }
+        {
+          error:
+            "Email not found in whitelist or has an associated user account",
+        },
+        { status: 404 },
       );
     }
 
@@ -171,7 +172,7 @@ export async function DELETE(request: NextRequest) {
     console.error("Error removing from whitelist:", error);
     return NextResponse.json(
       { error: "Failed to remove from whitelist" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

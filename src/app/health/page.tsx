@@ -61,21 +61,20 @@ export default async function HealthPage() {
   const rows = Object.entries(checks);
 
   return (
-    <div className="bg-background h-[calc(100vh-4rem)] flex flex-col overflow-hidden">
-      <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 flex flex-col gap-6 h-full">
-
+    <div className="flex h-[calc(100vh-4rem)] flex-col overflow-hidden bg-background">
+      <main className="mx-auto flex h-full w-full max-w-6xl flex-col gap-6 px-4 py-8 sm:px-6">
         {/* Header — matches analytics page */}
-        <Card className="border-slate-200 py-0 shrink-0">
+        <Card className="shrink-0 border-slate-200 py-0">
           <div className="flex items-center justify-between p-6">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded bg-accent">
                 <Activity className="h-5 w-5 text-black" />
               </div>
               <div>
-                <h1 className="text-2xl font-semibold text-foreground flex items-center gap-3">
+                <h1 className="flex items-center gap-3 text-2xl font-semibold text-foreground">
                   System Health
                   <span
-                    className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                    className={`rounded-full px-2 py-0.5 text-xs font-medium ${
                       allOk
                         ? "bg-green-100 text-green-700"
                         : "bg-red-100 text-red-700"
@@ -93,31 +92,33 @@ export default async function HealthPage() {
         </Card>
 
         {/* Checks */}
-        <Card className="border-slate-200 py-0 shrink-0">
+        <Card className="shrink-0 border-slate-200 py-0">
           <div className="divide-y divide-slate-100">
             {rows.map(([key, check]) => {
               const meta = CHECK_META[key] ?? { label: key, description: "" };
               return (
                 <div key={key} className="flex items-center gap-4 px-6 py-4">
                   {check.ok ? (
-                    <CheckCircle className="h-5 w-5 text-green-600 shrink-0" />
+                    <CheckCircle className="h-5 w-5 shrink-0 text-green-600" />
                   ) : (
-                    <XCircle className="h-5 w-5 text-red-500 shrink-0" />
+                    <XCircle className="h-5 w-5 shrink-0 text-red-500" />
                   )}
-                  <div className="flex-1 min-w-0">
+                  <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium text-foreground">
                       {meta.label}
                     </p>
                     {check.ok ? (
-                      <p className="text-xs text-slate-500">{meta.description}</p>
+                      <p className="text-xs text-slate-500">
+                        {meta.description}
+                      </p>
                     ) : (
-                      <p className="text-xs text-red-500 mt-0.5 wrap-break-word">
+                      <p className="mt-0.5 text-xs wrap-break-word text-red-500">
                         {check.error}
                       </p>
                     )}
                   </div>
                   <span
-                    className={`text-xs font-medium px-2 py-0.5 rounded-full shrink-0 ${
+                    className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${
                       check.ok
                         ? "bg-green-100 text-green-700"
                         : "bg-red-100 text-red-700"
@@ -131,7 +132,7 @@ export default async function HealthPage() {
           </div>
         </Card>
 
-        <p className="text-xs text-slate-400 shrink-0">
+        <p className="shrink-0 text-xs text-slate-400">
           Only accessible to authenticated users.
         </p>
       </main>

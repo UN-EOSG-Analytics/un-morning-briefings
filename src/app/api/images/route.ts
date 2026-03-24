@@ -29,7 +29,10 @@ export async function POST(request: NextRequest) {
     // Validate file type
     if (!ALLOWED_MIME_TYPES.includes(file.type)) {
       return NextResponse.json(
-        { error: "Invalid file type. Only JPEG, PNG, GIF, and WebP images are allowed." },
+        {
+          error:
+            "Invalid file type. Only JPEG, PNG, GIF, and WebP images are allowed.",
+        },
         { status: 400 },
       );
     }

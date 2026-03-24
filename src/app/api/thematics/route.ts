@@ -18,7 +18,9 @@ export async function GET() {
        LIMIT 100`,
     );
 
-    const thematics = result.rows.map((row: { thematic: string }) => row.thematic);
+    const thematics = result.rows.map(
+      (row: { thematic: string }) => row.thematic,
+    );
     return NextResponse.json({ thematics });
   } catch (error) {
     console.error("Error fetching thematics:", error);

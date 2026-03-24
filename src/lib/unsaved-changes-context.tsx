@@ -21,7 +21,8 @@ const UnsavedChangesContext = createContext<
 
 export function UnsavedChangesProvider({ children }: { children: ReactNode }) {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [pendingConfirmation, setPendingConfirmation] = useState<Promise<boolean> | null>(null);
+  const [pendingConfirmation, setPendingConfirmation] =
+    useState<Promise<boolean> | null>(null);
   const { confirm: showConfirm } = usePopup();
 
   const confirmNavigation = useCallback(async (): Promise<boolean> => {

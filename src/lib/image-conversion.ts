@@ -110,7 +110,7 @@ export async function convertImageReferencesServerSide(
       const position = getImagePosition(img, images);
       const ref = `image-ref://img-${position}`;
 
-        if (updatedHtml.includes(ref)) {
+      if (updatedHtml.includes(ref)) {
         const buffer = await blobStorage.download(img.blobUrl);
         const base64Data = buffer.toString("base64");
         const dataUrl = `data:${img.mimeType};base64,${base64Data}`;

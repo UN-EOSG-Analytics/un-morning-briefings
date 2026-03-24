@@ -11,14 +11,14 @@ export async function POST(request: NextRequest) {
     if (!token || typeof token !== "string") {
       return NextResponse.json(
         { message: labels.auth.validation.invalidToken },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (!password || typeof password !== "string" || password.length < 8) {
       return NextResponse.json(
         { message: labels.auth.validation.passwordMinLength },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -30,13 +30,13 @@ export async function POST(request: NextRequest) {
        JOIN morning_briefings.users u ON pr.user_id = u.id
        WHERE pr.used_at IS NULL 
        AND pr.expires_at > CURRENT_TIMESTAMP`,
-      []
+      [],
     );
 
     if (tokensResult.rows.length === 0) {
       return NextResponse.json(
         { message: labels.auth.validation.invalidOrExpiredToken },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
     if (!matchedToken) {
       return NextResponse.json(
         { message: labels.auth.validation.invalidOrExpiredToken },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -63,33 +63,32 @@ export async function POST(request: NextRequest) {
     // Update user's password
     await query(
       "UPDATE morning_briefings.users SET password_hash = $1 WHERE id = $2",
-      [passwordHash, matchedToken.user_id]
+      [passwordHash, matchedToken.user_id],
     );
 
     // Mark the token as used
     await query(
       "UPDATE morning_briefings.password_resets SET used_at = CURRENT_TIMESTAMP WHERE id = $1",
-      [matchedToken.id]
+      [matchedToken.id],
     );
 
     // Invalidate all other unused tokens for this user (security measure)
     await query(
       "UPDATE morning_briefings.password_resets SET used_at = CURRENT_TIMESTAMP WHERE user_id = $1 AND used_at IS NULL AND id != $2",
-      [matchedToken.user_id, matchedToken.id]
+      [matchedToken.user_id, matchedToken.id],
     );
-
 
     return NextResponse.json(
       {
         message: labels.auth.validation.passwordResetComplete,
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("[PASSWORD RESET ERROR]", error);
     return NextResponse.json(
       { message: labels.auth.messages.serverError },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -102,7 +101,7 @@ export async function GET(request: NextRequest) {
     if (!token) {
       return NextResponse.json(
         { valid: false, message: labels.auth.validation.noTokenProvided },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -112,13 +111,13 @@ export async function GET(request: NextRequest) {
        FROM morning_briefings.password_resets pr
        WHERE pr.used_at IS NULL 
        AND pr.expires_at > CURRENT_TIMESTAMP`,
-      []
+      [],
     );
 
     if (tokensResult.rows.length === 0) {
       return NextResponse.json(
         { valid: false, message: labels.auth.validation.invalidOrExpiredToken },
-        { status: 200 }
+        { status: 200 },
       );
     }
 
@@ -135,19 +134,23 @@ export async function GET(request: NextRequest) {
     if (!isValid) {
       return NextResponse.json(
         { valid: false, message: labels.auth.validation.invalidOrExpiredToken },
-        { status: 200 }
+        { status: 200 },
       );
     }
 
     return NextResponse.json(
       { valid: true, message: labels.auth.validation.tokenValid },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("[PASSWORD RESET TOKEN VALIDATION ERROR]", error);
     return NextResponse.json(
-      { valid: false, message: labels.auth.validation.tokenValidationError, serverError: true },
-      { status: 500 }
+      {
+        valid: false,
+        message: labels.auth.validation.tokenValidationError,
+        serverError: true,
+      },
+      { status: 500 },
     );
   }
 }

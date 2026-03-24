@@ -54,7 +54,7 @@ export function CommentDialog({
       </PopoverTrigger>
       <PopoverContent className="w-80 p-3" align="end">
         <div className="space-y-3">
-          <h4 className="font-semibold text-sm">Comment & Feedback</h4>
+          <h4 className="text-sm font-semibold">Comment & Feedback</h4>
           <textarea
             value={comment}
             onChange={(e) => setComment(e.target.value)}
@@ -70,11 +70,7 @@ export function CommentDialog({
             >
               Cancel
             </Button>
-            <Button
-              size="sm"
-              onClick={handleSave}
-              disabled={isSaving}
-            >
+            <Button size="sm" onClick={handleSave} disabled={isSaving}>
               {isSaving ? "Saving..." : "Save"}
             </Button>
           </div>

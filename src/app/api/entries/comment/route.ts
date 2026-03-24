@@ -15,14 +15,14 @@ export async function PUT(request: NextRequest) {
     if (!entryId) {
       return NextResponse.json(
         { error: "Entry ID is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     // Update the comment in the database
     const result = await query(
       "UPDATE morning_briefings.entries SET comment = $1 WHERE id = $2 RETURNING id, comment",
-      [comment || null, entryId]
+      [comment || null, entryId],
     );
 
     if (result.rows.length === 0) {
@@ -37,7 +37,7 @@ export async function PUT(request: NextRequest) {
     console.error("Error updating comment:", error);
     return NextResponse.json(
       { error: "Failed to update comment" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -244,7 +244,7 @@ export function useEntriesFilter(entries: any[], initialDateFilter?: string) {
         filterRegion === "all" || entry.region === filterRegion;
       const matchesPriority =
         filterPriority === "all" || entry.priority === filterPriority;
-      
+
       let matchesCountry = true;
       if (filterCountry !== "all") {
         matchesCountry = Array.isArray(entry.country)

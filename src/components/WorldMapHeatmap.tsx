@@ -11,7 +11,8 @@ import {
 } from "react-simple-maps";
 import { getCountryCoordinates } from "@/lib/country-coordinates";
 
-const GEO_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
+const GEO_URL =
+  "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
 
 interface GeoType {
   rsmKey: string;
@@ -54,7 +55,11 @@ interface TooltipState {
 /**
  * World map with heatmap overlay showing country entry distribution
  */
-function WorldMapHeatmapComponent({ data, connections = [], className = "" }: WorldMapHeatmapProps) {
+function WorldMapHeatmapComponent({
+  data,
+  connections = [],
+  className = "",
+}: WorldMapHeatmapProps) {
   const [tooltip, setTooltip] = useState<TooltipState>({
     show: false,
     x: 0,
@@ -71,7 +76,8 @@ function WorldMapHeatmapComponent({ data, connections = [], className = "" }: Wo
 
     // Find max count for normalization
     for (const item of data) {
-      const count = typeof item.count === "string" ? parseInt(item.count) : item.count;
+      const count =
+        typeof item.count === "string" ? parseInt(item.count) : item.count;
       if (count > maxCount) maxCount = count;
     }
 
@@ -79,7 +85,8 @@ function WorldMapHeatmapComponent({ data, connections = [], className = "" }: Wo
     for (const item of data) {
       const coords = getCountryCoordinates(item.country_name);
       if (coords) {
-        const count = typeof item.count === "string" ? parseInt(item.count) : item.count;
+        const count =
+          typeof item.count === "string" ? parseInt(item.count) : item.count;
         points.push({
           coordinates: coords,
           intensity: maxCount > 0 ? count / maxCount : 0,
@@ -104,7 +111,8 @@ function WorldMapHeatmapComponent({ data, connections = [], className = "" }: Wo
 
     // Find max connection count for normalization
     for (const conn of connections) {
-      const count = typeof conn.count === "string" ? parseInt(conn.count) : conn.count;
+      const count =
+        typeof conn.count === "string" ? parseInt(conn.count) : conn.count;
       if (count > maxConnectionCount) maxConnectionCount = count;
     }
 
@@ -112,11 +120,13 @@ function WorldMapHeatmapComponent({ data, connections = [], className = "" }: Wo
     for (const conn of connections) {
       const coords1 = getCountryCoordinates(conn.country1);
       const coords2 = getCountryCoordinates(conn.country2);
-      
+
       if (coords1 && coords2) {
-        const count = typeof conn.count === "string" ? parseInt(conn.count) : conn.count;
-        const intensity = maxConnectionCount > 0 ? count / maxConnectionCount : 0;
-        
+        const count =
+          typeof conn.count === "string" ? parseInt(conn.count) : conn.count;
+        const intensity =
+          maxConnectionCount > 0 ? count / maxConnectionCount : 0;
+
         lines.push({
           start: coords1,
           end: coords2,
@@ -204,14 +214,18 @@ function WorldMapHeatmapComponent({ data, connections = [], className = "" }: Wo
 
   if (!data || data.length === 0) {
     return (
-      <div className={`flex items-center justify-center bg-slate-900 rounded-lg h-[400px] ${className}`}>
+      <div
+        className={`flex h-[400px] items-center justify-center rounded-lg bg-slate-900 ${className}`}
+      >
         <p className="text-slate-400">No country data available</p>
       </div>
     );
   }
 
   return (
-    <div className={`relative overflow-hidden rounded-lg bg-[#1a2744] ${className}`}>
+    <div
+      className={`relative overflow-hidden rounded-lg bg-[#1a2744] ${className}`}
+    >
       <ComposableMap
         projection="geoMercator"
         projectionConfig={{
@@ -248,7 +262,7 @@ function WorldMapHeatmapComponent({ data, connections = [], className = "" }: Wo
           {connectionLines.map((line, index) => {
             const strokeWidth = 0.5 + line.intensity * 2.5;
             const color = getConnectionColor(line.intensity);
-            
+
             return (
               <Line
                 key={`connection-${index}`}
@@ -267,10 +281,15 @@ function WorldMapHeatmapComponent({ data, connections = [], className = "" }: Wo
             const color = getHeatColor(point.intensity);
 
             return (
-              <Marker key={`${point.name}-${index}`} coordinates={point.coordinates}>
+              <Marker
+                key={`${point.name}-${index}`}
+                coordinates={point.coordinates}
+              >
                 <g
                   onMouseEnter={(e) => {
-                    const rect = (e.target as SVGElement).ownerSVGElement?.getBoundingClientRect();
+                    const rect = (
+                      e.target as SVGElement
+                    ).ownerSVGElement?.getBoundingClientRect();
                     if (rect) {
                       setTooltip({
                         show: true,
@@ -301,7 +320,7 @@ function WorldMapHeatmapComponent({ data, connections = [], className = "" }: Wo
                   />
                   {/* Center bright spot */}
                   <circle
-                    r={Math.log2(size * size / 10)}
+                    r={Math.log2((size * size) / 10)}
                     fill={color}
                     fillOpacity={0.7}
                   />
@@ -315,7 +334,7 @@ function WorldMapHeatmapComponent({ data, connections = [], className = "" }: Wo
       {/* Tooltip */}
       {tooltip.show && (
         <div
-          className="absolute pointer-events-none z-50 bg-slate-900/95 backdrop-blur-sm rounded-lg px-3 py-2 shadow-lg border border-slate-700"
+          className="pointer-events-none absolute z-50 rounded-lg border border-slate-700 bg-slate-900/95 px-3 py-2 shadow-lg backdrop-blur-sm"
           style={{
             left: tooltip.x + 10,
             top: tooltip.y - 10,
@@ -323,36 +342,38 @@ function WorldMapHeatmapComponent({ data, connections = [], className = "" }: Wo
           }}
         >
           <div className="text-sm font-medium text-white">{tooltip.name}</div>
-          <div className="text-xs text-slate-300">{tooltip.count} {tooltip.count === 1 ? "entry" : "entries"}</div>
+          <div className="text-xs text-slate-300">
+            {tooltip.count} {tooltip.count === 1 ? "entry" : "entries"}
+          </div>
         </div>
       )}
 
       {/* Legend */}
-      <div className="absolute bottom-4 right-4 bg-slate-900/80 backdrop-blur-sm rounded-lg px-3 py-2">
-        <div className="text-xs text-slate-300 mb-2">Entry Density</div>
+      <div className="absolute right-4 bottom-4 rounded-lg bg-slate-900/80 px-3 py-2 backdrop-blur-sm">
+        <div className="mb-2 text-xs text-slate-300">Entry Density</div>
         <div className="flex items-center gap-1">
           <div
-            className="w-3 h-3 rounded-full"
+            className="h-3 w-3 rounded-full"
             style={{ backgroundColor: getHeatColor(0.1) }}
           />
           <div
-            className="w-3 h-3 rounded-full"
+            className="h-3 w-3 rounded-full"
             style={{ backgroundColor: getHeatColor(0.3) }}
           />
           <div
-            className="w-3 h-3 rounded-full"
+            className="h-3 w-3 rounded-full"
             style={{ backgroundColor: getHeatColor(0.5) }}
           />
           <div
-            className="w-3 h-3 rounded-full"
+            className="h-3 w-3 rounded-full"
             style={{ backgroundColor: getHeatColor(0.7) }}
           />
           <div
-            className="w-3 h-3 rounded-full"
+            className="h-3 w-3 rounded-full"
             style={{ backgroundColor: getHeatColor(0.9) }}
           />
         </div>
-        <div className="flex justify-between text-[10px] text-slate-400 mt-1">
+        <div className="mt-1 flex justify-between text-[10px] text-slate-400">
           <span>Low</span>
           <span>High</span>
         </div>

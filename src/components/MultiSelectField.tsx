@@ -56,40 +56,44 @@ export function MultiSelectField({
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const { selectedOptions, unselectedOptions, matchingCustomOptions } = useMemo(() => {
-    const searchLower = searchQuery.toLowerCase();
-    const filtered = searchQuery
-      ? options.filter((option) =>
-          option.label.toLowerCase().includes(searchLower),
-        )
-      : options;
-
-    const selected = filtered.filter((option) => value.includes(option.value));
-    const unselected = filtered.filter(
-      (option) => !value.includes(option.value),
-    );
-
-    // Find custom values that match the search but aren't in the predefined options
-    const predefinedValues = options.map(opt => opt.value);
-    const matchingCustom = searchQuery
-      ? existingCustomValues
-          .filter((customValue) => 
-            !predefinedValues.includes(customValue) &&
-            customValue.toLowerCase().includes(searchLower)
+  const { selectedOptions, unselectedOptions, matchingCustomOptions } =
+    useMemo(() => {
+      const searchLower = searchQuery.toLowerCase();
+      const filtered = searchQuery
+        ? options.filter((option) =>
+            option.label.toLowerCase().includes(searchLower),
           )
-          .map((customValue) => ({
-            value: customValue,
-            label: customValue,
-            isCustom: true,
-          }))
-      : [];
+        : options;
 
-    return { 
-      selectedOptions: selected, 
-      unselectedOptions: unselected,
-      matchingCustomOptions: matchingCustom,
-    };
-  }, [options, searchQuery, value, existingCustomValues]);
+      const selected = filtered.filter((option) =>
+        value.includes(option.value),
+      );
+      const unselected = filtered.filter(
+        (option) => !value.includes(option.value),
+      );
+
+      // Find custom values that match the search but aren't in the predefined options
+      const predefinedValues = options.map((opt) => opt.value);
+      const matchingCustom = searchQuery
+        ? existingCustomValues
+            .filter(
+              (customValue) =>
+                !predefinedValues.includes(customValue) &&
+                customValue.toLowerCase().includes(searchLower),
+            )
+            .map((customValue) => ({
+              value: customValue,
+              label: customValue,
+              isCustom: true,
+            }))
+        : [];
+
+      return {
+        selectedOptions: selected,
+        unselectedOptions: unselected,
+        matchingCustomOptions: matchingCustom,
+      };
+    }, [options, searchQuery, value, existingCustomValues]);
 
   const handleToggle = (optionValue: string) => {
     const newValue = value.includes(optionValue)
@@ -139,7 +143,7 @@ export function MultiSelectField({
               inputBaseStyles,
               inputDefaultStyles,
               "justify-start gap-1 overflow-hidden px-3 font-normal hover:bg-[var(--form-field-background)] hover:text-[var(--form-field-text)]",
-              error && inputErrorStyles
+              error && inputErrorStyles,
             )}
           >
             <div className="flex items-center gap-1 overflow-x-auto">
@@ -197,9 +201,9 @@ export function MultiSelectField({
             )}
           </Button>
         </PopoverTrigger>
-        <PopoverContent 
-          className="form-standardized-portal w-full p-0" 
-          align="start" 
+        <PopoverContent
+          className="form-standardized-portal w-full p-0"
+          align="start"
           side="bottom"
           sideOffset={4}
           avoidCollisions={false}
@@ -251,7 +255,9 @@ export function MultiSelectField({
                       onSelect={() => handleToggle(option.value)}
                       className="cursor-pointer"
                     >
-                      <Check className={`mr-2 h-4 w-4 ${value.includes(option.value) ? 'text-un-blue opacity-100' : 'opacity-0'}`} />
+                      <Check
+                        className={`mr-2 h-4 w-4 ${value.includes(option.value) ? "text-un-blue opacity-100" : "opacity-0"}`}
+                      />
                       <span>{option.label}</span>
                     </CommandItem>
                   ))}
@@ -284,10 +290,10 @@ export function MultiSelectField({
                       className="cursor-pointer bg-un-blue/5"
                     >
                       <Check className="mr-2 h-4 w-4 text-un-blue opacity-100" />
-                      <div className="flex items-center gap-2 flex-1">
+                      <div className="flex flex-1 items-center gap-2">
                         <span className="font-medium">{option.label}</span>
                         {option.showStar && (
-                          <Sparkles className="h-3 w-3 text-un-blue/30 fill-un-blue/20 -ml-1" />
+                          <Sparkles className="-ml-1 h-3 w-3 fill-un-blue/20 text-un-blue/30" />
                         )}
                       </div>
                     </CommandItem>
@@ -305,10 +311,10 @@ export function MultiSelectField({
                   className="cursor-pointer"
                 >
                   <Check className="mr-2 h-4 w-4 opacity-0" />
-                  <div className="flex items-center gap-2 flex-1">
+                  <div className="flex flex-1 items-center gap-2">
                     <span>{option.label}</span>
                     {option.showStar && (
-                      <Sparkles className="h-3 w-3 text-un-blue/30 fill-un-blue/20 -ml-1" />
+                      <Sparkles className="-ml-1 h-3 w-3 fill-un-blue/20 text-un-blue/30" />
                     )}
                   </div>
                 </CommandItem>

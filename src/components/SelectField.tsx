@@ -78,7 +78,7 @@ export function SelectField({
             inputDefaultStyles,
             "data-[placeholder]:text-[var(--form-field-placeholder)]",
             error && inputErrorStyles,
-            triggerClassName
+            triggerClassName,
           )}
         >
           <SelectValue placeholder={placeholder} />
@@ -109,10 +109,10 @@ export function SelectField({
           {filteredOptions.length > 0 ? (
             filteredOptions.map((option) => (
               <SelectItem key={option.value} value={option.value}>
-                <div className="flex items-center gap-2 max-w-5xl">
+                <div className="flex max-w-5xl items-center gap-2">
                   <span>{option.label}</span>
                   {option.showStar && (
-                    <Sparkles className="h-3 w-3 shrink-0 text-un-blue/30 fill-un-blue/20 -ml-1" />
+                    <Sparkles className="-ml-1 h-3 w-3 shrink-0 fill-un-blue/20 text-un-blue/30" />
                   )}
                 </div>
               </SelectItem>

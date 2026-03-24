@@ -46,9 +46,10 @@ export async function autoFillFromContent(
   }
 
   // Truncate excessively long content
-  const safeContent = content.length > MAX_CONTENT_LENGTH
-    ? content.slice(0, MAX_CONTENT_LENGTH)
-    : content;
+  const safeContent =
+    content.length > MAX_CONTENT_LENGTH
+      ? content.slice(0, MAX_CONTENT_LENGTH)
+      : content;
 
   // Build lists for the prompt
   const categoryList = CATEGORIES.join(", ");
@@ -237,9 +238,10 @@ Each bullet should be:
 Return ONLY the bullet points, one per line, without bullet symbols or numbering.`;
 
   // Truncate excessively long content
-  const safeContent = plainText.length > MAX_CONTENT_LENGTH
-    ? plainText.slice(0, MAX_CONTENT_LENGTH)
-    : plainText;
+  const safeContent =
+    plainText.length > MAX_CONTENT_LENGTH
+      ? plainText.slice(0, MAX_CONTENT_LENGTH)
+      : plainText;
 
   try {
     const { text } = await generateText({

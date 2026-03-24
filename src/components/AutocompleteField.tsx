@@ -48,30 +48,33 @@ export function AutocompleteField({
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const { matchingSuggestions, unmatchingSuggestions, shouldShowAddButton } = useMemo(() => {
-    const searchLower = searchQuery.toLowerCase();
-    
-    if (!searchQuery) {
+  const { matchingSuggestions, unmatchingSuggestions, shouldShowAddButton } =
+    useMemo(() => {
+      const searchLower = searchQuery.toLowerCase();
+
+      if (!searchQuery) {
+        return {
+          matchingSuggestions: [],
+          unmatchingSuggestions: suggestions,
+          shouldShowAddButton: false,
+        };
+      }
+
+      const matching = suggestions.filter((s) =>
+        s.toLowerCase().includes(searchLower),
+      );
+      const unmatching = suggestions.filter(
+        (s) => !s.toLowerCase().includes(searchLower),
+      );
+
       return {
-        matchingSuggestions: [],
-        unmatchingSuggestions: suggestions,
-        shouldShowAddButton: false,
+        matchingSuggestions: matching,
+        unmatchingSuggestions: unmatching,
+        shouldShowAddButton:
+          !suggestions.includes(searchQuery.trim()) &&
+          searchQuery.trim() !== "",
       };
-    }
-
-    const matching = suggestions.filter((s) =>
-      s.toLowerCase().includes(searchLower)
-    );
-    const unmatching = suggestions.filter(
-      (s) => !s.toLowerCase().includes(searchLower)
-    );
-
-    return {
-      matchingSuggestions: matching,
-      unmatchingSuggestions: unmatching,
-      shouldShowAddButton: !suggestions.includes(searchQuery.trim()) && searchQuery.trim() !== "",
-    };
-  }, [suggestions, searchQuery]);
+    }, [suggestions, searchQuery]);
 
   const handleSelect = (selected: string) => {
     onChange(selected);
@@ -112,12 +115,14 @@ export function AutocompleteField({
               inputBaseStyles,
               inputDefaultStyles,
               "justify-start gap-1 px-3 font-normal hover:bg-[var(--form-field-background)] hover:text-[var(--form-field-text)]",
-              error && inputErrorStyles
+              error && inputErrorStyles,
             )}
           >
             {value ? (
               <>
-                <span className="flex-1 truncate text-left text-sm text-slate-900">{value}</span>
+                <span className="flex-1 truncate text-left text-sm text-slate-900">
+                  {value}
+                </span>
                 <div
                   className="cursor-pointer p-1 hover:opacity-100"
                   onClick={handleClear}
@@ -138,7 +143,13 @@ export function AutocompleteField({
             )}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="form-standardized-portal w-full p-0" align="start" side="bottom" sideOffset={4} avoidCollisions={false}>
+        <PopoverContent
+          className="form-standardized-portal w-full p-0"
+          align="start"
+          side="bottom"
+          sideOffset={4}
+          avoidCollisions={false}
+        >
           <Command>
             <CommandInput
               placeholder="Search or type new..."
@@ -194,14 +205,17 @@ export function AutocompleteField({
                   onSelect={() => handleSelect(s)}
                   className="cursor-pointer"
                 >
-                  <Check className={`mr-2 h-4 w-4 ${value === s ? "text-un-blue opacity-100" : "opacity-0"}`} />
+                  <Check
+                    className={`mr-2 h-4 w-4 ${value === s ? "text-un-blue opacity-100" : "opacity-0"}`}
+                  />
                   <span>{s}</span>
                 </CommandItem>
               ))}
 
-              {matchingSuggestions.length > 0 && unmatchingSuggestions.length > 0 && (
-                <div className="mx-2 my-1 h-px bg-slate-200" />
-              )}
+              {matchingSuggestions.length > 0 &&
+                unmatchingSuggestions.length > 0 && (
+                  <div className="mx-2 my-1 h-px bg-slate-200" />
+                )}
 
               {/* Unmatching suggestions */}
               {unmatchingSuggestions.map((s) => (
@@ -211,7 +225,9 @@ export function AutocompleteField({
                   onSelect={() => handleSelect(s)}
                   className="cursor-pointer"
                 >
-                  <Check className={`mr-2 h-4 w-4 ${value === s ? "text-un-blue opacity-100" : "opacity-0"}`} />
+                  <Check
+                    className={`mr-2 h-4 w-4 ${value === s ? "text-un-blue opacity-100" : "opacity-0"}`}
+                  />
                   <span>{s}</span>
                 </CommandItem>
               ))}

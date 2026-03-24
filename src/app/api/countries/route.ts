@@ -4,9 +4,8 @@ import labelsData from "@/lib/labels.json";
 import { checkAuth } from "@/lib/auth-helper";
 
 // Get predefined countries list
-const PREDEFINED_COUNTRIES: string[] = (
-  (labelsData as Record<string, unknown>).countries || []
-) as string[];
+const PREDEFINED_COUNTRIES: string[] = ((labelsData as Record<string, unknown>)
+  .countries || []) as string[];
 
 // GET /api/countries - Fetch all unique custom countries from the database
 export async function GET() {
@@ -20,12 +19,12 @@ export async function GET() {
     const result = await query(
       `SELECT DISTINCT country 
        FROM morning_briefings.entries 
-       WHERE country IS NOT NULL AND country != ''`
+       WHERE country IS NOT NULL AND country != ''`,
     );
 
     // Parse and flatten all country values
     const customCountriesSet = new Set<string>();
-    
+
     result.rows.forEach((row: { country: string }) => {
       try {
         // Try to parse as JSON array
@@ -38,7 +37,7 @@ export async function GET() {
               customCountriesSet.add(trimmed);
             }
           });
-        } else if (typeof parsed === 'string') {
+        } else if (typeof parsed === "string") {
           const trimmed = parsed.trim();
           if (trimmed && !PREDEFINED_COUNTRIES.includes(trimmed)) {
             customCountriesSet.add(trimmed);
@@ -55,13 +54,13 @@ export async function GET() {
 
     // Convert to array and sort
     const countries = Array.from(customCountriesSet).sort();
-    
+
     return NextResponse.json({ countries });
   } catch (error) {
     console.error("Error fetching countries:", error);
     return NextResponse.json(
       { error: "Failed to fetch countries" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

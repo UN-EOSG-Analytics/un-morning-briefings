@@ -54,9 +54,8 @@ export async function GET(request: NextRequest) {
       paramIndex += countryList.length;
     }
 
-    const whereClause = conditions.length > 0 
-      ? `WHERE ${conditions.join(" AND ")}`
-      : "";
+    const whereClause =
+      conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
 
     // Get regional distribution
     let regionalDistribution;
@@ -67,7 +66,7 @@ export async function GET(request: NextRequest) {
          ${whereClause}
          GROUP BY region
          ORDER BY count DESC`,
-        params
+        params,
       );
     } catch (error) {
       console.error("Analytics: regional distribution error:", error);
@@ -83,7 +82,7 @@ export async function GET(request: NextRequest) {
          ${whereClause}
          GROUP BY category
          ORDER BY count DESC`,
-        params
+        params,
       );
     } catch (error) {
       console.error("Analytics: category error:", error);
@@ -99,7 +98,7 @@ export async function GET(request: NextRequest) {
          ${whereClause}
          GROUP BY priority
          ORDER BY count DESC`,
-        params
+        params,
       );
     } catch (error) {
       console.error("Analytics: priority error:", error);
@@ -123,7 +122,7 @@ export async function GET(request: NextRequest) {
          ${whereClause}
          GROUP BY length_range
          ORDER BY length_range`,
-        params
+        params,
       );
     } catch (error) {
       console.error("Analytics: entry length distribution error:", error);
@@ -142,7 +141,7 @@ export async function GET(request: NextRequest) {
          ${whereClause}
          GROUP BY DATE(date), region
          ORDER BY date ASC`,
-        params
+        params,
       );
     } catch (error) {
       console.error("Analytics: chronological error:", error);
@@ -160,7 +159,7 @@ export async function GET(request: NextRequest) {
          ${whereClause}
          GROUP BY month
          ORDER BY month ASC`,
-        params
+        params,
       );
     } catch (error) {
       console.error("Analytics: entries per month error:", error);
@@ -178,11 +177,20 @@ export async function GET(request: NextRequest) {
            AVG(LENGTH(entry)) as avg_entry_length
          FROM morning_briefings.entries
          ${whereClause}`,
-        params
+        params,
       );
     } catch (error) {
       console.error("Analytics: total stats error:", error);
-      totalStats = { rows: [{ total_entries: '0', total_regions: '0', total_authors: '0', avg_entry_length: '0' }] };
+      totalStats = {
+        rows: [
+          {
+            total_entries: "0",
+            total_regions: "0",
+            total_authors: "0",
+            avg_entry_length: "0",
+          },
+        ],
+      };
     }
 
     // Get top countries - parse in JavaScript for reliability
@@ -193,32 +201,35 @@ export async function GET(request: NextRequest) {
         `SELECT country
          FROM morning_briefings.entries
          ${whereClause}`,
-        params
+        params,
       );
 
       // Parse countries in JavaScript
       const countryMap = new Map<string, number>();
       rawCountries.rows.forEach((row: any) => {
         if (!row.country) return;
-        
+
         let countryStr = row.country;
-        
+
         // Remove JSON array brackets if present
-        countryStr = countryStr.replace(/^\[/, '').replace(/\]$/, '');
+        countryStr = countryStr.replace(/^\[/, "").replace(/\]$/, "");
         // Remove quotes
-        countryStr = countryStr.replace(/^"/, '').replace(/"$/, '').replace(/\\"/g, '"');
+        countryStr = countryStr
+          .replace(/^"/, "")
+          .replace(/"$/, "")
+          .replace(/\\"/g, '"');
         // Split by comma and process each country
-        const countries = countryStr.split(',').map((c: string) => {
+        const countries = countryStr.split(",").map((c: string) => {
           return c
             .trim()
-            .replace(/^\["?/, '') // Remove opening bracket and quote
-            .replace(/"\]?$/, '') // Remove closing bracket and quote
-            .replace(/\s*\([^)]*\)$/, '') // Remove parenthetical text
+            .replace(/^\["?/, "") // Remove opening bracket and quote
+            .replace(/"\]?$/, "") // Remove closing bracket and quote
+            .replace(/\s*\([^)]*\)$/, "") // Remove parenthetical text
             .trim();
         });
-        
+
         countries.forEach((c: string) => {
-          if (c && c !== '[]' && c !== '""' && c.length > 0) {
+          if (c && c !== "[]" && c !== '""' && c.length > 0) {
             countryMap.set(c, (countryMap.get(c) || 0) + 1);
           }
         });
@@ -226,7 +237,10 @@ export async function GET(request: NextRequest) {
 
       // Convert to array and sort
       const countryArray = Array.from(countryMap.entries())
-        .map(([name, count]) => ({ country_name: name, count: count.toString() }))
+        .map(([name, count]) => ({
+          country_name: name,
+          count: count.toString(),
+        }))
         .sort((a, b) => parseInt(b.count) - parseInt(a.count));
 
       // Top 10 for the chart, all for the map
@@ -244,41 +258,43 @@ export async function GET(request: NextRequest) {
         `SELECT country
          FROM morning_briefings.entries
          ${whereClause}`,
-        params
+        params,
       );
 
       // Parse and build co-occurrence map
       const connectionMap = new Map<string, number>();
-      
+
       rawCountries.rows.forEach((row: any) => {
         if (!row.country) return;
-        
+
         let countryStr = row.country;
-        countryStr = countryStr.replace(/^\[/, '').replace(/\]$/, '');
-        
-        const countries = countryStr.split(',')
+        countryStr = countryStr.replace(/^\[/, "").replace(/\]$/, "");
+
+        const countries = countryStr
+          .split(",")
           .map((c: string) => {
             return c
               .trim()
-              .replace(/^\["?/, '')
-              .replace(/"\]?$/, '')
-              .replace(/\s*\([^)]*\)$/, '')
+              .replace(/^\["?/, "")
+              .replace(/"\]?$/, "")
+              .replace(/\s*\([^)]*\)$/, "")
               .replace(/\\"/g, '"')
               .trim();
           })
-          .filter((c: string) => c && c !== '[]' && c !== '""' && c.length > 0);
+          .filter((c: string) => c && c !== "[]" && c !== '""' && c.length > 0);
 
         // Create connections between all pairs of countries in this entry
         for (let i = 0; i < countries.length; i++) {
           for (let j = i + 1; j < countries.length; j++) {
             const country1 = countries[i];
             const country2 = countries[j];
-            
+
             // Create a consistent key (alphabetically sorted)
-            const key = country1 < country2 
-              ? `${country1}|||${country2}` 
-              : `${country2}|||${country1}`;
-            
+            const key =
+              country1 < country2
+                ? `${country1}|||${country2}`
+                : `${country2}|||${country1}`;
+
             connectionMap.set(key, (connectionMap.get(key) || 0) + 1);
           }
         }
@@ -287,10 +303,10 @@ export async function GET(request: NextRequest) {
       // Convert to array
       const connectionArray = Array.from(connectionMap.entries())
         .map(([key, count]) => {
-          const [country1, country2] = key.split('|||');
+          const [country1, country2] = key.split("|||");
           return { country1, country2, count: count.toString() };
         })
-        .filter(conn => parseInt(conn.count) >= 2) // Only show connections with 2+ co-occurrences
+        .filter((conn) => parseInt(conn.count) >= 2) // Only show connections with 2+ co-occurrences
         .sort((a, b) => parseInt(b.count) - parseInt(a.count))
         .slice(0, 100); // Limit to top 100 connections to avoid clutter
 
@@ -313,13 +329,12 @@ export async function GET(request: NextRequest) {
       countryConnections: countryConnections.rows,
     };
 
-
     return NextResponse.json(responseData);
   } catch (error) {
     console.error("Error fetching analytics:", error);
     return NextResponse.json(
       { error: "Failed to fetch analytics data" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

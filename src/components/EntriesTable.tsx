@@ -93,7 +93,7 @@ export function EntriesTable({
   const [exportingDate, setExportingDate] = useState<string | null>(null);
   const [submittingId, setSubmittingId] = useState<string | null>(null);
   const [collapsedBriefings, setCollapsedBriefings] = useState<Set<string>>(
-    new Set() // All briefings expanded by default
+    new Set(), // All briefings expanded by default
   );
   const [showAgendaDialog, setShowAgendaDialog] = useState(false);
   const [agendaDate, setAgendaDate] = useState<string | null>(null);
@@ -273,10 +273,12 @@ export function EntriesTable({
   // Extract unique countries from entries
   const availableCountries = Array.from(
     new Set(
-      entries.flatMap((entry) => 
-        Array.isArray(entry.country) ? entry.country : [entry.country]
-      ).filter(Boolean)
-    )
+      entries
+        .flatMap((entry) =>
+          Array.isArray(entry.country) ? entry.country : [entry.country],
+        )
+        .filter(Boolean),
+    ),
   ).sort();
 
   return (
@@ -441,9 +443,15 @@ export function EntriesTable({
                         >
                           <div className="flex items-center gap-4">
                             <button
-                              onClick={() => toggleBriefingCollapse(currentBriefingDate)}
-                              className="flex items-center gap-2 text-sm font-semibold text-un-blue transition-colors hover:text-un-blue/80 -ml-2 p-1"
-                              title={collapsedBriefings.has(currentBriefingDate) ? "Expand" : "Collapse"}
+                              onClick={() =>
+                                toggleBriefingCollapse(currentBriefingDate)
+                              }
+                              className="-ml-2 flex items-center gap-2 p-1 text-sm font-semibold text-un-blue transition-colors hover:text-un-blue/80"
+                              title={
+                                collapsedBriefings.has(currentBriefingDate)
+                                  ? "Expand"
+                                  : "Collapse"
+                              }
                             >
                               {collapsedBriefings.has(currentBriefingDate) ? (
                                 <ChevronRight className="h-4 w-4" />
@@ -459,10 +467,12 @@ export function EntriesTable({
                                 onClick={(e) => e.stopPropagation()}
                               >
                                 <button
-                    
                                   onClick={() => {
-                                    const entriesForDate = entries.filter(
-                                      (e) => isWithinCutoffRange(e.date, currentBriefingDate)
+                                    const entriesForDate = entries.filter((e) =>
+                                      isWithinCutoffRange(
+                                        e.date,
+                                        currentBriefingDate,
+                                      ),
                                     );
                                     setAgendaDate(currentBriefingDate);
                                     setAgendaEntries(entriesForDate);
@@ -490,23 +500,37 @@ export function EntriesTable({
                                     try {
                                       // Filter entries for this briefing date
                                       const entriesForDate = entries.filter(
-                                        (e) => isWithinCutoffRange(e.date, currentBriefingDate)
+                                        (e) =>
+                                          isWithinCutoffRange(
+                                            e.date,
+                                            currentBriefingDate,
+                                          ),
                                       );
                                       // Generate and download the document
                                       const blob = await generateDocumentBlob(
                                         entriesForDate,
                                         currentBriefingDate,
                                         true, // includeImages
-                                        createDocumentHeader
+                                        createDocumentHeader,
                                       );
-                                      saveAs(blob, formatExportFilename(currentBriefingDate));
+                                      saveAs(
+                                        blob,
+                                        formatExportFilename(
+                                          currentBriefingDate,
+                                        ),
+                                      );
                                     } catch (error) {
-                                      console.error("Error exporting briefing:", error);
+                                      console.error(
+                                        "Error exporting briefing:",
+                                        error,
+                                      );
                                     } finally {
                                       setExportingDate(null);
                                     }
                                   }}
-                                  disabled={exportingDate === currentBriefingDate}
+                                  disabled={
+                                    exportingDate === currentBriefingDate
+                                  }
                                   className="p-1 text-slate-600 transition-colors hover:text-un-blue disabled:opacity-50"
                                   title="Export to Word"
                                 >
@@ -524,200 +548,212 @@ export function EntriesTable({
                         className="cursor-pointer border-b border-slate-100 hover:bg-slate-50"
                         onClick={() => handleRowClick(entry)}
                       >
-                      <td className="px-2 py-3 text-sm whitespace-nowrap text-slate-600 sm:px-4">
-                        <div className="flex flex-col gap-1">
-                          <span className="hidden sm:inline">
-                            {formatDateDesktop(entry.date)}
+                        <td className="px-2 py-3 text-sm whitespace-nowrap text-slate-600 sm:px-4">
+                          <div className="flex flex-col gap-1">
+                            <span className="hidden sm:inline">
+                              {formatDateDesktop(entry.date)}
+                            </span>
+                            <span className="sm:hidden">
+                              {formatDateResponsive(entry.date).mobile}
+                            </span>
+                            <span className="text-xs text-slate-500">
+                              {formatTime(entry.date)}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="max-w-md px-2 py-3 text-sm sm:px-4">
+                          <div className="line-clamp-3 sm:line-clamp-2">
+                            {entry.headline}
+                          </div>
+                        </td>
+                        <td className="hidden px-2 py-3 whitespace-nowrap sm:table-cell sm:px-3 lg:px-4">
+                          <span
+                            className={`inline-block rounded px-2 py-1 text-xs font-medium ${getRegionBadgeClass(entry.region)}`}
+                          >
+                            {entry.region}
                           </span>
-                          <span className="sm:hidden">
-                            {formatDateResponsive(entry.date).mobile}
-                          </span>
-                          <span className="text-xs text-slate-500">
-                            {formatTime(entry.date)}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="max-w-md px-2 py-3 text-sm sm:px-4">
-                        <div className="line-clamp-3 sm:line-clamp-2">
-                          {entry.headline}
-                        </div>
-                      </td>
-                      <td className="hidden px-2 py-3 whitespace-nowrap sm:table-cell sm:px-3 lg:px-4">
-                        <span
-                          className={`inline-block rounded px-2 py-1 text-xs font-medium ${getRegionBadgeClass(entry.region)}`}
-                        >
-                          {entry.region}
-                        </span>
-                      </td>
-                      <td className="hidden px-2 py-3 sm:table-cell sm:px-3 lg:px-4 max-w-48">
-                        <div className="flex gap-1 overflow-hidden">
-                          {Array.isArray(entry.country) && entry.country.length > 0
-                            ? entry.country.map((country: string) => (
+                        </td>
+                        <td className="hidden max-w-48 px-2 py-3 sm:table-cell sm:px-3 lg:px-4">
+                          <div className="flex gap-1 overflow-hidden">
+                            {Array.isArray(entry.country) &&
+                            entry.country.length > 0 ? (
+                              entry.country.map((country: string) => (
                                 <span
                                   key={country}
-                                  className="inline-block rounded bg-gray-100 px-2 py-1 text-xs font-medium text-gray-800 whitespace-nowrap truncate max-w-24"
+                                  className="inline-block max-w-24 truncate rounded bg-gray-100 px-2 py-1 text-xs font-medium whitespace-nowrap text-gray-800"
                                   title={country}
                                 >
                                   {country}
                                 </span>
                               ))
-                            : entry.country ? (
-                                <span className="inline-block rounded bg-gray-100 px-2 py-1 text-xs font-medium text-gray-800 whitespace-nowrap truncate max-w-24" title={entry.country}>
-                                  {entry.country}
-                                </span>
-                              ) : (
-                                <span className="text-xs text-slate-500">—</span>
-                              )}
-                        </div>
-                      </td>
-                      {showApprovedColumn && (
-                        <td
-                          className="hidden px-2 py-3 whitespace-nowrap sm:table-cell sm:px-3 lg:px-4"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <div className="status-dropdown-container relative">
-                            {(() => {
-                              const status = entry.approvalStatus || "pending";
-                              const badgeConfig = {
-                                pending: {
-                                  bg: "bg-amber-50",
-                                  text: "text-amber-700",
-                                  icon: Clock,
-                                  label: labels.entries.status.pending,
-                                },
-                                discussed: {
-                                  bg: "bg-green-50",
-                                  text: "text-green-700",
-                                  icon: Check,
-                                  label: labels.entries.status.discussed,
-                                },
-                              };
-                              const config =
-                                badgeConfig[
-                                  status as keyof typeof badgeConfig
-                                ] || badgeConfig.pending;
-                              const Icon = config.icon;
-                              return (
-                                <>
-                                  <button
-                                    onClick={() =>
-                                      setOpenStatusDropdown(
-                                        openStatusDropdown === entry.id
-                                          ? null
-                                          : entry.id,
-                                      )
-                                    }
-                                    disabled={updatingStatus === entry.id}
-                                    className={`inline-flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-opacity hover:opacity-80 ${config.bg} ${config.text} disabled:opacity-50`}
-                                  >
-                                    <Icon className="h-3.5 w-3.5" />
-                                    {config.label}
-                                  </button>
-                                  {openStatusDropdown === entry.id && (
-                                    <div className="absolute top-full left-0 z-50 mt-1.5 w-max rounded-lg border border-slate-200 bg-white py-1 shadow-lg">
-                                      {["pending", "discussed"]
-                                        .filter((s) => s !== status)
-                                        .map((statusOption) => {
-                                          const statusConfig =
-                                            badgeConfig[
-                                              statusOption as keyof typeof badgeConfig
-                                            ];
-                                          const StatusIcon = statusConfig.icon;
-                                          return (
-                                            <button
-                                              key={statusOption}
-                                              onClick={() =>
-                                                handleStatusChange(
-                                                  entry.id,
-                                                  statusOption,
-                                                )
-                                              }
-                                              disabled={
-                                                updatingStatus === entry.id
-                                              }
-                                              className="block px-3 py-2 transition-colors hover:bg-slate-50 disabled:opacity-50"
-                                            >
-                                              <span
-                                                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium ${statusConfig.bg} ${statusConfig.text}`}
-                                              >
-                                                <StatusIcon className="h-3.5 w-3.5" />
-                                                {statusConfig.label}
-                                              </span>
-                                            </button>
-                                          );
-                                        })}
-                                      {status !== "discussed" && (
-                                        <button
-                                          onClick={() =>
-                                            handlePostpone(entry.id)
-                                          }
-                                          disabled={updatingStatus === entry.id}
-                                          className="block w-full border-t border-slate-100 px-3 py-2 transition-colors hover:bg-slate-50 disabled:opacity-50"
-                                        >
-                                          <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-700">
-                                            <FastForward className="h-3.5 w-3.5" />
-                                            {labels.entries.actions.postpone}
-                                          </span>
-                                        </button>
-                                      )}
-                                    </div>
-                                  )}
-                                </>
-                              );
-                            })()}
+                            ) : entry.country ? (
+                              <span
+                                className="inline-block max-w-24 truncate rounded bg-gray-100 px-2 py-1 text-xs font-medium whitespace-nowrap text-gray-800"
+                                title={entry.country}
+                              >
+                                {entry.country}
+                              </span>
+                            ) : (
+                              <span className="text-xs text-slate-500">—</span>
+                            )}
                           </div>
                         </td>
-                      )}
-                      <td className="hidden px-2 py-3 text-right whitespace-nowrap sm:table-cell sm:px-3 lg:px-4">
-                        <div className="flex justify-end gap-0">
-                          {onSubmit && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 w-8 p-0 text-un-blue hover:bg-blue-50 hover:text-un-blue"
-                              onClick={(e) =>
-                                handleActionClick(e, () => handleSubmitEntry(entry.id))
-                              }
-                              disabled={submittingId === entry.id}
-                              title="Submit entry"
-                            >
-                              <Send className="h-5 w-5" />
-                            </Button>
-                          )}
-                          {!hideCommentAction && (
-                            <div onClick={(e) => e.stopPropagation()}>
-                              <CommentDialog
-                                entryId={entry.id}
-                                initialComment={entry.comment || ""}
-                                onSave={(comment) => handleSaveComment(entry.id, comment)}
-                              />
-                            </div>
-                          )}
-                          <Link
-                            href={`/form?edit=${entry.id}`}
+                        {showApprovedColumn && (
+                          <td
+                            className="hidden px-2 py-3 whitespace-nowrap sm:table-cell sm:px-3 lg:px-4"
                             onClick={(e) => e.stopPropagation()}
                           >
+                            <div className="status-dropdown-container relative">
+                              {(() => {
+                                const status =
+                                  entry.approvalStatus || "pending";
+                                const badgeConfig = {
+                                  pending: {
+                                    bg: "bg-amber-50",
+                                    text: "text-amber-700",
+                                    icon: Clock,
+                                    label: labels.entries.status.pending,
+                                  },
+                                  discussed: {
+                                    bg: "bg-green-50",
+                                    text: "text-green-700",
+                                    icon: Check,
+                                    label: labels.entries.status.discussed,
+                                  },
+                                };
+                                const config =
+                                  badgeConfig[
+                                    status as keyof typeof badgeConfig
+                                  ] || badgeConfig.pending;
+                                const Icon = config.icon;
+                                return (
+                                  <>
+                                    <button
+                                      onClick={() =>
+                                        setOpenStatusDropdown(
+                                          openStatusDropdown === entry.id
+                                            ? null
+                                            : entry.id,
+                                        )
+                                      }
+                                      disabled={updatingStatus === entry.id}
+                                      className={`inline-flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-opacity hover:opacity-80 ${config.bg} ${config.text} disabled:opacity-50`}
+                                    >
+                                      <Icon className="h-3.5 w-3.5" />
+                                      {config.label}
+                                    </button>
+                                    {openStatusDropdown === entry.id && (
+                                      <div className="absolute top-full left-0 z-50 mt-1.5 w-max rounded-lg border border-slate-200 bg-white py-1 shadow-lg">
+                                        {["pending", "discussed"]
+                                          .filter((s) => s !== status)
+                                          .map((statusOption) => {
+                                            const statusConfig =
+                                              badgeConfig[
+                                                statusOption as keyof typeof badgeConfig
+                                              ];
+                                            const StatusIcon =
+                                              statusConfig.icon;
+                                            return (
+                                              <button
+                                                key={statusOption}
+                                                onClick={() =>
+                                                  handleStatusChange(
+                                                    entry.id,
+                                                    statusOption,
+                                                  )
+                                                }
+                                                disabled={
+                                                  updatingStatus === entry.id
+                                                }
+                                                className="block px-3 py-2 transition-colors hover:bg-slate-50 disabled:opacity-50"
+                                              >
+                                                <span
+                                                  className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium ${statusConfig.bg} ${statusConfig.text}`}
+                                                >
+                                                  <StatusIcon className="h-3.5 w-3.5" />
+                                                  {statusConfig.label}
+                                                </span>
+                                              </button>
+                                            );
+                                          })}
+                                        {status !== "discussed" && (
+                                          <button
+                                            onClick={() =>
+                                              handlePostpone(entry.id)
+                                            }
+                                            disabled={
+                                              updatingStatus === entry.id
+                                            }
+                                            className="block w-full border-t border-slate-100 px-3 py-2 transition-colors hover:bg-slate-50 disabled:opacity-50"
+                                          >
+                                            <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-700">
+                                              <FastForward className="h-3.5 w-3.5" />
+                                              {labels.entries.actions.postpone}
+                                            </span>
+                                          </button>
+                                        )}
+                                      </div>
+                                    )}
+                                  </>
+                                );
+                              })()}
+                            </div>
+                          </td>
+                        )}
+                        <td className="hidden px-2 py-3 text-right whitespace-nowrap sm:table-cell sm:px-3 lg:px-4">
+                          <div className="flex justify-end gap-0">
+                            {onSubmit && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0 text-un-blue hover:bg-blue-50 hover:text-un-blue"
+                                onClick={(e) =>
+                                  handleActionClick(e, () =>
+                                    handleSubmitEntry(entry.id),
+                                  )
+                                }
+                                disabled={submittingId === entry.id}
+                                title="Submit entry"
+                              >
+                                <Send className="h-5 w-5" />
+                              </Button>
+                            )}
+                            {!hideCommentAction && (
+                              <div onClick={(e) => e.stopPropagation()}>
+                                <CommentDialog
+                                  entryId={entry.id}
+                                  initialComment={entry.comment || ""}
+                                  onSave={(comment) =>
+                                    handleSaveComment(entry.id, comment)
+                                  }
+                                />
+                              </div>
+                            )}
+                            <Link
+                              href={`/form?edit=${entry.id}`}
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0 text-slate-600 hover:bg-slate-100"
+                              >
+                                <Edit className="h-5 w-5" />
+                              </Button>
+                            </Link>
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="h-8 w-8 p-0 text-slate-600 hover:bg-slate-100"
+                              className="h-8 w-8 p-0 text-red-600 hover:bg-red-50 hover:text-red-700"
+                              onClick={(e) =>
+                                handleActionClick(e, () => onDelete(entry.id))
+                              }
                             >
-                              <Edit className="h-5 w-5" />
+                              <Trash2 className="h-5 w-5" />
                             </Button>
-                          </Link>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 w-8 p-0 text-red-600 hover:bg-red-50 hover:text-red-700"
-                            onClick={(e) =>
-                              handleActionClick(e, () => onDelete(entry.id))
-                            }
-                          >
-                            <Trash2 className="h-5 w-5" />
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
+                          </div>
+                        </td>
+                      </tr>
                     ),
                   ].filter(Boolean);
                 })
@@ -752,20 +788,27 @@ export function EntriesTable({
 
       {/* Briefing Agenda Dialog */}
       <Dialog open={showAgendaDialog} onOpenChange={setShowAgendaDialog}>
-        <DialogContent className="sm:!max-w-[60vw] max-w-full h-screen md:h-auto md:max-h-[40vw] flex flex-col p-0">
-          <DialogHeader className="border-b border-slate-200 px-4 md:px-6 py-3 flex-shrink-0">
+        <DialogContent className="flex h-screen max-w-full flex-col p-0 sm:!max-w-[60vw] md:h-auto md:max-h-[40vw]">
+          <DialogHeader className="flex-shrink-0 border-b border-slate-200 px-4 py-3 md:px-6">
             <DialogTitle className="text-xl font-semibold text-un-blue">
-              Briefing Agenda for {agendaDate && formatDateWithWeekday(agendaDate)}
+              Briefing Agenda for{" "}
+              {agendaDate && formatDateWithWeekday(agendaDate)}
             </DialogTitle>
           </DialogHeader>
-          
-          <div className="mt-0 overflow-y-auto flex-1 px-4 md:px-6 pb-4">
+
+          <div className="mt-0 flex-1 overflow-y-auto px-4 pb-4 md:px-6">
             {(() => {
               // Sort entries by priority (SG attention first) and date
               const sortedAgendaEntries = [...agendaEntries].sort((a, b) => {
-                if (a.priority === "SG's attention" && b.priority !== "SG's attention")
+                if (
+                  a.priority === "SG's attention" &&
+                  b.priority !== "SG's attention"
+                )
                   return -1;
-                if (a.priority !== "SG's attention" && b.priority === "SG's attention")
+                if (
+                  a.priority !== "SG's attention" &&
+                  b.priority === "SG's attention"
+                )
                   return 1;
                 return 0;
               });
@@ -801,18 +844,20 @@ export function EntriesTable({
                 {} as Record<string, Record<string, MorningMeetingEntry[]>>,
               );
 
-              const sortedRegions = Object.keys(entriesByRegionAndCountry).sort();
+              const sortedRegions = Object.keys(
+                entriesByRegionAndCountry,
+              ).sort();
 
               return (
                 <div className="space-y-6">
                   {sortedRegions.map((region) => {
-                    const countries = Object.keys(entriesByRegionAndCountry[region]).sort(
-                      (a, b) => {
-                        if (a === "") return 1;
-                        if (b === "") return -1;
-                        return a.localeCompare(b);
-                      },
-                    );
+                    const countries = Object.keys(
+                      entriesByRegionAndCountry[region],
+                    ).sort((a, b) => {
+                      if (a === "") return 1;
+                      if (b === "") return -1;
+                      return a.localeCompare(b);
+                    });
 
                     return (
                       <div key={region}>
@@ -836,26 +881,33 @@ export function EntriesTable({
                             </thead>
                             <tbody>
                               {countries.map((country) => {
-                                const countryEntries = entriesByRegionAndCountry[region][country];
+                                const countryEntries =
+                                  entriesByRegionAndCountry[region][country];
                                 let entryIndexInCountry = 0;
 
                                 return countryEntries.map((entry) => {
-                                  const isFirstInCountry = entryIndexInCountry === 0;
-                                  const displayCountry = Array.isArray(entry.country)
+                                  const isFirstInCountry =
+                                    entryIndexInCountry === 0;
+                                  const displayCountry = Array.isArray(
+                                    entry.country,
+                                  )
                                     ? entry.country.join(" / ")
                                     : entry.country || "(No country specified)";
 
                                   const result = (
-                                    <tr key={entry.id} className="hover:bg-slate-50">
+                                    <tr
+                                      key={entry.id}
+                                      className="hover:bg-slate-50"
+                                    >
                                       {isFirstInCountry && (
                                         <td
-                                          className="border border-slate-200 px-3 py-2 text-sm whitespace-normal break-words align-top font-medium"
+                                          className="border border-slate-200 px-3 py-2 align-top text-sm font-medium break-words whitespace-normal"
                                           rowSpan={countryEntries.length}
                                         >
                                           {displayCountry}
                                         </td>
                                       )}
-                                      <td className="border border-slate-200 px-3 py-2 text-sm whitespace-normal break-words">
+                                      <td className="border border-slate-200 px-3 py-2 text-sm break-words whitespace-normal">
                                         {entry.headline}
                                       </td>
                                     </tr>
@@ -877,7 +929,6 @@ export function EntriesTable({
           </div>
         </DialogContent>
       </Dialog>
-
     </>
   );
 }

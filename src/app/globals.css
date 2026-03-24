@@ -176,8 +176,11 @@
     font-size: 0.875rem;
     line-height: 1.25rem;
     outline: none;
-    transition: color 120ms ease, border-color 120ms ease,
-      box-shadow 120ms ease, background-color 120ms ease;
+    transition:
+      color 120ms ease,
+      border-color 120ms ease,
+      box-shadow 120ms ease,
+      background-color 120ms ease;
     border-width: 1px;
     border-style: solid;
     border-color: var(--form-field-border);
@@ -220,8 +223,11 @@
     line-height: 1.25rem;
     resize: none;
     outline: none;
-    transition: color 120ms ease, border-color 120ms ease,
-      box-shadow 120ms ease, background-color 120ms ease;
+    transition:
+      color 120ms ease,
+      border-color 120ms ease,
+      box-shadow 120ms ease,
+      background-color 120ms ease;
     border-width: 1px;
     border-style: solid;
     border-color: var(--form-field-border);
@@ -247,14 +253,20 @@
     color: var(--form-field-placeholder);
   }
 
-  .form-standardized :is(
-      input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="range"]),
+  .form-standardized
+    :is(
+      input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not(
+          [type="range"]
+        ),
       select:not(.editor-image-size-select),
       [data-slot="select-trigger"],
       button[role="combobox"]
     ),
-  .form-standardized-portal :is(
-      input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="range"]),
+  .form-standardized-portal
+    :is(
+      input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not(
+          [type="range"]
+        ),
       select:not(.editor-image-size-select),
       [data-slot="select-trigger"],
       button[role="combobox"]
@@ -286,17 +298,49 @@
     color: var(--form-field-placeholder) !important;
   }
 
-  .form-standardized :is(input, textarea, select:not(.editor-image-size-select), [data-slot="select-trigger"], button[role="combobox"]):focus,
-  .form-standardized :is(input, textarea, select:not(.editor-image-size-select), [data-slot="select-trigger"], button[role="combobox"]):focus-visible,
-  .form-standardized-portal :is(input, textarea, select:not(.editor-image-size-select), [data-slot="select-trigger"], button[role="combobox"]):focus,
-  .form-standardized-portal :is(input, textarea, select:not(.editor-image-size-select), [data-slot="select-trigger"], button[role="combobox"]):focus-visible {
+  .form-standardized
+    :is(
+      input,
+      textarea,
+      select:not(.editor-image-size-select),
+      [data-slot="select-trigger"],
+      button[role="combobox"]
+    ):focus,
+  .form-standardized
+    :is(
+      input,
+      textarea,
+      select:not(.editor-image-size-select),
+      [data-slot="select-trigger"],
+      button[role="combobox"]
+    ):focus-visible,
+  .form-standardized-portal
+    :is(
+      input,
+      textarea,
+      select:not(.editor-image-size-select),
+      [data-slot="select-trigger"],
+      button[role="combobox"]
+    ):focus,
+  .form-standardized-portal
+    :is(
+      input,
+      textarea,
+      select:not(.editor-image-size-select),
+      [data-slot="select-trigger"],
+      button[role="combobox"]
+    ):focus-visible {
     border-color: var(--form-field-focus-border) !important;
     box-shadow: 0 0 0 2px var(--form-field-focus-ring) !important;
     outline: none !important;
   }
 
-  .form-standardized [data-slot="select-trigger"][data-placeholder] [data-slot="select-value"],
-  .form-standardized-portal [data-slot="select-trigger"][data-placeholder] [data-slot="select-value"] {
+  .form-standardized
+    [data-slot="select-trigger"][data-placeholder]
+    [data-slot="select-value"],
+  .form-standardized-portal
+    [data-slot="select-trigger"][data-placeholder]
+    [data-slot="select-value"] {
     color: var(--form-field-placeholder) !important;
   }
 

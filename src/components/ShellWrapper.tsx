@@ -8,7 +8,9 @@ const NO_SHELL_PREFIXES = ["/login"];
 
 export function ShellWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const showShell = !NO_SHELL_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+  const showShell = !NO_SHELL_PREFIXES.some((prefix) =>
+    pathname.startsWith(prefix),
+  );
 
   if (!showShell) {
     return <>{children}</>;

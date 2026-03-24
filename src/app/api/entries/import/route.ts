@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
         if (authorEmail) {
           const userResult = await query(
             `SELECT id FROM morning_briefings.users WHERE email = $1`,
-            [authorEmail]
+            [authorEmail],
           );
           if (userResult.rows.length > 0) {
             authorId = userResult.rows[0].id;

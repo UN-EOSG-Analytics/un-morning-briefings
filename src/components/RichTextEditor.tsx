@@ -387,7 +387,9 @@ export function RichTextEditor({
       >
         <div
           className={`transition-all duration-100 ${isFullscreen ? "mx-auto max-w-[280mm] rounded-lg bg-white shadow-sm" : "rounded-t"} border p-2 ${
-            error ? "border-[var(--form-field-error-border)] bg-[var(--form-field-error-background)]" : "border-[var(--form-field-border)] bg-[var(--form-field-background)]"
+            error
+              ? "border-[var(--form-field-error-border)] bg-[var(--form-field-error-background)]"
+              : "border-[var(--form-field-border)] bg-[var(--form-field-background)]"
           }`}
         >
           <div

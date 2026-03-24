@@ -216,16 +216,26 @@ export function MorningMeetingForm({
   // Track frequently used regions and countries
   const [frequentRegion, setFrequentRegion] = useState<string | null>(null);
   const [frequentCountries, setFrequentCountries] = useState<string[]>([]);
-  const [existingCustomCountries, setExistingCustomCountries] = useState<string[]>([]);
+  const [existingCustomCountries, setExistingCustomCountries] = useState<
+    string[]
+  >([]);
   const [existingThematics, setExistingThematics] = useState<string[]>(
-    (labelsData as Record<string, any>).form?.options?.thematics || []
+    (labelsData as Record<string, any>).form?.options?.thematics || [],
   );
 
   // Source name suggestions for autocomplete
   const [sourceNames, setSourceNames] = useState<string[]>([]);
 
   // User's entries for "Previous Entry" selector
-  const [userEntries, setUserEntries] = useState<{ id: string; headline: string; date: string; country: string | string[]; region: string }[]>([]);
+  const [userEntries, setUserEntries] = useState<
+    {
+      id: string;
+      headline: string;
+      date: string;
+      country: string | string[];
+      region: string;
+    }[]
+  >([]);
 
   // Compute region options with frequent region at top with star
   const regionOptions = useMemo(() => {
@@ -237,7 +247,9 @@ export function MorningMeetingForm({
 
     // Move frequent region to top if it exists
     if (frequentRegion) {
-      const frequentIndex = options.findIndex((opt) => opt.value === frequentRegion);
+      const frequentIndex = options.findIndex(
+        (opt) => opt.value === frequentRegion,
+      );
       if (frequentIndex > 0) {
         const [frequentOpt] = options.splice(frequentIndex, 1);
         options.unshift(frequentOpt);
@@ -270,7 +282,10 @@ export function MorningMeetingForm({
 
       // Sort frequent countries by their frequency order
       frequentOpts.sort((a, b) => {
-        return frequentCountries.indexOf(a.value) - frequentCountries.indexOf(b.value);
+        return (
+          frequentCountries.indexOf(a.value) -
+          frequentCountries.indexOf(b.value)
+        );
       });
 
       return [...frequentOpts, ...otherOpts];
@@ -282,7 +297,8 @@ export function MorningMeetingForm({
   // Build previous entry options with matching tags highlighted
   const previousEntryOptions = useMemo(() => {
     const options = userEntries.map((e) => {
-      const dateStr = typeof e.date === 'string' ? e.date : new Date(e.date).toISOString();
+      const dateStr =
+        typeof e.date === "string" ? e.date : new Date(e.date).toISOString();
       return {
         value: e.id,
         label: `${e.headline} (${dateStr.split("T")[0]})`,
@@ -298,11 +314,21 @@ export function MorningMeetingForm({
 
     options.forEach((opt) => {
       const countryMatch = Array.isArray(formData.country)
-        ? formData.country.some((c) => c === opt.country || (Array.isArray(opt.country) && opt.country.includes(c)))
-        : formData.country === opt.country || (Array.isArray(opt.country) && opt.country.includes(formData.country as string));
+        ? formData.country.some(
+            (c) =>
+              c === opt.country ||
+              (Array.isArray(opt.country) && opt.country.includes(c)),
+          )
+        : formData.country === opt.country ||
+          (Array.isArray(opt.country) &&
+            opt.country.includes(formData.country as string));
       const regionMatch = formData.region === opt.region;
 
-      if ((countryMatch || regionMatch) && formData.country && formData.region) {
+      if (
+        (countryMatch || regionMatch) &&
+        formData.country &&
+        formData.region
+      ) {
         opt.showStar = true;
         matchingEntries.push(opt);
       } else {
@@ -310,7 +336,11 @@ export function MorningMeetingForm({
       }
     });
 
-    return [{ value: "none", label: labelsData.form.labels.none }, ...matchingEntries, ...otherEntries];
+    return [
+      { value: "none", label: labelsData.form.labels.none },
+      ...matchingEntries,
+      ...otherEntries,
+    ];
   }, [userEntries, formData.country, formData.region]);
 
   // Track if form has been modified
@@ -401,7 +431,7 @@ export function MorningMeetingForm({
           const apiThematics = data.thematics || [];
           // Merge defaults with API results, avoiding duplicates
           const combined = Array.from(
-            new Set([...defaultThematics, ...apiThematics])
+            new Set([...defaultThematics, ...apiThematics]),
           );
           setExistingThematics(combined);
         } else {
@@ -412,7 +442,7 @@ export function MorningMeetingForm({
         console.error("Failed to fetch existing thematics:", error);
         // Fall back to defaults on error
         setExistingThematics(
-          (labelsData as Record<string, any>).form?.options?.thematics || []
+          (labelsData as Record<string, any>).form?.options?.thematics || [],
         );
       }
     };
@@ -427,16 +457,20 @@ export function MorningMeetingForm({
         // Get date from 2 weeks ago
         const twoWeeksAgo = new Date();
         twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
-        
+
         const response = await fetch(`/api/entries`);
         if (!response.ok) return;
-        
+
         const data = await response.json();
         // Handle both formats: { entries: [...] } or direct array
-        const entries = Array.isArray(data) ? data : (Array.isArray(data.entries) ? data.entries : []);
-        
+        const entries = Array.isArray(data)
+          ? data
+          : Array.isArray(data.entries)
+            ? data.entries
+            : [];
+
         if (!Array.isArray(entries) || entries.length === 0) return;
-        
+
         // Filter entries from last 2 weeks by current user
         // Prefer normalized email matching, fall back to authorId when email is unavailable
         const userEmail = session?.user?.email?.trim().toLowerCase();
@@ -474,7 +508,9 @@ export function MorningMeetingForm({
         });
 
         // Get most used region - only set if there's actual data
-        const sortedRegions = Object.entries(regionCounts).sort((a, b) => b[1] - a[1]);
+        const sortedRegions = Object.entries(regionCounts).sort(
+          (a, b) => b[1] - a[1],
+        );
         if (sortedRegions.length > 0 && Object.keys(regionCounts).length > 0) {
           setFrequentRegion(sortedRegions[0][0]);
         } else {
@@ -536,7 +572,9 @@ export function MorningMeetingForm({
       try {
         const email = session?.user?.email;
         if (!email) return;
-        const response = await fetch(`/api/entries?author=${encodeURIComponent(email)}&noConvert=true`);
+        const response = await fetch(
+          `/api/entries?author=${encodeURIComponent(email)}&noConvert=true`,
+        );
         if (!response.ok) return;
         const data = await response.json();
         const entries = Array.isArray(data) ? data : [];
@@ -545,7 +583,13 @@ export function MorningMeetingForm({
         setUserEntries(
           entries
             .filter((e: any) => e.id && e.headline && e.id !== editId)
-            .map((e: any) => ({ id: e.id, headline: e.headline, date: e.date, country: e.country, region: e.region }))
+            .map((e: any) => ({
+              id: e.id,
+              headline: e.headline,
+              date: e.date,
+              country: e.country,
+              region: e.region,
+            })),
         );
       } catch (error) {
         console.error("Failed to fetch user entries:", error);
@@ -741,7 +785,10 @@ export function MorningMeetingForm({
 
   const handleAutoFill = async () => {
     if (!autoFillContent.trim()) {
-      showWarning(labelsData.form.popups.noContent, labelsData.form.popups.noContentMessage);
+      showWarning(
+        labelsData.form.popups.noContent,
+        labelsData.form.popups.noContentMessage,
+      );
       return;
     }
 
@@ -764,7 +811,10 @@ export function MorningMeetingForm({
           errorMessage.includes("GEMINI_API_KEY") ||
           errorMessage.includes("not configured")
         ) {
-          showWarning(labelsData.form.popups.aiDisabled, labelsData.form.popups.aiDisabledMessage);
+          showWarning(
+            labelsData.form.popups.aiDisabled,
+            labelsData.form.popups.aiDisabledMessage,
+          );
         } else {
           showWarning(labelsData.form.popups.autoFillFailed, errorMessage);
         }
@@ -806,7 +856,10 @@ export function MorningMeetingForm({
       );
     } catch (error) {
       console.error("[AUTO-FILL] Error:", error);
-      showWarning(labelsData.form.popups.aiDisabled, labelsData.form.popups.aiDisabledMessage);
+      showWarning(
+        labelsData.form.popups.aiDisabled,
+        labelsData.form.popups.aiDisabledMessage,
+      );
     } finally {
       setIsAutoFilling(false);
     }
@@ -848,7 +901,9 @@ export function MorningMeetingForm({
                 title={labelsData.form.autoFill.dialogTitle}
               >
                 <Sparkles className="mr-1.5 h-4 w-4" />
-                <span className="hidden sm:inline">{labelsData.form.actions.autoFill}</span>
+                <span className="hidden sm:inline">
+                  {labelsData.form.actions.autoFill}
+                </span>
               </Button>
             </div>
             <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-500 sm:mt-4 sm:gap-4">
@@ -961,7 +1016,8 @@ export function MorningMeetingForm({
                   {/* Headline - Full width */}
                   <div className="col-span-4 space-y-2">
                     <label className="text-sm font-medium text-slate-900">
-                      {labelsData.form.labels.headline} <span className="text-red-500">*</span>
+                      {labelsData.form.labels.headline}{" "}
+                      <span className="text-red-500">*</span>
                       <span className="ml-2 text-xs text-slate-500">
                         ({formData.headline.length}/300)
                       </span>
@@ -1002,7 +1058,8 @@ export function MorningMeetingForm({
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <label className="text-sm font-medium text-slate-900">
-                      {labelsData.form.labels.entryContent} <span className="text-red-500">*</span>
+                      {labelsData.form.labels.entryContent}{" "}
+                      <span className="text-red-500">*</span>
                     </label>
                     {/* Text Mode Toggle Switch */}
                     <div className="inline-flex gap-1 rounded-lg border border-slate-300 bg-slate-100 p-1">
@@ -1077,9 +1134,7 @@ export function MorningMeetingForm({
                       }}
                       placeholder={labelsData.form.placeholders.entry}
                       className={`form-field-textarea min-h-[250px] ${
-                        errors.entry
-                          ? "form-field-error"
-                          : "form-field-focus"
+                        errors.entry ? "form-field-error" : "form-field-focus"
                       }`}
                       spellCheck="true"
                     />
@@ -1094,7 +1149,7 @@ export function MorningMeetingForm({
                 </div>
 
                 {/* Source Data Row: Name, Date, URL */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
                   <AutocompleteField
                     label={labelsData.form.labels.sourceName}
                     value={formData.sourceName || ""}
@@ -1176,7 +1231,7 @@ export function MorningMeetingForm({
                 </button>
 
                 {showMetadata && (
-                  <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
                     <TextField
                       label={labelsData.form.labels.author}
                       value={formData.author || "Current User"}
@@ -1209,7 +1264,10 @@ export function MorningMeetingForm({
                       label={labelsData.form.labels.previousEntry}
                       value={formData.previousEntryId || "none"}
                       onValueChange={(value) =>
-                        setFormData((prev) => ({ ...prev, previousEntryId: value === "none" ? null : value }))
+                        setFormData((prev) => ({
+                          ...prev,
+                          previousEntryId: value === "none" ? null : value,
+                        }))
                       }
                       options={previousEntryOptions}
                       searchable={true}
@@ -1310,7 +1368,11 @@ export function MorningMeetingForm({
               />
             </div>
             <div className="rounded border border-slate-200 bg-slate-50 p-3 text-xs text-slate-500">
-              <strong>AI will extract:</strong> {labelsData.form.autoFill.extractionHint.replace("AI will extract: ", "")}
+              <strong>AI will extract:</strong>{" "}
+              {labelsData.form.autoFill.extractionHint.replace(
+                "AI will extract: ",
+                "",
+              )}
             </div>
           </div>
 
@@ -1333,7 +1395,9 @@ export function MorningMeetingForm({
               className="gap-2"
             >
               <Sparkles className="h-4 w-4" />
-              {isAutoFilling ? labelsData.form.autoFill.submitLoading : labelsData.form.autoFill.submitButton}
+              {isAutoFilling
+                ? labelsData.form.autoFill.submitLoading
+                : labelsData.form.autoFill.submitButton}
             </Button>
           </DialogFooter>
         </DialogContent>

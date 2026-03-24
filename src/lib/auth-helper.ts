@@ -14,7 +14,10 @@ export async function checkAuth() {
       return {
         authenticated: false,
         response: NextResponse.json(
-          { error: "Unauthorized", details: "You must be logged in to access this resource" },
+          {
+            error: "Unauthorized",
+            details: "You must be logged in to access this resource",
+          },
           { status: 401 },
         ),
       };

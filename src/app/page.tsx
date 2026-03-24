@@ -30,21 +30,26 @@ export default function HomePage() {
         <div className="mb-8 flex flex-col gap-4 sm:mb-12 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
           <div className="px-2 text-left sm:px-0">
             <h1 className="mb-1 text-3xl font-bold text-foreground sm:text-4xl">
-                {labels.home.greeting.replace("{name}", session?.user?.name?.split(" ")[0] || "...")}
+              {labels.home.greeting.replace(
+                "{name}",
+                session?.user?.name?.split(" ")[0] || "...",
+              )}
             </h1>
             <p className="hidden text-base text-slate-600 sm:block sm:text-lg">
               {labels.home.subtitle}
             </p>
           </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowExportDialog(true)}
-              className="w-full justify-center sm:h-10 sm:w-auto sm:px-6"
-            >
-              <FileDown className="h-4 w-4" />
-              <span className="sm:inline">{labels.entries.actions.exportBriefing}</span>
-            </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowExportDialog(true)}
+            className="w-full justify-center sm:h-10 sm:w-auto sm:px-6"
+          >
+            <FileDown className="h-4 w-4" />
+            <span className="sm:inline">
+              {labels.entries.actions.exportBriefing}
+            </span>
+          </Button>
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-3">
@@ -100,7 +105,10 @@ export default function HomePage() {
                       {labels.home.cards.currentBriefing.title}{" "}
                     </h2>
                     <p className="text-xs text-slate-600">
-                      {labels.home.cards.currentBriefing.descriptionShort.replace("{date}", formatDateDesktop(currentBriefingDate))}
+                      {labels.home.cards.currentBriefing.descriptionShort.replace(
+                        "{date}",
+                        formatDateDesktop(currentBriefingDate),
+                      )}
                     </p>
                   </div>
                 </div>
@@ -112,10 +120,14 @@ export default function HomePage() {
                     {labels.home.cards.currentBriefing.title}
                   </h2>
                   <p className="mt-2 text-sm text-slate-600 sm:text-base">
-                    {labels.home.cards.currentBriefing.descriptionLong.replace("{date}", "")}
+                    {labels.home.cards.currentBriefing.descriptionLong.replace(
+                      "{date}",
+                      "",
+                    )}
                     <span className="font-semibold">
                       {formatDateDesktop(currentBriefingDate)}
-                    </span>.
+                    </span>
+                    .
                   </p>
                 </div>
                 <Button
@@ -141,7 +153,9 @@ export default function HomePage() {
                     <h2 className="text-lg font-semibold text-foreground">
                       {labels.home.cards.archive.title}
                     </h2>
-                    <p className="text-xs text-slate-600">{labels.home.cards.archive.descriptionShort}</p>
+                    <p className="text-xs text-slate-600">
+                      {labels.home.cards.archive.descriptionShort}
+                    </p>
                   </div>
                 </div>
                 <div className="hidden flex-col sm:flex">

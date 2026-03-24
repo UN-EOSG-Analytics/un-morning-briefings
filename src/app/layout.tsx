@@ -47,9 +47,7 @@ export default function RootLayout({
         <AuthProvider>
           <PopupProvider>
             <UnsavedChangesProvider>
-              <ShellWrapper>
-                {children}
-              </ShellWrapper>
+              <ShellWrapper>{children}</ShellWrapper>
               <PopupContainer />
             </UnsavedChangesProvider>
           </PopupProvider>

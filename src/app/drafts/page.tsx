@@ -12,7 +12,11 @@ import labels from "@/lib/labels.json";
 
 export default function DraftsPage() {
   const { data: session } = useSession();
-  const { confirm: showConfirm, success: showSuccess, error: showError } = usePopup();
+  const {
+    confirm: showConfirm,
+    success: showSuccess,
+    error: showError,
+  } = usePopup();
   const [entries, setEntries] = useState<MorningMeetingEntry[]>([]);
 
   // Get current user's email for API filtering
@@ -39,7 +43,10 @@ export default function DraftsPage() {
     if (confirmed) {
       try {
         await deleteEntry(id);
-        showSuccess(labels.entries.success.deleted, labels.entries.success.draftDeleted);
+        showSuccess(
+          labels.entries.success.deleted,
+          labels.entries.success.draftDeleted,
+        );
         await loadEntries();
       } catch (error) {
         const errorMessage =
@@ -61,9 +68,7 @@ export default function DraftsPage() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(
-          errorData.error || "Failed to submit entry"
-        );
+        throw new Error(errorData.error || "Failed to submit entry");
       }
 
       showSuccess(labels.common.success, labels.entries.success.draftSubmitted);

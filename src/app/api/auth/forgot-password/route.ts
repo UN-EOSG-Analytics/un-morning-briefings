@@ -21,18 +21,18 @@ setInterval(() => {
 function checkRateLimit(identifier: string): boolean {
   const now = Date.now();
   const record = rateLimitMap.get(identifier);
-  
+
   if (!record || now > record.resetAt) {
     // New window - allow request
     rateLimitMap.set(identifier, { count: 1, resetAt: now + 15 * 60 * 1000 }); // 15 min window
     return true;
   }
-  
+
   if (record.count >= 3) {
     // Too many requests
     return false;
   }
-  
+
   record.count++;
   return true;
 }
@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
     if (!email || typeof email !== "string" || !email.includes("@")) {
       return NextResponse.json(
         { message: labels.auth.validation.invalidEmailAddress },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -55,25 +55,28 @@ export async function POST(request: NextRequest) {
         {
           message: labels.auth.rateLimit.tooManyEmailRequests,
         },
-        { status: 429 }
+        { status: 429 },
       );
     }
 
     // Rate limiting by IP (10 requests per 15 minutes)
-    const ip = request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || "unknown";
+    const ip =
+      request.headers.get("x-forwarded-for") ||
+      request.headers.get("x-real-ip") ||
+      "unknown";
     if (!checkRateLimit(`ip:${ip}`)) {
       return NextResponse.json(
         {
           message: labels.auth.rateLimit.tooManyIpRequests,
         },
-        { status: 429 }
+        { status: 429 },
       );
     }
 
     // Look up user - but don't reveal if they exist (security best practice)
     const userResult = await query(
       "SELECT id, email, first_name FROM morning_briefings.users WHERE LOWER(email) = LOWER($1) AND email_verified = TRUE",
-      [email]
+      [email],
     );
 
     // Always return success to prevent email enumeration
@@ -83,7 +86,7 @@ export async function POST(request: NextRequest) {
         {
           message: labels.auth.rateLimit.resetEmailSent,
         },
-        { status: 200 }
+        { status: 200 },
       );
     }
 
@@ -91,7 +94,7 @@ export async function POST(request: NextRequest) {
 
     // Generate cryptographically secure random token (32 bytes = 64 hex chars)
     const resetToken = crypto.randomBytes(32).toString("hex");
-    
+
     // Hash the token before storing (using bcrypt with 12 rounds)
     const tokenHash = await bcrypt.hash(resetToken, 12);
 
@@ -101,7 +104,7 @@ export async function POST(request: NextRequest) {
     // Invalidate any existing reset tokens for this user
     await query(
       "UPDATE morning_briefings.password_resets SET used_at = CURRENT_TIMESTAMP WHERE user_id = $1 AND used_at IS NULL",
-      [user.id]
+      [user.id],
     );
 
     // Store the hashed token in database, expiry set in SQL to avoid timezone issues
@@ -109,36 +112,35 @@ export async function POST(request: NextRequest) {
       `INSERT INTO morning_briefings.password_resets
        (user_id, token_hash, expires_at, ip_address)
        VALUES ($1, $2, CURRENT_TIMESTAMP + interval '30 minutes', $3)`,
-      [user.id, tokenHash, ipAddress]
+      [user.id, tokenHash, ipAddress],
     );
 
     const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
-    
+
     // Send email with reset link containing the plain token
     const emailSent = await sendPasswordResetEmail(
       user.email,
       resetToken,
       user.first_name,
-      baseUrl
+      baseUrl,
     );
 
     if (!emailSent) {
       // Don't reveal email send failure to user for security
     }
 
-
     // Always return generic success message
     return NextResponse.json(
       {
         message: labels.auth.rateLimit.resetEmailSent,
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("[PASSWORD RESET ERROR]", error);
     return NextResponse.json(
       { message: labels.auth.messages.serverError },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

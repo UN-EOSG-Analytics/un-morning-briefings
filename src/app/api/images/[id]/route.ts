@@ -18,7 +18,10 @@ export async function GET(
     const { id } = await params;
 
     if (!id) {
-      return NextResponse.json({ error: "No image ID provided" }, { status: 400 });
+      return NextResponse.json(
+        { error: "No image ID provided" },
+        { status: 400 },
+      );
     }
 
     const result = await query(

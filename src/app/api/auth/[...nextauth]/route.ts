@@ -3,7 +3,6 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { query } from "@/lib/db";
 import bcrypt from "bcryptjs";
 
-
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({

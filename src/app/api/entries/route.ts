@@ -15,9 +15,9 @@ import {
 import labels from "@/lib/labels.json";
 
 const VALID_CATEGORIES = (labels as any).categories as string[];
-const VALID_PRIORITIES = ((labels as any).priorities as { value: string }[]).map(
-  (p) => p.value,
-);
+const VALID_PRIORITIES = (
+  (labels as any).priorities as { value: string }[]
+).map((p) => p.value);
 const VALID_REGIONS = (labels as any).regions as string[];
 const VALID_STATUSES = ["draft", "submitted"];
 
@@ -225,10 +225,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     // Build update query based on what fields are provided
-    if (
-      approvalStatus &&
-      !["pending", "discussed"].includes(approvalStatus)
-    ) {
+    if (approvalStatus && !["pending", "discussed"].includes(approvalStatus)) {
       return NextResponse.json(
         { error: labels.entries.errors.invalidApprovalStatus },
         { status: 400 },
@@ -290,7 +287,10 @@ export async function PATCH(request: NextRequest) {
     // Fetch updated entry with author info
     const entry = await fetchEntryById(id);
     if (!entry) {
-      return NextResponse.json({ error: labels.entries.errors.notFound }, { status: 404 });
+      return NextResponse.json(
+        { error: labels.entries.errors.notFound },
+        { status: 404 },
+      );
     }
 
     return NextResponse.json(entry);

@@ -38,7 +38,11 @@ import { saveAs } from "file-saver";
 import { FileText, Calendar, Mail, Download, Eye } from "lucide-react";
 import { parseHtmlContent } from "@/lib/html-to-docx";
 import { usePopup } from "@/lib/popup-context";
-import { formatDateLong, formatDateFull, getCurrentDateTime } from "@/lib/format-date";
+import {
+  formatDateLong,
+  formatDateFull,
+  getCurrentDateTime,
+} from "@/lib/format-date";
 import type { MorningMeetingEntry } from "@/types/morning-meeting";
 
 interface ExportDialogProps {
@@ -275,7 +279,10 @@ const createPlainPuNoteParagraph = (puNote: string): Paragraph =>
  * Build table of contents from the structured entries as an actual table
  */
 const buildTableOfContents = (
-  entriesByRegionAndCountry: Record<string, Record<string, MorningMeetingEntry[]>>,
+  entriesByRegionAndCountry: Record<
+    string,
+    Record<string, MorningMeetingEntry[]>
+  >,
   sortedRegions: string[],
 ): (Paragraph | Table)[] => {
   const tocElements: (Paragraph | Table)[] = [
@@ -427,8 +434,16 @@ const buildTableOfContents = (
           bottom: { style: BorderStyle.SINGLE, size: 1, color: "000000" },
           left: { style: BorderStyle.SINGLE, size: 1, color: "000000" },
           right: { style: BorderStyle.SINGLE, size: 1, color: "000000" },
-          insideHorizontal: { style: BorderStyle.SINGLE, size: 1, color: "CCCCCC" },
-          insideVertical: { style: BorderStyle.SINGLE, size: 1, color: "CCCCCC" },
+          insideHorizontal: {
+            style: BorderStyle.SINGLE,
+            size: 1,
+            color: "CCCCCC",
+          },
+          insideVertical: {
+            style: BorderStyle.SINGLE,
+            size: 1,
+            color: "CCCCCC",
+          },
         },
         rows: tableRows,
       }),
@@ -490,7 +505,7 @@ const buildDocumentChildren = (
         if (!acc[entry.region][countryKey]) {
           acc[entry.region][countryKey] = [];
         }
-        acc[entry.region][countryKey].push(entry)
+        acc[entry.region][countryKey].push(entry);
       }
       return acc;
     },
@@ -636,7 +651,7 @@ const buildDocumentChildren = (
                       }),
                     ],
                     link: entry.sourceUrl,
-                  })
+                  }),
                 );
               } else {
                 sourceChildren.push(
@@ -870,7 +885,9 @@ export function ExportDailyBriefingDialog({
   );
   const [isLoadingEntries, setIsLoadingEntries] = useState(false);
   const [includeImages, setIncludeImages] = useState(true);
-  const [selectedEntryIds, setSelectedEntryIds] = useState<Set<string>>(new Set());
+  const [selectedEntryIds, setSelectedEntryIds] = useState<Set<string>>(
+    new Set(),
+  );
 
   // Unified function to get all entries for a date using 8AM cutoff (regardless of approval status)
   const getApprovedEntriesForDate = useCallback(
@@ -903,7 +920,11 @@ export function ExportDailyBriefingDialog({
         const entriesForDate = await getApprovedEntriesForDate(selectedDate);
         setApprovedEntries(entriesForDate);
         // Initialize all entries as selected (checked)
-        const allEntryIds = new Set(entriesForDate.map((e) => e.id).filter((id): id is string => Boolean(id)));
+        const allEntryIds = new Set(
+          entriesForDate
+            .map((e) => e.id)
+            .filter((id): id is string => Boolean(id)),
+        );
         setSelectedEntryIds(allEntryIds);
       } catch (error) {
         const errorMessage =
@@ -1061,9 +1082,10 @@ export function ExportDailyBriefingDialog({
             <FileText className="h-5 w-5 text-un-blue" />
             Daily Briefing
           </DialogTitle>
-          <DialogDescription className="text-left pt-2">
-            Select entries to include, then view the briefing, export to Word, or send via email. 
-            Entries are from the previous day at 8:00 AM until the selected day at 8:00 AM.
+          <DialogDescription className="pt-2 text-left">
+            Select entries to include, then view the briefing, export to Word,
+            or send via email. Entries are from the previous day at 8:00 AM
+            until the selected day at 8:00 AM.
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-1 flex-col space-y-4 overflow-y-auto px-4 py-4 sm:px-0">
@@ -1134,7 +1156,7 @@ export function ExportDailyBriefingDialog({
                       />
                       <label
                         htmlFor={`entry-${entry.id}`}
-                        className="flex-1 cursor-pointer line-clamp-2 text-slate-700"
+                        className="line-clamp-2 flex-1 cursor-pointer text-slate-700"
                       >
                         {entry.headline}
                       </label>

@@ -24,7 +24,11 @@ import {
 import { saveAs } from "file-saver";
 import { parseHtmlContent } from "@/lib/html-to-docx";
 import { sanitizeHtml } from "@/lib/sanitize";
-import { formatDateLong, formatDateFull, getCurrentDateTime } from "@/lib/format-date";
+import {
+  formatDateLong,
+  formatDateFull,
+  getCurrentDateTime,
+} from "@/lib/format-date";
 import type { MorningMeetingEntry } from "@/types/morning-meeting";
 
 // formatDateLong, formatDateFull (replaces formatSourceDate), getCurrentDateTime
@@ -284,10 +288,13 @@ const generateBriefingDocument = async (
       if (country !== "") {
         // Get all countries for entries in this group
         const entriesInGroup = entriesByRegionAndCountry[region][country];
-        const allCountries = entriesInGroup.length > 0 && entriesInGroup[0].country
-          ? (Array.isArray(entriesInGroup[0].country) ? entriesInGroup[0].country.join(" / ") : entriesInGroup[0].country)
-          : country;
-        
+        const allCountries =
+          entriesInGroup.length > 0 && entriesInGroup[0].country
+            ? Array.isArray(entriesInGroup[0].country)
+              ? entriesInGroup[0].country.join(" / ")
+              : entriesInGroup[0].country
+            : country;
+
         children.push(
           new Paragraph({
             children: [
@@ -349,7 +356,7 @@ const generateBriefingDocument = async (
                       }),
                     ],
                     link: entry.sourceUrl,
-                  })
+                  }),
                 );
               } else {
                 sourceChildren.push(
@@ -550,7 +557,7 @@ function BriefingContent() {
         if (!acc[entry.region][countryKey]) {
           acc[entry.region][countryKey] = [];
         }
-        acc[entry.region][countryKey].push(entry)
+        acc[entry.region][countryKey].push(entry);
       }
       return acc;
     },
@@ -681,8 +688,6 @@ function BriefingContent() {
         </div>
       )}
 
-
-
       {/* Agenda Sidebar - Hidden on mobile and when printing */}
       <div className="fixed top-20 left-4 hidden w-56 lg:block print:hidden">
         <div className="sticky top-20 max-h-[calc(100vh-8rem)] overflow-y-auto">
@@ -727,7 +732,7 @@ function BriefingContent() {
       {/* Document Container */}
       <div
         ref={contentRef}
-        className="mx-auto max-w-6xl px-8 sm:px-12 xl:pl-[12rem] lg:pl-[8rem] lg:pr-8 py-12 sm:py-16"
+        className="mx-auto max-w-6xl px-8 py-12 sm:px-12 sm:py-16 lg:pr-8 lg:pl-[8rem] xl:pl-[12rem]"
       >
         {/* Header */}
         <div className="mb-8 flex flex-col items-start justify-between gap-4 pb-6 sm:mb-10 sm:flex-row sm:items-start sm:gap-0 sm:pb-8">
@@ -799,8 +804,8 @@ function BriefingContent() {
                               {(entry.sourceName || entry.sourceDate) && (
                                 <p className="text-sm leading-relaxed text-slate-600 italic">
                                   Source:{" "}
-                                  {entry.sourceName && (
-                                    entry.sourceUrl ? (
+                                  {entry.sourceName &&
+                                    (entry.sourceUrl ? (
                                       <a
                                         href={entry.sourceUrl}
                                         target="_blank"
@@ -811,10 +816,12 @@ function BriefingContent() {
                                       </a>
                                     ) : (
                                       <span>{entry.sourceName}</span>
-                                    )
-                                  )}
-                                  {entry.sourceName && entry.sourceDate && " | "}
-                                  {entry.sourceDate && formatDateFull(entry.sourceDate)}
+                                    ))}
+                                  {entry.sourceName &&
+                                    entry.sourceDate &&
+                                    " | "}
+                                  {entry.sourceDate &&
+                                    formatDateFull(entry.sourceDate)}
                                 </p>
                               )}
 

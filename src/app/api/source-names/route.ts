@@ -5,13 +5,13 @@ import { checkAuth } from "@/lib/auth-helper";
 export async function GET() {
   try {
     const auth = await checkAuth();
-    
+
     if (!auth.authenticated || !auth.session) {
       return auth.response;
     }
 
     const userEmail = auth.session.user?.email;
-    
+
     if (!userEmail) {
       return NextResponse.json({ sourceNames: [] });
     }
@@ -26,7 +26,7 @@ export async function GET() {
          AND e.source_name != ''
        ORDER BY e.source_name ASC
        LIMIT 50`,
-      [userEmail]
+      [userEmail],
     );
 
     const sourceNames = result.rows.map((row: any) => row.source_name);
@@ -36,7 +36,7 @@ export async function GET() {
     console.error("Error fetching source names:", error);
     return NextResponse.json(
       { error: "Failed to fetch source names" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

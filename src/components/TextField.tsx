@@ -10,8 +10,10 @@ export const inputBaseStyles = "form-field";
 export const inputDefaultStyles = "form-field-focus";
 export const inputErrorStyles = "form-field-error";
 
-interface TextFieldProps
-  extends Omit<InputHTMLAttributes<HTMLInputElement>, "className"> {
+interface TextFieldProps extends Omit<
+  InputHTMLAttributes<HTMLInputElement>,
+  "className"
+> {
   label?: string;
   error?: string;
   wrapperClassName?: string;
@@ -28,7 +30,7 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
       inputClassName,
       ...inputProps
     },
-    ref
+    ref,
   ) => {
     return (
       <div className={cn("space-y-2", wrapperClassName)}>
@@ -38,14 +40,14 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
           className={cn(
             inputBaseStyles,
             error ? inputErrorStyles : inputDefaultStyles,
-            inputClassName
+            inputClassName,
           )}
           {...inputProps}
         />
         <FieldError error={error} />
       </div>
     );
-  }
+  },
 );
 
 TextField.displayName = "TextField";

@@ -8,7 +8,10 @@ export async function POST(request: NextRequest) {
     // Check authentication
     const auth = await checkAuth();
     if (!auth.authenticated || !auth.session?.user?.email) {
-      return auth.response ?? NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return (
+        auth.response ??
+        NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      );
     }
 
     const { docxBlob, fileName, briefingDate } = await request.json();

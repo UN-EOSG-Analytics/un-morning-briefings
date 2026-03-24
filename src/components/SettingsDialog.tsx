@@ -1,11 +1,10 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { useSession, signOut } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import {
   Settings,
   Trash2,
-  AlertTriangle,
   Check,
   X,
   Download,
@@ -34,8 +33,6 @@ interface SettingsDialogProps {
 export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   const { data: session, update: updateSession } = useSession();
   const { success: showSuccess, warning: showWarning } = usePopup();
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState("");
   const [isEditingName, setIsEditingName] = useState(false);
   const [firstName, setFirstName] = useState(session?.user?.firstName || "");
@@ -50,6 +47,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   const [emailAddress, setEmailAddress] = useState("");
 
   // Whitelist settings
+  const [pendingRemoveEmail, setPendingRemoveEmail] = useState<string | null>(null);
   const [whitelistEmails, setWhitelistEmails] = useState<
     Array<{
       id: number;
@@ -139,34 +137,6 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
       const errorMsg =
         err instanceof Error ? err.message : "Failed to remove email";
       showWarning(labels.settings.whitelist.removeFailed, errorMsg);
-    }
-  };
-
-  const handleDeleteAccount = async () => {
-    if (!session?.user?.email) return;
-
-    setIsDeleting(true);
-    setError("");
-
-    try {
-      const response = await fetch("/api/user/delete", {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to delete account");
-      }
-
-      // Account deleted successfully - sign out and redirect
-      await signOut({ callbackUrl: "/login?deleted=true" });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
-      setIsDeleting(false);
     }
   };
 
@@ -320,8 +290,9 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   }, [open]);
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex flex-col sm:max-h-[80vh] sm:max-w-[600px]">
+      <DialogContent className="flex flex-col sm:max-h-[80vh] sm:max-w-150">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Settings className="h-5 w-5" />
@@ -334,7 +305,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
           defaultValue="account"
           className="flex min-h-0 w-full flex-1 flex-col"
         >
-          <TabsList className="grid w-full flex-shrink-0 grid-cols-4">
+          <TabsList className="grid w-full shrink-0 grid-cols-4">
             <TabsTrigger value="account">
               {labels.settings.tabs.account}
             </TabsTrigger>
@@ -452,61 +423,6 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
               </div>
             </div>
 
-            {/* Delete Account Section */}
-            {!showDeleteConfirm ? (
-              <Button
-                variant="outline"
-                className="w-full border-red-200 text-red-600 hover:bg-red-50"
-                onClick={() => setShowDeleteConfirm(true)}
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                {labels.settings.account.deleteAccount}
-              </Button>
-            ) : (
-              <div className="space-y-3 rounded-lg border border-red-200 bg-red-50 p-4">
-                <div className="flex items-start gap-2">
-                  <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-600" />
-                  <div className="space-y-1">
-                    <p className="text-sm font-semibold text-red-900">
-                      {labels.settings.account.deleteConfirmTitle}
-                    </p>
-                    <p className="text-xs text-red-700">
-                      {labels.settings.account.deleteConfirmMessage}
-                    </p>
-                  </div>
-                </div>
-
-                {error && (
-                  <p className="text-xs font-medium text-red-600">{error}</p>
-                )}
-
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setShowDeleteConfirm(false);
-                      setError("");
-                    }}
-                    disabled={isDeleting}
-                    className="flex-1"
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={handleDeleteAccount}
-                    disabled={isDeleting}
-                    className="flex-1 bg-red-600 hover:bg-red-700"
-                  >
-                    {isDeleting
-                      ? labels.settings.account.deleting
-                      : labels.settings.account.deleteButton}
-                  </Button>
-                </div>
-              </div>
-            )}
           </TabsContent>
 
           {/* Data Management Tab */}
@@ -571,7 +487,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
 
                 {/* Add Email Form */}
                 <div className="mb-4 space-y-2">
-                  <div className="flex gap-2">
+                  <div className="flex items-center gap-2">
                     <input
                       type="email"
                       value={newWhitelistEmail}
@@ -586,7 +502,6 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                       disabled={isAddingWhitelist}
                     />
                     <Button
-                      size="sm"
                       onClick={handleAddWhitelistEmail}
                       disabled={isAddingWhitelist || !newWhitelistEmail.trim()}
                       className="bg-un-blue hover:bg-un-blue/90"
@@ -659,9 +574,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                               <Button
                                 size="sm"
                                 variant="ghost"
-                                onClick={() =>
-                                  handleRemoveWhitelistEmail(item.email)
-                                }
+                                onClick={() => setPendingRemoveEmail(item.email)}
                                 className="h-7 px-2 text-red-600 hover:bg-red-50 hover:text-red-700"
                                 title={labels.settings.whitelist.removeTooltip}
                               >
@@ -732,5 +645,33 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
         </Tabs>
       </DialogContent>
     </Dialog>
+
+    <Dialog open={!!pendingRemoveEmail} onOpenChange={(o) => { if (!o) setPendingRemoveEmail(null); }}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Remove access</DialogTitle>
+          <DialogDescription>
+            Are you sure you want to remove <span className="font-medium text-slate-900">{pendingRemoveEmail}</span>? They will be immediately signed out and unable to log in.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="flex justify-end gap-2 pt-2">
+          <Button variant="outline" onClick={() => setPendingRemoveEmail(null)}>
+            Cancel
+          </Button>
+          <Button
+            variant="destructive"
+            onClick={async () => {
+              if (pendingRemoveEmail) {
+                await handleRemoveWhitelistEmail(pendingRemoveEmail);
+                setPendingRemoveEmail(null);
+              }
+            }}
+          >
+            Remove
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }

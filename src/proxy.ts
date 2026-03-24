@@ -5,7 +5,7 @@ export const proxy = withAuth({
     signIn: "/login",
   },
   callbacks: {
-    authorized: ({ token }) => !!token,
+    authorized: ({ token }) => !!token && token.whitelisted !== false,
   },
 });
 

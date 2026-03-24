@@ -15,15 +15,15 @@ export async function GET() {
 
   try {
     const result = await query(
-      `SELECT 
+      `SELECT
         w.id,
         w.email,
-        w.user_id as "userId",
+        COALESCE(w.user_id, u.id) as "userId",
         w.created_at as "createdAt",
         COALESCE(CONCAT(u.first_name, ' ', u.last_name), NULL) as "userName",
         COALESCE(CONCAT(adder.first_name, ' ', adder.last_name), 'System') as "addedBy"
       FROM morning_briefings.user_whitelist w
-      LEFT JOIN morning_briefings.users u ON w.user_id = u.id
+      LEFT JOIN morning_briefings.users u ON u.email = w.email
       LEFT JOIN morning_briefings.users adder ON w.added_by = adder.id
       ORDER BY w.created_at DESC`,
     );
@@ -130,39 +130,17 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "Email is required" }, { status: 400 });
     }
 
-    // Check if the email is associated with an existing user
-    const userCheck = await query(
-      `SELECT u.id, u.email 
-       FROM morning_briefings.user_whitelist w
-       JOIN morning_briefings.users u ON w.user_id = u.id
-       WHERE w.email = $1`,
-      [email.toLowerCase()],
-    );
-
-    if (userCheck.rows.length > 0) {
-      return NextResponse.json(
-        {
-          error:
-            "Cannot remove email - user account already exists. Delete the user account first.",
-        },
-        { status: 400 },
-      );
-    }
-
     // Delete from whitelist
     const result = await query(
-      `DELETE FROM morning_briefings.user_whitelist 
-       WHERE email = $1 AND user_id IS NULL
+      `DELETE FROM morning_briefings.user_whitelist
+       WHERE email = $1
        RETURNING email`,
       [email.toLowerCase()],
     );
 
     if (result.rows.length === 0) {
       return NextResponse.json(
-        {
-          error:
-            "Email not found in whitelist or has an associated user account",
-        },
+        { error: "Email not found in whitelist" },
         { status: 404 },
       );
     }

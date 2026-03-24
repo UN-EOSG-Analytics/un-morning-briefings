@@ -333,7 +333,7 @@ export default function AnalyticsPage() {
                     min={0}
                     max={100}
                     step={1}
-                    className="w-full [&_[data-slot=slider-range]]:bg-un-blue [&_[data-slot=slider-track]]:bg-blue-200"
+                    className="w-full **:data-[slot=slider-range]:bg-un-blue **:data-[slot=slider-track]:bg-blue-200"
                   />
                   <div className="text-xs text-slate-600">
                     {startDate
@@ -382,7 +382,7 @@ export default function AnalyticsPage() {
               </Button>
             </div>
             {loading ? (
-              <div className="flex h-[400px] items-center justify-center">
+              <div className="flex h-100 items-center justify-center">
                 <div className="text-center">
                   <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-un-blue"></div>
                   <p className="mt-2 text-sm text-slate-600">
@@ -396,7 +396,7 @@ export default function AnalyticsPage() {
                 connections={
                   showConnections ? analyticsData?.countryConnections || [] : []
                 }
-                className="h-[400px]"
+                className="h-100"
               />
             )}
           </CardContent>

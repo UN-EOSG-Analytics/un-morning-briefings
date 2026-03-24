@@ -89,6 +89,7 @@
       "tokenExpired": "Verification link has expired. Please register again.",
       "verificationFailed": "Email verification failed. Please try again.",
       "invalidCredentials": "Invalid email or password. Please check your credentials and try again.",
+      "notAuthorized": "Your account is not authorized to access this application. Please contact your team.",
       "genericError": "An error occurred. Please try again.",
       "serverError": "An error occurred processing your request"
     },
@@ -98,7 +99,7 @@
       "passwordMismatch": "Passwords do not match",
       "allFieldsRequired": "All fields are required",
       "invalidEmailAddress": "Invalid email address",
-      "emailNotAuthorized": "This email address is not authorized to register. Please contact an administrator.",
+      "emailNotAuthorized": "This email address is not authorized to register. Please contact your team.",
       "onlyUnEmail": "Only @un.org email addresses are allowed",
       "accountExists": "An account with this email already exists",
       "registrationSuccess": "Registration successful. Please check your email to verify your account.",

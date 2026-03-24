@@ -29,7 +29,7 @@ export const authOptions: NextAuthOptions = {
           );
 
           if (whitelistCheck.rows.length === 0) {
-            return null;
+            throw new Error("NOT_AUTHORIZED");
           }
 
           // Query user from database
@@ -71,6 +71,9 @@ export const authOptions: NextAuthOptions = {
             role: user.role,
           };
         } catch (error) {
+          if (error instanceof Error && error.message === "NOT_AUTHORIZED") {
+            throw error;
+          }
           console.error("authorize: Database error:", error);
           return null;
         }
@@ -101,6 +104,18 @@ export const authOptions: NextAuthOptions = {
         token.lastName = user.lastName;
         token.team = user.team;
         token.role = user.role;
+        token.whitelisted = true;
+      } else if (token.email) {
+        // Re-check whitelist on every token refresh
+        try {
+          const result = await query(
+            `SELECT id FROM morning_briefings.user_whitelist WHERE email = $1`,
+            [token.email],
+          );
+          token.whitelisted = result.rows.length > 0;
+        } catch {
+          // Keep existing value on DB error
+        }
       }
       return token;
     },

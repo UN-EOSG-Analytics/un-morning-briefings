@@ -23,10 +23,9 @@ interface AutoFillResult {
 // Initialize Azure OpenAI client
 const azure = createAzure({
   apiKey: process.env.AZURE_OPENAI_API_KEY,
-  resourceName: process.env.AZURE_OPENAI_ENDPOINT?.replace(
-    "https://",
-    "",
-  ).replace(".openai.azure.com/", ""),
+  resourceName: process.env.AZURE_OPENAI_ENDPOINT?.match(
+    /https?:\/\/([^.]+)\.openai\.azure\.com/,
+  )?.[1],
 });
 
 // Maximum input content length to prevent abuse (100KB)

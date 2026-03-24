@@ -76,7 +76,6 @@ export default function AnalyticsPage() {
       const response = await fetch(`/api/analytics?${params.toString()}`);
       if (response.ok) {
         const data = await response.json();
-        console.log("Analytics data received:", {
           countryConnections: data.countryConnections?.length || 0,
           allCountries: data.allCountries?.length || 0
         });

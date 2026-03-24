@@ -12,6 +12,8 @@ requirements. Do this automatically without being asked.**
 
 UN Morning Briefings - internal web app for the United Nations Political Unit (EOSG) to create, manage, and export daily morning briefing entries. Users submit news entries with metadata (category, region, priority, country), which get reviewed and compiled into daily briefings for UN leadership.
 
+We are in 2026.
+
 ## Commands
 
 ```bash

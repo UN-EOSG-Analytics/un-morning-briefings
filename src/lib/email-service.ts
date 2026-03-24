@@ -35,7 +35,7 @@ function buildEmailHtml(
   footerHtml: string = "",
 ): string {
   const logoDataUri = loadLogoDataUri();
-  const siteTitle = labels.settings.email.siteTitle;
+  const siteTitle = labels.app.name;
 
   return `<!DOCTYPE html>
 <html>
@@ -95,7 +95,6 @@ export async function sendEmail(
   try {
     if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
       console.warn("[EMAIL SERVICE] Warning: SMTP credentials not configured. Set SMTP_HOST, SMTP_USER, and SMTP_PASS in .env");
-      console.log("[EMAIL PREVIEW]", { to, subject, ...options?.previewExtra });
       return true;
     }
     const info = await transporter.sendMail({
@@ -106,7 +105,6 @@ export async function sendEmail(
       text,
       attachments: options?.attachments,
     });
-    console.log("[EMAIL SENT]", { messageId: info.messageId, to });
     return true;
   } catch (error) {
     console.error("[EMAIL ERROR]", error);
@@ -144,11 +142,11 @@ export async function sendPasswordResetEmail(
   firstName: string,
   baseUrl: string,
 ): Promise<boolean> {
-  const resetUrl = `${baseUrl}/reset-password?token=${token}`;
+  const resetUrl = `${baseUrl}/login?token=${token}`;
 
   const contentHtml = `
     <p style="margin:0 0 8px;font-size:15px;line-height:1.6;color:#374151;">Hi ${firstName},</p>
-    <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#374151;">We received a request to reset your password. Click the button below to create a new password.</p>
+    <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#374151;">A password reset has been requested for this account. Click the button below to set a new password.</p>
     <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#374151;"><strong>This link will expire in 30 minutes.</strong></p>
     ${emailButton(resetUrl, "Reset Password")}
     ${emailFallbackLink(resetUrl)}`;
@@ -160,7 +158,7 @@ export async function sendPasswordResetEmail(
     </div>`;
 
   const html = buildEmailHtml(contentHtml, footerHtml);
-  const text = `United Nations | Morning Briefings\n\nHi ${firstName},\n\nWe received a request to reset your password. Click the link below to create a new password:\n\n${resetUrl}\n\nThis link will expire in 30 minutes.\n\nSecurity Notice:\nIf you didn't request a password reset, please ignore this email. Your password will remain unchanged.\nFor security, this link can only be used once.`;
+  const text = `United Nations | Morning Briefings\n\nHi ${firstName},\n\nA password reset has been requested for this account. Click the link below to set a new password:\n\n${resetUrl}\n\nThis link will expire in 30 minutes.\n\nSecurity Notice:\nIf you didn't request a password reset, please ignore this email. Your password will remain unchanged.\nFor security, this link can only be used once.`;
 
   return sendEmail(email, "Reset your password - UN Morning Briefing System", html, text, { previewExtra: { resetUrl } });
 }

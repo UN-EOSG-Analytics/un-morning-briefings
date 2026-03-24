@@ -79,7 +79,6 @@ export async function POST(request: NextRequest) {
     // Always return success to prevent email enumeration
     // This prevents attackers from discovering valid email addresses
     if (userResult.rows.length === 0) {
-      console.log("[PASSWORD RESET] Request for non-existent or unverified user:", email);
       return NextResponse.json(
         {
           message: labels.auth.rateLimit.resetEmailSent,
@@ -95,10 +94,7 @@ export async function POST(request: NextRequest) {
     
     // Hash the token before storing (using bcrypt with 12 rounds)
     const tokenHash = await bcrypt.hash(resetToken, 12);
-    
-    // Set expiration to 30 minutes from now
-    const expiresAt = new Date(Date.now() + 30 * 60 * 1000);
-    
+
     // Get IP address for audit trail
     const ipAddress = ip.substring(0, 45); // Limit to IPv6 length
 
@@ -108,16 +104,16 @@ export async function POST(request: NextRequest) {
       [user.id]
     );
 
-    // Store the hashed token in database
+    // Store the hashed token in database, expiry set in SQL to avoid timezone issues
     await query(
-      `INSERT INTO pu_morning_briefings.password_resets 
-       (user_id, token_hash, expires_at, ip_address) 
-       VALUES ($1, $2, $3, $4)`,
-      [user.id, tokenHash, expiresAt, ipAddress]
+      `INSERT INTO pu_morning_briefings.password_resets
+       (user_id, token_hash, expires_at, ip_address)
+       VALUES ($1, $2, CURRENT_TIMESTAMP + interval '30 minutes', $3)`,
+      [user.id, tokenHash, ipAddress]
     );
 
-    // Get base URL for email link
-    const baseUrl = process.env.NEXTAUTH_URL || "https://briefings.eosg.dev";
+    // Get base URL from the incoming request so it works on any host (dev, staging, prod)
+    const baseUrl = `${request.nextUrl.protocol}//${request.nextUrl.host}`;
     
     // Send email with reset link containing the plain token
     const emailSent = await sendPasswordResetEmail(
@@ -128,11 +124,9 @@ export async function POST(request: NextRequest) {
     );
 
     if (!emailSent) {
-      console.error("[PASSWORD RESET] Failed to send email to:", user.email);
       // Don't reveal email send failure to user for security
     }
 
-    console.log("[PASSWORD RESET] Reset email sent to:", user.email);
 
     // Always return generic success message
     return NextResponse.json(

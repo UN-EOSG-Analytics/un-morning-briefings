@@ -4,11 +4,11 @@ import { usePathname } from "next/navigation";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 
-const NO_SHELL_ROUTES = ["/login"];
+const NO_SHELL_PREFIXES = ["/login"];
 
 export function ShellWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const showShell = !NO_SHELL_ROUTES.includes(pathname);
+  const showShell = !NO_SHELL_PREFIXES.some((prefix) => pathname.startsWith(prefix));
 
   if (!showShell) {
     return <>{children}</>;

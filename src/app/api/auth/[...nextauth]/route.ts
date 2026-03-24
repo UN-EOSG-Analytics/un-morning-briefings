@@ -3,18 +3,6 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { query } from "@/lib/db";
 import bcrypt from "bcryptjs";
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const getAuthUrl = () => {
-  if (process.env.NEXTAUTH_URL) {
-    return process.env.NEXTAUTH_URL;
-  }
-
-  if (process.env.VERCEL_URL) {
-    return `https://${process.env.VERCEL_URL}`;
-  }
-
-  return "http://localhost:3000";
-};
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -42,7 +30,6 @@ export const authOptions: NextAuthOptions = {
           );
 
           if (whitelistCheck.rows.length === 0) {
-            console.log("Login denied: email not whitelisted");
             return null;
           }
 

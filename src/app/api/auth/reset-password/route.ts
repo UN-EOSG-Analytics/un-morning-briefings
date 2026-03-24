@@ -78,7 +78,6 @@ export async function POST(request: NextRequest) {
       [matchedToken.user_id, matchedToken.id]
     );
 
-    console.log("[PASSWORD RESET] Password successfully reset for user:", matchedToken.email);
 
     return NextResponse.json(
       {
@@ -147,7 +146,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error("[PASSWORD RESET TOKEN VALIDATION ERROR]", error);
     return NextResponse.json(
-      { valid: false, message: labels.auth.validation.tokenValidationError },
+      { valid: false, message: labels.auth.validation.tokenValidationError, serverError: true },
       { status: 500 }
     );
   }

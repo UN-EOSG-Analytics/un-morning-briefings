@@ -313,7 +313,6 @@ export async function GET(request: NextRequest) {
       countryConnections: countryConnections.rows,
     };
 
-    console.log("Returning country connections:", countryConnections.rows.length);
 
     return NextResponse.json(responseData);
   } catch (error) {

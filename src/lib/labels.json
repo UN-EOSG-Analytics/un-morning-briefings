@@ -53,12 +53,12 @@
     },
     "forgotPassword": {
       "title": "Reset Your Password",
-      "subtitle": "Enter your email address and we'll send you a link to reset your password.",
+      "subtitle": "Enter your email address and you will receive a link to reset your password.",
       "emailHelper": "Must be a valid @un.org email address",
       "submitButton": "Send Reset Link",
       "submitLoading": "Sending...",
       "successTitle": "Check your email",
-      "successMessage": "If an account exists with that email, we've sent a password reset link. The link will expire in 30 minutes.",
+      "successMessage": "If that email address is registered, a password reset link has been sent. The link will expire in 30 minutes.",
       "securityNote": "For security reasons, password reset links expire after 30 minutes and can only be used once."
     },
     "resetPassword": {
@@ -75,7 +75,9 @@
       "successTitle": "Password reset successful!",
       "successRedirect": "Redirecting you to login...",
       "invalidTitle": "Invalid Reset Link",
+      "serverErrorTitle": "Something went wrong",
       "requestNewLink": "Request New Reset Link",
+      "retryValidation": "Try Again",
       "securityNote": "Your password will be securely encrypted and stored."
     },
     "messages": {

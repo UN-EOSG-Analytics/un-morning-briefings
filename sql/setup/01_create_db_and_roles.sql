@@ -3,7 +3,7 @@
 -- Run as: un80devpgadmin80 (Azure admin)
 -- Connected to: postgres (maintenance database)
 
--- echo "PROD: $(openssl rand -base64 32)" && echo "DEV:  $(openssl rand -base64 32)"
+-- node -e "const c=require('crypto'); console.log('PROD:',c.randomBytes(32).toString('hex')); console.log('DEV: ',c.randomBytes(32).toString('hex'));"
 -- =============================================================================
 
 -- Production database
@@ -23,7 +23,7 @@ CREATE ROLE morning_briefings_app
     NOCREATEROLE
     NOINHERIT
     CONNECTION LIMIT 25
-    PASSWORD '1ur8JeL2FelKS3wXdV36X+WA+HdM/WEwhLeH2kI2lOg=';
+    PASSWORD '';
 
 -- Development database
 CREATE DATABASE morning_meetings_dev
@@ -42,7 +42,7 @@ CREATE ROLE morning_briefings_dev
     NOCREATEROLE
     NOINHERIT
     CONNECTION LIMIT 10
-    PASSWORD 'zPCUNm96h0Au0XGcy9onFFN4dEWxggEVCyiy9dOwYoc=';
+    PASSWORD '';
 
 -- =============================================================================
 -- IMPORTANT: Now connect to each new database and lock down PUBLIC.

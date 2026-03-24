@@ -73,6 +73,8 @@ CREATE TABLE IF NOT EXISTS morning_briefings.entries (
     author_id         INTEGER REFERENCES morning_briefings.users ON DELETE SET NULL,
     previous_entry_id TEXT REFERENCES morning_briefings.entries ON DELETE SET NULL,
     thematic          TEXT,
+    text_content      TEXT,
+    search_vector     TSVECTOR,
     created_at        TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at        TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP NOT NULL,
 
@@ -120,6 +122,38 @@ CREATE TRIGGER update_entries_updated_at
     BEFORE UPDATE ON morning_briefings.entries
     FOR EACH ROW
     EXECUTE FUNCTION morning_briefings.update_updated_at_column();
+
+-- ─── entries: full-text search trigger ───────────────────────────────────────
+-- text_content is populated by the application layer (JS stripHtmlToText).
+-- The trigger only builds search_vector from headline + text_content.
+
+CREATE OR REPLACE FUNCTION morning_briefings.entries_fts_update()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF TG_OP = 'UPDATE'
+       AND NEW.text_content IS NOT DISTINCT FROM OLD.text_content
+       AND NEW.headline IS NOT DISTINCT FROM OLD.headline
+    THEN
+        RETURN NEW;
+    END IF;
+
+    NEW.search_vector :=
+        setweight(to_tsvector('english', coalesce(NEW.headline, '')), 'A')
+        ||
+        setweight(to_tsvector('english', coalesce(NEW.text_content, '')), 'B');
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS entries_fts_update ON morning_briefings.entries;
+CREATE TRIGGER entries_fts_update
+    BEFORE INSERT OR UPDATE ON morning_briefings.entries
+    FOR EACH ROW
+    EXECUTE FUNCTION morning_briefings.entries_fts_update();
+
+CREATE INDEX IF NOT EXISTS idx_entries_search_vector
+    ON morning_briefings.entries USING GIN (search_vector);
 
 -- ─── images ───────────────────────────────────────────────────────────────────
 

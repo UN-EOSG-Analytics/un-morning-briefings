@@ -3,7 +3,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { query } from "@/lib/db";
 import { checkAuth } from "@/lib/auth-helper";
-import { serializeCountry } from "@/lib/entry-queries";
+import { serializeCountry, stripHtmlToText } from "@/lib/entry-queries";
 
 /**
  * POST /api/entries/import
@@ -62,8 +62,8 @@ export async function POST(request: NextRequest) {
         await query(
           `INSERT INTO morning_briefings.entries (
             id, category, priority, region, country, headline, date, entry,
-            source_name, source_url, source_date, pu_note, thematic, author_id, status, ai_summary, approval_status
-          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)`,
+            source_name, source_url, source_date, pu_note, thematic, author_id, status, ai_summary, approval_status, text_content
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)`,
           [
             entry.id,
             entry.category,
@@ -82,6 +82,7 @@ export async function POST(request: NextRequest) {
             entry.status || "draft",
             entry.aiSummary || null,
             entry.approvalStatus || "pending",
+            stripHtmlToText(entry.entry),
           ],
         );
 

@@ -3,7 +3,7 @@ import { query } from "@/lib/db";
 import { blobStorage } from "@/lib/blob-storage";
 import { convertImageReferencesServerSide } from "@/lib/image-conversion";
 import { checkAuth } from "@/lib/auth-helper";
-import { serializeCountry, fetchEntryById } from "@/lib/entry-queries";
+import { serializeCountry, stripHtmlToText, fetchEntryById } from "@/lib/entry-queries";
 import labels from "@/lib/labels.json";
 
 const VALID_CATEGORIES = (labels as any).categories as string[];
@@ -173,6 +173,8 @@ export async function PUT(
     if (entryContent !== undefined) {
       updateFields.push(`entry = $${paramCount++}`);
       updateValues.push(entryContent);
+      updateFields.push(`text_content = $${paramCount++}`);
+      updateValues.push(stripHtmlToText(entryContent));
     }
     if (data.sourceName !== undefined) {
       updateFields.push(`source_name = $${paramCount++}`);

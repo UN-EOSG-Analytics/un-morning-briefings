@@ -7,6 +7,34 @@
 
 import { query } from "@/lib/db";
 
+// ─── HTML → Plain Text ──────────────────────────────────────────────────────
+
+/** Strip HTML tags from entry content and return clean plain text.
+ *  Used to populate the `text_content` column for FTS and future embeddings. */
+export function stripHtmlToText(html: string): string {
+  let text = html;
+  // Remove <img> tags entirely (they carry image-ref:// URLs, no useful text)
+  text = text.replace(/<img[^>]*>/gi, "");
+  // Replace block-level closing tags and line-break elements with spaces
+  text = text.replace(
+    /<\/(p|li|h[1-6]|blockquote|div|tr|td|th)>|<br\s*\/?>|<hr\s*\/?>/gi,
+    " ",
+  );
+  // Strip all remaining HTML tags
+  text = text.replace(/<[^>]+>/g, "");
+  // Decode common HTML entities
+  text = text
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&nbsp;/g, " ");
+  // Collapse whitespace and trim
+  text = text.replace(/\s+/g, " ").trim();
+  return text;
+}
+
 // ─── Country Serialization ───────────────────────────────────────────────────
 
 /** Serialize country field for database storage (string or array → JSON string) */

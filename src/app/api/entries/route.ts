@@ -7,6 +7,7 @@ import { convertImageReferencesServerSide } from "@/lib/image-conversion";
 import { checkAuth } from "@/lib/auth-helper";
 import {
   serializeCountry,
+  stripHtmlToText,
   fetchEntries,
   fetchEntryById,
   getAuthorId,
@@ -133,11 +134,12 @@ export async function POST(request: NextRequest) {
 
     // Insert entry with author_id foreign key
     // Store date as-is without timezone conversion
+    const textContent = stripHtmlToText(entryContent);
     await query(
       `INSERT INTO morning_briefings.entries (
         id, category, priority, region, country, headline, date, entry,
-        source_name, source_url, source_date, pu_note, thematic, author_id, status, approval_status, previous_entry_id
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)`,
+        source_name, source_url, source_date, pu_note, thematic, author_id, status, approval_status, previous_entry_id, text_content
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)`,
       [
         id,
         data.category,
@@ -156,6 +158,7 @@ export async function POST(request: NextRequest) {
         data.status || null,
         "pending",
         data.previousEntryId || null,
+        textContent,
       ],
     );
 

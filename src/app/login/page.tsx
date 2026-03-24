@@ -2,19 +2,21 @@
 
 import { signIn } from "next-auth/react";
 import { useState, FormEvent, useEffect, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import {
-  Lock,
   AlertCircle,
   Mail,
   CheckCircle2,
-  UserPlus,
   ArrowLeft,
 } from "lucide-react";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { SelectField } from "@/components/SelectField";
 import { TEAMS } from "@/lib/teams";
 import labels from "@/lib/labels.json";
+
+const inputClass =
+  "block w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-un-blue focus:ring-1 focus:ring-un-blue focus:outline-none disabled:opacity-50 transition-colors";
 
 function LoginPageContent() {
   const [email, setEmail] = useState("");
@@ -25,10 +27,8 @@ function LoginPageContent() {
   const [showRegister, setShowRegister] = useState(false);
   const [registrationSuccess, setRegistrationSuccess] = useState(false);
   const [registrationEmail, setRegistrationEmail] = useState("");
-  const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Registration form state
   const [regFormData, setRegFormData] = useState({
     email: "",
     password: "",
@@ -69,18 +69,14 @@ function LoginPageContent() {
     setError("");
     setSuccess("");
     setIsLoading(true);
-
     try {
       const result = await signIn("credentials", {
         email,
         password,
         redirect: false,
       });
-
       if (result?.error) {
-        setError(
-          labels.auth.messages.invalidCredentials,
-        );
+        setError(labels.auth.messages.invalidCredentials);
       } else if (result?.ok) {
         window.location.href = "/";
       }
@@ -95,29 +91,24 @@ function LoginPageContent() {
     e.preventDefault();
     setError("");
 
-    // Validate fields
     if (!regFormData.email.endsWith("@un.org")) {
       setError(labels.auth.validation.invalidEmail);
       return;
     }
-
     if (regFormData.password.length < 8) {
       setError(labels.auth.validation.passwordMinLength);
       return;
     }
-
     if (regFormData.password !== regFormData.confirmPassword) {
       setError(labels.auth.validation.passwordMismatch);
       return;
     }
-
     if (!regFormData.firstName || !regFormData.lastName || !regFormData.team) {
       setError(labels.auth.validation.allFieldsRequired);
       return;
     }
 
     setIsLoading(true);
-
     try {
       const response = await fetch("/api/auth/register", {
         method: "POST",
@@ -130,14 +121,11 @@ function LoginPageContent() {
           team: regFormData.team,
         }),
       });
-
       const data = await response.json();
-
       if (!response.ok) {
         setError(data.error || labels.auth.messages.genericError);
         return;
       }
-
       setRegistrationEmail(regFormData.email);
       setRegistrationSuccess(true);
     } catch {
@@ -161,348 +149,269 @@ function LoginPageContent() {
     });
   };
 
+  const Logo = () => (
+    <Image
+      src="/images/UN_Logo_Stacked_Colour_English.svg"
+      alt="UN Logo"
+      width={100}
+      height={40}
+      className="h-10 w-auto"
+      priority
+    />
+  );
+
+  const ErrorBanner = ({ message }: { message: string }) => (
+    <div className="flex items-start gap-2 rounded-md border border-red-200 bg-red-50 px-3 py-2.5">
+      <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-red-500" />
+      <p className="text-sm text-red-600">{message}</p>
+    </div>
+  );
+
+  const SuccessBanner = ({ message }: { message: string }) => (
+    <div className="flex items-start gap-2 rounded-md border border-green-200 bg-green-50 px-3 py-2.5">
+      <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-green-500" />
+      <p className="text-sm text-green-700">{message}</p>
+    </div>
+  );
+
   return (
-    <div className="flex items-center justify-center bg-slate-50 px-4 py-20">
-      <div className="w-full max-w-md">
-        {/* Registration Success Message */}
-        {registrationSuccess ? (
-          <div className="rounded-lg bg-white p-8 shadow-lg">
-            <div className="mb-4 flex items-center justify-center">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
-                <CheckCircle2 className="h-10 w-10 text-green-600" />
-              </div>
+    <div className="w-full max-w-sm">
+      {registrationSuccess ? (
+        /* Registration Success */
+        <div className="rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
+          <Logo />
+          <div className="mt-8 mb-6 flex flex-col items-center text-center">
+            <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-green-50">
+              <CheckCircle2 className="h-7 w-7 text-green-500" />
             </div>
-            <h2 className="mb-2 text-center text-xl font-semibold text-slate-900">
+            <h2 className="mb-1 text-lg font-semibold text-slate-900">
               {labels.auth.register.checkEmail}
             </h2>
-            <p className="mb-6 text-center text-sm text-slate-600">
+            <p className="text-sm text-slate-500">
               {labels.auth.register.verificationSent}{" "}
-              <strong>{registrationEmail}</strong>
+              <span className="font-medium text-slate-700">{registrationEmail}</span>
             </p>
-            <div className="mb-6 flex items-start gap-3 rounded-md bg-blue-50 p-4">
-              <Mail className="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600" />
-              <div className="text-sm text-slate-700">
-                <p className="mb-1 font-medium">{labels.auth.register.verifyPrompt}</p>
-                <p className="text-slate-600">
-                  {labels.auth.register.verifyDescription}
-                </p>
-              </div>
-            </div>
-            <Button
-              onClick={handleBackToLogin}
-              className="w-full bg-un-blue hover:bg-un-blue/90"
-            >
-              {labels.auth.register.backToLogin}
-            </Button>
           </div>
-        ) : showRegister ? (
-          /* Registration Form */
-          <div className="rounded-lg bg-white p-8 shadow-lg">
-            <div className="mb-8 text-left">
-              <Button
-                variant="ghost"
-                onClick={handleBackToLogin}
-                className="mb-4 -ml-2 text-slate-600 hover:text-slate-900"
-              >
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                {labels.auth.register.backToLogin}
-              </Button>
-              <h1 className="mb-2 text-2xl font-semibold text-slate-900">
-                {labels.auth.register.title}
-              </h1>
-              <p className="text-sm text-slate-600">
-                {labels.auth.register.subtitle}
-              </p>
+          <div className="mb-6 flex items-start gap-3 rounded-lg bg-slate-50 p-3">
+            <Mail className="mt-0.5 h-4 w-4 flex-shrink-0 text-slate-400" />
+            <div className="text-sm text-slate-600">
+              <p className="font-medium text-slate-700">{labels.auth.register.verifyPrompt}</p>
+              <p className="mt-0.5">{labels.auth.register.verifyDescription}</p>
             </div>
+          </div>
+          <Button
+            onClick={handleBackToLogin}
+            className="w-full bg-un-blue text-white hover:bg-un-blue/90"
+          >
+            {labels.auth.register.backToLogin}
+          </Button>
+        </div>
+      ) : showRegister ? (
+        /* Registration Form */
+        <div className="rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
+          <Logo />
+          <div className="mt-6 mb-6">
+            <button
+              onClick={handleBackToLogin}
+              className="mb-4 flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800 transition-colors"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" />
+              {labels.auth.register.backToLogin}
+            </button>
+            <h1 className="text-xl font-semibold text-slate-900">
+              {labels.auth.register.title}
+            </h1>
+            <p className="mt-1 text-sm text-slate-500">
+              {labels.auth.register.subtitle}
+            </p>
+          </div>
 
-            <form onSubmit={handleRegisterSubmit} className="space-y-4">
-              {error && (
-                <div className="flex items-start gap-2 rounded-md border border-red-200 bg-red-50 p-3">
-                  <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-600" />
-                  <p className="text-sm text-red-600">{error}</p>
-                </div>
-              )}
+          <form onSubmit={handleRegisterSubmit} className="space-y-4">
+            {error && <ErrorBanner message={error} />}
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label
-                    htmlFor="firstName"
-                    className="mb-2 block text-sm font-medium text-slate-700"
-                  >
-                    {labels.auth.register.firstName}
-                  </label>
-                  <input
-                    id="firstName"
-                    type="text"
-                    required
-                    value={regFormData.firstName}
-                    onChange={(e) =>
-                      setRegFormData({
-                        ...regFormData,
-                        firstName: e.target.value,
-                      })
-                    }
-                    className="block w-full rounded-md border border-slate-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-un-blue focus:outline-none"
-                    disabled={isLoading}
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="lastName"
-                    className="mb-2 block text-sm font-medium text-slate-700"
-                  >
-                    {labels.auth.register.lastName}
-                  </label>
-                  <input
-                    id="lastName"
-                    type="text"
-                    required
-                    value={regFormData.lastName}
-                    onChange={(e) =>
-                      setRegFormData({
-                        ...regFormData,
-                        lastName: e.target.value,
-                      })
-                    }
-                    className="block w-full rounded-md border border-slate-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-un-blue focus:outline-none"
-                    disabled={isLoading}
-                  />
-                </div>
-              </div>
-
+            <div className="grid grid-cols-2 gap-3">
               <div>
-                <label
-                  htmlFor="regEmail"
-                  className="mb-2 block text-sm font-medium text-slate-700"
-                >
-                  Email Address
+                <label htmlFor="firstName" className="mb-1.5 block text-sm font-medium text-slate-700">
+                  {labels.auth.register.firstName}
                 </label>
-                <div className="relative">
-                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                    <Mail className="h-5 w-5 text-slate-400" />
-                  </div>
-                  <input
-                    id="regEmail"
-                    type="email"
-                    required
-                    value={regFormData.email}
-                    onChange={(e) =>
-                      setRegFormData({ ...regFormData, email: e.target.value })
-                    }
-                    className="block w-full rounded-md border border-slate-300 py-2 pr-3 pl-10 focus:border-transparent focus:ring-2 focus:ring-un-blue focus:outline-none"
-                    placeholder={labels.auth.login.emailPlaceholder}
-                    disabled={isLoading}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <SelectField
-                  label="Team"
-                  placeholder="Select a team..."
-                  value={regFormData.team}
-                  onValueChange={(value) =>
-                    setRegFormData({ ...regFormData, team: value })
-                  }
-                  options={TEAMS}
-                  required={true}
-                  className="w-full"
+                <input
+                  id="firstName"
+                  type="text"
+                  required
+                  value={regFormData.firstName}
+                  onChange={(e) => setRegFormData({ ...regFormData, firstName: e.target.value })}
+                  className={inputClass}
+                  disabled={isLoading}
                 />
               </div>
-
               <div>
-                <label
-                  htmlFor="regPassword"
-                  className="mb-2 block text-sm font-medium text-slate-700"
-                >
-                  {labels.auth.register.password}
+                <label htmlFor="lastName" className="mb-1.5 block text-sm font-medium text-slate-700">
+                  {labels.auth.register.lastName}
                 </label>
-                <div className="relative">
-                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                    <Lock className="h-5 w-5 text-slate-400" />
-                  </div>
-                  <input
-                    id="regPassword"
-                    type="password"
-                    required
-                    value={regFormData.password}
-                    onChange={(e) =>
-                      setRegFormData({
-                        ...regFormData,
-                        password: e.target.value,
-                      })
-                    }
-                    className="block w-full rounded-md border border-slate-300 py-2 pr-3 pl-10 focus:border-transparent focus:ring-2 focus:ring-un-blue focus:outline-none"
-                    placeholder={labels.auth.register.passwordPlaceholder}
-                    disabled={isLoading}
-                  />
-                </div>
+                <input
+                  id="lastName"
+                  type="text"
+                  required
+                  value={regFormData.lastName}
+                  onChange={(e) => setRegFormData({ ...regFormData, lastName: e.target.value })}
+                  className={inputClass}
+                  disabled={isLoading}
+                />
               </div>
-
-              <div>
-                <label
-                  htmlFor="confirmPassword"
-                  className="mb-2 block text-sm font-medium text-slate-700"
-                >
-                  {labels.auth.register.confirmPassword}
-                </label>
-                <div className="relative">
-                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                    <Lock className="h-5 w-5 text-slate-400" />
-                  </div>
-                  <input
-                    id="confirmPassword"
-                    type="password"
-                    required
-                    value={regFormData.confirmPassword}
-                    onChange={(e) =>
-                      setRegFormData({
-                        ...regFormData,
-                        confirmPassword: e.target.value,
-                      })
-                    }
-                    className="block w-full rounded-md border border-slate-300 py-2 pr-3 pl-10 focus:border-transparent focus:ring-2 focus:ring-un-blue focus:outline-none"
-                    placeholder={labels.auth.register.confirmPlaceholder}
-                    disabled={isLoading}
-                  />
-                </div>
-              </div>
-
-              <Button
-                type="submit"
-                disabled={isLoading}
-                className="w-full bg-un-blue py-2 text-white hover:bg-un-blue/95"
-              >
-                {isLoading ? labels.auth.register.submitLoading : labels.auth.register.submitButton}
-              </Button>
-            </form>
-
-            <div className="mt-8 text-center text-xs text-slate-500">
-              <p>© {new Date().getFullYear()} {labels.app.org}</p>
-            </div>
-          </div>
-        ) : (
-          /* Login Form */
-          <div className="rounded-lg bg-white p-8 shadow-lg">
-            {/* Title */}
-            <div className="mb-8 text-left">
-              <h1 className="mb-2 text-2xl font-semibold text-slate-900">
-                {labels.auth.login.title}
-              </h1>
-              <p className="text-sm text-slate-600">
-                {labels.auth.login.subtitle}
-              </p>
             </div>
 
-            {/* Form */}
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label
-                  htmlFor="email"
-                  className="mb-2 block text-sm font-medium text-slate-700"
-                >
-                  {labels.auth.login.emailLabel}
-                </label>
-                <div className="relative">
-                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                    <Mail className="h-5 w-5 text-slate-400" />
-                  </div>
-                  <input
-                    id="email"
-                    name="email"
-                    type="email"
-                    autoComplete="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="block w-full rounded-md border border-slate-300 py-2 pr-3 pl-10 focus:border-transparent focus:ring-2 focus:ring-un-blue focus:outline-none"
-                    placeholder={labels.auth.login.emailPlaceholder}
-                    disabled={isLoading}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <div className="mb-2 flex items-center justify-between">
-                  <label
-                    htmlFor="password"
-                    className="block text-sm font-medium text-slate-700"
-                  >
-                    {labels.auth.login.passwordLabel}
-                  </label>
-                  <a
-                    href="/forgot-password"
-                    className="text-xs text-un-blue hover:text-un-blue/80 transition-colors"
-                  >
-                    {labels.auth.login.forgotPassword}
-                  </a>
-                </div>
-                <div className="relative">
-                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                    <Lock className="h-5 w-5 text-slate-400" />
-                  </div>
-                  <input
-                    id="password"
-                    name="password"
-                    type="password"
-                    autoComplete="current-password"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="block w-full rounded-md border border-slate-300 py-2 pr-3 pl-10 focus:border-transparent focus:ring-2 focus:ring-un-blue focus:outline-none"
-                    placeholder={labels.auth.login.passwordPlaceholder}
-                    disabled={isLoading}
-                  />
-                </div>
-              </div>
-
-              {error && (
-                <div className="flex items-start gap-2 rounded-md border border-red-200 bg-red-50 p-3">
-                  <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-600" />
-                  <p className="text-sm text-red-600">{error}</p>
-                </div>
-              )}
-
-              {success && (
-                <div className="flex items-start gap-2 rounded-md border border-green-200 bg-green-50 p-3">
-                  <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-green-600" />
-                  <p className="text-sm text-green-600">{success}</p>
-                </div>
-              )}
-
-              <Button
-                type="submit"
+            <div>
+              <label htmlFor="regEmail" className="mb-1.5 block text-sm font-medium text-slate-700">
+                {labels.auth.login.emailLabel}
+              </label>
+              <input
+                id="regEmail"
+                type="email"
+                required
+                value={regFormData.email}
+                onChange={(e) => setRegFormData({ ...regFormData, email: e.target.value })}
+                className={inputClass}
+                placeholder={labels.auth.login.emailPlaceholder}
                 disabled={isLoading}
-                className="w-full bg-un-blue py-2 text-white hover:bg-un-blue/95"
-              >
-                {isLoading ? labels.auth.login.loginLoading : labels.auth.login.loginButton}
-              </Button>
-            </form>
+              />
+            </div>
 
-            {/* Register Section */}
-            <div className="mt-6 border-t border-slate-200 pt-6">
-              <p className="mb-3 text-center text-sm text-slate-600">
-                {labels.auth.login.noAccount}
-              </p>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setShowRegister(true)}
+            <div>
+              <SelectField
+                label="Team"
+                placeholder="Select a team..."
+                value={regFormData.team}
+                onValueChange={(value) => setRegFormData({ ...regFormData, team: value })}
+                options={TEAMS}
+                required={true}
                 className="w-full"
-                disabled={isLoading}
-              >
-                <UserPlus className="mr-2 h-4 w-4" />
-                {labels.auth.login.createAccount}
-              </Button>
+              />
             </div>
 
-            {/* Footer */}
-            <div className="mt-8 text-center text-xs text-slate-500">
-              <p>© {new Date().getFullYear()} {labels.app.org}</p>
+            <div>
+              <label htmlFor="regPassword" className="mb-1.5 block text-sm font-medium text-slate-700">
+                {labels.auth.register.password}
+              </label>
+              <input
+                id="regPassword"
+                type="password"
+                required
+                value={regFormData.password}
+                onChange={(e) => setRegFormData({ ...regFormData, password: e.target.value })}
+                className={inputClass}
+                placeholder={labels.auth.register.passwordPlaceholder}
+                disabled={isLoading}
+              />
             </div>
+
+            <div>
+              <label htmlFor="confirmPassword" className="mb-1.5 block text-sm font-medium text-slate-700">
+                {labels.auth.register.confirmPassword}
+              </label>
+              <input
+                id="confirmPassword"
+                type="password"
+                required
+                value={regFormData.confirmPassword}
+                onChange={(e) => setRegFormData({ ...regFormData, confirmPassword: e.target.value })}
+                className={inputClass}
+                placeholder={labels.auth.register.confirmPlaceholder}
+                disabled={isLoading}
+              />
+            </div>
+
+            <Button
+              type="submit"
+              disabled={isLoading}
+              className="w-full bg-un-blue text-white hover:bg-un-blue/90"
+            >
+              {isLoading ? labels.auth.register.submitLoading : labels.auth.register.submitButton}
+            </Button>
+          </form>
+        </div>
+      ) : (
+        /* Login Form */
+        <div className="rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
+          <Logo />
+          <div className="mt-6 mb-6">
+            <h1 className="text-xl font-semibold text-slate-900">
+              {labels.auth.login.title}
+            </h1>
+            <p className="mt-1 text-sm text-slate-500">
+              {labels.auth.login.subtitle}
+            </p>
           </div>
-        )}
-      </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-slate-700">
+                {labels.auth.login.emailLabel}
+              </label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className={inputClass}
+                placeholder={labels.auth.login.emailPlaceholder}
+                disabled={isLoading}
+              />
+            </div>
+
+            <div>
+              <div className="mb-1.5 flex items-center justify-between">
+                <label htmlFor="password" className="text-sm font-medium text-slate-700">
+                  {labels.auth.login.passwordLabel}
+                </label>
+                <a
+                  href="/forgot-password"
+                  className="text-xs text-un-blue hover:text-un-blue/80 transition-colors"
+                >
+                  {labels.auth.login.forgotPassword}
+                </a>
+              </div>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                autoComplete="current-password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className={inputClass}
+                placeholder={labels.auth.login.passwordPlaceholder}
+                disabled={isLoading}
+              />
+            </div>
+
+            {error && <ErrorBanner message={error} />}
+            {success && <SuccessBanner message={success} />}
+
+            <Button
+              type="submit"
+              disabled={isLoading}
+              className="w-full bg-un-blue text-white hover:bg-un-blue/90"
+            >
+              {isLoading ? labels.auth.login.loginLoading : labels.auth.login.loginButton}
+            </Button>
+          </form>
+
+          <p className="mt-5 text-center text-sm text-slate-500">
+            {labels.auth.login.noAccount}{" "}
+            <button
+              type="button"
+              onClick={() => setShowRegister(true)}
+              disabled={isLoading}
+              className="font-medium text-un-blue hover:text-un-blue/80 transition-colors disabled:opacity-50"
+            >
+              {labels.auth.login.createAccount}
+            </button>
+          </p>
+        </div>
+      )}
     </div>
   );
 }

@@ -18,8 +18,6 @@ UN Morning Briefings - internal web app for the United Nations Political Unit (E
 pnpm dev              # Start dev server (port 3000)
 pnpm build            # Production build
 pnpm lint             # ESLint
-pnpm format           # Prettier format
-pnpm format:check     # Check formatting
 ```
 
 Package manager is **pnpm** (v10.30.3) - do not use npm or yarn.

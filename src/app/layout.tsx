@@ -7,6 +7,7 @@ import { PopupProvider } from "@/lib/popup-context";
 import { UnsavedChangesProvider } from "@/lib/unsaved-changes-context";
 import { PopupContainer } from "@/components/Popup";
 import { AuthProvider } from "@/components/AuthProvider";
+import { ShellWrapper } from "@/components/ShellWrapper";
 import "./globals.css";
 
 // https://fonts.google.com/specimen/Roboto
@@ -46,13 +47,9 @@ export default function RootLayout({
         <AuthProvider>
           <PopupProvider>
             <UnsavedChangesProvider>
-              <div className="flex min-h-screen flex-col">
-                <Navbar />
-                <main className="flex-1 pt-16">
-                  {children}
-                </main>
-                <Footer />
-              </div>
+              <ShellWrapper>
+                {children}
+              </ShellWrapper>
               <PopupContainer />
             </UnsavedChangesProvider>
           </PopupProvider>

@@ -22,7 +22,7 @@ export async function GET(
     }
 
     const result = await query(
-      `SELECT id, blob_url, mime_type, filename FROM pu_morning_briefings.images WHERE id = $1`,
+      `SELECT id, blob_url, mime_type, filename FROM morning_briefings.images WHERE id = $1`,
       [id],
     );
 

@@ -25,7 +25,7 @@ export const authOptions: NextAuthOptions = {
         try {
           // Check if email is whitelisted
           const whitelistCheck = await query(
-            `SELECT id FROM pu_morning_briefings.user_whitelist WHERE email = $1`,
+            `SELECT id FROM morning_briefings.user_whitelist WHERE email = $1`,
             [credentials.email.toLowerCase()],
           );
 
@@ -35,8 +35,8 @@ export const authOptions: NextAuthOptions = {
 
           // Query user from database
           const result = await query(
-            `SELECT id, email, password_hash, first_name, last_name, team, email_verified 
-             FROM pu_morning_briefings.users 
+            `SELECT id, email, password_hash, first_name, last_name, team, role, email_verified
+             FROM morning_briefings.users
              WHERE email = $1`,
             [credentials.email.toLowerCase()],
           );
@@ -69,6 +69,7 @@ export const authOptions: NextAuthOptions = {
             firstName: user.first_name,
             lastName: user.last_name,
             team: user.team,
+            role: user.role,
           };
         } catch (error) {
           console.error("authorize: Database error:", error);
@@ -100,6 +101,7 @@ export const authOptions: NextAuthOptions = {
         token.firstName = user.firstName;
         token.lastName = user.lastName;
         token.team = user.team;
+        token.role = user.role;
       }
       return token;
     },
@@ -109,6 +111,7 @@ export const authOptions: NextAuthOptions = {
         session.user.firstName = token.firstName;
         session.user.lastName = token.lastName;
         session.user.team = token.team;
+        session.user.role = token.role;
       }
       return session;
     },

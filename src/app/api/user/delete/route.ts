@@ -15,7 +15,7 @@ export async function DELETE() {
 
     // Delete the user from the database
     const result = await query(
-      "DELETE FROM pu_morning_briefings.users WHERE email = $1 RETURNING id",
+      "DELETE FROM morning_briefings.users WHERE email = $1 RETURNING id",
       [userEmail],
     );
 

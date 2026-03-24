@@ -13,6 +13,13 @@ import {
 } from "@/lib/entry-queries";
 import labels from "@/lib/labels.json";
 
+const VALID_CATEGORIES = (labels as any).categories as string[];
+const VALID_PRIORITIES = ((labels as any).priorities as { value: string }[]).map(
+  (p) => p.value,
+);
+const VALID_REGIONS = (labels as any).regions as string[];
+const VALID_STATUSES = ["draft", "submitted"];
+
 /**
  * GET /api/entries
  * Fetch entries with optional filters for date, status, and author
@@ -77,6 +84,20 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { entry: entryContent, images, ...data } = body;
 
+    // Validate domain values
+    if (data.category && !VALID_CATEGORIES.includes(data.category)) {
+      return NextResponse.json({ error: "Invalid category" }, { status: 400 });
+    }
+    if (data.priority && !VALID_PRIORITIES.includes(data.priority)) {
+      return NextResponse.json({ error: "Invalid priority" }, { status: 400 });
+    }
+    if (data.region && !VALID_REGIONS.includes(data.region)) {
+      return NextResponse.json({ error: "Invalid region" }, { status: 400 });
+    }
+    if (data.status && !VALID_STATUSES.includes(data.status)) {
+      return NextResponse.json({ error: "Invalid status" }, { status: 400 });
+    }
+
     // Upload images to blob storage
     const uploadedImages = [];
     if (images && images.length > 0) {
@@ -113,7 +134,7 @@ export async function POST(request: NextRequest) {
     // Insert entry with author_id foreign key
     // Store date as-is without timezone conversion
     await query(
-      `INSERT INTO pu_morning_briefings.entries (
+      `INSERT INTO morning_briefings.entries (
         id, category, priority, region, country, headline, date, entry,
         source_name, source_url, source_date, pu_note, thematic, author_id, status, approval_status, previous_entry_id
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)`,
@@ -142,7 +163,7 @@ export async function POST(request: NextRequest) {
     if (uploadedImages.length > 0) {
       for (const img of uploadedImages) {
         await query(
-          `INSERT INTO pu_morning_briefings.images (
+          `INSERT INTO morning_briefings.images (
             id, entry_id, filename, mime_type, blob_url, width, height, position
           ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
           [
@@ -218,7 +239,7 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    let updateQuery = "UPDATE pu_morning_briefings.entries SET";
+    let updateQuery = "UPDATE morning_briefings.entries SET";
     const params: any[] = [];
     let paramIndex = 1;
     const updateParts: string[] = [];

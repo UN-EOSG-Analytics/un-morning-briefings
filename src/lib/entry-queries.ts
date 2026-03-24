@@ -72,9 +72,9 @@ const ENTRY_SELECT = `
       ) FILTER (WHERE i.id IS NOT NULL),
       '[]'
     ) as images
-  FROM pu_morning_briefings.entries e
-  LEFT JOIN pu_morning_briefings.users u ON e.author_id = u.id
-  LEFT JOIN pu_morning_briefings.images i ON e.id = i.entry_id`;
+  FROM morning_briefings.entries e
+  LEFT JOIN morning_briefings.users u ON e.author_id = u.id
+  LEFT JOIN morning_briefings.images i ON e.id = i.entry_id`;
 
 /** Fetch a single entry by ID with images and author info */
 export async function fetchEntryById(id: string) {
@@ -130,7 +130,7 @@ export async function fetchEntries(filters: {
 /** Look up author_id from a user's email */
 export async function getAuthorId(email: string): Promise<number | null> {
   const result = await query(
-    `SELECT id FROM pu_morning_briefings.users WHERE email = $1`,
+    `SELECT id FROM morning_briefings.users WHERE email = $1`,
     [email],
   );
   return result.rows.length > 0 ? result.rows[0].id : null;

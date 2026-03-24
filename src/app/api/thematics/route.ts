@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { query } from "@/lib/db";
 import { checkAuth } from "@/lib/auth-helper";
 
 // GET /api/thematics - Fetch all distinct non-empty thematic values from the database
@@ -10,9 +10,9 @@ export async function GET() {
   }
 
   try {
-    const result = await db.query(
+    const result = await query(
       `SELECT DISTINCT thematic
-       FROM pu_morning_briefings.entries
+       FROM morning_briefings.entries
        WHERE thematic IS NOT NULL AND thematic != ''
        ORDER BY thematic ASC
        LIMIT 100`,

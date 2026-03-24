@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
     // First, try to find user with this token
     let result = await query(
       `SELECT id, email, first_name, email_verified, verification_token, verification_token_expires 
-       FROM pu_morning_briefings.users 
+       FROM morning_briefings.users 
        WHERE verification_token = $1`,
       [plainToken],
     );
@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
     if (result.rows.length === 0 && decodedToken !== plainToken) {
       result = await query(
         `SELECT id, email, first_name, email_verified, verification_token, verification_token_expires 
-         FROM pu_morning_briefings.users 
+         FROM morning_briefings.users 
          WHERE verification_token = $1`,
         [decodedToken],
       );
@@ -61,7 +61,7 @@ export async function GET(req: NextRequest) {
 
     // Now mark email as verified and clear the token
     await query(
-      `UPDATE pu_morning_briefings.users 
+      `UPDATE morning_briefings.users 
        SET email_verified = TRUE, verification_token = NULL, verification_token_expires = NULL 
        WHERE id = $1`,
       [user.id],

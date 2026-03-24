@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
       try {
         // Check if entry already exists (by id or by headline+date)
         const existingCheck = await query(
-          `SELECT id FROM pu_morning_briefings.entries 
+          `SELECT id FROM morning_briefings.entries 
            WHERE id = $1 OR (headline = $2 AND date = $3)`,
           [entry.id, entry.headline, entry.date],
         );
@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
         const authorEmail = entry.authorEmail || auth.session?.user?.email;
         if (authorEmail) {
           const userResult = await query(
-            `SELECT id FROM pu_morning_briefings.users WHERE email = $1`,
+            `SELECT id FROM morning_briefings.users WHERE email = $1`,
             [authorEmail]
           );
           if (userResult.rows.length > 0) {
@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
 
         // Insert the entry with author_id foreign key
         await query(
-          `INSERT INTO pu_morning_briefings.entries (
+          `INSERT INTO morning_briefings.entries (
             id, category, priority, region, country, headline, date, entry,
             source_name, source_url, source_date, pu_note, thematic, author_id, status, ai_summary, approval_status
           ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)`,
@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
             if (!image.blobUrl) continue;
 
             await query(
-              `INSERT INTO pu_morning_briefings.images (
+              `INSERT INTO morning_briefings.images (
                 id, entry_id, filename, mime_type, blob_url, width, height, position
               ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
               ON CONFLICT (id) DO NOTHING`,

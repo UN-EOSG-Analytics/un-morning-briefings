@@ -24,7 +24,7 @@ export async function PUT(req: NextRequest) {
 
     // Update user in database
     const result = await query(
-      `UPDATE pu_morning_briefings.users 
+      `UPDATE morning_briefings.users 
        SET first_name = $1, last_name = $2 
        WHERE email = $3 
        RETURNING id, email, first_name, last_name`,

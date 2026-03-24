@@ -6,6 +6,14 @@ import { checkAuth } from "@/lib/auth-helper";
 import { serializeCountry, fetchEntryById } from "@/lib/entry-queries";
 import labels from "@/lib/labels.json";
 
+const VALID_CATEGORIES = (labels as any).categories as string[];
+const VALID_PRIORITIES = ((labels as any).priorities as { value: string }[]).map(
+  (p) => p.value,
+);
+const VALID_REGIONS = (labels as any).regions as string[];
+const VALID_STATUSES = ["draft", "submitted"];
+const VALID_APPROVAL_STATUSES = ["pending", "discussed"];
+
 /**
  * GET /api/entries/[id]
  * Fetch a single entry by ID with image conversion
@@ -67,10 +75,27 @@ export async function PUT(
     const body = await request.json();
     const { entry: entryContent, images, ...data } = body;
 
+    // Validate domain values
+    if (data.category !== undefined && !VALID_CATEGORIES.includes(data.category)) {
+      return NextResponse.json({ error: "Invalid category" }, { status: 400 });
+    }
+    if (data.priority !== undefined && !VALID_PRIORITIES.includes(data.priority)) {
+      return NextResponse.json({ error: "Invalid priority" }, { status: 400 });
+    }
+    if (data.region !== undefined && !VALID_REGIONS.includes(data.region)) {
+      return NextResponse.json({ error: "Invalid region" }, { status: 400 });
+    }
+    if (data.status !== undefined && !VALID_STATUSES.includes(data.status)) {
+      return NextResponse.json({ error: "Invalid status" }, { status: 400 });
+    }
+    if (data.approvalStatus !== undefined && !VALID_APPROVAL_STATUSES.includes(data.approvalStatus)) {
+      return NextResponse.json({ error: "Invalid approval status" }, { status: 400 });
+    }
+
     // Delete existing images from blob storage and database if new ones are provided
     if (images) {
       const existingImagesResult = await query(
-        `SELECT id, blob_url FROM pu_morning_briefings.images WHERE entry_id = $1`,
+        `SELECT id, blob_url FROM morning_briefings.images WHERE entry_id = $1`,
         [id],
       );
 
@@ -85,7 +110,7 @@ export async function PUT(
 
       // Delete from database
       await query(
-        `DELETE FROM pu_morning_briefings.images WHERE entry_id = $1`,
+        `DELETE FROM morning_briefings.images WHERE entry_id = $1`,
         [id],
       );
     }
@@ -190,7 +215,7 @@ export async function PUT(
 
     if (updateFields.length > 0) {
       await query(
-        `UPDATE pu_morning_briefings.entries SET ${updateFields.join(", ")} WHERE id = $${paramCount}`,
+        `UPDATE morning_briefings.entries SET ${updateFields.join(", ")} WHERE id = $${paramCount}`,
         updateValues,
       );
     }
@@ -199,7 +224,7 @@ export async function PUT(
     if (uploadedImages.length > 0) {
       for (const img of uploadedImages) {
         await query(
-          `INSERT INTO pu_morning_briefings.images (
+          `INSERT INTO morning_briefings.images (
             id, entry_id, filename, mime_type, blob_url, width, height, position
           ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
           [
@@ -258,7 +283,7 @@ export async function DELETE(
 
     // Delete images from blob storage first
     const existingImagesResult = await query(
-      `SELECT id, blob_url FROM pu_morning_briefings.images WHERE entry_id = $1`,
+      `SELECT id, blob_url FROM morning_briefings.images WHERE entry_id = $1`,
       [id],
     );
 
@@ -272,7 +297,7 @@ export async function DELETE(
 
     // Delete entry (will cascade delete images from database)
     const deleteResult = await query(
-      `DELETE FROM pu_morning_briefings.entries WHERE id = $1 RETURNING id`,
+      `DELETE FROM morning_briefings.entries WHERE id = $1 RETURNING id`,
       [id],
     );
 

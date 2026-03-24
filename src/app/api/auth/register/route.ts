@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
 
     // Check if email is whitelisted
     const whitelistCheck = await query(
-      "SELECT id FROM pu_morning_briefings.user_whitelist WHERE email = $1",
+      "SELECT id FROM morning_briefings.user_whitelist WHERE email = $1",
       [email.toLowerCase()],
     );
 
@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
 
     // Check if user already exists
     const existingUser = await query(
-      "SELECT id FROM pu_morning_briefings.users WHERE email = $1",
+      "SELECT id FROM morning_briefings.users WHERE email = $1",
       [email.toLowerCase()],
     );
 
@@ -70,7 +70,7 @@ export async function POST(req: NextRequest) {
 
     // Insert user
     const result = await query(
-      `INSERT INTO pu_morning_briefings.users (email, password_hash, first_name, last_name, team, verification_token, verification_token_expires)
+      `INSERT INTO morning_briefings.users (email, password_hash, first_name, last_name, team, verification_token, verification_token_expires)
        VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING id, email`,
       [
@@ -86,7 +86,7 @@ export async function POST(req: NextRequest) {
 
     // Update whitelist entry to link the user
     await query(
-      `UPDATE pu_morning_briefings.user_whitelist 
+      `UPDATE morning_briefings.user_whitelist 
        SET user_id = $1 
        WHERE email = $2`,
       [result.rows[0].id, email.toLowerCase()],

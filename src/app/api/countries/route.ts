@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { query } from "@/lib/db";
 import labelsData from "@/lib/labels.json";
 import { checkAuth } from "@/lib/auth-helper";
 
@@ -17,9 +17,9 @@ export async function GET() {
   }
 
   try {
-    const result = await db.query(
+    const result = await query(
       `SELECT DISTINCT country 
-       FROM pu_morning_briefings.entries 
+       FROM morning_briefings.entries 
        WHERE country IS NOT NULL AND country != ''`
     );
 

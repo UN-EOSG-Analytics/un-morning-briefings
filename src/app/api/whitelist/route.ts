@@ -22,9 +22,9 @@ export async function GET() {
         w.created_at as "createdAt",
         COALESCE(CONCAT(u.first_name, ' ', u.last_name), NULL) as "userName",
         COALESCE(CONCAT(adder.first_name, ' ', adder.last_name), 'System') as "addedBy"
-      FROM pu_morning_briefings.user_whitelist w
-      LEFT JOIN pu_morning_briefings.users u ON w.user_id = u.id
-      LEFT JOIN pu_morning_briefings.users adder ON w.added_by = adder.id
+      FROM morning_briefings.user_whitelist w
+      LEFT JOIN morning_briefings.users u ON w.user_id = u.id
+      LEFT JOIN morning_briefings.users adder ON w.added_by = adder.id
       ORDER BY w.created_at DESC`
     );
 
@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
     let addedBy: number | null = null;
     if (userEmail) {
       const userResult = await query(
-        `SELECT id FROM pu_morning_briefings.users WHERE email = $1`,
+        `SELECT id FROM morning_briefings.users WHERE email = $1`,
         [userEmail]
       );
       if (userResult.rows.length > 0) {
@@ -82,14 +82,14 @@ export async function POST(request: NextRequest) {
 
     // Check if user already exists with this email
     const existingUser = await query(
-      `SELECT id FROM pu_morning_briefings.users WHERE email = $1`,
+      `SELECT id FROM morning_briefings.users WHERE email = $1`,
       [email.toLowerCase()]
     );
     const userId = existingUser.rows.length > 0 ? existingUser.rows[0].id : null;
 
     // Insert into whitelist
     const result = await query(
-      `INSERT INTO pu_morning_briefings.user_whitelist (email, user_id, added_by)
+      `INSERT INTO morning_briefings.user_whitelist (email, user_id, added_by)
        VALUES ($1, $2, $3)
        ON CONFLICT (email) DO NOTHING
        RETURNING id, email, user_id as "userId", created_at as "createdAt"`,
@@ -138,8 +138,8 @@ export async function DELETE(request: NextRequest) {
     // Check if the email is associated with an existing user
     const userCheck = await query(
       `SELECT u.id, u.email 
-       FROM pu_morning_briefings.user_whitelist w
-       JOIN pu_morning_briefings.users u ON w.user_id = u.id
+       FROM morning_briefings.user_whitelist w
+       JOIN morning_briefings.users u ON w.user_id = u.id
        WHERE w.email = $1`,
       [email.toLowerCase()]
     );
@@ -153,7 +153,7 @@ export async function DELETE(request: NextRequest) {
 
     // Delete from whitelist
     const result = await query(
-      `DELETE FROM pu_morning_briefings.user_whitelist 
+      `DELETE FROM morning_briefings.user_whitelist 
        WHERE email = $1 AND user_id IS NULL
        RETURNING email`,
       [email.toLowerCase()]

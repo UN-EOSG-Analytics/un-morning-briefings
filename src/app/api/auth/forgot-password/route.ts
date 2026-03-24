@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
 
     // Look up user - but don't reveal if they exist (security best practice)
     const userResult = await query(
-      "SELECT id, email, first_name FROM pu_morning_briefings.users WHERE LOWER(email) = LOWER($1) AND email_verified = TRUE",
+      "SELECT id, email, first_name FROM morning_briefings.users WHERE LOWER(email) = LOWER($1) AND email_verified = TRUE",
       [email]
     );
 
@@ -100,20 +100,19 @@ export async function POST(request: NextRequest) {
 
     // Invalidate any existing reset tokens for this user
     await query(
-      "UPDATE pu_morning_briefings.password_resets SET used_at = CURRENT_TIMESTAMP WHERE user_id = $1 AND used_at IS NULL",
+      "UPDATE morning_briefings.password_resets SET used_at = CURRENT_TIMESTAMP WHERE user_id = $1 AND used_at IS NULL",
       [user.id]
     );
 
     // Store the hashed token in database, expiry set in SQL to avoid timezone issues
     await query(
-      `INSERT INTO pu_morning_briefings.password_resets
+      `INSERT INTO morning_briefings.password_resets
        (user_id, token_hash, expires_at, ip_address)
        VALUES ($1, $2, CURRENT_TIMESTAMP + interval '30 minutes', $3)`,
       [user.id, tokenHash, ipAddress]
     );
 
-    // Get base URL from the incoming request so it works on any host (dev, staging, prod)
-    const baseUrl = `${request.nextUrl.protocol}//${request.nextUrl.host}`;
+    const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
     
     // Send email with reset link containing the plain token
     const emailSent = await sendPasswordResetEmail(

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { query } from "@/lib/db";
 import { checkAuth } from "@/lib/auth-helper";
 
 export async function GET(request: NextRequest) {
@@ -61,9 +61,9 @@ export async function GET(request: NextRequest) {
     // Get regional distribution
     let regionalDistribution;
     try {
-      regionalDistribution = await db.query(
+      regionalDistribution = await query(
         `SELECT region, COUNT(*) as count
-         FROM pu_morning_briefings.entries
+         FROM morning_briefings.entries
          ${whereClause}
          GROUP BY region
          ORDER BY count DESC`,
@@ -77,9 +77,9 @@ export async function GET(request: NextRequest) {
     // Get category distribution
     let categoryDistribution;
     try {
-      categoryDistribution = await db.query(
+      categoryDistribution = await query(
         `SELECT category, COUNT(*) as count
-         FROM pu_morning_briefings.entries
+         FROM morning_briefings.entries
          ${whereClause}
          GROUP BY category
          ORDER BY count DESC`,
@@ -93,9 +93,9 @@ export async function GET(request: NextRequest) {
     // Get priority distribution
     let priorityDistribution;
     try {
-      priorityDistribution = await db.query(
+      priorityDistribution = await query(
         `SELECT priority, COUNT(*) as count
-         FROM pu_morning_briefings.entries
+         FROM morning_briefings.entries
          ${whereClause}
          GROUP BY priority
          ORDER BY count DESC`,
@@ -109,7 +109,7 @@ export async function GET(request: NextRequest) {
     // Get entry length distribution
     let entryLengthDistribution;
     try {
-      entryLengthDistribution = await db.query(
+      entryLengthDistribution = await query(
         `SELECT 
            CASE 
              WHEN LENGTH(entry) < 100 THEN '0-100'
@@ -119,7 +119,7 @@ export async function GET(request: NextRequest) {
              ELSE '1000+'
            END as length_range,
            COUNT(*) as count
-         FROM pu_morning_briefings.entries
+         FROM morning_briefings.entries
          ${whereClause}
          GROUP BY length_range
          ORDER BY length_range`,
@@ -133,12 +133,12 @@ export async function GET(request: NextRequest) {
     // Get chronological data (entries per day by region)
     let chronologicalData;
     try {
-      chronologicalData = await db.query(
+      chronologicalData = await query(
         `SELECT 
            DATE(date) as date,
            region,
            COUNT(*) as count
-         FROM pu_morning_briefings.entries
+         FROM morning_briefings.entries
          ${whereClause}
          GROUP BY DATE(date), region
          ORDER BY date ASC`,
@@ -152,11 +152,11 @@ export async function GET(request: NextRequest) {
     // Get entries per month
     let entriesPerMonth;
     try {
-      entriesPerMonth = await db.query(
+      entriesPerMonth = await query(
         `SELECT 
            DATE_TRUNC('month', date) as month,
            COUNT(*) as count
-         FROM pu_morning_briefings.entries
+         FROM morning_briefings.entries
          ${whereClause}
          GROUP BY month
          ORDER BY month ASC`,
@@ -170,13 +170,13 @@ export async function GET(request: NextRequest) {
     // Get total statistics
     let totalStats;
     try {
-      totalStats = await db.query(
+      totalStats = await query(
         `SELECT 
            COUNT(*) as total_entries,
            COUNT(DISTINCT region) as total_regions,
            COUNT(DISTINCT author) as total_authors,
            AVG(LENGTH(entry)) as avg_entry_length
-         FROM pu_morning_briefings.entries
+         FROM morning_briefings.entries
          ${whereClause}`,
         params
       );
@@ -189,9 +189,9 @@ export async function GET(request: NextRequest) {
     let topCountries;
     try {
       // Get all raw country data
-      const rawCountries = await db.query(
+      const rawCountries = await query(
         `SELECT country
-         FROM pu_morning_briefings.entries
+         FROM morning_briefings.entries
          ${whereClause}`,
         params
       );
@@ -240,9 +240,9 @@ export async function GET(request: NextRequest) {
     let countryConnections;
     try {
       // Get all entries with their countries
-      const rawCountries = await db.query(
+      const rawCountries = await query(
         `SELECT country
-         FROM pu_morning_briefings.entries
+         FROM morning_briefings.entries
          ${whereClause}`,
         params
       );

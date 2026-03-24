@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { query } from "@/lib/db";
 import { checkAuth } from "@/lib/auth-helper";
 
 export async function GET() {
@@ -17,10 +17,10 @@ export async function GET() {
     }
 
     // Get unique source names used by this user via author_id foreign key
-    const result = await db.query(
+    const result = await query(
       `SELECT DISTINCT e.source_name
-       FROM pu_morning_briefings.entries e
-       INNER JOIN pu_morning_briefings.users u ON e.author_id = u.id
+       FROM morning_briefings.entries e
+       INNER JOIN morning_briefings.users u ON e.author_id = u.id
        WHERE u.email = $1
          AND e.source_name IS NOT NULL
          AND e.source_name != ''

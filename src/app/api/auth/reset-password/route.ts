@@ -26,8 +26,8 @@ export async function POST(request: NextRequest) {
     // We need to check all tokens for this email because the token is hashed
     const tokensResult = await query(
       `SELECT pr.id, pr.user_id, pr.token_hash, pr.expires_at, u.email, u.first_name
-       FROM pu_morning_briefings.password_resets pr
-       JOIN pu_morning_briefings.users u ON pr.user_id = u.id
+       FROM morning_briefings.password_resets pr
+       JOIN morning_briefings.users u ON pr.user_id = u.id
        WHERE pr.used_at IS NULL 
        AND pr.expires_at > CURRENT_TIMESTAMP`,
       []
@@ -62,19 +62,19 @@ export async function POST(request: NextRequest) {
 
     // Update user's password
     await query(
-      "UPDATE pu_morning_briefings.users SET password_hash = $1 WHERE id = $2",
+      "UPDATE morning_briefings.users SET password_hash = $1 WHERE id = $2",
       [passwordHash, matchedToken.user_id]
     );
 
     // Mark the token as used
     await query(
-      "UPDATE pu_morning_briefings.password_resets SET used_at = CURRENT_TIMESTAMP WHERE id = $1",
+      "UPDATE morning_briefings.password_resets SET used_at = CURRENT_TIMESTAMP WHERE id = $1",
       [matchedToken.id]
     );
 
     // Invalidate all other unused tokens for this user (security measure)
     await query(
-      "UPDATE pu_morning_briefings.password_resets SET used_at = CURRENT_TIMESTAMP WHERE user_id = $1 AND used_at IS NULL AND id != $2",
+      "UPDATE morning_briefings.password_resets SET used_at = CURRENT_TIMESTAMP WHERE user_id = $1 AND used_at IS NULL AND id != $2",
       [matchedToken.user_id, matchedToken.id]
     );
 
@@ -109,7 +109,7 @@ export async function GET(request: NextRequest) {
     // Find valid reset tokens that haven't been used and haven't expired
     const tokensResult = await query(
       `SELECT pr.id, pr.token_hash, pr.expires_at
-       FROM pu_morning_briefings.password_resets pr
+       FROM morning_briefings.password_resets pr
        WHERE pr.used_at IS NULL 
        AND pr.expires_at > CURRENT_TIMESTAMP`,
       []

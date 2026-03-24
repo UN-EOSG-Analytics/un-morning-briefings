@@ -76,9 +76,6 @@ export default function AnalyticsPage() {
       const response = await fetch(`/api/analytics?${params.toString()}`);
       if (response.ok) {
         const data = await response.json();
-          countryConnections: data.countryConnections?.length || 0,
-          allCountries: data.allCountries?.length || 0
-        });
         setAnalyticsData(data);
         
         // Extract unique dates from chronological data only on initial load

@@ -8,6 +8,7 @@ import { UnsavedChangesProvider } from "@/lib/unsaved-changes-context";
 import { PopupContainer } from "@/components/Popup";
 import { AuthProvider } from "@/components/AuthProvider";
 import { ShellWrapper } from "@/components/ShellWrapper";
+import { AnimatedCornerLogo } from "@/components/AnimatedCornerLogo";
 import "./globals.css";
 
 // https://fonts.google.com/specimen/Roboto
@@ -48,6 +49,7 @@ export default function RootLayout({
           <PopupProvider>
             <UnsavedChangesProvider>
               <ShellWrapper>{children}</ShellWrapper>
+              <AnimatedCornerLogo />
               <PopupContainer />
             </UnsavedChangesProvider>
           </PopupProvider>

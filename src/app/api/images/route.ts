@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { query } from "@/lib/db";
 import { checkAuth } from "@/lib/auth-helper";
 
 const ALLOWED_MIME_TYPES = [
@@ -67,43 +66,3 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// GET image by ID
-export async function GET(request: NextRequest) {
-  // Check authentication
-  const auth = await checkAuth();
-  if (!auth.authenticated) {
-    return auth.response;
-  }
-
-  try {
-    const { searchParams } = new URL(request.url);
-    const id = searchParams.get("id");
-
-    if (!id) {
-      return NextResponse.json(
-        { error: "No image ID provided" },
-        { status: 400 },
-      );
-    }
-
-    const result = await query(
-      `SELECT id, blob_url, mime_type FROM images WHERE id = $1`,
-      [id],
-    );
-
-    if (result.rows.length === 0) {
-      return NextResponse.json({ error: "Image not found" }, { status: 404 });
-    }
-
-    const image = result.rows[0];
-
-    // Redirect to blob URL
-    return NextResponse.redirect(image.blob_url);
-  } catch (error) {
-    console.error("Error fetching image:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch image" },
-      { status: 500 },
-    );
-  }
-}

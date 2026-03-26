@@ -14,6 +14,7 @@ import {
   Users,
   Settings,
   UserCircle,
+  BookOpen,
 } from "lucide-react";
 import { useState } from "react";
 import { signOut, useSession } from "next-auth/react";
@@ -208,6 +209,14 @@ export function Navbar() {
               </NavButton>
 
               <NavButton
+                href="/docs"
+                className="text-foreground hover:bg-slate-50 hover:text-un-blue"
+              >
+                <BookOpen className="h-4 w-4 text-slate-600" />
+                <span>Docs</span>
+              </NavButton>
+
+              <NavButton
                 href="/form"
                 className="bg-un-blue text-white hover:bg-un-blue/95"
               >
@@ -285,6 +294,14 @@ export function Navbar() {
               >
                 <FileEdit className="h-4 w-4 text-slate-600" />
                 <span>{labels.nav.myDrafts}</span>
+              </Link>
+              <Link
+                href="/docs"
+                onClick={(e) => handleMobileNavigation(e, "/docs")}
+                className="flex items-center gap-2 rounded px-3 py-2 text-sm hover:bg-slate-50"
+              >
+                <BookOpen className="h-4 w-4 text-slate-600" />
+                <span>Docs</span>
               </Link>
               <Link
                 href="/form"

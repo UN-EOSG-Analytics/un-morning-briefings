@@ -6,10 +6,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Before any Next.js work, find and read the relevant doc in `node_modules/next/dist/docs/`. Your training data is outdated — the docs are the source of truth.
 
-**When starting work on a Next.js project, ALWAYS call the `init` tool from
-next-devtools-mcp FIRST to set up proper context and establish documentation
-requirements. Do this automatically without being asked.**
-
 ## Project Overview
 
 UN Morning Briefings - internal web app for the United Nations Political Unit (EOSG) to create, manage, and export daily morning briefing entries. Users submit news entries with metadata (category, region, priority, country), which get reviewed and compiled into daily briefings for UN leadership.

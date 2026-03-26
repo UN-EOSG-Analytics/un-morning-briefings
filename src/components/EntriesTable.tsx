@@ -92,8 +92,7 @@ export function EntriesTable({
   const [dropdownPos, setDropdownPos] = useState<{
     top: number;
     left: number;
-  } | null>(null
-  );
+  } | null>(null);
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
   const [exportingDate, setExportingDate] = useState<string | null>(null);
   const [submittingId, setSubmittingId] = useState<string | null>(null);
@@ -659,63 +658,66 @@ export function EntriesTable({
                                     </button>
                                     {openStatusDropdown === entry.id &&
                                       dropdownPos && (
-                                      <div
-                                        className="fixed z-50 w-max rounded-lg border border-slate-200 bg-white py-1 shadow-lg"
-                                        style={{
-                                          top: dropdownPos.top,
-                                          left: dropdownPos.left,
-                                        }}
-                                      >
-                                        {["pending", "discussed"]
-                                          .filter((s) => s !== status)
-                                          .map((statusOption) => {
-                                            const statusConfig =
-                                              badgeConfig[
-                                                statusOption as keyof typeof badgeConfig
-                                              ];
-                                            const StatusIcon =
-                                              statusConfig.icon;
-                                            return (
-                                              <button
-                                                key={statusOption}
-                                                onClick={() =>
-                                                  handleStatusChange(
-                                                    entry.id,
-                                                    statusOption,
-                                                  )
-                                                }
-                                                disabled={
-                                                  updatingStatus === entry.id
-                                                }
-                                                className="block px-3 py-2 transition-colors hover:bg-slate-50 disabled:opacity-50"
-                                              >
-                                                <span
-                                                  className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium ${statusConfig.bg} ${statusConfig.text}`}
+                                        <div
+                                          className="fixed z-50 w-max rounded-lg border border-slate-200 bg-white py-1 shadow-lg"
+                                          style={{
+                                            top: dropdownPos.top,
+                                            left: dropdownPos.left,
+                                          }}
+                                        >
+                                          {["pending", "discussed"]
+                                            .filter((s) => s !== status)
+                                            .map((statusOption) => {
+                                              const statusConfig =
+                                                badgeConfig[
+                                                  statusOption as keyof typeof badgeConfig
+                                                ];
+                                              const StatusIcon =
+                                                statusConfig.icon;
+                                              return (
+                                                <button
+                                                  key={statusOption}
+                                                  onClick={() =>
+                                                    handleStatusChange(
+                                                      entry.id,
+                                                      statusOption,
+                                                    )
+                                                  }
+                                                  disabled={
+                                                    updatingStatus === entry.id
+                                                  }
+                                                  className="block px-3 py-2 transition-colors hover:bg-slate-50 disabled:opacity-50"
                                                 >
-                                                  <StatusIcon className="h-3.5 w-3.5" />
-                                                  {statusConfig.label}
-                                                </span>
-                                              </button>
-                                            );
-                                          })}
-                                        {status !== "discussed" && (
-                                          <button
-                                            onClick={() =>
-                                              handlePostpone(entry.id)
-                                            }
-                                            disabled={
-                                              updatingStatus === entry.id
-                                            }
-                                            className="block w-full border-t border-slate-100 px-3 py-2 transition-colors hover:bg-slate-50 disabled:opacity-50"
-                                          >
-                                            <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-700">
-                                              <FastForward className="h-3.5 w-3.5" />
-                                              {labels.entries.actions.postpone}
-                                            </span>
-                                          </button>
-                                        )}
-                                      </div>
-                                    )}
+                                                  <span
+                                                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium ${statusConfig.bg} ${statusConfig.text}`}
+                                                  >
+                                                    <StatusIcon className="h-3.5 w-3.5" />
+                                                    {statusConfig.label}
+                                                  </span>
+                                                </button>
+                                              );
+                                            })}
+                                          {status !== "discussed" && (
+                                            <button
+                                              onClick={() =>
+                                                handlePostpone(entry.id)
+                                              }
+                                              disabled={
+                                                updatingStatus === entry.id
+                                              }
+                                              className="block w-full border-t border-slate-100 px-3 py-2 transition-colors hover:bg-slate-50 disabled:opacity-50"
+                                            >
+                                              <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-700">
+                                                <FastForward className="h-3.5 w-3.5" />
+                                                {
+                                                  labels.entries.actions
+                                                    .postpone
+                                                }
+                                              </span>
+                                            </button>
+                                          )}
+                                        </div>
+                                      )}
                                   </>
                                 );
                               })()}

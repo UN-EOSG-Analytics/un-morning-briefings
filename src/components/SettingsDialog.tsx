@@ -47,7 +47,9 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   const [emailAddress, setEmailAddress] = useState("");
 
   // Whitelist settings
-  const [pendingRemoveEmail, setPendingRemoveEmail] = useState<string | null>(null);
+  const [pendingRemoveEmail, setPendingRemoveEmail] = useState<string | null>(
+    null,
+  );
   const [whitelistEmails, setWhitelistEmails] = useState<
     Array<{
       id: number;
@@ -291,387 +293,411 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
 
   return (
     <>
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex flex-col sm:max-h-[80vh] sm:max-w-150">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Settings className="h-5 w-5" />
-            Settings
-          </DialogTitle>
-          <DialogDescription>{labels.settings.subtitle}</DialogDescription>
-        </DialogHeader>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="flex flex-col sm:max-h-[80vh] sm:max-w-150">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Settings className="h-5 w-5" />
+              Settings
+            </DialogTitle>
+            <DialogDescription>{labels.settings.subtitle}</DialogDescription>
+          </DialogHeader>
 
-        <Tabs
-          defaultValue="account"
-          className="flex min-h-0 w-full flex-1 flex-col"
-        >
-          <TabsList className="grid w-full shrink-0 grid-cols-4">
-            <TabsTrigger value="account">
-              {labels.settings.tabs.account}
-            </TabsTrigger>
-            <TabsTrigger value="data">
-              {labels.settings.tabs.dataManagement}
-            </TabsTrigger>
-            <TabsTrigger value="whitelist">
-              {labels.settings.tabs.whitelist}
-            </TabsTrigger>
-            <TabsTrigger value="email">
-              {labels.settings.tabs.emailWorkflow}
-            </TabsTrigger>
-          </TabsList>
-
-          {/* Account Tab */}
-          <TabsContent
-            value="account"
-            className="mt-4 flex-1 space-y-4 overflow-y-auto"
+          <Tabs
+            defaultValue="account"
+            className="flex min-h-0 w-full flex-1 flex-col"
           >
-            {/* Account Information */}
-            <div className="space-y-3 rounded-lg bg-slate-50 p-4">
-              <div>
-                <p className="text-xs text-slate-600">
-                  {labels.settings.account.email}
-                </p>
-                <p className="text-sm font-medium">{session?.user?.email}</p>
-              </div>
+            <TabsList className="grid w-full shrink-0 grid-cols-4">
+              <TabsTrigger value="account">
+                {labels.settings.tabs.account}
+              </TabsTrigger>
+              <TabsTrigger value="data">
+                {labels.settings.tabs.dataManagement}
+              </TabsTrigger>
+              <TabsTrigger value="whitelist">
+                {labels.settings.tabs.whitelist}
+              </TabsTrigger>
+              <TabsTrigger value="email">
+                {labels.settings.tabs.emailWorkflow}
+              </TabsTrigger>
+            </TabsList>
 
-              {/* Name Section - Edit Mode */}
-              {isEditingName ? (
-                <div className="space-y-2 rounded border border-slate-200 bg-white p-3">
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <label className="text-xs text-slate-600">
-                        {labels.settings.account.firstName}
-                      </label>
-                      <input
-                        type="text"
-                        value={firstName}
-                        onChange={(e) => setFirstName(e.target.value)}
-                        placeholder={
-                          labels.settings.account.firstNamePlaceholder
-                        }
-                        className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-sm focus:border-un-blue focus:ring-2 focus:ring-un-blue/20 focus:outline-none"
-                      />
+            {/* Account Tab */}
+            <TabsContent
+              value="account"
+              className="mt-4 flex-1 space-y-4 overflow-y-auto"
+            >
+              {/* Account Information */}
+              <div className="space-y-3 rounded-lg bg-slate-50 p-4">
+                <div>
+                  <p className="text-xs text-slate-600">
+                    {labels.settings.account.email}
+                  </p>
+                  <p className="text-sm font-medium">{session?.user?.email}</p>
+                </div>
+
+                {/* Name Section - Edit Mode */}
+                {isEditingName ? (
+                  <div className="space-y-2 rounded border border-slate-200 bg-white p-3">
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="text-xs text-slate-600">
+                          {labels.settings.account.firstName}
+                        </label>
+                        <input
+                          type="text"
+                          value={firstName}
+                          onChange={(e) => setFirstName(e.target.value)}
+                          placeholder={
+                            labels.settings.account.firstNamePlaceholder
+                          }
+                          className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-sm focus:border-un-blue focus:ring-2 focus:ring-un-blue/20 focus:outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs text-slate-600">
+                          {labels.settings.account.lastName}
+                        </label>
+                        <input
+                          type="text"
+                          value={lastName}
+                          onChange={(e) => setLastName(e.target.value)}
+                          placeholder={
+                            labels.settings.account.lastNamePlaceholder
+                          }
+                          className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-sm focus:border-un-blue focus:ring-2 focus:ring-un-blue/20 focus:outline-none"
+                        />
+                      </div>
                     </div>
-                    <div>
-                      <label className="text-xs text-slate-600">
-                        {labels.settings.account.lastName}
-                      </label>
-                      <input
-                        type="text"
-                        value={lastName}
-                        onChange={(e) => setLastName(e.target.value)}
-                        placeholder={
-                          labels.settings.account.lastNamePlaceholder
-                        }
-                        className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-sm focus:border-un-blue focus:ring-2 focus:ring-un-blue/20 focus:outline-none"
-                      />
+                    {error && (
+                      <p className="text-xs font-medium text-red-600">
+                        {error}
+                      </p>
+                    )}
+                    <div className="flex gap-2 pt-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setIsEditingName(false);
+                          setFirstName(session?.user?.firstName || "");
+                          setLastName(session?.user?.lastName || "");
+                          setError("");
+                        }}
+                        disabled={isSavingName}
+                        className="flex-1"
+                      >
+                        <X className="mr-1 h-4 w-4" />
+                        {labels.common.cancel}
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={handleSaveName}
+                        disabled={isSavingName}
+                        className="flex-1 bg-un-blue hover:bg-un-blue/90"
+                      >
+                        <Check className="mr-1 h-4 w-4" />
+                        {isSavingName
+                          ? labels.settings.account.saving
+                          : labels.common.save}
+                      </Button>
                     </div>
                   </div>
-                  {error && (
-                    <p className="text-xs font-medium text-red-600">{error}</p>
-                  )}
-                  <div className="flex gap-2 pt-2">
+                ) : (
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs text-slate-600">Name</p>
+                      <p className="text-sm font-medium">
+                        {session?.user?.firstName} {session?.user?.lastName}
+                      </p>
+                    </div>
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => {
-                        setIsEditingName(false);
-                        setFirstName(session?.user?.firstName || "");
-                        setLastName(session?.user?.lastName || "");
-                        setError("");
-                      }}
-                      disabled={isSavingName}
-                      className="flex-1"
+                      onClick={() => setIsEditingName(true)}
                     >
-                      <X className="mr-1 h-4 w-4" />
-                      {labels.common.cancel}
+                      {labels.settings.account.edit}
+                    </Button>
+                  </div>
+                )}
+
+                <div>
+                  <p className="text-xs text-slate-600">Team</p>
+                  <p className="text-sm font-medium">{session?.user?.team}</p>
+                </div>
+              </div>
+            </TabsContent>
+
+            {/* Data Management Tab */}
+            <TabsContent
+              value="data"
+              className="mt-4 flex-1 space-y-4 overflow-y-auto"
+            >
+              <div className="space-y-4 rounded-lg bg-slate-50 p-4">
+                <div>
+                  <h3 className="mb-3 text-sm font-semibold text-slate-900">
+                    {labels.settings.data.title}
+                  </h3>
+                  <div className="mb-2 grid grid-cols-1 gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={handleCreateBackup}
+                      disabled={isCreatingBackup}
+                    >
+                      <Download className="mr-2 h-4 w-4" />
+                      {isCreatingBackup
+                        ? labels.settings.data.downloading
+                        : labels.settings.data.download}
                     </Button>
                     <Button
-                      size="sm"
-                      onClick={handleSaveName}
-                      disabled={isSavingName}
-                      className="flex-1 bg-un-blue hover:bg-un-blue/90"
+                      variant="outline"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isImporting}
                     >
-                      <Check className="mr-1 h-4 w-4" />
-                      {isSavingName
-                        ? labels.settings.account.saving
-                        : labels.common.save}
+                      <Upload className="mr-2 h-4 w-4" />
+                      {isImporting
+                        ? labels.settings.data.importing
+                        : labels.settings.data.import}
                     </Button>
                   </div>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="application/json,.json"
+                    onChange={handleImportBackup}
+                    className="hidden"
+                  />
+                  <p className="text-xs text-slate-600">
+                    {labels.settings.data.description}
+                  </p>
                 </div>
-              ) : (
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs text-slate-600">Name</p>
-                    <p className="text-sm font-medium">
-                      {session?.user?.firstName} {session?.user?.lastName}
-                    </p>
-                  </div>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setIsEditingName(true)}
-                  >
-                    {labels.settings.account.edit}
-                  </Button>
-                </div>
-              )}
-
-              <div>
-                <p className="text-xs text-slate-600">Team</p>
-                <p className="text-sm font-medium">{session?.user?.team}</p>
               </div>
-            </div>
+            </TabsContent>
 
-          </TabsContent>
+            {/* Whitelist Tab */}
+            <TabsContent
+              value="whitelist"
+              className="mt-4 flex-1 space-y-4 overflow-y-auto"
+            >
+              <div className="space-y-4 rounded-lg bg-slate-50 p-4">
+                <div>
+                  <h3 className="mb-2 text-sm font-semibold text-slate-900">
+                    {labels.settings.whitelist.title}
+                  </h3>
+                  <p className="mb-3 text-xs text-slate-600">
+                    {labels.settings.whitelist.description}
+                  </p>
 
-          {/* Data Management Tab */}
-          <TabsContent
-            value="data"
-            className="mt-4 flex-1 space-y-4 overflow-y-auto"
-          >
-            <div className="space-y-4 rounded-lg bg-slate-50 p-4">
-              <div>
-                <h3 className="mb-3 text-sm font-semibold text-slate-900">
-                  {labels.settings.data.title}
-                </h3>
-                <div className="mb-2 grid grid-cols-1 gap-2">
-                  <Button
-                    variant="outline"
-                    onClick={handleCreateBackup}
-                    disabled={isCreatingBackup}
-                  >
-                    <Download className="mr-2 h-4 w-4" />
-                    {isCreatingBackup
-                      ? labels.settings.data.downloading
-                      : labels.settings.data.download}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={isImporting}
-                  >
-                    <Upload className="mr-2 h-4 w-4" />
-                    {isImporting
-                      ? labels.settings.data.importing
-                      : labels.settings.data.import}
-                  </Button>
-                </div>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="application/json,.json"
-                  onChange={handleImportBackup}
-                  className="hidden"
-                />
-                <p className="text-xs text-slate-600">
-                  {labels.settings.data.description}
-                </p>
-              </div>
-            </div>
-          </TabsContent>
-
-          {/* Whitelist Tab */}
-          <TabsContent
-            value="whitelist"
-            className="mt-4 flex-1 space-y-4 overflow-y-auto"
-          >
-            <div className="space-y-4 rounded-lg bg-slate-50 p-4">
-              <div>
-                <h3 className="mb-2 text-sm font-semibold text-slate-900">
-                  {labels.settings.whitelist.title}
-                </h3>
-                <p className="mb-3 text-xs text-slate-600">
-                  {labels.settings.whitelist.description}
-                </p>
-
-                {/* Add Email Form */}
-                <div className="mb-4 space-y-2">
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="email"
-                      value={newWhitelistEmail}
-                      onChange={(e) => setNewWhitelistEmail(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" && !isAddingWhitelist) {
-                          handleAddWhitelistEmail();
+                  {/* Add Email Form */}
+                  <div className="mb-4 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="email"
+                        value={newWhitelistEmail}
+                        onChange={(e) => setNewWhitelistEmail(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && !isAddingWhitelist) {
+                            handleAddWhitelistEmail();
+                          }
+                        }}
+                        placeholder={labels.settings.whitelist.placeholder}
+                        className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-un-blue focus:ring-2 focus:ring-un-blue/20 focus:outline-none"
+                        disabled={isAddingWhitelist}
+                      />
+                      <Button
+                        onClick={handleAddWhitelistEmail}
+                        disabled={
+                          isAddingWhitelist || !newWhitelistEmail.trim()
                         }
-                      }}
-                      placeholder={labels.settings.whitelist.placeholder}
-                      className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-un-blue focus:ring-2 focus:ring-un-blue/20 focus:outline-none"
-                      disabled={isAddingWhitelist}
-                    />
-                    <Button
-                      onClick={handleAddWhitelistEmail}
-                      disabled={isAddingWhitelist || !newWhitelistEmail.trim()}
-                      className="bg-un-blue hover:bg-un-blue/90"
-                    >
-                      <Plus className="mr-1 h-4 w-4" />
-                      {labels.settings.whitelist.addButton}
+                        className="bg-un-blue hover:bg-un-blue/90"
+                      >
+                        <Plus className="mr-1 h-4 w-4" />
+                        {labels.settings.whitelist.addButton}
+                      </Button>
+                    </div>
+                    {error && (
+                      <p className="text-xs font-medium text-red-600">
+                        {error}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Whitelist Table */}
+                  <div className="max-h-64 overflow-y-auto rounded border border-slate-200 bg-white">
+                    {isLoadingWhitelist ? (
+                      <div className="p-4 text-center text-sm text-slate-600">
+                        {labels.settings.whitelist.loading}
+                      </div>
+                    ) : whitelistEmails.length === 0 ? (
+                      <div className="p-4 text-center text-sm text-slate-600">
+                        {labels.settings.whitelist.empty}
+                      </div>
+                    ) : (
+                      <table className="w-full text-sm">
+                        <thead className="bg-slate-50 text-xs text-slate-600 uppercase">
+                          <tr>
+                            <th className="px-3 py-2 text-left font-medium">
+                              {labels.settings.whitelist.columns.email}
+                            </th>
+                            <th className="px-3 py-2 text-left font-medium">
+                              {labels.settings.whitelist.columns.status}
+                            </th>
+                            <th className="px-3 py-2 text-left font-medium">
+                              {labels.settings.whitelist.columns.addedBy}
+                            </th>
+                            <th className="px-3 py-2 text-right font-medium">
+                              {labels.settings.whitelist.columns.actions}
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-200">
+                          {whitelistEmails.map((item) => (
+                            <tr key={item.id} className="hover:bg-slate-50">
+                              <td className="px-3 py-2">
+                                <div className="flex items-center gap-2">
+                                  <Mail className="h-4 w-4 text-slate-400" />
+                                  <span className="font-medium text-slate-900">
+                                    {item.email}
+                                  </span>
+                                </div>
+                              </td>
+                              <td className="px-3 py-2">
+                                {item.userId ? (
+                                  <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800">
+                                    <Check className="h-3 w-3" />
+                                    {
+                                      labels.settings.whitelist.status
+                                        .registered
+                                    }
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
+                                    <UserPlus className="h-3 w-3" />
+                                    {labels.settings.whitelist.status.pending}
+                                  </span>
+                                )}
+                              </td>
+                              <td className="px-3 py-2 text-slate-600">
+                                {item.addedBy}
+                              </td>
+                              <td className="px-3 py-2 text-right">
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() =>
+                                    setPendingRemoveEmail(item.email)
+                                  }
+                                  className="h-7 px-2 text-red-600 hover:bg-red-50 hover:text-red-700"
+                                  title={
+                                    labels.settings.whitelist.removeTooltip
+                                  }
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </Button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    )}
+                  </div>
+
+                  <p className="mt-3 text-xs text-slate-500">
+                    {labels.settings.whitelist.protectedNote}
+                  </p>
+                </div>
+              </div>
+            </TabsContent>
+
+            {/* E-Mail Workflow Tab */}
+            <TabsContent
+              value="email"
+              className="mt-4 flex-1 space-y-4 overflow-y-auto"
+            >
+              <div className="space-y-4 rounded-lg bg-slate-50 p-4">
+                <div>
+                  <h3 className="mb-3 text-sm font-semibold text-slate-900">
+                    {labels.settings.email.title}
+                  </h3>
+                  <p className="mb-3 text-xs text-slate-600">
+                    {labels.settings.email.description}
+                  </p>
+
+                  <div className="space-y-3">
+                    <div>
+                      <label className="mb-1 block text-xs text-slate-600">
+                        {labels.settings.email.sendTime}
+                      </label>
+                      <input
+                        type="time"
+                        value={emailTime}
+                        onChange={(e) => setEmailTime(e.target.value)}
+                        className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-un-blue focus:ring-2 focus:ring-un-blue/20 focus:outline-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="mb-1 block text-xs text-slate-600">
+                        {labels.settings.email.recipient}
+                      </label>
+                      <input
+                        type="email"
+                        value={emailAddress}
+                        onChange={(e) => setEmailAddress(e.target.value)}
+                        placeholder={labels.settings.email.recipientPlaceholder}
+                        className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-un-blue focus:ring-2 focus:ring-un-blue/20 focus:outline-none"
+                      />
+                    </div>
+
+                    <Button variant="outline" className="w-full" disabled>
+                      {labels.settings.email.save}
                     </Button>
                   </div>
-                  {error && (
-                    <p className="text-xs font-medium text-red-600">{error}</p>
-                  )}
-                </div>
-
-                {/* Whitelist Table */}
-                <div className="max-h-64 overflow-y-auto rounded border border-slate-200 bg-white">
-                  {isLoadingWhitelist ? (
-                    <div className="p-4 text-center text-sm text-slate-600">
-                      {labels.settings.whitelist.loading}
-                    </div>
-                  ) : whitelistEmails.length === 0 ? (
-                    <div className="p-4 text-center text-sm text-slate-600">
-                      {labels.settings.whitelist.empty}
-                    </div>
-                  ) : (
-                    <table className="w-full text-sm">
-                      <thead className="bg-slate-50 text-xs text-slate-600 uppercase">
-                        <tr>
-                          <th className="px-3 py-2 text-left font-medium">
-                            {labels.settings.whitelist.columns.email}
-                          </th>
-                          <th className="px-3 py-2 text-left font-medium">
-                            {labels.settings.whitelist.columns.status}
-                          </th>
-                          <th className="px-3 py-2 text-left font-medium">
-                            {labels.settings.whitelist.columns.addedBy}
-                          </th>
-                          <th className="px-3 py-2 text-right font-medium">
-                            {labels.settings.whitelist.columns.actions}
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-200">
-                        {whitelistEmails.map((item) => (
-                          <tr key={item.id} className="hover:bg-slate-50">
-                            <td className="px-3 py-2">
-                              <div className="flex items-center gap-2">
-                                <Mail className="h-4 w-4 text-slate-400" />
-                                <span className="font-medium text-slate-900">
-                                  {item.email}
-                                </span>
-                              </div>
-                            </td>
-                            <td className="px-3 py-2">
-                              {item.userId ? (
-                                <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800">
-                                  <Check className="h-3 w-3" />
-                                  {labels.settings.whitelist.status.registered}
-                                </span>
-                              ) : (
-                                <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
-                                  <UserPlus className="h-3 w-3" />
-                                  {labels.settings.whitelist.status.pending}
-                                </span>
-                              )}
-                            </td>
-                            <td className="px-3 py-2 text-slate-600">
-                              {item.addedBy}
-                            </td>
-                            <td className="px-3 py-2 text-right">
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => setPendingRemoveEmail(item.email)}
-                                className="h-7 px-2 text-red-600 hover:bg-red-50 hover:text-red-700"
-                                title={labels.settings.whitelist.removeTooltip}
-                              >
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </Button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  )}
-                </div>
-
-                <p className="mt-3 text-xs text-slate-500">
-                  {labels.settings.whitelist.protectedNote}
-                </p>
-              </div>
-            </div>
-          </TabsContent>
-
-          {/* E-Mail Workflow Tab */}
-          <TabsContent
-            value="email"
-            className="mt-4 flex-1 space-y-4 overflow-y-auto"
-          >
-            <div className="space-y-4 rounded-lg bg-slate-50 p-4">
-              <div>
-                <h3 className="mb-3 text-sm font-semibold text-slate-900">
-                  {labels.settings.email.title}
-                </h3>
-                <p className="mb-3 text-xs text-slate-600">
-                  {labels.settings.email.description}
-                </p>
-
-                <div className="space-y-3">
-                  <div>
-                    <label className="mb-1 block text-xs text-slate-600">
-                      {labels.settings.email.sendTime}
-                    </label>
-                    <input
-                      type="time"
-                      value={emailTime}
-                      onChange={(e) => setEmailTime(e.target.value)}
-                      className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-un-blue focus:ring-2 focus:ring-un-blue/20 focus:outline-none"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="mb-1 block text-xs text-slate-600">
-                      {labels.settings.email.recipient}
-                    </label>
-                    <input
-                      type="email"
-                      value={emailAddress}
-                      onChange={(e) => setEmailAddress(e.target.value)}
-                      placeholder={labels.settings.email.recipientPlaceholder}
-                      className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-un-blue focus:ring-2 focus:ring-un-blue/20 focus:outline-none"
-                    />
-                  </div>
-
-                  <Button variant="outline" className="w-full" disabled>
-                    {labels.settings.email.save}
-                  </Button>
                 </div>
               </div>
-            </div>
-          </TabsContent>
-        </Tabs>
-      </DialogContent>
-    </Dialog>
+            </TabsContent>
+          </Tabs>
+        </DialogContent>
+      </Dialog>
 
-    <Dialog open={!!pendingRemoveEmail} onOpenChange={(o) => { if (!o) setPendingRemoveEmail(null); }}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Remove access</DialogTitle>
-          <DialogDescription>
-            Are you sure you want to remove <span className="font-medium text-slate-900">{pendingRemoveEmail}</span>? They will be immediately signed out and unable to log in.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="flex justify-end gap-2 pt-2">
-          <Button variant="outline" onClick={() => setPendingRemoveEmail(null)}>
-            Cancel
-          </Button>
-          <Button
-            variant="destructive"
-            onClick={async () => {
-              if (pendingRemoveEmail) {
-                await handleRemoveWhitelistEmail(pendingRemoveEmail);
-                setPendingRemoveEmail(null);
-              }
-            }}
-          >
-            Remove
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+      <Dialog
+        open={!!pendingRemoveEmail}
+        onOpenChange={(o) => {
+          if (!o) setPendingRemoveEmail(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Remove access</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to remove{" "}
+              <span className="font-medium text-slate-900">
+                {pendingRemoveEmail}
+              </span>
+              ? They will be immediately signed out and unable to log in.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button
+              variant="outline"
+              onClick={() => setPendingRemoveEmail(null)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={async () => {
+                if (pendingRemoveEmail) {
+                  await handleRemoveWhitelistEmail(pendingRemoveEmail);
+                  setPendingRemoveEmail(null);
+                }
+              }}
+            >
+              Remove
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

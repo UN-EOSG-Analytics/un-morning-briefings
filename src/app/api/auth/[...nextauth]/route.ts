@@ -97,7 +97,11 @@ export const authOptions: NextAuthOptions = {
       // Fallback to baseUrl
       return baseUrl;
     },
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
+      if (trigger === "update" && session) {
+        if (session.firstName) token.firstName = session.firstName;
+        if (session.lastName) token.lastName = session.lastName;
+      }
       if (user) {
         token.id = user.id;
         token.firstName = user.firstName;

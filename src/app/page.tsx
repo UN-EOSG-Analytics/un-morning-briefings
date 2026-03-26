@@ -19,7 +19,11 @@ import labels from "@/lib/labels.json";
 
 export default function HomePage() {
   const [showExportDialog, setShowExportDialog] = useState(false);
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
+  const name =
+    status !== "loading"
+      ? session?.user?.firstName || session?.user?.name?.split(" ")[0]
+      : undefined;
 
   // Get current briefing date based on 8AM ET cutoff
   const currentBriefingDate = getCurrentBriefingDate();
@@ -29,15 +33,16 @@ export default function HomePage() {
       <div className="mx-auto w-full max-w-6xl px-2 py-6 sm:px-4 sm:py-16">
         <div className="mb-8 flex flex-col gap-4 sm:mb-12 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
           <div className="px-2 text-left sm:px-0">
-            <h1 className="mb-1 text-3xl font-bold text-foreground sm:text-4xl">
-              {labels.home.greeting.replace(
-                "{name}",
-                session?.user?.name?.split(" ")[0] || "...",
-              )}
-            </h1>
-            <p className="hidden text-base text-slate-600 sm:block sm:text-lg">
-              {labels.home.subtitle}
-            </p>
+            {name !== undefined && (
+              <>
+                <h1 className="mb-1 text-3xl font-bold text-foreground sm:text-4xl">
+                  {labels.home.greeting.replace("{name}", name || "")}
+                </h1>
+                <p className="hidden text-base text-slate-600 sm:block sm:text-lg">
+                  {labels.home.subtitle}
+                </p>
+              </>
+            )}
           </div>
           <Button
             variant="outline"

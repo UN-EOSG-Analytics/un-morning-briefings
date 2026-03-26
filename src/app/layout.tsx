@@ -9,6 +9,8 @@ import { PopupContainer } from "@/components/Popup";
 import { AuthProvider } from "@/components/AuthProvider";
 import { ShellWrapper } from "@/components/ShellWrapper";
 import { AnimatedCornerLogo } from "@/components/AnimatedCornerLogo";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import "./globals.css";
 
 // https://fonts.google.com/specimen/Roboto
@@ -37,15 +39,17 @@ export const viewport: Viewport = {
   themeColor: "#009edb",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const session = await getServerSession(authOptions);
+
   return (
     <html lang="en" className={`${roboto.className} antialiased`}>
       <body className="bg-white">
-        <AuthProvider>
+        <AuthProvider session={session}>
           <PopupProvider>
             <UnsavedChangesProvider>
               <ShellWrapper>{children}</ShellWrapper>

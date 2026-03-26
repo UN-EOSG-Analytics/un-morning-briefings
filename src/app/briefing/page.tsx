@@ -330,7 +330,7 @@ const generateBriefingDocument = async (
                   font: "Roboto",
                 }),
               ],
-              spacing: { after: 100 },
+              spacing: { after: 40 },
             }),
           );
 
@@ -340,6 +340,7 @@ const generateBriefingDocument = async (
                 text: "Source: ",
                 italics: true,
                 font: "Roboto",
+                size: 20,
               }),
             ];
 
@@ -352,6 +353,7 @@ const generateBriefingDocument = async (
                         text: entry.sourceName,
                         italics: true,
                         font: "Roboto",
+                        size: 20,
                         style: "Hyperlink",
                       }),
                     ],
@@ -364,6 +366,7 @@ const generateBriefingDocument = async (
                     text: entry.sourceName,
                     italics: true,
                     font: "Roboto",
+                    size: 20,
                   }),
                 );
               }
@@ -375,6 +378,7 @@ const generateBriefingDocument = async (
                   text: " | ",
                   italics: true,
                   font: "Roboto",
+                  size: 20,
                 }),
               );
             }
@@ -385,6 +389,7 @@ const generateBriefingDocument = async (
                   text: formatDateFull(entry.sourceDate),
                   italics: true,
                   font: "Roboto",
+                  size: 20,
                 }),
               );
             }
@@ -392,7 +397,7 @@ const generateBriefingDocument = async (
             children.push(
               new Paragraph({
                 children: sourceChildren,
-                spacing: { after: 100 },
+                spacing: { after: 80 },
               }),
             );
           }
@@ -403,20 +408,14 @@ const generateBriefingDocument = async (
                 new TextRun({
                   text:
                     entry.priority === "SG's attention"
-                      ? "SG Attention"
+                      ? "SG's attention"
                       : "Situational Awareness",
                   italics: true,
                   size: 20,
                   font: "Roboto",
                 }),
-                new TextRun({
-                  text: ` | ${entry.category}`,
-                  italics: true,
-                  size: 20,
-                  font: "Roboto",
-                }),
               ],
-              spacing: { after: 150 },
+              spacing: { after: 120 },
             }),
           );
 
@@ -794,44 +793,42 @@ function BriefingContent() {
                       <div className="space-y-5">
                         {entriesByRegionAndCountry[region][country].map(
                           (entry, index) => (
-                            <div key={entry.id} className="space-y-3">
-                              {/* Headline */}
-                              <h4 className="sticky top-28 z-10 border-b border-slate-200 bg-white py-2 text-lg leading-snug font-bold text-slate-900 print:static print:border-none">
-                                • {entry.headline}
-                              </h4>
+                            <div key={entry.id} className="space-y-4">
+                              {/* Headline + Source */}
+                              <div>
+                                <h4 className="sticky top-28 z-10 border-b border-slate-200 bg-white py-2 text-lg leading-snug font-bold text-slate-900 print:static print:border-none">
+                                  • {entry.headline}
+                                </h4>
+                                {(entry.sourceName || entry.sourceDate) && (
+                                  <p className="mt-1 text-sm text-slate-600 italic">
+                                    Source:{" "}
+                                    {entry.sourceName &&
+                                      (entry.sourceUrl ? (
+                                        <a
+                                          href={entry.sourceUrl}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="text-un-blue hover:underline"
+                                        >
+                                          {entry.sourceName}
+                                        </a>
+                                      ) : (
+                                        <span>{entry.sourceName}</span>
+                                      ))}
+                                    {entry.sourceName &&
+                                      entry.sourceDate &&
+                                      " | "}
+                                    {entry.sourceDate &&
+                                      formatDateFull(entry.sourceDate)}
+                                  </p>
+                                )}
+                              </div>
 
-                              {/* Source Information */}
-                              {(entry.sourceName || entry.sourceDate) && (
-                                <p className="text-sm leading-relaxed text-slate-600 italic">
-                                  Source:{" "}
-                                  {entry.sourceName &&
-                                    (entry.sourceUrl ? (
-                                      <a
-                                        href={entry.sourceUrl}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="text-un-blue hover:underline"
-                                      >
-                                        {entry.sourceName}
-                                      </a>
-                                    ) : (
-                                      <span>{entry.sourceName}</span>
-                                    ))}
-                                  {entry.sourceName &&
-                                    entry.sourceDate &&
-                                    " | "}
-                                  {entry.sourceDate &&
-                                    formatDateFull(entry.sourceDate)}
-                                </p>
-                              )}
-
-                              {/* Priority & Category */}
-                              <p className="text-sm leading-relaxed text-slate-700 italic">
+                              {/* Priority */}
+                              <p className="text-sm text-slate-700 italic">
                                 {entry.priority === "SG's attention"
-                                  ? "SG Attention"
+                                  ? "SG's attention"
                                   : "Situational Awareness"}
-                                {" | "}
-                                {entry.category}
                               </p>
 
                               {/* Content */}
@@ -846,7 +843,7 @@ function BriefingContent() {
 
                               {/* PU Note */}
                               {entry.puNote && (
-                                <div className="text-sm leading-relaxed text-slate-800 italic">
+                                <div className="text-sm text-slate-800 italic">
                                   <span className="font-bold">PU Note: </span>
                                   <span
                                     dangerouslySetInnerHTML={{

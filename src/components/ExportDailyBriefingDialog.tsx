@@ -330,54 +330,15 @@ const buildTableOfContents = (
       },
     );
 
+    const noBorder = { style: BorderStyle.NONE, size: 0, color: "FFFFFF" };
+    const subtleBorder = {
+      style: BorderStyle.SINGLE,
+      size: 1,
+      color: "D9D9D9",
+    };
     const tableRows: TableRow[] = [];
 
-    // Header row
-    tableRows.push(
-      new TableRow({
-        tableHeader: true,
-        children: [
-          new TableCell({
-            width: { size: 25, type: WidthType.PERCENTAGE },
-            verticalAlign: VerticalAlign.CENTER,
-            shading: { fill: "009edb" },
-            children: [
-              new Paragraph({
-                children: [
-                  new TextRun({
-                    text: "Country",
-                    bold: true,
-                    color: "FFFFFF",
-                    size: 20,
-                    font: "Roboto",
-                  }),
-                ],
-              }),
-            ],
-          }),
-          new TableCell({
-            width: { size: 75, type: WidthType.PERCENTAGE },
-            verticalAlign: VerticalAlign.CENTER,
-            shading: { fill: "009edb" },
-            children: [
-              new Paragraph({
-                children: [
-                  new TextRun({
-                    text: "Headline",
-                    bold: true,
-                    color: "FFFFFF",
-                    size: 20,
-                    font: "Roboto",
-                  }),
-                ],
-              }),
-            ],
-          }),
-        ],
-      }),
-    );
-
-    // Data rows
+    // Data rows (no header row — region name above already provides context)
     countries.forEach((country) => {
       const countryLabel = country || "(No country specified)";
       const entries = entriesByRegionAndCountry[region][country];
@@ -393,13 +354,22 @@ const buildTableOfContents = (
               new TableCell({
                 width: { size: 25, type: WidthType.PERCENTAGE },
                 verticalAlign: VerticalAlign.TOP,
+                borders: {
+                  top: noBorder,
+                  bottom: subtleBorder,
+                  left: noBorder,
+                  right: noBorder,
+                },
+                margins: { top: 40, bottom: 40 },
                 children: [
                   new Paragraph({
                     children: [
                       new TextRun({
                         text: displayCountry,
+                        bold: true,
                         size: 20,
                         font: "Roboto",
+                        color: "009edb",
                       }),
                     ],
                   }),
@@ -408,6 +378,13 @@ const buildTableOfContents = (
               new TableCell({
                 width: { size: 75, type: WidthType.PERCENTAGE },
                 verticalAlign: VerticalAlign.TOP,
+                borders: {
+                  top: noBorder,
+                  bottom: subtleBorder,
+                  left: noBorder,
+                  right: noBorder,
+                },
+                margins: { top: 40, bottom: 40 },
                 children: [
                   new Paragraph({
                     children: [
@@ -430,20 +407,12 @@ const buildTableOfContents = (
       new Table({
         width: { size: 100, type: WidthType.PERCENTAGE },
         borders: {
-          top: { style: BorderStyle.SINGLE, size: 1, color: "000000" },
-          bottom: { style: BorderStyle.SINGLE, size: 1, color: "000000" },
-          left: { style: BorderStyle.SINGLE, size: 1, color: "000000" },
-          right: { style: BorderStyle.SINGLE, size: 1, color: "000000" },
-          insideHorizontal: {
-            style: BorderStyle.SINGLE,
-            size: 1,
-            color: "CCCCCC",
-          },
-          insideVertical: {
-            style: BorderStyle.SINGLE,
-            size: 1,
-            color: "CCCCCC",
-          },
+          top: noBorder,
+          bottom: noBorder,
+          left: noBorder,
+          right: noBorder,
+          insideHorizontal: noBorder,
+          insideVertical: noBorder,
         },
         rows: tableRows,
       }),
@@ -623,18 +592,19 @@ const buildDocumentChildren = (
                   font: "Roboto",
                 }),
               ],
-              spacing: { after: 100 },
+              spacing: { after: 40 },
               keepNext: true,
             }),
           );
 
-          // Source Information (Name with optional hyperlink, Date)
+          // Source Information (right under headline)
           if (entry.sourceName || entry.sourceDate) {
             const sourceChildren: (TextRun | ExternalHyperlink)[] = [
               new TextRun({
                 text: "Source: ",
                 italics: true,
                 font: "Roboto",
+                size: 20,
               }),
             ];
 
@@ -647,6 +617,7 @@ const buildDocumentChildren = (
                         text: entry.sourceName,
                         italics: true,
                         font: "Roboto",
+                        size: 20,
                         style: "Hyperlink",
                       }),
                     ],
@@ -659,6 +630,7 @@ const buildDocumentChildren = (
                     text: entry.sourceName,
                     italics: true,
                     font: "Roboto",
+                    size: 20,
                   }),
                 );
               }
@@ -670,6 +642,7 @@ const buildDocumentChildren = (
                   text: " | ",
                   italics: true,
                   font: "Roboto",
+                  size: 20,
                 }),
               );
             }
@@ -680,6 +653,7 @@ const buildDocumentChildren = (
                   text: formatDateFull(entry.sourceDate),
                   italics: true,
                   font: "Roboto",
+                  size: 20,
                 }),
               );
             }
@@ -687,32 +661,26 @@ const buildDocumentChildren = (
             children.push(
               new Paragraph({
                 children: sourceChildren,
-                spacing: { after: 100 },
+                spacing: { after: 80 },
               }),
             );
           }
 
-          // Priority and Category
+          // Priority
           children.push(
             new Paragraph({
               children: [
                 new TextRun({
                   text:
                     entry.priority === "SG's attention"
-                      ? "SG Attention"
+                      ? "SG's attention"
                       : "Situational Awareness",
                   italics: true,
                   size: 20,
                   font: "Roboto",
                 }),
-                new TextRun({
-                  text: ` | ${entry.category}`,
-                  italics: true,
-                  size: 20,
-                  font: "Roboto",
-                }),
               ],
-              spacing: { after: 150 },
+              spacing: { after: 120 },
             }),
           );
 

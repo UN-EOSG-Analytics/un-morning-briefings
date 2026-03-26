@@ -89,6 +89,11 @@ export function EntriesTable({
   const [openStatusDropdown, setOpenStatusDropdown] = useState<string | null>(
     null,
   );
+  const [dropdownPos, setDropdownPos] = useState<{
+    top: number;
+    left: number;
+  } | null>(null
+  );
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
   const [exportingDate, setExportingDate] = useState<string | null>(null);
   const [submittingId, setSubmittingId] = useState<string | null>(null);
@@ -163,6 +168,7 @@ export function EntriesTable({
     } finally {
       setUpdatingStatus(null);
       setOpenStatusDropdown(null);
+      setDropdownPos(null);
     }
   };
 
@@ -202,6 +208,7 @@ export function EntriesTable({
     } finally {
       setUpdatingStatus(null);
       setOpenStatusDropdown(null);
+      setDropdownPos(null);
     }
   };
 
@@ -225,6 +232,7 @@ export function EntriesTable({
       // Close if clicking outside any dropdown
       if (!target.closest(".status-dropdown-container")) {
         setOpenStatusDropdown(null);
+        setDropdownPos(null);
       }
     };
 
@@ -629,21 +637,35 @@ export function EntriesTable({
                                 return (
                                   <>
                                     <button
-                                      onClick={() =>
-                                        setOpenStatusDropdown(
-                                          openStatusDropdown === entry.id
-                                            ? null
-                                            : entry.id,
-                                        )
-                                      }
+                                      onClick={(e) => {
+                                        if (openStatusDropdown === entry.id) {
+                                          setOpenStatusDropdown(null);
+                                          setDropdownPos(null);
+                                        } else {
+                                          const rect =
+                                            e.currentTarget.getBoundingClientRect();
+                                          setDropdownPos({
+                                            top: rect.bottom + 6,
+                                            left: rect.left,
+                                          });
+                                          setOpenStatusDropdown(entry.id);
+                                        }
+                                      }}
                                       disabled={updatingStatus === entry.id}
                                       className={`inline-flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-opacity hover:opacity-80 ${config.bg} ${config.text} disabled:opacity-50`}
                                     >
                                       <Icon className="h-3.5 w-3.5" />
                                       {config.label}
                                     </button>
-                                    {openStatusDropdown === entry.id && (
-                                      <div className="absolute top-full left-0 z-50 mt-1.5 w-max rounded-lg border border-slate-200 bg-white py-1 shadow-lg">
+                                    {openStatusDropdown === entry.id &&
+                                      dropdownPos && (
+                                      <div
+                                        className="fixed z-50 w-max rounded-lg border border-slate-200 bg-white py-1 shadow-lg"
+                                        style={{
+                                          top: dropdownPos.top,
+                                          left: dropdownPos.left,
+                                        }}
+                                      >
                                         {["pending", "discussed"]
                                           .filter((s) => s !== status)
                                           .map((statusOption) => {

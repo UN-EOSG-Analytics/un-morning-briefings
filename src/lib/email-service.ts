@@ -2,6 +2,20 @@ import nodemailer from "nodemailer";
 import * as fs from "fs";
 import * as path from "path";
 import labels from "@/lib/labels.json";
+import type { NextRequest } from "next/server";
+
+/**
+ * Resolves the base URL for email links from the incoming request.
+ * Reads x-forwarded-proto/host (set by Vercel and most proxies) so the link
+ * always matches the actual domain — no env vars required.
+ */
+export function resolveBaseUrl(req: NextRequest): string {
+  const proto =
+    req.headers.get("x-forwarded-proto") ??
+    (req.url.startsWith("https") ? "https" : "http");
+  const host = req.headers.get("x-forwarded-host") ?? req.headers.get("host");
+  return `${proto}://${host}`;
+}
 
 // Create a transporter using the configured SMTP server
 const transporter = nodemailer.createTransport({
@@ -126,8 +140,9 @@ export async function sendVerificationEmail(
   email: string,
   token: string,
   firstName: string,
-  baseUrl: string,
+  req: NextRequest,
 ): Promise<boolean> {
+  const baseUrl = resolveBaseUrl(req);
   const verificationUrl = `${baseUrl}/api/auth/verify-email?token=${token}`;
 
   const contentHtml = `
@@ -153,8 +168,9 @@ export async function sendPasswordResetEmail(
   email: string,
   token: string,
   firstName: string,
-  baseUrl: string,
+  req: NextRequest,
 ): Promise<boolean> {
+  const baseUrl = resolveBaseUrl(req);
   const resetUrl = `${baseUrl}/login?token=${token}`;
 
   const contentHtml = `

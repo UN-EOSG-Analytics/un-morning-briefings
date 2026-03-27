@@ -115,14 +115,12 @@ export async function POST(request: NextRequest) {
       [user.id, tokenHash, ipAddress],
     );
 
-    const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
-
     // Send email with reset link containing the plain token
     const emailSent = await sendPasswordResetEmail(
       user.email,
       resetToken,
       user.first_name,
-      baseUrl,
+      req,
     );
 
     if (!emailSent) {

@@ -92,10 +92,8 @@ export async function POST(req: NextRequest) {
       [result.rows[0].id, email.toLowerCase()],
     );
 
-    // Send verification email
-    // Use NEXTAUTH_URL for consistent, trusted base URL (never trust Host header)
-    const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
-    await sendVerificationEmail(email, verificationToken, firstName, baseUrl);
+    // Send verification email — base URL resolved dynamically from the request
+    await sendVerificationEmail(email, verificationToken, firstName, req);
 
     return NextResponse.json({
       success: true,

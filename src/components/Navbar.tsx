@@ -164,12 +164,11 @@ export function Navbar() {
               className="flex items-center gap-2 sm:gap-3"
             >
               <Image
-                src="/images/UN_Logo_Stacked_Colour_English.svg"
+                src="/images/un-logo-stacked-colour-english.svg"
                 alt="UN Logo"
-                width={300}
-                height={64}
+                width={0}
+                height={0}
                 className="h-8 w-auto sm:h-10"
-                style={{ width: "auto" }}
                 priority
               />
             </Link>

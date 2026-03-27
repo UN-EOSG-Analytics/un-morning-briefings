@@ -736,7 +736,7 @@ function BriefingContent() {
         {/* Header */}
         <div className="mb-8 flex flex-col items-start justify-between gap-4 pb-6 sm:mb-10 sm:flex-row sm:items-start sm:gap-0 sm:pb-8">
           <img
-            src="/images/UN_Logo_Black.png"
+            src="/images/un-logo-black.png"
             alt="UN Logo"
             className="h-8 sm:h-10"
           />

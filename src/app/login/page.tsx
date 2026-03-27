@@ -24,12 +24,11 @@ type View = "login" | "register" | "forgotPassword" | "resetPassword";
 
 const Logo = () => (
   <Image
-    src="/images/UN_Logo_Stacked_Colour_English.svg"
+    src="/images/un-logo-stacked-colour-english.svg"
     alt="UN Logo"
-    width={100}
-    height={40}
+    width={0}
+    height={0}
     className="h-10 w-auto"
-    style={{ width: "auto" }}
     priority
   />
 );

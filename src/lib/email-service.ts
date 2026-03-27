@@ -33,10 +33,10 @@ function loadLogoDataUri(): string {
   try {
     const logoPath = path.join(
       process.cwd(),
-      "public/images/UN_Logo_Stacked_Colour_English.png",
+      "public/images/un-logo-stacked-colour-english.svg",
     );
     const logoBuffer = fs.readFileSync(logoPath);
-    return `data:image/png;base64,${logoBuffer.toString("base64")}`;
+    return `data:image/svg+xml;base64,${logoBuffer.toString("base64")}`;
   } catch (error) {
     console.warn("[EMAIL SERVICE] Warning: Could not read logo file", error);
     return "";

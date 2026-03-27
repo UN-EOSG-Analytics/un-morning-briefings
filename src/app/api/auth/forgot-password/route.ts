@@ -120,7 +120,7 @@ export async function POST(request: NextRequest) {
       user.email,
       resetToken,
       user.first_name,
-      req,
+      request,
     );
 
     if (!emailSent) {

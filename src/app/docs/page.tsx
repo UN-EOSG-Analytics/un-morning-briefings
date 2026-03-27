@@ -43,9 +43,9 @@ function SectionHeading({
   return (
     <h2
       id={id}
-      className="mb-4 flex items-center gap-2.5 scroll-mt-24 text-xl font-semibold text-slate-900"
+      className="mb-4 flex scroll-mt-24 items-center gap-2.5 text-xl font-semibold text-slate-900"
     >
-      <Icon className="h-5 w-5 text-un-blue shrink-0" />
+      <Icon className="h-5 w-5 shrink-0 text-un-blue" />
       {children}
     </h2>
   );
@@ -135,7 +135,7 @@ export default function DocsPage() {
         {/* Sticky TOC sidebar */}
         <aside className="hidden w-56 shrink-0 lg:block">
           <div className="sticky top-24">
-            <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
+            <p className="mb-3 text-xs font-semibold tracking-wider text-slate-500 uppercase">
               On this page
             </p>
             <nav className="space-y-0.5">
@@ -224,14 +224,16 @@ export default function DocsPage() {
                 email address added to the authorized whitelist.
               </Step>
               <Step number={2} title="Create an account">
-                Navigate to{" "}
-                <strong>/login</strong> → <em>Create Account</em>. You must use
-                your <code className="rounded bg-slate-100 px-1 text-xs">@un.org</code>{" "}
+                Navigate to <strong>/login</strong> → <em>Create Account</em>.
+                You must use your{" "}
+                <code className="rounded bg-slate-100 px-1 text-xs">
+                  @un.org
+                </code>{" "}
                 email. Non-whitelisted addresses will be rejected.
               </Step>
               <Step number={3} title="Verify your email">
-                Check your inbox for a verification link. The link expires in
-                24 hours. Click it to activate your account.
+                Check your inbox for a verification link. The link expires in 24
+                hours. Click it to activate your account.
               </Step>
               <Step number={4} title="Sign in">
                 Return to <strong>/login</strong> and sign in with your
@@ -256,7 +258,7 @@ export default function DocsPage() {
             </p>
             <div className="mb-4 overflow-hidden rounded-lg border border-slate-200">
               <table className="w-full text-sm">
-                <thead className="bg-slate-50 text-xs uppercase text-slate-500">
+                <thead className="bg-slate-50 text-xs text-slate-500 uppercase">
                   <tr>
                     <th className="px-4 py-2 text-left">Field</th>
                     <th className="px-4 py-2 text-left">Description</th>
@@ -265,19 +267,49 @@ export default function DocsPage() {
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {[
-                    ["Category", "Type of source document (Article, Code Cable, etc.)", "Yes"],
-                    ["Priority", "SG's attention or Situational Awareness", "Yes"],
+                    [
+                      "Category",
+                      "Type of source document (Article, Code Cable, etc.)",
+                      "Yes",
+                    ],
+                    [
+                      "Priority",
+                      "SG's attention or Situational Awareness",
+                      "Yes",
+                    ],
                     ["Region", "Geographic region covered by the entry", "Yes"],
-                    ["Countries/Tags", "Specific countries or tags mentioned", "No"],
-                    ["Headline", "Concise, descriptive headline for the entry", "Yes"],
-                    ["Entry Content", "Rich text summary of the development", "Yes (≥50 chars)"],
-                    ["Source Name", "Name of the source publication or document", "No"],
+                    [
+                      "Countries/Tags",
+                      "Specific countries or tags mentioned",
+                      "No",
+                    ],
+                    [
+                      "Headline",
+                      "Concise, descriptive headline for the entry",
+                      "Yes",
+                    ],
+                    [
+                      "Entry Content",
+                      "Rich text summary of the development",
+                      "Yes (≥50 chars)",
+                    ],
+                    [
+                      "Source Name",
+                      "Name of the source publication or document",
+                      "No",
+                    ],
                     ["Source Date", "Date of the original source", "No"],
                     ["Source URL", "Link to the original source", "No"],
-                    ["PU Note", "Internal Political Unit comment or annotation", "No"],
+                    [
+                      "PU Note",
+                      "Internal Political Unit comment or annotation",
+                      "No",
+                    ],
                   ].map(([field, desc, req]) => (
                     <tr key={field} className="hover:bg-slate-50">
-                      <td className="px-4 py-2 font-medium text-slate-800">{field}</td>
+                      <td className="px-4 py-2 font-medium text-slate-800">
+                        {field}
+                      </td>
                       <td className="px-4 py-2 text-slate-600">{desc}</td>
                       <td className="px-4 py-2">
                         <Badge>{req}</Badge>
@@ -307,9 +339,10 @@ export default function DocsPage() {
               8AM Cutoff & Briefing Dates
             </SectionHeading>
             <p className="mb-4 text-sm text-slate-700">
-              Entries are automatically assigned to a <strong>briefing date</strong>{" "}
-              based on an 8AM local time cutoff. This determines which day's
-              Morning Meeting Update the entry will appear in.
+              Entries are automatically assigned to a{" "}
+              <strong>briefing date</strong> based on an 8AM local time cutoff.
+              This determines which day's Morning Meeting Update the entry will
+              appear in.
             </p>
             <div className="mb-4 rounded-lg border border-slate-200 bg-slate-50 p-5">
               <p className="mb-3 text-sm font-semibold text-slate-800">
@@ -341,10 +374,12 @@ export default function DocsPage() {
             </div>
             <div className="mb-4 overflow-hidden rounded-lg border border-slate-200">
               <table className="w-full text-sm">
-                <thead className="bg-slate-50 text-xs uppercase text-slate-500">
+                <thead className="bg-slate-50 text-xs text-slate-500 uppercase">
                   <tr>
                     <th className="px-4 py-2 text-left">Submitted at</th>
-                    <th className="px-4 py-2 text-left">Assigned to briefing</th>
+                    <th className="px-4 py-2 text-left">
+                      Assigned to briefing
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -357,7 +392,9 @@ export default function DocsPage() {
                     ["Saturday any time", "Monday (next week)"],
                   ].map(([time, briefing]) => (
                     <tr key={time} className="hover:bg-slate-50">
-                      <td className="px-4 py-2 font-mono text-xs text-slate-700">{time}</td>
+                      <td className="px-4 py-2 font-mono text-xs text-slate-700">
+                        {time}
+                      </td>
                       <td className="px-4 py-2 text-slate-700">{briefing}</td>
                     </tr>
                   ))}
@@ -365,9 +402,10 @@ export default function DocsPage() {
               </table>
             </div>
             <InfoBox variant="amber">
-              The home page always shows the <strong>current briefing date</strong>{" "}
-              — the next upcoming morning meeting. The entries list can be
-              filtered by any briefing date to view past or future entries.
+              The home page always shows the{" "}
+              <strong>current briefing date</strong> — the next upcoming morning
+              meeting. The entries list can be filtered by any briefing date to
+              view past or future entries.
             </InfoBox>
           </section>
 
@@ -416,18 +454,18 @@ export default function DocsPage() {
                 },
                 {
                   status: "Pending",
-                  desc: 'Approval status for entries that have been approved for the current briefing. Shown in the daily briefing view.',
+                  desc: "Approval status for entries that have been approved for the current briefing. Shown in the daily briefing view.",
                 },
                 {
                   status: "Discussed",
-                  desc: 'Marked after the morning meeting has concluded and the entry was discussed. The entry is archived.',
+                  desc: "Marked after the morning meeting has concluded and the entry was discussed. The entry is archived.",
                 },
               ].map(({ status, desc }) => (
                 <div
                   key={status}
                   className="flex gap-3 rounded-lg border border-slate-200 p-3"
                 >
-                  <span className="mt-0.5 text-xs font-semibold text-slate-500 w-20 shrink-0">
+                  <span className="mt-0.5 w-20 shrink-0 text-xs font-semibold text-slate-500">
                     {status}
                   </span>
                   <span className="text-slate-600">{desc}</span>
@@ -438,7 +476,7 @@ export default function DocsPage() {
               <p className="text-sm font-medium text-slate-800">
                 Additional actions
               </p>
-              <div className="grid gap-3 sm:grid-cols-2 text-sm">
+              <div className="grid gap-3 text-sm sm:grid-cols-2">
                 <div className="rounded-lg border border-slate-200 p-3">
                   <p className="font-medium text-slate-800">Follow Up</p>
                   <p className="mt-1 text-slate-600">
@@ -526,7 +564,7 @@ export default function DocsPage() {
               <code className="rounded bg-slate-100 px-1 text-xs">/list</code>)
               shows all submitted entries across all briefing dates.
             </p>
-            <div className="grid gap-3 sm:grid-cols-2 text-sm mb-4">
+            <div className="mb-4 grid gap-3 text-sm sm:grid-cols-2">
               {[
                 {
                   label: "Briefing Date filter",
@@ -556,9 +594,9 @@ export default function DocsPage() {
             </div>
             <InfoBox variant="blue">
               <strong>My Drafts</strong> (
-              <code className="rounded bg-blue-100 px-1 text-xs">/drafts</code>
-              ) shows only your own unsubmitted draft entries. From there you
-              can edit, submit, or delete each draft.
+              <code className="rounded bg-blue-100 px-1 text-xs">/drafts</code>)
+              shows only your own unsubmitted draft entries. From there you can
+              edit, submit, or delete each draft.
             </InfoBox>
           </section>
 
@@ -620,7 +658,7 @@ export default function DocsPage() {
               The Analytics Dashboard provides insights into entry patterns and
               regional activity over time.
             </p>
-            <div className="grid gap-3 sm:grid-cols-2 text-sm">
+            <div className="grid gap-3 text-sm sm:grid-cols-2">
               {[
                 {
                   label: "Regional Distribution",
@@ -696,7 +734,7 @@ export default function DocsPage() {
                   key={tab}
                   className="flex gap-3 rounded-lg border border-slate-200 p-3"
                 >
-                  <span className="mt-0.5 text-xs font-semibold text-slate-500 w-32 shrink-0">
+                  <span className="mt-0.5 w-32 shrink-0 text-xs font-semibold text-slate-500">
                     {tab}
                   </span>
                   <span className="text-slate-600">{desc}</span>
@@ -745,7 +783,7 @@ export default function DocsPage() {
                 </p>
                 <div className="overflow-hidden rounded-lg border border-slate-200">
                   <table className="w-full text-sm">
-                    <thead className="bg-slate-50 text-xs uppercase text-slate-500">
+                    <thead className="bg-slate-50 text-xs text-slate-500 uppercase">
                       <tr>
                         <th className="px-4 py-2 text-left">Region</th>
                         <th className="px-4 py-2 text-left">Description</th>
@@ -754,14 +792,25 @@ export default function DocsPage() {
                     <tbody className="divide-y divide-slate-100">
                       {[
                         ["Africa", "All African nations and territories"],
-                        ["The Americas", "North, Central, South America and the Caribbean"],
-                        ["Asia and the Pacific", "East Asia, Southeast Asia, South Asia, and Pacific islands"],
+                        [
+                          "The Americas",
+                          "North, Central, South America and the Caribbean",
+                        ],
+                        [
+                          "Asia and the Pacific",
+                          "East Asia, Southeast Asia, South Asia, and Pacific islands",
+                        ],
                         ["Europe", "European nations and territories"],
                         ["Middle East", "Middle Eastern nations and the Gulf"],
-                        ["Thematic updates", "Cross-regional or thematic entries not tied to a single region"],
+                        [
+                          "Thematic updates",
+                          "Cross-regional or thematic entries not tied to a single region",
+                        ],
                       ].map(([region, desc]) => (
                         <tr key={region} className="hover:bg-slate-50">
-                          <td className="px-4 py-2 font-medium text-slate-800">{region}</td>
+                          <td className="px-4 py-2 font-medium text-slate-800">
+                            {region}
+                          </td>
                           <td className="px-4 py-2 text-slate-600">{desc}</td>
                         </tr>
                       ))}
@@ -782,7 +831,7 @@ export default function DocsPage() {
               </div>
             </div>
 
-            <div className="mt-8 rounded-lg border border-slate-200 bg-slate-50 p-4 text-xs text-slate-500 text-center">
+            <div className="mt-8 rounded-lg border border-slate-200 bg-slate-50 p-4 text-center text-xs text-slate-500">
               {labels.app.confidential}
             </div>
           </section>

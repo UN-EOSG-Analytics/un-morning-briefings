@@ -105,7 +105,7 @@ const processEntriesImages = async (
   entries: MorningMeetingEntry[],
   includeImages: boolean,
 ): Promise<MorningMeetingEntry[]> => {
-  const processedEntries = [...entries];
+  const processedEntries = entries.map((e) => ({ ...e }));
 
   for (const entry of processedEntries) {
     let html = entry.entry;
@@ -216,45 +216,23 @@ const processEntriesImages = async (
  * Build PU Note paragraph with italic formatting and rich text support
  */
 const buildPuNoteParagraph = (puNote: string): Paragraph[] => {
-  const paragraphs: Paragraph[] = [];
-
-  try {
-    const puNoteElements = parseHtmlContent(puNote);
-    if (puNoteElements.length > 0) {
-      const firstPara = puNoteElements[0];
-      const prefixRun = new TextRun({
-        text: "PU Note: ",
+  const labelParagraph = new Paragraph({
+    children: [
+      new TextRun({
+        text: "PU Note:",
         bold: true,
         italics: true,
         font: "Roboto",
-      });
-      const modifiedChildren = (firstPara as any).root?.[0]?.root || [];
-      const italicChildren = modifiedChildren.map((child: any) => {
-        if (child.constructor.name === "TextRun") {
-          return new TextRun({
-            ...((child as any).root?.[0]?.root || {}),
-            italics: true,
-          });
-        }
-        return child;
-      });
-      paragraphs.push(
-        new Paragraph({
-          children: [prefixRun, ...italicChildren],
-          spacing: { after: 100 },
-        }),
-      );
-      for (let i = 1; i < puNoteElements.length; i++) {
-        paragraphs.push(puNoteElements[i]);
-      }
-    } else {
-      paragraphs.push(createPlainPuNoteParagraph(puNote));
-    }
-  } catch {
-    paragraphs.push(createPlainPuNoteParagraph(puNote));
-  }
+      }),
+    ],
+    spacing: { after: 40 },
+  });
 
-  return paragraphs;
+  const contentParagraphs = parseHtmlContent(puNote, { italics: true });
+
+  return contentParagraphs.length > 0
+    ? [labelParagraph, ...contentParagraphs]
+    : [labelParagraph, createPlainPuNoteParagraph(puNote)];
 };
 
 const createPlainPuNoteParagraph = (puNote: string): Paragraph =>

@@ -196,7 +196,7 @@ export function MorningMeetingForm({
   });
 
   const [errors, setErrors] = useState<FormFieldError>({});
-  const [showPuNote, setShowPuNote] = useState(false);
+  const [showPuNote, setShowPuNote] = useState(!!initialData?.puNote);
   const [draftSaved, setDraftSaved] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showMetadata, setShowMetadata] = useState(false);

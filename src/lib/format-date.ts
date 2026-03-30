@@ -1,10 +1,11 @@
 /**
  * Parse a date string and extract components WITHOUT any timezone conversion.
  * Works with formats like:
- * - "2026-01-15T13:30:00.000Z"
- * - "2026-01-15T13:30:00"
- * - "2026-01-15T13:30"
- * Returns the literal values from the string, ignoring any Z suffix.
+ * - "2026-01-15T13:30:00.000Z"   (ISO with Z — Z is ignored)
+ * - "2026-01-15T13:30:00"        (ISO without Z)
+ * - "2026-01-15T13:30"           (ISO date-time)
+ * - "2026-01-15 13:30:00.000"    (pg raw TIMESTAMP string, space separator)
+ * Returns the literal values from the string, ignoring any timezone suffix.
  */
 export function parseDateString(dateStr: string): {
   year: number;
@@ -13,7 +14,7 @@ export function parseDateString(dateStr: string): {
   hour: number;
   minute: number;
 } {
-  const match = dateStr.match(/(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
+  const match = dateStr.match(/(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/);
   if (!match) {
     const dateOnly = dateStr.match(/(\d{4})-(\d{2})-(\d{2})/);
     if (dateOnly) {
@@ -122,12 +123,27 @@ export function formatDateWithWeekday(date: string | Date): string {
 
 /**
  * Format time as HH:MM (no seconds)
- * NO timezone conversion - uses literal string values
+ * NO timezone conversion - entry.date stores NYC local time as a naive
+ * timestamp (no tz offset), so we read the literal hour/minute from the string.
  */
 export function formatTime(date: string | Date): string {
   const dateStr = typeof date === "string" ? date : date.toISOString();
   const { hour, minute } = parseDateString(dateStr);
   return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+}
+
+/**
+ * Format a UTC timestamp (created_at / updated_at) as HH:MM in New York time.
+ * These columns store UTC time; we convert to America/New_York for display.
+ */
+export function formatTimeNYC(date: string | Date): string {
+  const dateObj = typeof date === "string" ? new Date(date) : date;
+  return dateObj.toLocaleTimeString("en-US", {
+    timeZone: "America/New_York",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
 }
 
 /**

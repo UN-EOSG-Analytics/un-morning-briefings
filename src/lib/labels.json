@@ -222,7 +222,7 @@
     "title": "Morning Meeting Entries",
     "subtitle": "View and manage submitted entries",
     "columns": {
-      "date": "Date",
+      "date": "Last Updated",
       "headline": "Headline",
       "region": "Region",
       "tag": "Tag",

@@ -75,8 +75,8 @@ CREATE TABLE IF NOT EXISTS morning_briefings.entries (
     thematic          TEXT,
     text_content      TEXT,
     search_vector     TSVECTOR,
-    created_at        TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_at        TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_at        TIMESTAMP(3) WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at        TIMESTAMP(3) WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
 
     CONSTRAINT chk_status CHECK (
         status IN ('draft', 'submitted')

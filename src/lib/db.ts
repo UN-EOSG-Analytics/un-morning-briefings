@@ -1,6 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { Pool } from "pg";
+import { Pool, types } from "pg";
+
+// Prevent pg from converting TIMESTAMP (without time zone, OID 1114) into a
+// JS Date object via new Date(rawString). That conversion uses the server's
+// local timezone, which shifts the wall-clock value.  Instead, keep the raw
+// Postgres string so that parseDateString() can read the literal NYC time.
+// TIMESTAMPTZ (OID 1184) is unaffected and continues to return proper UTC Dates.
+types.setTypeParser(1114, (val: string) => val);
 
 const globalForDb = global as unknown as { db: Pool };
 

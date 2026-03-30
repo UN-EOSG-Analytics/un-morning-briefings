@@ -594,18 +594,38 @@ function parseHtmlContentClient(html: string): Paragraph[] {
   return paragraphs;
 }
 
-function extractTextRuns(element: Element): any[] {
+interface TextStyles {
+  bold?: boolean;
+  italics?: boolean;
+  underline?: object;
+  strike?: boolean;
+  highlight?: { type: "clear"; fill: string };
+  color?: string;
+  font?: string;
+}
+
+function extractTextRuns(element: Element, inherited: TextStyles = {}): any[] {
   const runs: any[] = [];
 
   for (const node of Array.from(element.childNodes)) {
     if (node.nodeType === Node.TEXT_NODE) {
       const text = (node as Text).textContent;
       if (text) {
-        // Split by line breaks if any
         const lines = text.split("\n");
         lines.forEach((line, index) => {
           if (line) {
-            runs.push(new TextRun({ text: line, font: "Roboto" }));
+            runs.push(
+              new TextRun({
+                text: line,
+                font: inherited.font || "Roboto",
+                bold: inherited.bold,
+                italics: inherited.italics,
+                underline: inherited.underline,
+                strike: inherited.strike,
+                shading: inherited.highlight,
+                color: inherited.color,
+              }),
+            );
           }
           if (index < lines.length - 1) {
             runs.push(new TextRun({ text: "", break: 1 }));
@@ -616,106 +636,65 @@ function extractTextRuns(element: Element): any[] {
       const el = node as Element;
       const tag = el.tagName.toLowerCase();
 
+      if (tag === "br") {
+        runs.push(new TextRun({ text: "", break: 1 }));
+        continue;
+      }
+
+      if (tag === "img") {
+        const src = el.getAttribute("src");
+        if (src && src.startsWith("data:image")) {
+          try {
+            const buffer = base64ToBuffer(src);
+            const dataWidth = el.getAttribute("data-width");
+            const dataHeight = el.getAttribute("data-height");
+            const dims = calculateImageDimensions(dataWidth, dataHeight, buffer, 300);
+            const imageType = getImageType(src);
+            runs.push(
+              new ImageRun({
+                data: buffer as unknown as Uint8Array,
+                type: imageType,
+                transformation: { width: dims.width, height: dims.height },
+              }),
+            );
+          } catch (error) {
+            console.error("Error processing inline image:", error);
+          }
+        }
+        continue;
+      }
+
+      // Accumulate styles for inline formatting tags, then recurse
+      const styles: TextStyles = { ...inherited };
       switch (tag) {
-        case "br":
-          runs.push(new TextRun({ text: "", break: 1 }));
-          break;
         case "strong":
         case "b":
-          runs.push(
-            new TextRun({
-              text: el.textContent || "",
-              bold: true,
-              font: "Roboto",
-            }),
-          );
+          styles.bold = true;
           break;
         case "em":
         case "i":
-          runs.push(
-            new TextRun({
-              text: el.textContent || "",
-              italics: true,
-              font: "Roboto",
-            }),
-          );
+          styles.italics = true;
           break;
         case "u":
-          runs.push(
-            new TextRun({
-              text: el.textContent || "",
-              underline: {},
-              font: "Roboto",
-            }),
-          );
+          styles.underline = styles.underline ?? {};
           break;
         case "s":
         case "del":
-          runs.push(
-            new TextRun({
-              text: el.textContent || "",
-              strike: true,
-              font: "Roboto",
-            }),
-          );
-          break;
-        case "code":
-          runs.push(
-            new TextRun({ text: el.textContent || "", font: "Courier New" }),
-          );
-          break;
-        case "a":
-          runs.push(
-            new TextRun({
-              text: el.textContent || "",
-              color: "0563C1",
-              underline: {},
-              font: "Roboto",
-            }),
-          );
+          styles.strike = true;
           break;
         case "mark":
-          runs.push(
-            new TextRun({
-              text: el.textContent || "",
-              shading: { type: "clear", fill: "FFFF00" },
-              font: "Roboto",
-            }),
-          );
+          styles.highlight = { type: "clear", fill: "FFFF00" };
           break;
-        case "img": {
-          const src = el.getAttribute("src");
-          if (src && src.startsWith("data:image")) {
-            try {
-              const buffer = base64ToBuffer(src);
-              const dataWidth = el.getAttribute("data-width");
-              const dataHeight = el.getAttribute("data-height");
-
-              const dims = calculateImageDimensions(
-                dataWidth,
-                dataHeight,
-                buffer,
-                300,
-              );
-              const imageType = getImageType(src);
-
-              runs.push(
-                new ImageRun({
-                  data: buffer as unknown as Uint8Array,
-                  type: imageType,
-                  transformation: { width: dims.width, height: dims.height },
-                }),
-              );
-            } catch (error) {
-              console.error("Error processing inline image:", error);
-            }
-          }
+        case "a":
+          styles.color = "0563C1";
+          styles.underline = styles.underline ?? {};
           break;
-        }
-        default:
-          const nestedRuns = extractTextRuns(el);
-          runs.push(...nestedRuns);
+        case "code":
+          styles.font = "Courier New";
+          break;
       }
+
+      runs.push(...extractTextRuns(el, styles));
     }
   }
 

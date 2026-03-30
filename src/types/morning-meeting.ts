@@ -30,6 +30,8 @@ export interface MorningMeetingEntry {
   status?: "draft" | "submitted";
   approvalStatus?: ApprovalStatus;
   previousEntryId?: string | null;
+  createdAt?: string; // TIMESTAMPTZ — UTC ISO string, display with formatTimeNYC
+  updatedAt?: string; // TIMESTAMPTZ — UTC ISO string, display with formatTimeNYC
 }
 
 export interface FormFieldError {

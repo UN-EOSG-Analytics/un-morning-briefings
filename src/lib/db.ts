@@ -2,12 +2,13 @@
 
 import { Pool, types } from "pg";
 
-// Prevent pg from converting TIMESTAMP (without time zone, OID 1114) into a
-// JS Date object via new Date(rawString). That conversion uses the server's
-// local timezone, which shifts the wall-clock value.  Instead, keep the raw
-// Postgres string so that parseDateString() can read the literal NYC time.
-// TIMESTAMPTZ (OID 1184) is unaffected and continues to return proper UTC Dates.
-types.setTypeParser(1114, (val: string) => val);
+// Return TIMESTAMP (no tz, OID 1114) and DATE (OID 1082) as raw strings.
+// pg's default converts them via new Date(rawString) using the server's local
+// timezone, which shifts wall-clock values.  Raw strings let parseDateString()
+// read the literal values exactly as stored.
+// TIMESTAMPTZ (OID 1184) is unaffected — continues to return UTC-anchored Dates.
+types.setTypeParser(1114, (val: string) => val); // TIMESTAMP → "YYYY-MM-DD HH:MM:SS.mmm"
+types.setTypeParser(1082, (val: string) => val); // DATE      → "YYYY-MM-DD"
 
 const globalForDb = global as unknown as { db: Pool };
 

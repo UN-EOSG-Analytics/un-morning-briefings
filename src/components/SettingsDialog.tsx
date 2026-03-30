@@ -74,7 +74,9 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
       if (response.ok) {
         const data = await response.json();
         setEmailTime(data.emailTime ?? "");
-        setEmailRecipients(Array.isArray(data.emailRecipients) ? data.emailRecipients : []);
+        setEmailRecipients(
+          Array.isArray(data.emailRecipients) ? data.emailRecipients : [],
+        );
       }
     } catch (err) {
       console.error("Failed to load email settings:", err);
@@ -105,9 +107,13 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
       if (!response.ok) {
         throw new Error(data.error || "Failed to save email settings");
       }
-      showSuccess(labels.settings.email.saveSuccess, labels.settings.email.saveSuccessMessage);
+      showSuccess(
+        labels.settings.email.saveSuccess,
+        labels.settings.email.saveSuccessMessage,
+      );
     } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : "Failed to save email settings";
+      const errorMsg =
+        err instanceof Error ? err.message : "Failed to save email settings";
       showWarning(labels.settings.email.saveFailed, errorMsg);
     } finally {
       setIsSavingEmailSettings(false);
@@ -667,7 +673,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
             >
               {/* Send time */}
               <div className="rounded-lg border border-slate-200 bg-white p-4">
-                <label className="mb-1.5 block text-xs font-medium text-slate-500 uppercase tracking-wide">
+                <label className="mb-1.5 block text-xs font-medium tracking-wide text-slate-500 uppercase">
                   {labels.settings.email.sendTime}
                 </label>
                 <input
@@ -680,7 +686,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
 
               {/* Recipients */}
               <div className="rounded-lg border border-slate-200 bg-white p-4">
-                <p className="mb-1 text-xs font-medium text-slate-500 uppercase tracking-wide">
+                <p className="mb-1 text-xs font-medium tracking-wide text-slate-500 uppercase">
                   {labels.settings.email.recipients}
                 </p>
 

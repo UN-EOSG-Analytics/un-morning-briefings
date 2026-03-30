@@ -85,6 +85,8 @@ const ENTRY_SELECT = `
     e.ai_summary as "aiSummary",
     COALESCE(e.approval_status, 'pending') as "approvalStatus",
     e.previous_entry_id as "previousEntryId",
+    e.created_at as "createdAt",
+    e.updated_at as "updatedAt",
     COALESCE(
       json_agg(
         json_build_object(

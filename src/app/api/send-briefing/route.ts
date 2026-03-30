@@ -88,9 +88,7 @@ export async function POST(request: NextRequest) {
     }
 
     const recipients =
-      recipientSet.size > 0
-        ? [...recipientSet]
-        : [auth.session.user.email];
+      recipientSet.size > 0 ? [...recipientSet] : [auth.session.user.email];
 
     // Convert base64 blob to Buffer
     const base64Data = docxBlob.split(",")[1] || docxBlob;

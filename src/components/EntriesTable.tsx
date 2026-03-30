@@ -564,7 +564,8 @@ export function EntriesTable({
                               {formatDateResponsive(entry.date).mobile}
                             </span>
                             <span className="text-xs text-slate-500">
-                              {formatTime(entry.date)}
+                              {formatTime(entry.date)}{" "}
+                              <span className="text-slate-400">ET</span>
                             </span>
                           </div>
                         </td>

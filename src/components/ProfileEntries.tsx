@@ -105,8 +105,8 @@ export function ProfileEntries() {
 
       switch (sortField) {
         case "date":
-          aValue = new Date(a.date).getTime();
-          bValue = new Date(b.date).getTime();
+          aValue = a.date; // "YYYY-MM-DD HH:MM:SS" sorts correctly as a string
+          bValue = b.date;
           break;
         case "headline":
           aValue = a.headline.toLowerCase();
@@ -179,7 +179,7 @@ export function ProfileEntries() {
           e.comment &&
           entries.some((other) => other.previousEntryId === e.id),
       )
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      .sort((a, b) => (b.date > a.date ? 1 : -1));
     return entriesWithFollowUps;
   }, [entries]);
 
@@ -194,7 +194,7 @@ export function ProfileEntries() {
           e.comment &&
           !addressedIds.has(e.id),
       )
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      .sort((a, b) => (b.date > a.date ? 1 : -1));
   }, [entries, addressedFollowUps]);
 
   if (status === "loading") {

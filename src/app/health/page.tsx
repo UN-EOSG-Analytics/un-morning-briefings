@@ -9,15 +9,17 @@ type Check = { ok: boolean; error?: string };
 
 /** Format a UTC timestamp as New York time (America/New_York). */
 function formatET(ts: string): string {
-  return new Intl.DateTimeFormat("en-US", {
-    timeZone: "America/New_York",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  }).format(new Date(ts)) + " ET";
+  return (
+    new Intl.DateTimeFormat("en-US", {
+      timeZone: "America/New_York",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    }).format(new Date(ts)) + " ET"
+  );
 }
 
 async function loadEmailSendLog(): Promise<EmailSendLogEntry[]> {
@@ -109,7 +111,10 @@ const CHECK_META: Record<string, { label: string; description: string }> = {
 };
 
 export default async function HealthPage() {
-  const [checks, emailLog] = await Promise.all([runChecks(), loadEmailSendLog()]);
+  const [checks, emailLog] = await Promise.all([
+    runChecks(),
+    loadEmailSendLog(),
+  ]);
   const allOk = Object.values(checks).every((c) => c.ok);
   const rows = Object.entries(checks);
 
@@ -192,7 +197,8 @@ export default async function HealthPage() {
               Email Delivery Log
             </h2>
             <p className="text-xs text-slate-500">
-              Last 20 briefing send attempts. All times shown in New York time (ET).
+              Last 20 briefing send attempts. All times shown in New York time
+              (ET).
             </p>
           </div>
           {emailLog.length === 0 ? (
@@ -202,7 +208,10 @@ export default async function HealthPage() {
           ) : (
             <div className="divide-y divide-slate-100">
               {emailLog.map((entry) => (
-                <div key={entry.id} className="flex items-start gap-4 px-6 py-3">
+                <div
+                  key={entry.id}
+                  className="flex items-start gap-4 px-6 py-3"
+                >
                   {entry.status === "success" ? (
                     <CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-green-600" />
                   ) : (

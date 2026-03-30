@@ -3,6 +3,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useState, useCallback, useEffect, useMemo } from "react";
+import { cn } from "@/lib/utils";
 import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import {
@@ -34,6 +35,7 @@ import {
   REGIONS,
 } from "@/types/morning-meeting";
 import labelsData from "@/lib/labels.json";
+import { formatDateDesktop } from "@/lib/format-date";
 import {
   FileText,
   AlertCircle,
@@ -133,13 +135,11 @@ export function MorningMeetingForm({
     }
 
     if (typeof dateValue === "string") {
-      // Extract YYYY-MM-DDTHH:MM from the string exactly as stored
-      // This handles formats like:
-      // - "2026-01-15T13:30" (already correct)
-      // - "2026-01-15T13:30:00" (trim seconds)
-      // - "2026-01-15T13:30:00.000Z" (remove milliseconds and Z)
-      const match = dateValue.match(/(\d{4}-\d{2}-\d{2}T\d{2}:\d{2})/);
-      return match ? match[1] : "";
+      // Extract YYYY-MM-DDTHH:MM from the string exactly as stored.
+      // Handles both ISO format ("2026-01-15T13:30:00.000Z") and the raw
+      // Postgres TIMESTAMP string ("2026-01-15 13:30:00.000", space separator).
+      const match = dateValue.match(/(\d{4}-\d{2}-\d{2})[T ](\d{2}:\d{2})/);
+      return match ? `${match[1]}T${match[2]}` : "";
     }
 
     return "";
@@ -226,7 +226,7 @@ export function MorningMeetingForm({
   // Source name suggestions for autocomplete
   const [sourceNames, setSourceNames] = useState<string[]>([]);
 
-  // User's entries for "Previous Entry" selector
+  // All entries for "Previous Entry" selector
   const [userEntries, setUserEntries] = useState<
     {
       id: string;
@@ -234,6 +234,7 @@ export function MorningMeetingForm({
       date: string;
       country: string | string[];
       region: string;
+      author: string;
     }[]
   >([]);
 
@@ -297,11 +298,12 @@ export function MorningMeetingForm({
   // Build previous entry options with matching tags highlighted
   const previousEntryOptions = useMemo(() => {
     const options = userEntries.map((e) => {
-      const dateStr =
-        typeof e.date === "string" ? e.date : new Date(e.date).toISOString();
+      const formattedDate = e.date ? formatDateDesktop(e.date) : "";
+      const meta = [e.author, formattedDate].filter(Boolean).join(" · ");
       return {
         value: e.id,
-        label: `${e.headline} (${dateStr.split("T")[0]})`,
+        label: `${e.headline}`,
+        sublabel: meta,
         showStar: false,
         country: e.country,
         region: e.region,
@@ -566,19 +568,14 @@ export function MorningMeetingForm({
     }
   }, [session]);
 
-  // Fetch user's entries for Previous Entry selector
+  // Fetch all entries for Previous Entry selector
   useEffect(() => {
-    const fetchUserEntries = async () => {
+    const fetchAllEntries = async () => {
       try {
-        const email = session?.user?.email;
-        if (!email) return;
-        const response = await fetch(
-          `/api/entries?author=${encodeURIComponent(email)}&noConvert=true`,
-        );
+        const response = await fetch(`/api/entries?noConvert=true`);
         if (!response.ok) return;
         const data = await response.json();
         const entries = Array.isArray(data) ? data : [];
-        // Only include submitted entries with an id and headline, exclude current entry if editing
         const editId = new URLSearchParams(window.location.search).get("edit");
         setUserEntries(
           entries
@@ -589,17 +586,21 @@ export function MorningMeetingForm({
               date: e.date,
               country: e.country,
               region: e.region,
+              author: e.author || "",
             })),
         );
       } catch (error) {
-        console.error("Failed to fetch user entries:", error);
+        console.error(
+          "Failed to fetch entries for previous entry selector:",
+          error,
+        );
       }
     };
 
-    if (session?.user?.email) {
-      fetchUserEntries();
+    if (session?.user) {
+      fetchAllEntries();
     }
-  }, [session?.user?.email]);
+  }, [session?.user]);
 
   // No coordination needed - region and country are independent
 
@@ -751,7 +752,7 @@ export function MorningMeetingForm({
         region: "",
         country: [],
         headline: "",
-        date: new Date().toISOString().split("T")[0],
+        date: formatDateForInput(undefined),
         entry: "",
         sourceName: "",
         sourceDate: "",
@@ -923,7 +924,9 @@ export function MorningMeetingForm({
 
         {/* Form */}
         <Card className="rounded-t-none">
-          <CardContent className="p-4 pt-4 sm:p-6 sm:pt-6">
+          <CardContent
+            className={cn("p-4 pt-4 sm:p-6 sm:pt-6", showMetadata && "pb-72")}
+          >
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Classification & Location Section */}
               <section className="space-y-4 border-b pb-4 sm:pb-6">
@@ -1098,7 +1101,7 @@ export function MorningMeetingForm({
 
                   {useRichText === null ? (
                     // Show plain text while loading (will switch to rich text on desktop)
-                    <div className="form-field-textarea min-h-[250px]" />
+                    <div className="form-field-textarea min-h-62.5" />
                   ) : useRichText ? (
                     <RichTextEditor
                       content={formData.entry}
@@ -1114,7 +1117,7 @@ export function MorningMeetingForm({
                       }}
                       placeholder={labelsData.form.placeholders.entry}
                       error={!!errors.entry}
-                      minHeight="min-h-[250px]"
+                      minHeight="min-h-62.5"
                     />
                   ) : (
                     <textarea
@@ -1133,7 +1136,7 @@ export function MorningMeetingForm({
                         }
                       }}
                       placeholder={labelsData.form.placeholders.entry}
-                      className={`form-field-textarea min-h-[250px] ${
+                      className={`form-field-textarea min-h-62.5 ${
                         errors.entry ? "form-field-error" : "form-field-focus"
                       }`}
                       spellCheck="true"
@@ -1232,11 +1235,17 @@ export function MorningMeetingForm({
 
                 {showMetadata && (
                   <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
-                    <TextField
-                      label={labelsData.form.labels.author}
-                      value={formData.author || "Current User"}
-                      readOnly
-                    />
+                    <div>
+                      <TextField
+                        label={labelsData.form.labels.author}
+                        value={formData.author || "Current User"}
+                        readOnly
+                      />
+                      <div className="mt-1.5 flex items-center gap-1 text-xs text-slate-500">
+                        <Info className="h-3.5 w-3.5 shrink-0" />
+                        {labelsData.form.popups.authorHint}
+                      </div>
+                    </div>
 
                     <TextField
                       type="date"
@@ -1271,14 +1280,8 @@ export function MorningMeetingForm({
                       }
                       options={previousEntryOptions}
                       searchable={true}
+                      side="bottom"
                     />
-                  </div>
-                )}
-
-                {showMetadata && (
-                  <div className="mt-3 flex items-center gap-1 text-xs text-slate-500">
-                    <Info className="h-3.5 w-3.5" />
-                    {labelsData.form.popups.authorHint}
                   </div>
                 )}
               </section>
@@ -1363,7 +1366,7 @@ export function MorningMeetingForm({
                 value={autoFillContent}
                 onChange={(e) => setAutoFillContent(e.target.value)}
                 placeholder={labelsData.form.autoFill.contentPlaceholder}
-                className="form-field-textarea form-field-focus min-h-[200px]"
+                className="form-field-textarea form-field-focus min-h-50"
                 disabled={isAutoFilling}
               />
             </div>

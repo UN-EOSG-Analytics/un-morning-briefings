@@ -133,10 +133,10 @@
       "sourceDate": "Source Date",
       "sourceUrl": "Source URL",
       "puNote": "PU Note/Comment",
-      "author": "Author",
-      "creationDate": "Creation Date",
-      "creationTime": "Creation Time",
-      "previousEntry": "Previous Entry",
+      "author": "Entry Author",
+      "creationDate": "Entry Creation Date",
+      "creationTime": "Entry Creation Time (ET)",
+      "previousEntry": "Related Previous Entry",
       "none": "None"
     },
     "placeholders": {

@@ -16,7 +16,10 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { getSubmittedEntries } from "@/lib/storage";
-import { isWithinCutoffRange } from "@/lib/useEntriesFilter";
+import {
+  isWithinCutoffRange,
+  getCurrentBriefingDate,
+} from "@/lib/useEntriesFilter";
 import {
   Document,
   Paragraph,
@@ -28,7 +31,6 @@ import {
   TableRow,
   TableCell,
   BorderStyle,
-  ImageRun,
   Header,
   ExternalHyperlink,
   WidthType,
@@ -54,12 +56,15 @@ interface ExportDialogProps {
 // are now imported from @/lib/format-date
 
 const createSeparator = (
-  length: number = 63,
+  _length: number = 63,
   spacing: { before?: number; after?: number } = { after: 200 },
 ): Paragraph =>
   new Paragraph({
-    text: "─".repeat(length),
+    children: [new TextRun("")],
     spacing,
+    border: {
+      bottom: { style: BorderStyle.SINGLE, size: 6, color: "333333", space: 1 },
+    },
   });
 
 /**
@@ -285,8 +290,16 @@ const buildTableOfContents = (
     // Region heading paragraph
     tocElements.push(
       new Paragraph({
-        spacing: { before: 200, after: 0 },
+        spacing: { before: 480, after: 80 },
         keepNext: true,
+        border: {
+          bottom: {
+            style: BorderStyle.SINGLE,
+            size: 4,
+            color: "009edb",
+            space: 4,
+          },
+        },
         children: [
           new TextRun({
             text: region,
@@ -321,16 +334,18 @@ const buildTableOfContents = (
       const countryLabel = country || "(No country specified)";
       const entries = entriesByRegionAndCountry[region][country];
 
-      entries.forEach((entry) => {
+      entries.forEach((entry, entryIndex) => {
         const displayCountry = Array.isArray(entry.country)
           ? entry.country.join("/")
           : entry.country || countryLabel;
+        // Only show the country name on the first row for this country group
+        const showCountry = entryIndex === 0;
 
         tableRows.push(
           new TableRow({
             children: [
               new TableCell({
-                width: { size: 25, type: WidthType.PERCENTAGE },
+                width: { size: 33, type: WidthType.PERCENTAGE },
                 verticalAlign: VerticalAlign.TOP,
                 borders: {
                   top: noBorder,
@@ -341,20 +356,22 @@ const buildTableOfContents = (
                 margins: { top: 40, bottom: 40 },
                 children: [
                   new Paragraph({
-                    children: [
-                      new TextRun({
-                        text: displayCountry,
-                        bold: true,
-                        size: 20,
-                        font: "Roboto",
-                        color: "009edb",
-                      }),
-                    ],
+                    children: showCountry
+                      ? [
+                          new TextRun({
+                            text: displayCountry,
+                            bold: true,
+                            size: 20,
+                            font: "Roboto",
+                            color: "009edb",
+                          }),
+                        ]
+                      : [],
                   }),
                 ],
               }),
               new TableCell({
-                width: { size: 75, type: WidthType.PERCENTAGE },
+                width: { size: 67, type: WidthType.PERCENTAGE },
                 verticalAlign: VerticalAlign.TOP,
                 borders: {
                   top: noBorder,
@@ -399,10 +416,9 @@ const buildTableOfContents = (
 
   tocElements.push(
     new Paragraph({
-      spacing: { after: 200 },
+      pageBreakBefore: true,
       children: [new TextRun("")],
     }),
-    createSeparator(),
   );
 
   return tocElements;
@@ -742,7 +758,12 @@ const generateDocumentBlob = async (
   const doc = new Document({
     sections: [
       {
-        properties: { page: {} },
+        properties: {
+          page: {
+            size: { width: 12240, height: 15840 }, // US Letter (8.5" × 11") in twips
+            margin: { top: 1440, bottom: 1440, left: 1440, right: 1440 }, // 1" all sides
+          },
+        },
         headers: {
           default: new Header({
             children: [headerTable],
@@ -819,10 +840,11 @@ export function ExportDailyBriefingDialog({
   const { data: session } = useSession();
   const { info: showInfo, success: showSuccess, error: showError } = usePopup();
   const [selectedDate, setSelectedDate] = useState<string>(
-    new Date().toISOString().split("T")[0],
+    getCurrentBriefingDate(),
   );
   const [isExporting, setIsExporting] = useState(false);
   const [isSendingEmail, setIsSendingEmail] = useState(false);
+  const [showSendConfirm, setShowSendConfirm] = useState(false);
   const dateInputRef = useRef<HTMLInputElement>(null);
 
   const handleOpenChange = useCallback(
@@ -943,7 +965,7 @@ export function ExportDailyBriefingDialog({
     }
   };
 
-  const handleSendViaEmail = async () => {
+  const handleSendViaEmail = async (sendToSelf: boolean) => {
     if (!session?.user?.email) {
       showError("Not Authenticated", "You must be logged in to send emails.");
       return;
@@ -957,6 +979,7 @@ export function ExportDailyBriefingDialog({
       return;
     }
 
+    setShowSendConfirm(false);
     setIsSendingEmail(true);
     try {
       const entriesForDate = await getApprovedEntriesForDate(selectedDate);
@@ -999,6 +1022,7 @@ export function ExportDailyBriefingDialog({
           docxBlob,
           fileName: formatExportFilename(selectedDate),
           briefingDate: selectedDate,
+          sendToSelf,
         }),
       });
 
@@ -1009,7 +1033,9 @@ export function ExportDailyBriefingDialog({
 
       showSuccess(
         "Email Sent",
-        `Briefing sent successfully to ${session.user.email}`,
+        sendToSelf
+          ? `Briefing sent to ${session.user.email}`
+          : "Briefing sent to the distribution list.",
       );
       handleOpenChange(false);
     } catch (error) {
@@ -1026,126 +1052,172 @@ export function ExportDailyBriefingDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="flex h-dvh w-screen !max-w-none flex-col rounded-none !p-0 sm:h-auto sm:!max-w-lg sm:rounded-lg sm:!p-6">
-        <DialogHeader className="border-b border-slate-200 px-4 py-4 sm:border-0 sm:px-0 sm:py-0">
-          <DialogTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5 text-un-blue" />
-            Daily Briefing
-          </DialogTitle>
-          <DialogDescription className="pt-2 text-left">
-            Select entries to include, then view the briefing, export to Word,
-            or send via email. Entries are from the previous day at 8:00 AM
-            until the selected day at 8:00 AM.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="flex flex-1 flex-col space-y-4 overflow-y-auto px-4 py-4 sm:px-0">
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-foreground">
-              Select Date
-            </label>
-            <div className="relative">
-              <Calendar className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              <input
-                ref={dateInputRef}
-                type="date"
-                value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
-                autoFocus={false}
-                className="h-10 w-full appearance-none rounded border border-slate-300 bg-white pr-3 pl-10 text-sm focus:border-un-blue focus:ring-2 focus:ring-un-blue/20 focus:outline-none"
+    <>
+      <Dialog open={open} onOpenChange={handleOpenChange}>
+        <DialogContent className="flex h-dvh w-screen max-w-none! flex-col rounded-none p-0! sm:h-auto sm:max-w-lg! sm:rounded-lg sm:p-6!">
+          <DialogHeader className="border-b border-slate-200 px-4 py-4 sm:border-0 sm:px-0 sm:py-0">
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5 text-un-blue" />
+              Daily Briefing
+            </DialogTitle>
+            <DialogDescription className="pt-2 text-left">
+              Select entries to include, then view the briefing, export to Word,
+              or send via email. Entries are from the previous day at 8:00 AM
+              until the selected day at 8:00 AM.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-1 flex-col space-y-4 overflow-y-auto px-4 py-4 sm:px-0">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">
+                Select Date
+              </label>
+              <div className="relative">
+                <Calendar className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <input
+                  ref={dateInputRef}
+                  type="date"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  autoFocus={false}
+                  className="h-10 w-full appearance-none rounded border border-slate-300 bg-white pr-3 pl-10 text-sm focus:border-un-blue focus:ring-2 focus:ring-un-blue/20 focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="include-images"
+                checked={includeImages}
+                onCheckedChange={(checked) =>
+                  setIncludeImages(checked as boolean)
+                }
               />
+              <label
+                htmlFor="include-images"
+                className="cursor-pointer text-sm font-medium text-foreground"
+              >
+                Include images in export
+              </label>
             </div>
-          </div>
 
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="include-images"
-              checked={includeImages}
-              onCheckedChange={(checked) =>
-                setIncludeImages(checked as boolean)
-              }
-            />
-            <label
-              htmlFor="include-images"
-              className="cursor-pointer text-sm font-medium text-foreground"
-            >
-              Include images in export
-            </label>
-          </div>
-
-          <div className="flex max-h-80 min-h-0 flex-1 flex-col space-y-2">
-            <label className="text-sm font-medium text-foreground">
-              Entries ({selectedEntryIds.size}/{approvedEntries.length})
-            </label>
-            <div className="flex-1 overflow-y-auto rounded border border-slate-200 bg-slate-50 p-3">
-              {isLoadingEntries ? (
-                <p className="text-xs text-slate-500">Loading entries...</p>
-              ) : approvedEntries.length === 0 ? (
-                <p className="text-xs text-slate-500">
-                  No entries for this date
-                </p>
-              ) : (
-                <ul className="space-y-2">
-                  {approvedEntries.map((entry) => (
-                    <li
-                      key={entry.id}
-                      className="flex items-start gap-2 text-sm"
-                    >
-                      <Checkbox
-                        id={`entry-${entry.id}`}
-                        checked={selectedEntryIds.has(entry.id || "")}
-                        onCheckedChange={(checked) => {
-                          const newSelected = new Set(selectedEntryIds);
-                          if (checked) {
-                            newSelected.add(entry.id || "");
-                          } else {
-                            newSelected.delete(entry.id || "");
-                          }
-                          setSelectedEntryIds(newSelected);
-                        }}
-                        className="mt-0.5"
-                      />
-                      <label
-                        htmlFor={`entry-${entry.id}`}
-                        className="line-clamp-2 flex-1 cursor-pointer text-slate-700"
+            <div className="flex max-h-80 min-h-0 flex-1 flex-col space-y-2">
+              <label className="text-sm font-medium text-foreground">
+                Entries ({selectedEntryIds.size}/{approvedEntries.length})
+              </label>
+              <div className="flex-1 overflow-y-auto rounded border border-slate-200 bg-slate-50 p-3">
+                {isLoadingEntries ? (
+                  <p className="text-xs text-slate-500">Loading entries...</p>
+                ) : approvedEntries.length === 0 ? (
+                  <p className="text-xs text-slate-500">
+                    No entries for this date
+                  </p>
+                ) : (
+                  <ul className="space-y-2">
+                    {approvedEntries.map((entry) => (
+                      <li
+                        key={entry.id}
+                        className="flex items-start gap-2 text-sm"
                       >
-                        {entry.headline}
-                      </label>
-                    </li>
-                  ))}
-                </ul>
-              )}
+                        <Checkbox
+                          id={`entry-${entry.id}`}
+                          checked={selectedEntryIds.has(entry.id || "")}
+                          onCheckedChange={(checked) => {
+                            const newSelected = new Set(selectedEntryIds);
+                            if (checked) {
+                              newSelected.add(entry.id || "");
+                            } else {
+                              newSelected.delete(entry.id || "");
+                            }
+                            setSelectedEntryIds(newSelected);
+                          }}
+                          className="mt-0.5"
+                        />
+                        <label
+                          htmlFor={`entry-${entry.id}`}
+                          className="line-clamp-2 flex-1 cursor-pointer text-slate-700"
+                        >
+                          {entry.headline}
+                        </label>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-        <DialogFooter className="flex w-full flex-shrink-0 flex-col gap-3 px-4 pb-4 sm:flex-row sm:px-0 sm:pb-0">
-          <Link href={`/briefing?date=${selectedDate}`} className="flex-1">
+          <DialogFooter className="flex w-full shrink-0 flex-col gap-3 px-4 pb-4 sm:flex-row sm:px-0 sm:pb-0">
+            <Link href={`/briefing?date=${selectedDate}`} className="flex-1">
+              <Button
+                className="flex-1 gap-2 bg-un-blue hover:bg-un-blue/90"
+                onClick={() => handleOpenChange(false)}
+              >
+                <Eye className="h-4 w-4" />
+                View Briefing
+              </Button>
+            </Link>
             <Button
-              className="flex-1 gap-2"
-              onClick={() => handleOpenChange(false)}
+              onClick={handleExport}
+              disabled={isExporting || isSendingEmail}
+              className="flex-1 gap-2 bg-un-blue hover:bg-un-blue/90"
             >
-              <Eye className="h-4 w-4" />
-              View Briefing
+              <Download className="h-4 w-4" />
+              {isExporting ? "Exporting..." : "Export Word"}
             </Button>
-          </Link>
-          <Button
-            onClick={handleExport}
-            disabled={isExporting || isSendingEmail}
-            className="flex-1 gap-2"
-          >
-            <Download className="h-4 w-4" />
-            {isExporting ? "Exporting..." : "Export Word"}
-          </Button>
-          <Button
-            onClick={handleSendViaEmail}
-            disabled={isSendingEmail || isExporting}
-            className="flex-1 gap-2"
-          >
-            <Mail className="h-4 w-4" />
-            {isSendingEmail ? "Sending..." : "Send Email"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+            <Button
+              onClick={() => setShowSendConfirm(true)}
+              disabled={isSendingEmail || isExporting}
+              className="flex-1 gap-2 bg-un-blue hover:bg-un-blue/90"
+            >
+              <Mail className="h-4 w-4" />
+              {isSendingEmail ? "Sending..." : "Send Email"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Send confirmation dialog */}
+      <Dialog open={showSendConfirm} onOpenChange={setShowSendConfirm}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Mail className="h-5 w-5 text-un-blue" />
+              Send Briefing
+            </DialogTitle>
+            <DialogDescription className="pt-2 text-left">
+              Are you sure you want to send this briefing (
+              {selectedEntryIds.size}{" "}
+              {selectedEntryIds.size === 1 ? "entry" : "entries"}) via email?
+              Choose who should receive it.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-3 pt-2">
+            <Button
+              onClick={() => handleSendViaEmail(true)}
+              className="w-full justify-start gap-2 bg-un-blue hover:bg-un-blue/90"
+            >
+              <Mail className="h-4 w-4" />
+              Send to myself only
+              <span className="ml-auto text-xs opacity-75">
+                {session?.user?.email}
+              </span>
+            </Button>
+            <Button
+              onClick={() => handleSendViaEmail(false)}
+              className="w-full justify-start gap-2 bg-un-blue hover:bg-un-blue/90"
+            >
+              <Mail className="h-4 w-4" />
+              Send to distribution list
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setShowSendConfirm(false)}
+              className="w-full"
+            >
+              Cancel
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

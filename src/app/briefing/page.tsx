@@ -14,7 +14,6 @@ import {
 } from "@/lib/format-date";
 import type { MorningMeetingEntry } from "@/types/morning-meeting";
 
-
 function BriefingContent() {
   const searchParams = useSearchParams();
   const { data: session } = useSession();

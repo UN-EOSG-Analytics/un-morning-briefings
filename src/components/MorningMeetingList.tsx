@@ -134,10 +134,9 @@ export function MorningMeetingList({
               </span>
             </Button>
             <Button
-              variant="outline"
               size="sm"
               onClick={() => setShowExportDialog(true)}
-              className="w-full justify-center sm:h-10 sm:w-auto sm:px-6"
+              className="w-full justify-center bg-un-blue hover:bg-un-blue/90 sm:h-10 sm:w-auto sm:px-6"
             >
               <FileDown className="h-4 w-4" />
               <span className="sm:inline">

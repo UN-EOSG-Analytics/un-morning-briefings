@@ -41,7 +41,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { docxBlob, fileName, briefingDate } = await request.json();
+    const { docxBlob, fileName, briefingDate, sendToSelf } =
+      await request.json();
 
     if (!docxBlob || !fileName) {
       return NextResponse.json(
@@ -50,45 +51,52 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Build recipient list: all whitelisted emails + any additional recipients
-    // from app_settings, deduplicated. Falls back to the current user only if
-    // both sources are empty.
-    const recipientSet = new Set<string>();
+    // When sendToSelf is true, skip the distribution list entirely.
+    let recipients: string[];
 
-    try {
-      const [whitelistResult, settingsResult] = await Promise.all([
-        query<{ email: string }>(
-          `SELECT email FROM morning_briefings.user_whitelist ORDER BY email`,
-        ),
-        query<{ value: string }>(
-          `SELECT value FROM morning_briefings.app_settings WHERE key = 'email_recipients'`,
-        ),
-      ]);
+    if (sendToSelf) {
+      recipients = [auth.session.user.email];
+    } else {
+      // Build recipient list: all whitelisted emails + any additional recipients
+      // from app_settings, deduplicated. Falls back to the current user only if
+      // both sources are empty.
+      const recipientSet = new Set<string>();
 
-      for (const row of whitelistResult.rows) {
-        recipientSet.add(row.email.toLowerCase());
-      }
+      try {
+        const [whitelistResult, settingsResult] = await Promise.all([
+          query<{ email: string }>(
+            `SELECT email FROM morning_briefings.user_whitelist ORDER BY email`,
+          ),
+          query<{ value: string }>(
+            `SELECT value FROM morning_briefings.app_settings WHERE key = 'email_recipients'`,
+          ),
+        ]);
 
-      if (settingsResult.rows.length > 0) {
-        try {
-          const extra = JSON.parse(settingsResult.rows[0].value);
-          if (Array.isArray(extra)) {
-            for (const e of extra) {
-              if (typeof e === "string" && e.trim()) {
-                recipientSet.add(e.toLowerCase().trim());
+        for (const row of whitelistResult.rows) {
+          recipientSet.add(row.email.toLowerCase());
+        }
+
+        if (settingsResult.rows.length > 0) {
+          try {
+            const extra = JSON.parse(settingsResult.rows[0].value);
+            if (Array.isArray(extra)) {
+              for (const e of extra) {
+                if (typeof e === "string" && e.trim()) {
+                  recipientSet.add(e.toLowerCase().trim());
+                }
               }
             }
+          } catch {
+            // malformed JSON — ignore
           }
-        } catch {
-          // malformed JSON — ignore
         }
+      } catch (err) {
+        console.error("[SEND-BRIEFING] Failed to load recipients:", err);
       }
-    } catch (err) {
-      console.error("[SEND-BRIEFING] Failed to load recipients:", err);
-    }
 
-    const recipients =
-      recipientSet.size > 0 ? [...recipientSet] : [auth.session.user.email];
+      recipients =
+        recipientSet.size > 0 ? [...recipientSet] : [auth.session.user.email];
+    }
 
     // Convert base64 blob to Buffer
     const base64Data = docxBlob.split(",")[1] || docxBlob;
@@ -98,24 +106,23 @@ export async function POST(request: NextRequest) {
 
     const contentHtml = `
       <p style="margin:0 0 12px;font-size:15px;line-height:1.6;color:#374151;">
-        This is an automated notice that today's Morning Meeting Notes compiled by the PU Team are attached.
+        Please find attached the Morning Meeting Update for <strong>${formattedDate}</strong>, prepared by the Political Unit, EOSG.
       </p>
       <p style="margin:0 0 12px;font-size:15px;line-height:1.6;color:#374151;">
-        Best regards,
-      </p>
-      <p style="margin:0 0 12px;font-size:15px;line-height:1.6;color:#374151;">
-        EOSG Services
+        Have a good day!
       </p>
       <p style="margin:0;font-size:15px;line-height:1.6;color:#374151;">
-        For technical assistance, please email SPMU-Support@un.org
+        For technical assistance, please reach out to the SPMU Data Team.
       </p>`;
 
     const html = buildEmailHtml(contentHtml);
-    const text = `United Nations | Morning Briefings\n\nThis is an automated notice that today's Morning Meeting Notes compiled by the PU Team are attached.\nBest regards,\nEOSG Services\nFor technical assistance, please email SPMU-Support@un.org`;
+
+    // plain-text fallback
+    const text = `Please find attached the Morning Meeting Update for ${formattedDate}, prepared by the Political Unit, EOSG.\n\nHave a good day!\n\nFor technical assistance, please reach out to the SPMU Data Team.`;
 
     const success = await sendEmail(
       recipients.join(", "),
-      `Morning Briefing - ${formattedDate}`,
+      `Morning Meeting Update - ${formattedDate}`,
       html,
       text,
       {

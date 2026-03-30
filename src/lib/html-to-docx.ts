@@ -1,7 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 // Convert HTML content from TipTap editor to DOCX Paragraph elements
-import { Paragraph, TextRun, ImageRun, ExternalHyperlink, BorderStyle } from "docx";
+import {
+  Paragraph,
+  TextRun,
+  ImageRun,
+  ExternalHyperlink,
+  BorderStyle,
+} from "docx";
 
 /**
  * Convert base64 data URL to Buffer for image embedding
@@ -231,7 +237,9 @@ function decodeHtmlEntities(text: string): string {
     .replace(/&reg;/g, "\u00ae")
     .replace(/&trade;/g, "\u2122")
     .replace(/&#(\d+);/g, (_, dec) => String.fromCodePoint(Number(dec)))
-    .replace(/&#x([0-9a-f]+);/gi, (_, hex) => String.fromCodePoint(parseInt(hex, 16)));
+    .replace(/&#x([0-9a-f]+);/gi, (_, hex) =>
+      String.fromCodePoint(parseInt(hex, 16)),
+    );
 }
 
 /** Strip inline HTML tags and decode entities from a text fragment */
@@ -265,22 +273,39 @@ function buildServerRunsFromContent(
 
     while ((imgMatch = imgTagRegex.exec(part)) !== null) {
       const tagAttrs = imgMatch[1];
-      const srcMatch = /src\s*=\s*["']?(data:image[^"'\s>]+)["']?/i.exec(tagAttrs);
+      const srcMatch = /src\s*=\s*["']?(data:image[^"'\s>]+)["']?/i.exec(
+        tagAttrs,
+      );
       if (!srcMatch) continue;
 
       // Add text before the image
-      const textBefore = cleanServerText(part.substring(lastIndex, imgMatch.index));
+      const textBefore = cleanServerText(
+        part.substring(lastIndex, imgMatch.index),
+      );
       if (textBefore) {
-        paraRuns.push(new TextRun({ text: textBefore, font: "Roboto", italics: baseStyles?.italics }));
+        paraRuns.push(
+          new TextRun({
+            text: textBefore,
+            font: "Roboto",
+            italics: baseStyles?.italics,
+          }),
+        );
       }
 
       const dataUrl = srcMatch[1];
-      const dataWidth = /data-width\s*=\s*["']?(\d+)/i.exec(tagAttrs)?.[1] ?? null;
-      const dataHeight = /data-height\s*=\s*["']?(\d+)/i.exec(tagAttrs)?.[1] ?? null;
+      const dataWidth =
+        /data-width\s*=\s*["']?(\d+)/i.exec(tagAttrs)?.[1] ?? null;
+      const dataHeight =
+        /data-height\s*=\s*["']?(\d+)/i.exec(tagAttrs)?.[1] ?? null;
 
       try {
         const buffer = base64ToBuffer(dataUrl);
-        const dims = calculateImageDimensions(dataWidth, dataHeight, buffer, 500);
+        const dims = calculateImageDimensions(
+          dataWidth,
+          dataHeight,
+          buffer,
+          500,
+        );
         const imageType = getImageType(dataUrl);
         paraRuns.push(
           new ImageRun({
@@ -292,7 +317,12 @@ function buildServerRunsFromContent(
       } catch (error) {
         console.error("Server parser: Error processing data URL image:", error);
         paraRuns.push(
-          new TextRun({ text: "[Image]", color: "0563C1", underline: {}, font: "Roboto" }),
+          new TextRun({
+            text: "[Image]",
+            color: "0563C1",
+            underline: {},
+            font: "Roboto",
+          }),
         );
       }
 
@@ -302,7 +332,13 @@ function buildServerRunsFromContent(
     // Add remaining text after the last image
     const textAfter = cleanServerText(part.substring(lastIndex));
     if (textAfter) {
-      paraRuns.push(new TextRun({ text: textAfter, font: "Roboto", italics: baseStyles?.italics }));
+      paraRuns.push(
+        new TextRun({
+          text: textAfter,
+          font: "Roboto",
+          italics: baseStyles?.italics,
+        }),
+      );
     }
 
     // Add line break between parts (except after the last part)
@@ -322,7 +358,10 @@ function buildServerRunsFromContent(
  * @param baseStyles - Optional base styles to apply to all text runs
  * @returns Array of DOCX Paragraph objects
  */
-function parseHtmlContentServer(html: string, baseStyles?: TextStyles): Paragraph[] {
+function parseHtmlContentServer(
+  html: string,
+  baseStyles?: TextStyles,
+): Paragraph[] {
   const paragraphs: Paragraph[] = [];
 
   // First, split by paragraph tags
@@ -375,7 +414,10 @@ function parseHtmlContentServer(html: string, baseStyles?: TextStyles): Paragrap
 /**
  * Convert HTML content (from TipTap getHTML()) to docx Paragraph elements
  */
-export function parseHtmlContent(html: string, baseStyles?: TextStyles): Paragraph[] {
+export function parseHtmlContent(
+  html: string,
+  baseStyles?: TextStyles,
+): Paragraph[] {
   const paragraphs: Paragraph[] = [];
 
   if (!html || typeof html !== "string" || html.trim() === "") {
@@ -447,7 +489,10 @@ export function parseHtmlFirstParagraphRuns(
 /**
  * Client-side HTML parsing using DOMParser
  */
-function parseHtmlContentClient(html: string, baseStyles?: TextStyles): Paragraph[] {
+function parseHtmlContentClient(
+  html: string,
+  baseStyles?: TextStyles,
+): Paragraph[] {
   const paragraphs: Paragraph[] = [];
 
   const parser = new DOMParser();
@@ -514,7 +559,13 @@ function parseHtmlContentClient(html: string, baseStyles?: TextStyles): Paragrap
             children:
               children.length > 0
                 ? [bulletRun, ...children]
-                : [bulletRun, new TextRun({ text: item.textContent || "", font: "Roboto" })],
+                : [
+                    bulletRun,
+                    new TextRun({
+                      text: item.textContent || "",
+                      font: "Roboto",
+                    }),
+                  ],
             indent: { left: 400, hanging: 400 },
             spacing: { after: 80 },
           }),
@@ -530,7 +581,13 @@ function parseHtmlContentClient(html: string, baseStyles?: TextStyles): Paragrap
             children:
               children.length > 0
                 ? [numberRun, ...children]
-                : [numberRun, new TextRun({ text: item.textContent || "", font: "Roboto" })],
+                : [
+                    numberRun,
+                    new TextRun({
+                      text: item.textContent || "",
+                      font: "Roboto",
+                    }),
+                  ],
             spacing: { after: 50 },
           }),
         );
@@ -561,8 +618,12 @@ function parseHtmlContentClient(html: string, baseStyles?: TextStyles): Paragrap
         }),
       );
     } else if (tagName === "pre") {
-      const lines = ((element as HTMLElement).innerText ?? element.textContent ?? "").split("\n");
-      const preRuns: (TextRun)[] = [];
+      const lines = (
+        (element as HTMLElement).innerText ??
+        element.textContent ??
+        ""
+      ).split("\n");
+      const preRuns: TextRun[] = [];
       lines.forEach((line, idx) => {
         preRuns.push(new TextRun({ text: line, font: "Roboto", size: 18 }));
         if (idx < lines.length - 1) {
@@ -581,7 +642,12 @@ function parseHtmlContentClient(html: string, baseStyles?: TextStyles): Paragrap
         new Paragraph({
           children: [new TextRun({ text: "" })],
           border: {
-            bottom: { color: "CCCCCC", space: 1, style: BorderStyle.SINGLE, size: 6 },
+            bottom: {
+              color: "CCCCCC",
+              space: 1,
+              style: BorderStyle.SINGLE,
+              size: 6,
+            },
           },
           spacing: { after: 100 },
         }),
@@ -721,7 +787,12 @@ function extractTextRuns(element: Element, inherited: TextStyles = {}): any[] {
             const buffer = base64ToBuffer(src);
             const dataWidth = el.getAttribute("data-width");
             const dataHeight = el.getAttribute("data-height");
-            const dims = calculateImageDimensions(dataWidth, dataHeight, buffer, 300);
+            const dims = calculateImageDimensions(
+              dataWidth,
+              dataHeight,
+              buffer,
+              300,
+            );
             const imageType = getImageType(src);
             runs.push(
               new ImageRun({
@@ -740,12 +811,20 @@ function extractTextRuns(element: Element, inherited: TextStyles = {}): any[] {
       // Handle <a> tags as clickable hyperlinks
       if (tag === "a") {
         const href = el.getAttribute("href");
-        const linkStyles: TextStyles = { ...inherited, color: "0563C1", underline: inherited.underline ?? {} };
+        const linkStyles: TextStyles = {
+          ...inherited,
+          color: "0563C1",
+          underline: inherited.underline ?? {},
+        };
         const childRuns = extractTextRuns(el, linkStyles);
         if (href) {
-          const textRuns = childRuns.filter((r): r is TextRun => r instanceof TextRun);
+          const textRuns = childRuns.filter(
+            (r): r is TextRun => r instanceof TextRun,
+          );
           if (textRuns.length > 0) {
-            runs.push(new ExternalHyperlink({ link: href, children: textRuns }));
+            runs.push(
+              new ExternalHyperlink({ link: href, children: textRuns }),
+            );
           } else {
             runs.push(...childRuns);
           }

@@ -412,10 +412,17 @@
       "title": "Scheduled Briefing",
       "siteTitle": "United Nations | Morning Briefings",
       "description": "Configure automatic daily briefing emails.",
-      "sendTime": "Send Time",
+      "sendTime": "Send Time (New York time, ET)",
+      "recipients": "Recipients",
       "recipient": "Recipient Email Address",
-      "recipientPlaceholder": "recipient@un.org",
-      "save": "Save Email Settings"
+      "recipientPlaceholder": "Add extra recipient…",
+      "whitelistNote": "All whitelisted users receive the briefing automatically. Add additional addresses below.",
+      "save": "Save Email Settings",
+      "saving": "Saving...",
+      "saveSuccess": "Settings Saved",
+      "saveSuccessMessage": "Email settings have been saved.",
+      "saveFailed": "Save Failed",
+      "viewDeliveryLog": "View email delivery log →"
     }
   },
 

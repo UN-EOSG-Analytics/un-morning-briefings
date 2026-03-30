@@ -3,8 +3,61 @@ import { Card } from "@/components/ui/card";
 import { query } from "@/lib/db";
 import { generateText } from "ai";
 import { createAzure } from "@ai-sdk/azure";
+import type { EmailSendLogEntry } from "@/app/api/email-send-log/route";
 
 type Check = { ok: boolean; error?: string };
+
+/** Format a UTC timestamp as New York time (America/New_York). */
+function formatET(ts: string): string {
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/New_York",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(new Date(ts)) + " ET";
+}
+
+async function loadEmailSendLog(): Promise<EmailSendLogEntry[]> {
+  try {
+    const result = await query<{
+      id: number;
+      sent_at: string;
+      recipients: string;
+      status: string;
+      error_msg: string | null;
+      briefing_date: string | null;
+      triggered_by: string;
+    }>(
+      `SELECT id, sent_at, recipients, status, error_msg, briefing_date, triggered_by
+       FROM morning_briefings.email_send_log
+       ORDER BY sent_at DESC
+       LIMIT 20`,
+    );
+    return result.rows.map((r) => {
+      let recipients: string[] = [];
+      try {
+        recipients = JSON.parse(r.recipients);
+        if (!Array.isArray(recipients)) recipients = [r.recipients];
+      } catch {
+        recipients = [r.recipients];
+      }
+      return {
+        id: r.id,
+        sentAt: r.sent_at,
+        recipients,
+        status: r.status as "success" | "failed",
+        errorMsg: r.error_msg,
+        briefingDate: r.briefing_date,
+        triggeredBy: r.triggered_by,
+      };
+    });
+  } catch {
+    return [];
+  }
+}
 
 async function runChecks(): Promise<Record<string, Check>> {
   const checks: Record<string, Check> = {};
@@ -56,7 +109,7 @@ const CHECK_META: Record<string, { label: string; description: string }> = {
 };
 
 export default async function HealthPage() {
-  const checks = await runChecks();
+  const [checks, emailLog] = await Promise.all([runChecks(), loadEmailSendLog()]);
   const allOk = Object.values(checks).every((c) => c.ok);
   const rows = Object.entries(checks);
 
@@ -130,6 +183,69 @@ export default async function HealthPage() {
               );
             })}
           </div>
+        </Card>
+
+        {/* Email Delivery Log */}
+        <Card className="shrink-0 border-slate-200 py-0">
+          <div className="border-b border-slate-100 px-6 py-4">
+            <h2 className="text-sm font-semibold text-foreground">
+              Email Delivery Log
+            </h2>
+            <p className="text-xs text-slate-500">
+              Last 20 briefing send attempts. All times shown in New York time (ET).
+            </p>
+          </div>
+          {emailLog.length === 0 ? (
+            <div className="px-6 py-8 text-center text-sm text-slate-400">
+              No send attempts recorded yet.
+            </div>
+          ) : (
+            <div className="divide-y divide-slate-100">
+              {emailLog.map((entry) => (
+                <div key={entry.id} className="flex items-start gap-4 px-6 py-3">
+                  {entry.status === "success" ? (
+                    <CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-green-600" />
+                  ) : (
+                    <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5">
+                      <span className="text-sm font-medium text-foreground">
+                        {formatET(entry.sentAt)}
+                      </span>
+                      {entry.briefingDate && (
+                        <span className="text-xs text-slate-500">
+                          Briefing: {entry.briefingDate}
+                        </span>
+                      )}
+                      <span className="text-xs text-slate-400">
+                        by {entry.triggeredBy}
+                      </span>
+                    </div>
+                    <p className="mt-0.5 truncate text-xs text-slate-500">
+                      {entry.recipients.length === 1
+                        ? entry.recipients[0]
+                        : `${entry.recipients[0]} +${entry.recipients.length - 1} more`}
+                    </p>
+                    {entry.errorMsg && (
+                      <p className="mt-0.5 text-xs text-red-500">
+                        {entry.errorMsg}
+                      </p>
+                    )}
+                  </div>
+                  <span
+                    className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${
+                      entry.status === "success"
+                        ? "bg-green-100 text-green-700"
+                        : "bg-red-100 text-red-700"
+                    }`}
+                  >
+                    {entry.status}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
         </Card>
 
         <p className="shrink-0 text-xs text-slate-400">

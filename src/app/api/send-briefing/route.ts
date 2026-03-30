@@ -2,6 +2,33 @@ import { NextRequest, NextResponse } from "next/server";
 import { checkAuth } from "@/lib/auth-helper";
 import { sendEmail, buildEmailHtml } from "@/lib/email-service";
 import { formatDateLong } from "@/lib/format-date";
+import { query } from "@/lib/db";
+
+async function logSend(
+  recipients: string[],
+  status: "success" | "failed",
+  triggeredBy: string,
+  briefingDate: string | null,
+  errorMsg?: string,
+) {
+  try {
+    await query(
+      `INSERT INTO morning_briefings.email_send_log
+         (recipients, status, error_msg, briefing_date, triggered_by)
+       VALUES ($1, $2, $3, $4, $5)`,
+      [
+        JSON.stringify(recipients),
+        status,
+        errorMsg ?? null,
+        briefingDate ?? null,
+        triggeredBy,
+      ],
+    );
+  } catch (err) {
+    // Never let a logging failure affect the response
+    console.error("[SEND-BRIEFING] Failed to write send log:", err);
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -22,6 +49,48 @@ export async function POST(request: NextRequest) {
         { status: 400 },
       );
     }
+
+    // Build recipient list: all whitelisted emails + any additional recipients
+    // from app_settings, deduplicated. Falls back to the current user only if
+    // both sources are empty.
+    const recipientSet = new Set<string>();
+
+    try {
+      const [whitelistResult, settingsResult] = await Promise.all([
+        query<{ email: string }>(
+          `SELECT email FROM morning_briefings.user_whitelist ORDER BY email`,
+        ),
+        query<{ value: string }>(
+          `SELECT value FROM morning_briefings.app_settings WHERE key = 'email_recipients'`,
+        ),
+      ]);
+
+      for (const row of whitelistResult.rows) {
+        recipientSet.add(row.email.toLowerCase());
+      }
+
+      if (settingsResult.rows.length > 0) {
+        try {
+          const extra = JSON.parse(settingsResult.rows[0].value);
+          if (Array.isArray(extra)) {
+            for (const e of extra) {
+              if (typeof e === "string" && e.trim()) {
+                recipientSet.add(e.toLowerCase().trim());
+              }
+            }
+          }
+        } catch {
+          // malformed JSON — ignore
+        }
+      }
+    } catch (err) {
+      console.error("[SEND-BRIEFING] Failed to load recipients:", err);
+    }
+
+    const recipients =
+      recipientSet.size > 0
+        ? [...recipientSet]
+        : [auth.session.user.email];
 
     // Convert base64 blob to Buffer
     const base64Data = docxBlob.split(",")[1] || docxBlob;
@@ -47,7 +116,7 @@ export async function POST(request: NextRequest) {
     const text = `United Nations | Morning Briefings\n\nThis is an automated notice that today's Morning Meeting Notes compiled by the PU Team are attached.\nBest regards,\nEOSG Services\nFor technical assistance, please email SPMU-Support@un.org`;
 
     const success = await sendEmail(
-      auth.session.user.email,
+      recipients.join(", "),
       `Morning Briefing - ${formattedDate}`,
       html,
       text,
@@ -61,6 +130,14 @@ export async function POST(request: NextRequest) {
           },
         ],
       },
+    );
+
+    await logSend(
+      recipients,
+      success ? "success" : "failed",
+      auth.session.user.email,
+      briefingDate ?? null,
+      success ? undefined : "sendEmail returned false",
     );
 
     if (!success) {

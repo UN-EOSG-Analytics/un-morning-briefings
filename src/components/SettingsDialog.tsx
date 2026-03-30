@@ -43,8 +43,10 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Email workflow settings
-  const [emailTime, setEmailTime] = useState("09:00");
-  const [emailAddress, setEmailAddress] = useState("");
+  const [emailTime, setEmailTime] = useState("");
+  const [emailRecipients, setEmailRecipients] = useState<string[]>([]);
+  const [newRecipientInput, setNewRecipientInput] = useState("");
+  const [isSavingEmailSettings, setIsSavingEmailSettings] = useState(false);
 
   // Whitelist settings
   const [pendingRemoveEmail, setPendingRemoveEmail] = useState<string | null>(
@@ -63,6 +65,54 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   const [newWhitelistEmail, setNewWhitelistEmail] = useState("");
   const [isLoadingWhitelist, setIsLoadingWhitelist] = useState(false);
   const [isAddingWhitelist, setIsAddingWhitelist] = useState(false);
+
+  const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  const loadEmailSettings = async () => {
+    try {
+      const response = await fetch("/api/email-settings");
+      if (response.ok) {
+        const data = await response.json();
+        setEmailTime(data.emailTime ?? "");
+        setEmailRecipients(Array.isArray(data.emailRecipients) ? data.emailRecipients : []);
+      }
+    } catch (err) {
+      console.error("Failed to load email settings:", err);
+    }
+  };
+
+  const handleAddRecipient = () => {
+    const email = newRecipientInput.trim();
+    if (!email || !EMAIL_REGEX.test(email)) return;
+    if (emailRecipients.includes(email)) return;
+    setEmailRecipients((prev) => [...prev, email]);
+    setNewRecipientInput("");
+  };
+
+  const handleRemoveRecipient = (email: string) => {
+    setEmailRecipients((prev) => prev.filter((e) => e !== email));
+  };
+
+  const handleSaveEmailSettings = async () => {
+    setIsSavingEmailSettings(true);
+    try {
+      const response = await fetch("/api/email-settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ emailTime, emailRecipients }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to save email settings");
+      }
+      showSuccess(labels.settings.email.saveSuccess, labels.settings.email.saveSuccessMessage);
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : "Failed to save email settings";
+      showWarning(labels.settings.email.saveFailed, errorMsg);
+    } finally {
+      setIsSavingEmailSettings(false);
+    }
+  };
 
   // Load whitelist when dialog opens
   const loadWhitelist = async () => {
@@ -284,10 +334,11 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
     }
   };
 
-  // Load whitelist when dialog opens
+  // Load whitelist and email settings when dialog opens
   useEffect(() => {
     if (open) {
       loadWhitelist();
+      loadEmailSettings();
     }
   }, [open]);
 
@@ -612,48 +663,109 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
             {/* E-Mail Workflow Tab */}
             <TabsContent
               value="email"
-              className="mt-4 flex-1 space-y-4 overflow-y-auto"
+              className="mt-4 flex-1 space-y-3 overflow-y-auto"
             >
-              <div className="space-y-4 rounded-lg bg-slate-50 p-4">
-                <div>
-                  <h3 className="mb-3 text-sm font-semibold text-slate-900">
-                    {labels.settings.email.title}
-                  </h3>
-                  <p className="mb-3 text-xs text-slate-600">
-                    {labels.settings.email.description}
+              {/* Send time */}
+              <div className="rounded-lg border border-slate-200 bg-white p-4">
+                <label className="mb-1.5 block text-xs font-medium text-slate-500 uppercase tracking-wide">
+                  {labels.settings.email.sendTime}
+                </label>
+                <input
+                  type="time"
+                  value={emailTime}
+                  onChange={(e) => setEmailTime(e.target.value)}
+                  className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm font-medium tabular-nums focus:border-un-blue focus:ring-2 focus:ring-un-blue/20 focus:outline-none"
+                />
+              </div>
+
+              {/* Recipients */}
+              <div className="rounded-lg border border-slate-200 bg-white p-4">
+                <p className="mb-1 text-xs font-medium text-slate-500 uppercase tracking-wide">
+                  {labels.settings.email.recipients}
+                </p>
+
+                {/* Whitelist notice */}
+                <div className="mb-3 flex items-start gap-2 rounded-md bg-slate-50 px-3 py-2">
+                  <Mail className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-400" />
+                  <p className="text-xs text-slate-500">
+                    {labels.settings.email.whitelistNote}
                   </p>
-
-                  <div className="space-y-3">
-                    <div>
-                      <label className="mb-1 block text-xs text-slate-600">
-                        {labels.settings.email.sendTime}
-                      </label>
-                      <input
-                        type="time"
-                        value={emailTime}
-                        onChange={(e) => setEmailTime(e.target.value)}
-                        className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-un-blue focus:ring-2 focus:ring-un-blue/20 focus:outline-none"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="mb-1 block text-xs text-slate-600">
-                        {labels.settings.email.recipient}
-                      </label>
-                      <input
-                        type="email"
-                        value={emailAddress}
-                        onChange={(e) => setEmailAddress(e.target.value)}
-                        placeholder={labels.settings.email.recipientPlaceholder}
-                        className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-un-blue focus:ring-2 focus:ring-un-blue/20 focus:outline-none"
-                      />
-                    </div>
-
-                    <Button variant="outline" className="w-full" disabled>
-                      {labels.settings.email.save}
-                    </Button>
-                  </div>
                 </div>
+
+                {/* Additional recipient list */}
+                {emailRecipients.length > 0 && (
+                  <div className="mb-2 space-y-1">
+                    {emailRecipients.map((email) => (
+                      <div
+                        key={email}
+                        className="flex items-center justify-between gap-2 rounded-md border border-slate-100 bg-slate-50 px-3 py-1.5"
+                      >
+                        <span className="min-w-0 truncate text-xs text-slate-700">
+                          {email}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveRecipient(email)}
+                          className="shrink-0 rounded p-0.5 text-slate-300 hover:text-red-400"
+                          aria-label={`Remove ${email}`}
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Add recipient */}
+                <div className="flex gap-2">
+                  <input
+                    type="email"
+                    value={newRecipientInput}
+                    onChange={(e) => setNewRecipientInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleAddRecipient();
+                      }
+                    }}
+                    placeholder={labels.settings.email.recipientPlaceholder}
+                    className="flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-un-blue focus:ring-2 focus:ring-un-blue/20 focus:outline-none"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleAddRecipient}
+                    disabled={
+                      !newRecipientInput.trim() ||
+                      !EMAIL_REGEX.test(newRecipientInput.trim())
+                    }
+                    className="h-9.5 w-9.5 shrink-0 p-0"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+
+              {/* Save + log link */}
+              <div className="space-y-2">
+                <Button
+                  className="w-full bg-un-blue text-white hover:bg-un-blue/90"
+                  onClick={handleSaveEmailSettings}
+                  disabled={isSavingEmailSettings || !emailTime}
+                >
+                  {isSavingEmailSettings
+                    ? labels.settings.email.saving
+                    : labels.settings.email.save}
+                </Button>
+                <a
+                  href="/health"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center justify-center gap-1.5 text-xs text-slate-400 hover:text-un-blue hover:underline"
+                >
+                  <Mail className="h-3 w-3" />
+                  {labels.settings.email.viewDeliveryLog}
+                </a>
               </div>
             </TabsContent>
           </Tabs>

@@ -598,7 +598,11 @@ const buildDocumentChildren = (
           );
 
           // Source Information (right under headline)
-          if (entry.sourceName || entry.sourceDate) {
+          const sourceNameStr = Array.isArray(entry.sourceName)
+            ? entry.sourceName.join(", ")
+            : entry.sourceName;
+
+          if (sourceNameStr || entry.sourceDate) {
             const sourceChildren: (TextRun | ExternalHyperlink)[] = [
               new TextRun({
                 text: "Source: ",
@@ -608,13 +612,13 @@ const buildDocumentChildren = (
               }),
             ];
 
-            if (entry.sourceName) {
+            if (sourceNameStr) {
               if (entry.sourceUrl) {
                 sourceChildren.push(
                   new ExternalHyperlink({
                     children: [
                       new TextRun({
-                        text: entry.sourceName,
+                        text: sourceNameStr,
                         italics: true,
                         font: "Roboto",
                         size: 20,
@@ -627,7 +631,7 @@ const buildDocumentChildren = (
               } else {
                 sourceChildren.push(
                   new TextRun({
-                    text: entry.sourceName,
+                    text: sourceNameStr,
                     italics: true,
                     font: "Roboto",
                     size: 20,
@@ -636,7 +640,7 @@ const buildDocumentChildren = (
               }
             }
 
-            if (entry.sourceName && entry.sourceDate) {
+            if (sourceNameStr && entry.sourceDate) {
               sourceChildren.push(
                 new TextRun({
                   text: " | ",

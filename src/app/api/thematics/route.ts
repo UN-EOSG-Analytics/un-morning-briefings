@@ -11,17 +11,27 @@ export async function GET() {
 
   try {
     const result = await query(
-      `SELECT DISTINCT thematic
+      `SELECT thematic
        FROM morning_briefings.entries
-       WHERE thematic IS NOT NULL AND thematic != ''
-       ORDER BY thematic ASC
-       LIMIT 100`,
+       WHERE thematic IS NOT NULL AND thematic != ''`,
     );
 
-    const thematics = result.rows.map(
-      (row: { thematic: string }) => row.thematic,
-    );
-    return NextResponse.json({ thematics });
+    const thematics = new Set<string>();
+    result.rows.forEach((row: { thematic: string }) => {
+      const val = row.thematic;
+      if (val.startsWith("[")) {
+        try {
+          const parsed = JSON.parse(val);
+          if (Array.isArray(parsed)) {
+            parsed.forEach((t: string) => t && thematics.add(t));
+            return;
+          }
+        } catch {}
+      }
+      thematics.add(val);
+    });
+
+    return NextResponse.json({ thematics: Array.from(thematics).sort() });
   } catch (error) {
     console.error("Error fetching thematics:", error);
     return NextResponse.json(

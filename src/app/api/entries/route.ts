@@ -7,6 +7,7 @@ import { convertImageReferencesServerSide } from "@/lib/image-conversion";
 import { checkAuth } from "@/lib/auth-helper";
 import {
   serializeCountry,
+  serializeStringOrArray,
   stripHtmlToText,
   fetchEntries,
   fetchEntryById,
@@ -149,11 +150,11 @@ export async function POST(request: NextRequest) {
         data.headline,
         data.date, // Store as string, no Date conversion
         entryContent,
-        data.sourceName || null,
+        data.sourceName ? serializeStringOrArray(data.sourceName) : null,
         data.sourceUrl || null,
         data.sourceDate || null,
         data.puNote || null,
-        data.thematic || null,
+        data.thematic ? serializeStringOrArray(data.thematic) : null,
         authorId,
         data.status || null,
         "pending",

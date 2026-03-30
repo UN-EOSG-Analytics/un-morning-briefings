@@ -18,20 +18,31 @@ export async function GET() {
 
     // Get unique source names used by this user via author_id foreign key
     const result = await query(
-      `SELECT DISTINCT e.source_name
+      `SELECT e.source_name
        FROM morning_briefings.entries e
        INNER JOIN morning_briefings.users u ON e.author_id = u.id
        WHERE u.email = $1
          AND e.source_name IS NOT NULL
-         AND e.source_name != ''
-       ORDER BY e.source_name ASC
-       LIMIT 50`,
+         AND e.source_name != ''`,
       [userEmail],
     );
 
-    const sourceNames = result.rows.map((row: any) => row.source_name);
+    const sourceNames = new Set<string>();
+    result.rows.forEach((row: { source_name: string }) => {
+      const val = row.source_name;
+      if (val.startsWith("[")) {
+        try {
+          const parsed = JSON.parse(val);
+          if (Array.isArray(parsed)) {
+            parsed.forEach((s: string) => s && sourceNames.add(s));
+            return;
+          }
+        } catch {}
+      }
+      sourceNames.add(val);
+    });
 
-    return NextResponse.json({ sourceNames });
+    return NextResponse.json({ sourceNames: Array.from(sourceNames).sort() });
   } catch (error) {
     console.error("Error fetching source names:", error);
     return NextResponse.json(

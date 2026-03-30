@@ -142,11 +142,11 @@ export function MultiSelectField({
             className={cn(
               inputBaseStyles,
               inputDefaultStyles,
-              "justify-start gap-1 overflow-hidden px-3 font-normal hover:bg-[var(--form-field-background)] hover:text-[var(--form-field-text)]",
+              "h-auto min-h-9 justify-start gap-1 px-3 font-normal hover:bg-[var(--form-field-background)] hover:text-[var(--form-field-text)]",
               error && inputErrorStyles,
             )}
           >
-            <div className="flex items-center gap-1 overflow-x-auto">
+            <div className="flex flex-wrap items-center gap-1">
               {value.length === 0 ? (
                 <span className="form-field-placeholder">{placeholder}</span>
               ) : (
@@ -210,14 +210,14 @@ export function MultiSelectField({
         >
           <Command>
             {searchable && (
-              <div className="flex items-center border-b border-[var(--form-field-border)] bg-[var(--form-field-background)] px-3">
+              <div className="flex items-center border-b border-slate-100 px-3">
                 <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
                 <input
                   placeholder="Search..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  className="form-field-search h-9 py-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="form-field-search h-9 py-2 outline-none disabled:cursor-not-allowed disabled:opacity-50"
                 />
               </div>
             )}

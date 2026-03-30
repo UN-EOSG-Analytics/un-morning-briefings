@@ -186,11 +186,11 @@ export function MorningMeetingForm({
     headline: initialData?.headline || "",
     date: formatDateForInput(initialData?.date),
     entry: cleanEntry(initialData?.entry || ""),
-    sourceName: initialData?.sourceName || "",
+    sourceName: parseCountryField(initialData?.sourceName),
     sourceDate: formatSourceDateForInput(initialData?.sourceDate),
     sourceUrl: initialData?.sourceUrl || "",
     puNote: initialData?.puNote || "",
-    thematic: initialData?.thematic || "",
+    thematic: parseCountryField(initialData?.thematic),
     author: initialData?.author || "Current User",
     previousEntryId: initialData?.previousEntryId || null,
   });
@@ -754,11 +754,11 @@ export function MorningMeetingForm({
         headline: "",
         date: formatDateForInput(undefined),
         entry: "",
-        sourceName: "",
+        sourceName: [],
         sourceDate: "",
         sourceUrl: "",
         puNote: "",
-        thematic: "",
+        thematic: [],
         author: "Current User",
       });
       setErrors({});
@@ -846,7 +846,11 @@ export function MorningMeetingForm({
         date: result.date || prev.date,
         entry: result.entry || prev.entry,
         sourceDate: result.sourceDate || prev.sourceDate,
-        sourceName: result.sourceName || prev.sourceName,
+        sourceName: result.sourceName
+          ? Array.isArray(result.sourceName)
+            ? result.sourceName
+            : [result.sourceName]
+          : prev.sourceName,
       }));
 
       setShowAutoFillDialog(false);
@@ -930,7 +934,7 @@ export function MorningMeetingForm({
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Classification & Location Section */}
               <section className="space-y-4 border-b pb-4 sm:pb-6">
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 md:grid-cols-5">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
                   {/* Category */}
                   <SelectField
                     label={labelsData.form.labels.category}
@@ -976,7 +980,9 @@ export function MorningMeetingForm({
                     required={true}
                     searchable={false}
                   />
+                </div>
 
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
                   {/* Tag */}
                   <MultiSelectField
                     label={labelsData.form.labels.tags}
@@ -997,14 +1003,24 @@ export function MorningMeetingForm({
                   />
 
                   {/* Thematic */}
-                  <AutocompleteField
+                  <MultiSelectField
                     label={labelsData.form.labels.thematic}
                     placeholder={labelsData.form.placeholders.thematic}
-                    value={formData.thematic || ""}
-                    onChange={(value) =>
+                    value={
+                      Array.isArray(formData.thematic)
+                        ? formData.thematic
+                        : formData.thematic
+                          ? [formData.thematic]
+                          : []
+                    }
+                    onValueChange={(value) =>
                       setFormData((prev) => ({ ...prev, thematic: value }))
                     }
-                    suggestions={existingThematics}
+                    options={existingThematics.map((t) => ({
+                      value: t,
+                      label: t,
+                    }))}
+                    searchable={true}
                   />
                 </div>
               </section>
@@ -1153,14 +1169,21 @@ export function MorningMeetingForm({
 
                 {/* Source Data Row: Name, Date, URL */}
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
-                  <AutocompleteField
+                  <MultiSelectField
                     label={labelsData.form.labels.sourceName}
-                    value={formData.sourceName || ""}
-                    onChange={(value) =>
+                    placeholder={labelsData.form.placeholders.sourceName}
+                    value={
+                      Array.isArray(formData.sourceName)
+                        ? formData.sourceName
+                        : formData.sourceName
+                          ? [formData.sourceName]
+                          : []
+                    }
+                    onValueChange={(value) =>
                       setFormData((prev) => ({ ...prev, sourceName: value }))
                     }
-                    suggestions={sourceNames}
-                    placeholder={labelsData.form.placeholders.sourceName}
+                    options={sourceNames.map((s) => ({ value: s, label: s }))}
+                    searchable={true}
                   />
 
                   <TextField
@@ -1329,7 +1352,7 @@ export function MorningMeetingForm({
               size="sm"
               onClick={handleSubmit}
               disabled={isSubmitting}
-              className="w-full justify-center gap-2 sm:w-auto bg-un-blue hover:bg-un-blue/90"
+              className="w-full justify-center gap-2 bg-un-blue hover:bg-un-blue/90 sm:w-auto"
             >
               <Send className="h-4 w-4" />
               {isSubmitting

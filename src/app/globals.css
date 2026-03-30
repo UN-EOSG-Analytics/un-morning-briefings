@@ -266,7 +266,7 @@
     :is(
       input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not(
           [type="range"]
-        ),
+        ):not(.form-field-search),
       select:not(.editor-image-size-select),
       [data-slot="select-trigger"],
       button[role="combobox"]
@@ -305,7 +305,7 @@
       select:not(.editor-image-size-select),
       [data-slot="select-trigger"],
       button[role="combobox"]
-    ):focus,
+    ):not(.form-field-search):focus,
   .form-standardized
     :is(
       input,
@@ -313,7 +313,7 @@
       select:not(.editor-image-size-select),
       [data-slot="select-trigger"],
       button[role="combobox"]
-    ):focus-visible,
+    ):not(.form-field-search):focus-visible,
   .form-standardized-portal
     :is(
       input,
@@ -321,7 +321,7 @@
       select:not(.editor-image-size-select),
       [data-slot="select-trigger"],
       button[role="combobox"]
-    ):focus,
+    ):not(.form-field-search):focus,
   .form-standardized-portal
     :is(
       input,
@@ -329,7 +329,7 @@
       select:not(.editor-image-size-select),
       [data-slot="select-trigger"],
       button[role="combobox"]
-    ):focus-visible {
+    ):not(.form-field-search):focus-visible {
     border-color: var(--form-field-focus-border) !important;
     box-shadow: 0 0 0 2px var(--form-field-focus-ring) !important;
     outline: none !important;

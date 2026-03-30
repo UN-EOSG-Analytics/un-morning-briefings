@@ -5,6 +5,7 @@ import { convertImageReferencesServerSide } from "@/lib/image-conversion";
 import { checkAuth } from "@/lib/auth-helper";
 import {
   serializeCountry,
+  serializeStringOrArray,
   stripHtmlToText,
   fetchEntryById,
 } from "@/lib/entry-queries";
@@ -196,7 +197,9 @@ export async function PUT(
     }
     if (data.sourceName !== undefined) {
       updateFields.push(`source_name = $${paramCount++}`);
-      updateValues.push(data.sourceName || null);
+      updateValues.push(
+        data.sourceName ? serializeStringOrArray(data.sourceName) : null,
+      );
     }
     if (data.sourceUrl !== undefined) {
       updateFields.push(`source_url = $${paramCount++}`);
@@ -212,7 +215,9 @@ export async function PUT(
     }
     if (data.thematic !== undefined) {
       updateFields.push(`thematic = $${paramCount++}`);
-      updateValues.push(data.thematic || null);
+      updateValues.push(
+        data.thematic ? serializeStringOrArray(data.thematic) : null,
+      );
     }
     if (data.status !== undefined) {
       updateFields.push(`status = $${paramCount++}`);

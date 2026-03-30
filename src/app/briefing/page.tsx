@@ -334,7 +334,11 @@ const generateBriefingDocument = async (
             }),
           );
 
-          if (entry.sourceName || entry.sourceDate) {
+          const sourceNameStr = Array.isArray(entry.sourceName)
+            ? entry.sourceName.join(", ")
+            : entry.sourceName;
+
+          if (sourceNameStr || entry.sourceDate) {
             const sourceChildren: (TextRun | ExternalHyperlink)[] = [
               new TextRun({
                 text: "Source: ",
@@ -344,13 +348,13 @@ const generateBriefingDocument = async (
               }),
             ];
 
-            if (entry.sourceName) {
+            if (sourceNameStr) {
               if (entry.sourceUrl) {
                 sourceChildren.push(
                   new ExternalHyperlink({
                     children: [
                       new TextRun({
-                        text: entry.sourceName,
+                        text: sourceNameStr,
                         italics: true,
                         font: "Roboto",
                         size: 20,
@@ -363,7 +367,7 @@ const generateBriefingDocument = async (
               } else {
                 sourceChildren.push(
                   new TextRun({
-                    text: entry.sourceName,
+                    text: sourceNameStr,
                     italics: true,
                     font: "Roboto",
                     size: 20,
@@ -372,7 +376,7 @@ const generateBriefingDocument = async (
               }
             }
 
-            if (entry.sourceName && entry.sourceDate) {
+            if (sourceNameStr && entry.sourceDate) {
               sourceChildren.push(
                 new TextRun({
                   text: " | ",
@@ -799,29 +803,32 @@ function BriefingContent() {
                                 <h4 className="sticky top-28 z-10 border-b border-slate-200 bg-white py-2 text-lg leading-snug font-bold text-slate-900 print:static print:border-none">
                                   • {entry.headline}
                                 </h4>
-                                {(entry.sourceName || entry.sourceDate) && (
-                                  <p className="mt-1 text-sm text-slate-600 italic">
-                                    Source:{" "}
-                                    {entry.sourceName &&
-                                      (entry.sourceUrl ? (
-                                        <a
-                                          href={entry.sourceUrl}
-                                          target="_blank"
-                                          rel="noopener noreferrer"
-                                          className="text-un-blue hover:underline"
-                                        >
-                                          {entry.sourceName}
-                                        </a>
-                                      ) : (
-                                        <span>{entry.sourceName}</span>
-                                      ))}
-                                    {entry.sourceName &&
-                                      entry.sourceDate &&
-                                      " | "}
-                                    {entry.sourceDate &&
-                                      formatDateFull(entry.sourceDate)}
-                                  </p>
-                                )}
+                                {(() => {
+                                  const sn = Array.isArray(entry.sourceName)
+                                    ? entry.sourceName.join(", ")
+                                    : entry.sourceName;
+                                  return sn || entry.sourceDate ? (
+                                    <p className="mt-1 text-sm text-slate-600 italic">
+                                      Source:{" "}
+                                      {sn &&
+                                        (entry.sourceUrl ? (
+                                          <a
+                                            href={entry.sourceUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-un-blue hover:underline"
+                                          >
+                                            {sn}
+                                          </a>
+                                        ) : (
+                                          <span>{sn}</span>
+                                        ))}
+                                      {sn && entry.sourceDate && " | "}
+                                      {entry.sourceDate &&
+                                        formatDateFull(entry.sourceDate)}
+                                    </p>
+                                  ) : null;
+                                })()}
                               </div>
 
                               {/* Priority */}

@@ -544,18 +544,23 @@ export function ViewEntryDialog({
             displayEntry.sourceDate) && (
             <div className="flex flex-wrap items-center gap-2 text-sm text-slate-700">
               {displayEntry.sourceName &&
-                (displayEntry.sourceUrl ? (
-                  <a
-                    href={displayEntry.sourceUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="font-medium text-un-blue hover:underline"
-                  >
-                    {displayEntry.sourceName}
-                  </a>
-                ) : (
-                  <span className="font-medium">{displayEntry.sourceName}</span>
-                ))}
+                (() => {
+                  const name = Array.isArray(displayEntry.sourceName)
+                    ? displayEntry.sourceName.join(", ")
+                    : displayEntry.sourceName;
+                  return displayEntry.sourceUrl ? (
+                    <a
+                      href={displayEntry.sourceUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-medium text-un-blue hover:underline"
+                    >
+                      {name}
+                    </a>
+                  ) : (
+                    <span className="font-medium">{name}</span>
+                  );
+                })()}
               {displayEntry.sourceName && displayEntry.sourceDate && (
                 <span className="text-slate-400">|</span>
               )}

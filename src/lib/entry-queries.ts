@@ -35,29 +35,33 @@ export function stripHtmlToText(html: string): string {
   return text;
 }
 
-// ─── Country Serialization ───────────────────────────────────────────────────
+// ─── String / Array Serialization ───────────────────────────────────────────
 
-/** Serialize country field for database storage (string or array → JSON string) */
-export function serializeCountry(country: string | string[]): string {
-  if (Array.isArray(country)) {
-    return JSON.stringify(country);
+/** Serialize a string-or-array field for DB storage (array → JSON string) */
+export function serializeStringOrArray(value: string | string[]): string {
+  if (Array.isArray(value)) {
+    return JSON.stringify(value);
   }
-  return country;
+  return value;
 }
 
-/** Parse country field from database (JSON string → string or string[]) */
-export function parseCountry(country: string): string | string[] {
-  if (!country) return country;
-  if (country.startsWith("[")) {
+/** Parse a DB string that may be a JSON array back to string | string[] */
+export function parseStringOrArray(value: string): string | string[] {
+  if (!value) return value;
+  if (value.startsWith("[")) {
     try {
-      const parsed = JSON.parse(country);
+      const parsed = JSON.parse(value);
       if (Array.isArray(parsed)) return parsed;
     } catch {
       // Not valid JSON, return as-is
     }
   }
-  return country;
+  return value;
 }
+
+// Keep named aliases for clarity at call sites
+export const serializeCountry = serializeStringOrArray;
+export const parseCountry = parseStringOrArray;
 
 // ─── Entry SQL Fragments ─────────────────────────────────────────────────────
 
@@ -114,9 +118,14 @@ export async function fetchEntryById(id: string) {
   );
   if (result.rows.length === 0) return null;
 
+  const row = result.rows[0];
   return {
-    ...result.rows[0],
-    country: parseCountry(result.rows[0].country),
+    ...row,
+    country: parseStringOrArray(row.country),
+    thematic: row.thematic ? parseStringOrArray(row.thematic) : row.thematic,
+    sourceName: row.sourceName
+      ? parseStringOrArray(row.sourceName)
+      : row.sourceName,
   };
 }
 
@@ -153,7 +162,11 @@ export async function fetchEntries(filters: {
   const result = await query(sql, params);
   return result.rows.map((row) => ({
     ...row,
-    country: parseCountry(row.country),
+    country: parseStringOrArray(row.country),
+    thematic: row.thematic ? parseStringOrArray(row.thematic) : row.thematic,
+    sourceName: row.sourceName
+      ? parseStringOrArray(row.sourceName)
+      : row.sourceName,
   }));
 }
 

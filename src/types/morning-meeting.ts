@@ -12,11 +12,11 @@ export interface MorningMeetingEntry {
   headline: string;
   date: string; // Now includes both date and time
   entry: string;
-  sourceName?: string;
+  sourceName?: string | string[];
   sourceDate?: string; // Date from the source
   sourceUrl?: string;
   puNote?: string;
-  thematic?: string;
+  thematic?: string | string[];
   author?: string; // Joined from users table via author_id
   authorId?: number; // Foreign key to users table
   authorEmail?: string; // Author's email for convenience

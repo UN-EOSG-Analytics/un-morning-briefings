@@ -533,6 +533,7 @@ const buildDocumentChildren = (
       if (country !== "") {
         children.push(
           new Paragraph({
+            heading: HeadingLevel.HEADING_3,
             children: [
               new TextRun({
                 text: country,
@@ -793,7 +794,7 @@ export const createDocumentHeader = async (): Promise<Table> => {
                     text: "INTERNAL | NOT FOR FURTHER DISTRIBUTION",
                     bold: false,
                     size: 18,
-                    color: "000000",
+                    color: "7C7067",
                     font: "Roboto",
                   }),
                 ],

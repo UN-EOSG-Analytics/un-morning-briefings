@@ -508,19 +508,15 @@ function parseHtmlContentClient(html: string, baseStyles?: TextStyles): Paragrap
       const items = Array.from(element.querySelectorAll(":scope > li"));
       items.forEach((item) => {
         const children = extractTextRuns(item, baseStyles);
+        const bulletRun = new TextRun({ text: "•\t", font: "Roboto" });
         paragraphs.push(
           new Paragraph({
             children:
               children.length > 0
-                ? children
-                : [
-                    new TextRun({
-                      text: item.textContent || "",
-                      font: "Roboto",
-                    }),
-                  ],
-            bullet: { level: 0 },
-            spacing: { after: 50 },
+                ? [bulletRun, ...children]
+                : [bulletRun, new TextRun({ text: item.textContent || "", font: "Roboto" })],
+            indent: { left: 400, hanging: 400 },
+            spacing: { after: 80 },
           }),
         );
       });

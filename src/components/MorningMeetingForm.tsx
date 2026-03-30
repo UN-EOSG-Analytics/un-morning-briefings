@@ -1329,7 +1329,7 @@ export function MorningMeetingForm({
               size="sm"
               onClick={handleSubmit}
               disabled={isSubmitting}
-              className="w-full justify-center gap-2 sm:w-auto"
+              className="w-full justify-center gap-2 sm:w-auto bg-un-blue hover:bg-un-blue/90"
             >
               <Send className="h-4 w-4" />
               {isSubmitting

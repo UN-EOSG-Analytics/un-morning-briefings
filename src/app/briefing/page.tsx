@@ -368,7 +368,7 @@ function BriefingContent() {
                               {/* Content */}
                               {entry.entry && (
                                 <div
-                                  className="text-base leading-relaxed text-slate-900 [&_img]:cursor-pointer [&_img]:transition-opacity [&_img]:hover:opacity-80 [&_strong]:font-semibold [&>blockquote]:my-3 [&>blockquote]:border-l-4 [&>blockquote]:border-slate-300 [&>blockquote]:pl-4 [&>blockquote]:italic [&>p]:mb-3 [&>ul]:mb-3 [&>ul]:ml-6 [&>ul>li]:mb-1.5"
+                                  className="text-base leading-relaxed text-slate-900 [&_a]:text-un-blue [&_a]:underline [&_a]:hover:opacity-80 [&_b]:font-semibold [&_code]:rounded [&_code]:bg-slate-100 [&_code]:px-1 [&_code]:font-mono [&_code]:text-sm [&_del]:line-through [&_img]:max-w-full [&_img]:cursor-pointer [&_img]:transition-opacity [&_img]:hover:opacity-80 [&_li]:mb-1 [&_mark]:bg-yellow-200 [&_ol]:list-decimal [&_ol]:pl-5 [&_s]:line-through [&_strong]:font-semibold [&_sub]:align-sub [&_sub]:text-xs [&_sup]:align-super [&_sup]:text-xs [&_u]:underline [&_ul]:list-disc [&_ul]:pl-5 [&>blockquote]:my-3 [&>blockquote]:border-l-4 [&>blockquote]:border-slate-300 [&>blockquote]:pl-4 [&>blockquote]:italic [&>h1]:my-3 [&>h1]:text-2xl [&>h1]:font-bold [&>h2]:my-2 [&>h2]:text-xl [&>h2]:font-bold [&>h3]:my-2 [&>h3]:text-lg [&>h3]:font-semibold [&>hr]:my-4 [&>hr]:border-slate-300 [&>ol]:mb-3 [&>p]:mb-3 [&>pre]:mb-3 [&>pre]:overflow-x-auto [&>pre]:rounded [&>pre]:bg-slate-100 [&>pre]:p-3 [&>pre>code]:bg-transparent [&>pre>code]:p-0 [&>ul]:mb-3"
                                   dangerouslySetInnerHTML={{
                                     __html: sanitizeHtml(entry.entry),
                                   }}

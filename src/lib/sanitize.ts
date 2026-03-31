@@ -38,6 +38,12 @@ export function sanitizeHtml(html: string): string {
       "td",
       "sub",
       "sup",
+      "mark",
+      "s",
+      "del",
+      "code",
+      "pre",
+      "hr",
     ],
     ALLOWED_ATTR: [
       "href",

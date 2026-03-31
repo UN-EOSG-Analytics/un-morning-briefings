@@ -4,7 +4,6 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useSession } from "next-auth/react";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -37,7 +36,7 @@ import {
   VerticalAlign,
 } from "docx";
 import { saveAs } from "file-saver";
-import { FileText, Calendar, Mail, Download, Eye } from "lucide-react";
+import { FileText, Calendar, Mail, Download } from "lucide-react";
 import { parseHtmlContent } from "@/lib/html-to-docx";
 import { usePopup } from "@/lib/popup-context";
 import {
@@ -1146,15 +1145,6 @@ export function ExportDailyBriefingDialog({
             </div>
           </div>
           <DialogFooter className="flex w-full shrink-0 flex-col gap-3 px-4 pb-4 sm:flex-row sm:px-0 sm:pb-0">
-            <Link href={`/briefing?date=${selectedDate}`} className="flex-1">
-              <Button
-                className="flex-1 gap-2 bg-un-blue hover:bg-un-blue/90"
-                onClick={() => handleOpenChange(false)}
-              >
-                <Eye className="h-4 w-4" />
-                View Briefing
-              </Button>
-            </Link>
             <Button
               onClick={handleExport}
               disabled={isExporting || isSendingEmail}

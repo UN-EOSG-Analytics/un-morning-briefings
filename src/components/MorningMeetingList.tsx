@@ -4,8 +4,10 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { deleteEntry, getSubmittedEntries } from "@/lib/storage";
-import { FileDown, List, RefreshCw } from "lucide-react";
+import { Eye, FileDown, List, RefreshCw } from "lucide-react";
+import Link from "next/link";
 import { ExportDailyBriefingDialog } from "./ExportDailyBriefingDialog";
+import { getCurrentBriefingDate } from "@/lib/useEntriesFilter";
 import { EntriesTable } from "./EntriesTable";
 import { usePopup } from "@/lib/popup-context";
 import type { MorningMeetingEntry } from "@/types/morning-meeting";
@@ -133,6 +135,16 @@ export function MorningMeetingList({
                 {labels.entries.actions.refresh}
               </span>
             </Button>
+            <Link href={`/briefing?date=${getCurrentBriefingDate()}`}>
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full justify-center sm:h-10 sm:w-auto sm:px-6"
+              >
+                <Eye className="h-4 w-4" />
+                <span className="sm:inline">View Briefing</span>
+              </Button>
+            </Link>
             <Button
               size="sm"
               onClick={() => setShowExportDialog(true)}

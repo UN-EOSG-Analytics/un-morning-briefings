@@ -244,7 +244,7 @@
     },
     "actions": {
       "refresh": "Refresh",
-      "exportBriefing": "Export Daily Briefing",
+      "exportBriefing": "Export Briefing",
       "exportJson": "Export JSON",
       "edit": "Edit",
       "delete": "Delete",

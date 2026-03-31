@@ -9,6 +9,7 @@ import {
   Archive,
   ArrowRight,
   FileDown,
+  Eye,
 } from "lucide-react";
 import { useState } from "react";
 import { useSession } from "next-auth/react";
@@ -44,16 +45,28 @@ export default function HomePage() {
               </>
             )}
           </div>
-          <Button
-            size="sm"
-            onClick={() => setShowExportDialog(true)}
-            className="w-full justify-center bg-un-blue hover:bg-un-blue/90 sm:h-10 sm:w-auto sm:px-6"
-          >
-            <FileDown className="h-4 w-4" />
-            <span className="sm:inline">
-              {labels.entries.actions.exportBriefing}
-            </span>
-          </Button>
+          <div className="flex gap-2">
+            <Link href={`/briefing?date=${currentBriefingDate}`}>
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full justify-center sm:h-10 sm:w-auto sm:px-6"
+              >
+                <Eye className="h-4 w-4" />
+                <span className="sm:inline">View Briefing</span>
+              </Button>
+            </Link>
+            <Button
+              size="sm"
+              onClick={() => setShowExportDialog(true)}
+              className="w-full justify-center bg-un-blue hover:bg-un-blue/90 sm:h-10 sm:w-auto sm:px-6"
+            >
+              <FileDown className="h-4 w-4" />
+              <span className="sm:inline">
+                {labels.entries.actions.exportBriefing}
+              </span>
+            </Button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-3">

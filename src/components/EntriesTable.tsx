@@ -813,7 +813,7 @@ export function EntriesTable({
 
       {/* Briefing Agenda Dialog */}
       <Dialog open={showAgendaDialog} onOpenChange={setShowAgendaDialog}>
-        <DialogContent className="flex h-screen max-w-full flex-col p-0 sm:!max-w-[60vw] md:h-auto md:max-h-[40vw]">
+        <DialogContent aria-describedby={undefined} className="flex h-screen max-w-full flex-col p-0 sm:!max-w-[60vw] md:h-auto md:max-h-[40vw]">
           <DialogHeader className="flex-shrink-0 border-b border-slate-200 px-4 py-3 md:px-6">
             <DialogTitle className="text-xl font-semibold text-un-blue">
               Briefing Agenda for{" "}

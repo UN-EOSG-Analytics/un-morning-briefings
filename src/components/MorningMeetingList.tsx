@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { deleteEntry, getSubmittedEntries } from "@/lib/storage";
-import { Eye, FileDown, List, RefreshCw } from "lucide-react";
+import { Eye, FileDown, List } from "lucide-react";
 import Link from "next/link";
 import { ExportDailyBriefingDialog } from "./ExportDailyBriefingDialog";
 import { getCurrentBriefingDate } from "@/lib/useEntriesFilter";
@@ -23,34 +23,27 @@ export function MorningMeetingList({
   } = usePopup();
   const [entries, setEntries] = useState<MorningMeetingEntry[]>([]);
   const [showExportDialog, setShowExportDialog] = useState(false);
-  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const loadEntries = async () => {
+  const loadEntries = useCallback(async () => {
     const data = await getSubmittedEntries();
     setEntries(data);
-  };
-
-  const handleRefresh = async () => {
-    setIsRefreshing(true);
-    try {
-      await loadEntries();
-      showSuccess(
-        labels.entries.success.refreshed,
-        labels.entries.success.refreshedMessage,
-      );
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Failed to refresh data";
-      showInfo("Error", errorMessage);
-    } finally {
-      setIsRefreshing(false);
-    }
-  };
+  }, []);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadEntries();
-  }, []);
+  }, [loadEntries]);
+
+  useEffect(() => {
+    const interval = setInterval(loadEntries, 30_000);
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") loadEntries();
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [loadEntries]);
 
   const handleDelete = async (id: string) => {
     const confirmed = await showConfirm(
@@ -121,20 +114,6 @@ export function MorningMeetingList({
             </div>
           </div>
           <div className="flex flex-col gap-2 sm:shrink-0 sm:flex-row">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleRefresh}
-              disabled={isRefreshing}
-              className="hidden w-full justify-center sm:h-10 sm:w-auto sm:px-6 lg:flex"
-            >
-              <RefreshCw
-                className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
-              />
-              <span className="sm:inline">
-                {labels.entries.actions.refresh}
-              </span>
-            </Button>
             <Link href={`/briefing?date=${getCurrentBriefingDate()}`}>
               <Button
                 variant="outline"

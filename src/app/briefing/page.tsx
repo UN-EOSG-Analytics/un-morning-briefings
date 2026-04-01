@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState, useRef } from "react";
+import { Suspense, useEffect, useState, useRef, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { getSubmittedEntries } from "@/lib/storage";
@@ -26,30 +26,40 @@ function BriefingContent() {
   const [scrollPercentage, setScrollPercentage] = useState(0);
   const contentRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const loadEntries = async () => {
-      if (!session?.user) {
-        return;
-      }
-
-      setIsLoading(true);
+  const loadEntries = useCallback(
+    async (showLoader = false) => {
+      if (!session?.user) return;
+      if (showLoader) setIsLoading(true);
       try {
         const allEntries = await getSubmittedEntries();
         const entriesForDate = allEntries.filter(
-          (entry: MorningMeetingEntry) => {
-            return isWithinCutoffRange(entry.date, dateParam);
-          },
+          (entry: MorningMeetingEntry) => isWithinCutoffRange(entry.date, dateParam),
         );
         setEntries(entriesForDate);
       } catch (error) {
         console.error("Error loading entries:", error);
       } finally {
-        setIsLoading(false);
+        if (showLoader) setIsLoading(false);
       }
-    };
+    },
+    [dateParam, session?.user],
+  );
 
-    loadEntries();
-  }, [dateParam, session?.user]);
+  useEffect(() => {
+    loadEntries(true);
+  }, [loadEntries]);
+
+  useEffect(() => {
+    const interval = setInterval(() => loadEntries(), 30_000);
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") loadEntries();
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [loadEntries]);
 
   // Sort by priority (SG Attention first)
   const sortedEntries = [...entries].sort((a, b) => {

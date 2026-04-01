@@ -367,7 +367,7 @@ export function ViewEntryDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="flex h-dvh w-screen !max-w-280 flex-col gap-0 overflow-hidden rounded-none !p-0 sm:h-[90vh] sm:w-[95vw] sm:rounded-lg md:h-[90vh] md:w-[85vw] lg:h-[90vh] lg:w-[70vw]">
+      <DialogContent aria-describedby={undefined} className="flex h-dvh w-screen !max-w-280 flex-col gap-0 overflow-hidden rounded-none !p-0 sm:h-[90vh] sm:w-[95vw] sm:rounded-lg md:h-[90vh] md:w-[85vw] lg:h-[90vh] lg:w-[70vw]">
         {/* Hidden title for accessibility */}
         <DialogTitle className="sr-only">{displayEntry.headline}</DialogTitle>
 

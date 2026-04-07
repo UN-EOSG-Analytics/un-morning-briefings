@@ -47,11 +47,8 @@ import {
   getBriefingDate,
   isWithinCutoffRange,
 } from "@/lib/useEntriesFilter";
-import {
-  generateDocumentBlob,
-  formatExportFilename,
-  createDocumentHeader,
-} from "@/components/ExportDailyBriefingDialog";
+import { generateDocumentBlob } from "@/components/ExportDailyBriefingDialog";
+import { formatExportFilename } from "@/lib/briefing-docx";
 import { saveAs } from "file-saver";
 import labels from "@/lib/labels.json";
 
@@ -518,7 +515,6 @@ export function EntriesTable({
                                         entriesForDate,
                                         currentBriefingDate,
                                         true, // includeImages
-                                        createDocumentHeader,
                                       );
                                       saveAs(
                                         blob,

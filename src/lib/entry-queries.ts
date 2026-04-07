@@ -170,6 +170,43 @@ export async function fetchEntries(filters: {
   }));
 }
 
+/** Fetch all submitted entries for a specific briefing date using the 8AM cutoff window.
+ *  Briefing for date X includes entries from the previous working day at 08:00 to X at 08:00.
+ *  For Monday briefings, the window starts on Friday at 08:00 (spanning the weekend). */
+export async function fetchEntriesForBriefingDate(briefingDate: string) {
+  const [year, month, day] = briefingDate.split("-").map(Number);
+  const briefingDateObj = new Date(year, month - 1, day);
+  const dayOfWeek = briefingDateObj.getDay(); // 0=Sun, 1=Mon, ...
+
+  // How many calendar days to go back to find the previous working day's 8AM:
+  // Monday (1) → go back 3 days to Friday; all other weekdays → go back 1 day.
+  const daysBack = dayOfWeek === 1 ? 3 : 1;
+
+  const startDate = new Date(year, month - 1, day - daysBack);
+  const startYear = startDate.getFullYear();
+  const startMonth = startDate.getMonth() + 1;
+  const startDay = startDate.getDate();
+
+  const start = `${startYear}-${String(startMonth).padStart(2, "0")}-${String(startDay).padStart(2, "0")}T08:00`;
+  const end = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}T08:00`;
+
+  const sql = `${ENTRY_SELECT}
+    WHERE e.date >= $1 AND e.date < $2
+      AND e.status = 'submitted'
+    GROUP BY e.id, u.id
+    ORDER BY e.date DESC`;
+
+  const result = await query(sql, [start, end]);
+  return result.rows.map((row) => ({
+    ...row,
+    country: parseStringOrArray(row.country),
+    thematic: row.thematic ? parseStringOrArray(row.thematic) : row.thematic,
+    sourceName: row.sourceName
+      ? parseStringOrArray(row.sourceName)
+      : row.sourceName,
+  }));
+}
+
 /** Look up author_id from a user's email */
 export async function getAuthorId(email: string): Promise<number | null> {
   const result = await query(

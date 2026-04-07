@@ -43,7 +43,6 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Email workflow settings
-  const [emailTime, setEmailTime] = useState("");
   const [emailRecipients, setEmailRecipients] = useState<string[]>([]);
   const [newRecipientInput, setNewRecipientInput] = useState("");
   const [isSavingEmailSettings, setIsSavingEmailSettings] = useState(false);
@@ -73,7 +72,6 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
       const response = await fetch("/api/email-settings");
       if (response.ok) {
         const data = await response.json();
-        setEmailTime(data.emailTime ?? "");
         setEmailRecipients(
           Array.isArray(data.emailRecipients) ? data.emailRecipients : [],
         );
@@ -101,7 +99,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
       const response = await fetch("/api/email-settings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ emailTime, emailRecipients }),
+        body: JSON.stringify({ emailRecipients }),
       });
       const data = await response.json();
       if (!response.ok) {
@@ -671,17 +669,17 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
               value="email"
               className="mt-4 flex-1 space-y-3 overflow-y-auto"
             >
-              {/* Send time */}
+              {/* Send time (read-only) */}
               <div className="rounded-lg border border-slate-200 bg-white p-4">
                 <label className="mb-1.5 block text-xs font-medium tracking-wide text-slate-500 uppercase">
                   {labels.settings.email.sendTime}
                 </label>
-                <input
-                  type="time"
-                  value={emailTime}
-                  onChange={(e) => setEmailTime(e.target.value)}
-                  className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm font-medium tabular-nums focus:border-un-blue focus:ring-2 focus:ring-un-blue/20 focus:outline-none"
-                />
+                <p className="text-sm text-slate-700">
+                  Briefings are sent automatically at 7:45 AM ET on weekdays.
+                </p>
+                <p className="mt-1 text-xs text-slate-400">
+                  Contact an administrator to change this schedule.
+                </p>
               </div>
 
               {/* Recipients */}
@@ -757,7 +755,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                 <Button
                   className="w-full bg-un-blue text-white hover:bg-un-blue/90"
                   onClick={handleSaveEmailSettings}
-                  disabled={isSavingEmailSettings || !emailTime}
+                  disabled={isSavingEmailSettings}
                 >
                   {isSavingEmailSettings
                     ? labels.settings.email.saving

@@ -6,8 +6,8 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /**
  * GET /api/email-settings
- * Returns the global scheduled-email configuration.
- * { emailTime: "HH:MM" (America/New_York), emailRecipients: string[] }
+ * Returns the global email configuration.
+ * { emailRecipients: string[] }
  */
 export async function GET() {
   const auth = await checkAuth();
@@ -17,7 +17,7 @@ export async function GET() {
     const result = await query<{ key: string; value: string }>(
       `SELECT key, value
        FROM morning_briefings.app_settings
-       WHERE key IN ('email_time', 'email_recipients')`,
+       WHERE key = 'email_recipients'`,
     );
 
     const map = Object.fromEntries(result.rows.map((r) => [r.key, r.value]));
@@ -32,10 +32,7 @@ export async function GET() {
       }
     }
 
-    return NextResponse.json({
-      emailTime: map.email_time ?? "",
-      emailRecipients,
-    });
+    return NextResponse.json({ emailRecipients });
   } catch (error) {
     console.error("[EMAIL-SETTINGS GET]", error);
     return NextResponse.json(
@@ -47,8 +44,8 @@ export async function GET() {
 
 /**
  * POST /api/email-settings
- * Saves the global scheduled-email configuration.
- * Body: { emailTime: "HH:MM", emailRecipients: string[] }
+ * Saves the global email configuration.
+ * Body: { emailRecipients: string[] }
  */
 export async function POST(request: NextRequest) {
   const auth = await checkAuth();
@@ -61,17 +58,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const { emailTime, emailRecipients } = body as {
-    emailTime?: unknown;
+  const { emailRecipients } = body as {
     emailRecipients?: unknown;
   };
-
-  if (typeof emailTime !== "string" || !/^\d{2}:\d{2}$/.test(emailTime)) {
-    return NextResponse.json(
-      { error: "emailTime must be in HH:MM format" },
-      { status: 400 },
-    );
-  }
 
   if (
     !Array.isArray(emailRecipients) ||
@@ -86,12 +75,11 @@ export async function POST(request: NextRequest) {
   try {
     await query(
       `INSERT INTO morning_briefings.app_settings (key, value, updated_at)
-       VALUES ('email_time', $1, NOW()),
-              ('email_recipients', $2, NOW())
+       VALUES ('email_recipients', $1, NOW())
        ON CONFLICT (key) DO UPDATE
          SET value = EXCLUDED.value,
              updated_at = NOW()`,
-      [emailTime, JSON.stringify(emailRecipients)],
+      [JSON.stringify(emailRecipients)],
     );
 
     return NextResponse.json({ success: true });

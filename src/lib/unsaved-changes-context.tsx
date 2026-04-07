@@ -39,6 +39,7 @@ export function UnsavedChangesProvider({ children }: { children: ReactNode }) {
     const confirmPromise = showConfirm(
       "Unsaved Changes",
       "You have unsaved changes. Are you sure you want to leave? Your changes will be lost.",
+      { confirmLabel: "Leave", cancelLabel: "Stay" },
     );
 
     // Store it so subsequent calls return the same promise

@@ -7,7 +7,7 @@ interface PopupContextType {
   popups: Popup[];
   showPopup: (config: Omit<Popup, "id">) => string;
   closePopup: (id: string) => void;
-  confirm: (title: string, message: string) => Promise<boolean>;
+  confirm: (title: string, message: string, options?: { confirmLabel?: string; cancelLabel?: string }) => Promise<boolean>;
   success: (title: string, message: string, duration?: number) => void;
   error: (title: string, message: string, duration?: number) => void;
   warning: (title: string, message: string, duration?: number) => void;
@@ -61,13 +61,13 @@ export function PopupProvider({ children }: { children: React.ReactNode }) {
   );
 
   const confirm = useCallback(
-    (title: string, message: string): Promise<boolean> => {
+    (title: string, message: string, options?: { confirmLabel?: string; cancelLabel?: string }): Promise<boolean> => {
       return new Promise((resolve) => {
         // eslint-disable-next-line prefer-const
         let id: string;
 
         const handleConfirm: PopupAction = {
-          label: "Confirm",
+          label: options?.confirmLabel ?? "Confirm",
           onClick: () => {
             closePopup(id);
             resolve(true);
@@ -76,7 +76,7 @@ export function PopupProvider({ children }: { children: React.ReactNode }) {
         };
 
         const handleCancel: PopupAction = {
-          label: "Cancel",
+          label: options?.cancelLabel ?? "Cancel",
           onClick: () => {
             closePopup(id);
             resolve(false);

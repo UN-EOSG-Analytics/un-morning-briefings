@@ -61,7 +61,7 @@ Images go through a specific pipeline:
 ### Client-Side Data Layer
 `src/lib/storage.ts` is the **client-side** API wrapper (not server-side storage):
 - `saveEntry()`, `updateEntry()`, `deleteEntry()`, `getAllEntries()`, `getEntryById()`
-- `getDraftEntries()`, `getSubmittedEntries()`, `toggleApproval()`
+- `getDraftEntries()`, `getSubmittedEntries()`, `toggleDiscussionStatus()`
 - Handles image extraction before POST/PUT and image reference conversion after GET
 
 ### Authentication

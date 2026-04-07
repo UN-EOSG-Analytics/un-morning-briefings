@@ -294,7 +294,7 @@
       "loadPreviousFailed": "Unable to load previous entry data",
       "saveDraftFailed": "Unable to save draft. Please try again.",
       "idRequired": "Entry ID is required",
-      "invalidApprovalStatus": "Invalid approval status",
+      "invalidDiscussionStatus": "Invalid discussion status",
       "invalidStatus": "Invalid status",
       "noFieldsToUpdate": "No fields to update",
       "notFound": "Entry not found"
@@ -320,9 +320,9 @@
       "failed": "Summary Failed",
       "failedMessage": "Failed to generate summary. Please try again."
     },
-    "approval": {
+    "discussion": {
       "updateFailed": "Update Failed",
-      "updateFailedMessage": "Failed to update approval status. Please try again.",
+      "updateFailedMessage": "Failed to update discussion status. Please try again.",
       "postponed": "Postponed",
       "postponedMessage": "Entry has been postponed to the next day and set to pending",
       "postponeFailed": "Postpone Failed",

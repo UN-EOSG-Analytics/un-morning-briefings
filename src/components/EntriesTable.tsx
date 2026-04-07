@@ -58,11 +58,11 @@ import labels from "@/lib/labels.json";
 interface EntriesTableProps {
   entries: MorningMeetingEntry[];
   onDelete: (id: string) => void;
-  onToggleApproval?: (entry: MorningMeetingEntry) => void;
+  onToggleDiscussion?: (entry: MorningMeetingEntry) => void;
   onPostpone?: () => void;
   onSubmit?: (id: string) => Promise<void>;
   onUpdate?: (id: string, updates: any) => void;
-  showApprovedColumn?: boolean;
+  showDiscussionColumn?: boolean;
   emptyMessage?: string;
   resultLabel?: string;
   initialDateFilter?: string;
@@ -72,11 +72,11 @@ interface EntriesTableProps {
 export function EntriesTable({
   entries,
   onDelete,
-  onToggleApproval,
+  onToggleDiscussion,
   onPostpone,
   onSubmit,
   onUpdate,
-  showApprovedColumn = false,
+  showDiscussionColumn = false,
   emptyMessage = labels.entries.empty.noEntries,
   resultLabel = "entries",
   initialDateFilter,
@@ -148,7 +148,7 @@ export function EntriesTable({
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ id: entryId, approvalStatus: newStatus }),
+        body: JSON.stringify({ id: entryId, discussionStatus: newStatus }),
       });
 
       if (!response.ok) {
@@ -160,7 +160,7 @@ export function EntriesTable({
       // Update the entry in the list
       const updatedEntry = entries.find((e) => e.id === entryId);
       if (updatedEntry) {
-        updatedEntry.approvalStatus = newStatus as any;
+        updatedEntry.discussionStatus = newStatus as any;
       }
     } catch (error) {
       console.error("Error updating status:", error);
@@ -195,7 +195,7 @@ export function EntriesTable({
         const currentDate = new Date(updatedEntry.date);
         currentDate.setDate(currentDate.getDate() + 1);
         updatedEntry.date = currentDate.toISOString();
-        updatedEntry.approvalStatus = "pending";
+        updatedEntry.discussionStatus = "pending";
       }
 
       // Trigger refresh to reorder entries
@@ -407,7 +407,7 @@ export function EntriesTable({
                     />
                   </div>
                 </th>
-                {showApprovedColumn && (
+                {showDiscussionColumn && (
                   <th className="hidden px-2 py-3 text-left text-xs font-semibold tracking-wide text-slate-700 uppercase sm:table-cell sm:px-3 lg:px-4">
                     {labels.entries.columns.status}
                   </th>
@@ -421,7 +421,7 @@ export function EntriesTable({
               {sortedEntries.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={showApprovedColumn ? 7 : 6}
+                    colSpan={showDiscussionColumn ? 7 : 6}
                     className="px-2 py-12 text-center text-slate-500 sm:px-4"
                   >
                     {emptyMessage}{" "}
@@ -445,7 +445,7 @@ export function EntriesTable({
                     showSeparator && (
                       <tr key={`sep-${entry.id}`} className="bg-slate-100">
                         <td
-                          colSpan={showApprovedColumn ? 7 : 6}
+                          colSpan={showDiscussionColumn ? 7 : 6}
                           className="px-2 py-2 sm:px-4"
                         >
                           <div className="flex items-center gap-4">
@@ -606,7 +606,7 @@ export function EntriesTable({
                             )}
                           </div>
                         </td>
-                        {showApprovedColumn && (
+                        {showDiscussionColumn && (
                           <td
                             className="hidden px-2 py-3 whitespace-nowrap sm:table-cell sm:px-3 lg:px-4"
                             onClick={(e) => e.stopPropagation()}
@@ -614,7 +614,7 @@ export function EntriesTable({
                             <div className="status-dropdown-container relative">
                               {(() => {
                                 const status =
-                                  entry.approvalStatus || "pending";
+                                  entry.discussionStatus || "pending";
                                 const badgeConfig = {
                                   pending: {
                                     bg: "bg-amber-50",
@@ -804,10 +804,10 @@ export function EntriesTable({
         onOpenChange={setShowViewDialog}
         entry={selectedEntry}
         onDelete={onDelete}
-        onApprove={onToggleApproval}
+        onDiscuss={onToggleDiscussion}
         onPostpone={onPostpone}
         onUpdate={onUpdate}
-        showApproveButton={showApprovedColumn}
+        showDiscussButton={showDiscussionColumn}
         allEntries={sortedEntries}
       />
 

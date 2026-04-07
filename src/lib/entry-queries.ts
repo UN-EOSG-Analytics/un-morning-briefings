@@ -87,7 +87,7 @@ const ENTRY_SELECT = `
     e.comment,
     e.status,
     e.ai_summary as "aiSummary",
-    COALESCE(e.approval_status, 'pending') as "approvalStatus",
+    COALESCE(e.discussion_status, 'pending') as "discussionStatus",
     e.previous_entry_id as "previousEntryId",
     e.created_at as "createdAt",
     e.updated_at as "updatedAt",

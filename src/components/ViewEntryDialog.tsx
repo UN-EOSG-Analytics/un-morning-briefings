@@ -35,10 +35,10 @@ interface ViewEntryDialogProps {
   onOpenChange: (open: boolean) => void;
   entry: (MorningMeetingEntry & { [key: string]: any }) | null;
   onDelete?: (id: string) => void;
-  onApprove?: (entry: any) => void;
+  onDiscuss?: (entry: any) => void;
   onPostpone?: () => void;
   onUpdate?: (id: string, updates: any) => void;
-  showApproveButton?: boolean;
+  showDiscussButton?: boolean;
   allEntries?: MorningMeetingEntry[];
 }
 
@@ -47,15 +47,15 @@ export function ViewEntryDialog({
   onOpenChange,
   entry,
   onDelete,
-  onApprove,
+  onDiscuss,
   onPostpone,
   onUpdate,
-  showApproveButton = false,
+  showDiscussButton = false,
   allEntries = [],
 }: ViewEntryDialogProps) {
   const [summary, setSummary] = useState<string[] | null>(null);
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
-  const [isUpdatingApproval, setIsUpdatingApproval] = useState(false);
+  const [isUpdatingDiscussion, setIsUpdatingDiscussion] = useState(false);
   const [isEditingHeadline, setIsEditingHeadline] = useState(false);
   const [headlineValue, setHeadlineValue] = useState("");
   const { warning: showWarning, success: showSuccess } = usePopup();
@@ -136,20 +136,20 @@ export function ViewEntryDialog({
     }
   }, [displayEntry?.id]);
 
-  const handleApprove = useCallback(
+  const handleDiscuss = useCallback(
     async (status: "pending" | "discussed") => {
       if (!displayEntry?.id) return;
 
-      setIsUpdatingApproval(true);
+      setIsUpdatingDiscussion(true);
       try {
         const response = await fetch("/api/entries", {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id: displayEntry.id, approvalStatus: status }),
+          body: JSON.stringify({ id: displayEntry.id, discussionStatus: status }),
         });
 
         if (!response.ok) {
-          throw new Error("Failed to update approval status");
+          throw new Error("Failed to update discussion status");
         }
 
         const statusLabels = {
@@ -162,27 +162,27 @@ export function ViewEntryDialog({
           `Entry status changed to ${statusLabels[status].toLowerCase()}`,
         );
 
-        // Call the onApprove callback to refresh the data
-        if (onApprove) {
-          onApprove({ ...displayEntry, approvalStatus: status });
+        // Call the onDiscuss callback to refresh the data
+        if (onDiscuss) {
+          onDiscuss({ ...displayEntry, discussionStatus: status });
         }
       } catch (error) {
         console.error("Approval update error:", error);
         showWarning(
-          labels.viewEntry.approval.updateFailed,
-          labels.viewEntry.approval.updateFailedMessage,
+          labels.viewEntry.discussion.updateFailed,
+          labels.viewEntry.discussion.updateFailedMessage,
         );
       } finally {
-        setIsUpdatingApproval(false);
+        setIsUpdatingDiscussion(false);
       }
     },
-    [displayEntry, onApprove, showSuccess, showWarning],
+    [displayEntry, onDiscuss, showSuccess, showWarning],
   );
 
   const handlePostpone = useCallback(async () => {
     if (!displayEntry?.id) return;
 
-    setIsUpdatingApproval(true);
+    setIsUpdatingDiscussion(true);
     try {
       const response = await fetch("/api/entries", {
         method: "PATCH",
@@ -195,18 +195,18 @@ export function ViewEntryDialog({
       }
 
       showSuccess(
-        labels.viewEntry.approval.postponed,
-        labels.viewEntry.approval.postponedMessage,
+        labels.viewEntry.discussion.postponed,
+        labels.viewEntry.discussion.postponedMessage,
       );
 
       // Update the entry with new date and status
-      if (onApprove) {
+      if (onDiscuss) {
         const newDate = new Date(displayEntry.date);
         newDate.setDate(newDate.getDate() + 1);
-        onApprove({
+        onDiscuss({
           ...displayEntry,
           date: newDate.toISOString(),
-          approvalStatus: "pending",
+          discussionStatus: "pending",
         });
       }
 
@@ -217,13 +217,13 @@ export function ViewEntryDialog({
     } catch (error) {
       console.error("Postpone error:", error);
       showWarning(
-        labels.viewEntry.approval.postponeFailed,
-        labels.viewEntry.approval.postponeFailedMessage,
+        labels.viewEntry.discussion.postponeFailed,
+        labels.viewEntry.discussion.postponeFailedMessage,
       );
     } finally {
-      setIsUpdatingApproval(false);
+      setIsUpdatingDiscussion(false);
     }
-  }, [displayEntry, onApprove, onPostpone, showSuccess, showWarning]);
+  }, [displayEntry, onDiscuss, onPostpone, showSuccess, showWarning]);
 
   // Load saved AI summary when entry changes
   useEffect(() => {
@@ -604,18 +604,18 @@ export function ViewEntryDialog({
           )}
 
           {/* Approve/Deny buttons - shown on mobile and small screens */}
-          {showApproveButton && onApprove && (
+          {showDiscussButton && onDiscuss && (
             <div className="mb-0 flex w-full gap-2 lg:hidden">
               <Button
                 variant={
-                  displayEntry.approvalStatus === "discussed"
+                  displayEntry.discussionStatus === "discussed"
                     ? "default"
                     : "outline"
                 }
-                onClick={() => handleApprove("discussed")}
-                disabled={isUpdatingApproval}
+                onClick={() => handleDiscuss("discussed")}
+                disabled={isUpdatingDiscussion}
                 className={`h-8 flex-1 gap-1 text-xs ${
-                  displayEntry.approvalStatus === "discussed"
+                  displayEntry.discussionStatus === "discussed"
                     ? "bg-green-600 text-white hover:bg-green-700"
                     : "text-green-600 hover:bg-green-50 hover:text-green-700"
                 }`}
@@ -624,11 +624,11 @@ export function ViewEntryDialog({
                 {labels.entries.actions.discussed}
               </Button>
 
-              {displayEntry.approvalStatus !== "discussed" && (
+              {displayEntry.discussionStatus !== "discussed" && (
                 <Button
                   variant="outline"
                   onClick={() => handlePostpone()}
-                  disabled={isUpdatingApproval}
+                  disabled={isUpdatingDiscussion}
                   className="h-8 flex-1 gap-1 text-xs text-blue-600 hover:bg-blue-50 hover:text-blue-700"
                 >
                   <FastForward className="h-3 w-3" />
@@ -758,18 +758,18 @@ export function ViewEntryDialog({
 
             {/* Right: Approve/Deny/Delete */}
             <div className="flex gap-2">
-              {showApproveButton && onApprove && (
+              {showDiscussButton && onDiscuss && (
                 <>
                   <Button
                     variant={
-                      displayEntry.approvalStatus === "discussed"
+                      displayEntry.discussionStatus === "discussed"
                         ? "default"
                         : "outline"
                     }
-                    onClick={() => handleApprove("discussed")}
-                    disabled={isUpdatingApproval}
+                    onClick={() => handleDiscuss("discussed")}
+                    disabled={isUpdatingDiscussion}
                     className={`h-8 gap-2 text-xs ${
-                      displayEntry.approvalStatus === "discussed"
+                      displayEntry.discussionStatus === "discussed"
                         ? "bg-green-600 text-white hover:bg-green-700"
                         : "text-green-600 hover:bg-green-50 hover:text-green-700"
                     }`}
@@ -778,11 +778,11 @@ export function ViewEntryDialog({
                     {labels.entries.actions.discussed}
                   </Button>
 
-                  {displayEntry.approvalStatus !== "discussed" && (
+                  {displayEntry.discussionStatus !== "discussed" && (
                     <Button
                       variant="outline"
                       onClick={() => handlePostpone()}
-                      disabled={isUpdatingApproval}
+                      disabled={isUpdatingDiscussion}
                       className="h-8 gap-2 text-xs text-blue-600 hover:bg-blue-50 hover:text-blue-700"
                     >
                       <FastForward className="h-4 w-4" />

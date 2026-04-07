@@ -139,7 +139,7 @@ export async function POST(request: NextRequest) {
     await query(
       `INSERT INTO morning_briefings.entries (
         id, category, priority, region, country, headline, date, entry,
-        source_name, source_url, source_date, pu_note, thematic, author_id, status, approval_status, previous_entry_id, text_content
+        source_name, source_url, source_date, pu_note, thematic, author_id, status, discussion_status, previous_entry_id, text_content
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)`,
       [
         id,
@@ -205,7 +205,7 @@ export async function POST(request: NextRequest) {
 
 /**
  * PATCH /api/entries
- * Update entry approval status
+ * Update entry discussion status
  */
 export async function PATCH(request: NextRequest) {
   // Check authentication
@@ -216,7 +216,7 @@ export async function PATCH(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { id, approvalStatus, aiSummary, action, status } = body;
+    const { id, discussionStatus, aiSummary, action, status } = body;
 
     if (!id) {
       return NextResponse.json(
@@ -226,9 +226,9 @@ export async function PATCH(request: NextRequest) {
     }
 
     // Build update query based on what fields are provided
-    if (approvalStatus && !["pending", "discussed"].includes(approvalStatus)) {
+    if (discussionStatus && !["pending", "discussed"].includes(discussionStatus)) {
       return NextResponse.json(
-        { error: labels.entries.errors.invalidApprovalStatus },
+        { error: (labels as any).entries.errors.invalidDiscussionStatus },
         { status: 400 },
       );
     }
@@ -247,7 +247,7 @@ export async function PATCH(request: NextRequest) {
 
     // Handle postpone action: set status to pending and advance date by 1 day
     if (action === "postpone") {
-      updateParts.push(`approval_status = $${paramIndex}`);
+      updateParts.push(`discussion_status = $${paramIndex}`);
       params.push("pending");
       paramIndex++;
 
@@ -259,9 +259,9 @@ export async function PATCH(request: NextRequest) {
         paramIndex++;
       }
 
-      if (approvalStatus) {
-        updateParts.push(`approval_status = $${paramIndex}`);
-        params.push(approvalStatus);
+      if (discussionStatus) {
+        updateParts.push(`discussion_status = $${paramIndex}`);
+        params.push(discussionStatus);
         paramIndex++;
       }
 

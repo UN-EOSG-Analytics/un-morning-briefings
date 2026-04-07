@@ -286,26 +286,26 @@ export async function getSubmittedEntries(): Promise<any[]> {
 }
 
 /**
- * Toggle the approval status of an entry
+ * Toggle the discussion status of an entry
  *
  * @param entryId - Entry ID to update
- * @param approvalStatus - New approval status
+ * @param discussionStatus - New discussion status
  * @returns Promise that resolves to the updated entry
  */
-export async function toggleApproval(
+export async function toggleDiscussionStatus(
   entryId: string,
-  approvalStatus: "pending" | "approved" | "denied",
+  discussionStatus: "pending" | "discussed",
 ): Promise<any> {
   const response = await fetch(`/api/entries`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ id: entryId, approvalStatus }),
+    body: JSON.stringify({ id: entryId, discussionStatus }),
   });
 
   if (!response.ok) {
-    throw new Error("Failed to update approval status");
+    throw new Error("Failed to update discussion status");
   }
 
   return response.json();

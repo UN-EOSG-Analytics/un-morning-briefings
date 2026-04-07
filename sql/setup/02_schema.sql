@@ -65,7 +65,7 @@ CREATE TABLE IF NOT EXISTS morning_briefings.entries (
     source_url        TEXT,
     pu_note           TEXT,
     status            TEXT NOT NULL DEFAULT 'draft',
-    approval_status   TEXT NOT NULL DEFAULT 'pending',
+    discussion_status TEXT NOT NULL DEFAULT 'pending',
     ai_summary        JSONB,
     source_date       DATE,
     source_name       TEXT,
@@ -81,8 +81,8 @@ CREATE TABLE IF NOT EXISTS morning_briefings.entries (
     CONSTRAINT chk_status CHECK (
         status IN ('draft', 'submitted')
     ),
-    CONSTRAINT chk_approval_status CHECK (
-        approval_status IN ('pending', 'discussed')
+    CONSTRAINT chk_discussion_status CHECK (
+        discussion_status IN ('pending', 'discussed')
     ),
     CONSTRAINT chk_priority CHECK (
         priority IN ('SG''s attention', 'Situational Awareness')
@@ -92,8 +92,8 @@ CREATE TABLE IF NOT EXISTS morning_briefings.entries (
     )
 );
 
-CREATE INDEX IF NOT EXISTS idx_entries_approval_status
-    ON morning_briefings.entries (approval_status);
+CREATE INDEX IF NOT EXISTS idx_entries_discussion_status
+    ON morning_briefings.entries (discussion_status);
 
 CREATE INDEX IF NOT EXISTS idx_entries_ai_summary
     ON morning_briefings.entries (id)

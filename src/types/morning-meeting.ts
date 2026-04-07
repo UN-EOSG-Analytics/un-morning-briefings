@@ -1,6 +1,6 @@
 import labels from "@/lib/labels.json";
 
-export type ApprovalStatus = "pending" | "discussed";
+export type DiscussionStatus = "pending" | "discussed";
 
 // Morning Meeting Form Types
 export interface MorningMeetingEntry {
@@ -28,7 +28,7 @@ export interface MorningMeetingEntry {
     mimeType: string;
   }>;
   status?: "draft" | "submitted";
-  approvalStatus?: ApprovalStatus;
+  discussionStatus?: DiscussionStatus;
   previousEntryId?: string | null;
   createdAt?: string; // TIMESTAMPTZ — UTC ISO string, display with formatTimeNYC
   updatedAt?: string; // TIMESTAMPTZ — UTC ISO string, display with formatTimeNYC

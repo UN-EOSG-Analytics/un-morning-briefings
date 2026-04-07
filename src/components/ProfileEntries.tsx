@@ -117,8 +117,8 @@ export function ProfileEntries() {
           bValue = b.region.toLowerCase();
           break;
         case "status":
-          aValue = a.approvalStatus || "";
-          bValue = b.approvalStatus || "";
+          aValue = a.discussionStatus || "";
+          bValue = b.discussionStatus || "";
           break;
         default:
           return 0;
@@ -145,10 +145,10 @@ export function ProfileEntries() {
   const stats = useMemo(() => {
     const total = entries.length;
     const discussed = entries.filter(
-      (e) => e.approvalStatus === "discussed",
+      (e) => e.discussionStatus === "discussed",
     ).length;
     const pending = entries.filter(
-      (e) => e.approvalStatus === "pending",
+      (e) => e.discussionStatus === "pending",
     ).length;
     const drafts = entries.filter((e) => e.status === "draft").length;
     const submitted = entries.filter((e) => e.status === "submitted").length;
@@ -174,8 +174,8 @@ export function ProfileEntries() {
     const entriesWithFollowUps = entries
       .filter(
         (e) =>
-          (e.approvalStatus === "discussed" ||
-            e.approvalStatus === "pending") &&
+          (e.discussionStatus === "discussed" ||
+            e.discussionStatus === "pending") &&
           e.comment &&
           entries.some((other) => other.previousEntryId === e.id),
       )
@@ -189,8 +189,8 @@ export function ProfileEntries() {
     return entries
       .filter(
         (e) =>
-          (e.approvalStatus === "discussed" ||
-            e.approvalStatus === "pending") &&
+          (e.discussionStatus === "discussed" ||
+            e.discussionStatus === "pending") &&
           e.comment &&
           !addressedIds.has(e.id),
       )
@@ -292,7 +292,7 @@ export function ProfileEntries() {
           </div>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {discussedEntriesWithComments.map((entry) => {
-              const isPending = entry.approvalStatus === "pending";
+              const isPending = entry.discussionStatus === "pending";
               const borderColor = isPending
                 ? "border-yellow-200"
                 : "border-green-200";
@@ -540,7 +540,7 @@ export function ProfileEntries() {
                     </td>
                     <td className="hidden px-2 py-3 whitespace-nowrap sm:table-cell sm:px-3 lg:px-4">
                       {(() => {
-                        const status = entry.approvalStatus || "pending";
+                        const status = entry.discussionStatus || "pending";
                         if (status === "discussed") {
                           return (
                             <div className="inline-flex items-center gap-1.5 rounded bg-green-50 px-2 py-1 text-xs font-medium text-green-700">

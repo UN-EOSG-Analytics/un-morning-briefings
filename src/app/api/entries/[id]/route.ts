@@ -17,7 +17,7 @@ const VALID_PRIORITIES = (
 ).map((p) => p.value);
 const VALID_REGIONS = (labels as any).regions as string[];
 const VALID_STATUSES = ["draft", "submitted"];
-const VALID_APPROVAL_STATUSES = ["pending", "discussed"];
+const VALID_DISCUSSION_STATUSES = ["pending", "discussed"];
 
 /**
  * GET /api/entries/[id]
@@ -103,11 +103,11 @@ export async function PUT(
       return NextResponse.json({ error: "Invalid status" }, { status: 400 });
     }
     if (
-      data.approvalStatus !== undefined &&
-      !VALID_APPROVAL_STATUSES.includes(data.approvalStatus)
+      data.discussionStatus !== undefined &&
+      !VALID_DISCUSSION_STATUSES.includes(data.discussionStatus)
     ) {
       return NextResponse.json(
-        { error: "Invalid approval status" },
+        { error: "Invalid discussion status" },
         { status: 400 },
       );
     }
@@ -223,9 +223,9 @@ export async function PUT(
       updateFields.push(`status = $${paramCount++}`);
       updateValues.push(data.status);
     }
-    if (data.approvalStatus !== undefined) {
-      updateFields.push(`approval_status = $${paramCount++}`);
-      updateValues.push(data.approvalStatus);
+    if (data.discussionStatus !== undefined) {
+      updateFields.push(`discussion_status = $${paramCount++}`);
+      updateValues.push(data.discussionStatus);
     }
     if (data.aiSummary !== undefined) {
       updateFields.push(`ai_summary = $${paramCount++}`);

@@ -67,7 +67,7 @@ export function MorningMeetingList({
     }
   };
 
-  const handleToggleApproval = async (entry: MorningMeetingEntry) => {
+  const handleToggleDiscussion = async (entry: MorningMeetingEntry) => {
     try {
       if (!entry.id) {
         showInfo("Error", labels.entries.errors.idRequired);
@@ -77,7 +77,7 @@ export function MorningMeetingList({
       // Just refresh the data - the dialog has already updated the status via API
       loadEntries();
     } catch {
-      showSuccess("Error", labels.viewEntry.approval.updateFailedMessage);
+      showSuccess("Error", labels.viewEntry.discussion.updateFailedMessage);
     }
   };
 
@@ -142,10 +142,10 @@ export function MorningMeetingList({
       <EntriesTable
         entries={entries}
         onDelete={handleDelete}
-        onToggleApproval={handleToggleApproval}
+        onToggleDiscussion={handleToggleDiscussion}
         onPostpone={handlePostpone}
         onUpdate={handleUpdateEntry}
-        showApprovedColumn={true}
+        showDiscussionColumn={true}
         emptyMessage={labels.entries.empty.noEntries}
         resultLabel="entries"
         initialDateFilter={initialDateFilter}

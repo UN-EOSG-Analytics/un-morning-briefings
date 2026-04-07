@@ -852,7 +852,7 @@ export function ExportDailyBriefingDialog({
     },
     [onOpenChange],
   );
-  const [approvedEntries, setApprovedEntries] = useState<MorningMeetingEntry[]>(
+  const [briefingEntries, setApprovedEntries] = useState<MorningMeetingEntry[]>(
     [],
   );
   const [isLoadingEntries, setIsLoadingEntries] = useState(false);
@@ -861,8 +861,8 @@ export function ExportDailyBriefingDialog({
     new Set(),
   );
 
-  // Unified function to get all entries for a date using 8AM cutoff (regardless of approval status)
-  const getApprovedEntriesForDate = useCallback(
+  // Unified function to get all entries for a date using 8AM cutoff (regardless of discussion status)
+  const getEntriesForDate = useCallback(
     async (dateStr: string): Promise<MorningMeetingEntry[]> => {
       const allEntries = await getSubmittedEntries();
       return allEntries.filter((entry: MorningMeetingEntry) => {
@@ -889,7 +889,7 @@ export function ExportDailyBriefingDialog({
 
       setIsLoadingEntries(true);
       try {
-        const entriesForDate = await getApprovedEntriesForDate(selectedDate);
+        const entriesForDate = await getEntriesForDate(selectedDate);
         setApprovedEntries(entriesForDate);
         // Initialize all entries as selected (checked)
         const allEntryIds = new Set(
@@ -913,7 +913,7 @@ export function ExportDailyBriefingDialog({
     if (open) {
       loadEntriesForDate();
     }
-  }, [selectedDate, open, session?.user, showError, getApprovedEntriesForDate]);
+  }, [selectedDate, open, session?.user, showError, getEntriesForDate]);
 
   const handleExport = async () => {
     if (selectedEntryIds.size === 0) {
@@ -926,7 +926,7 @@ export function ExportDailyBriefingDialog({
 
     setIsExporting(true);
     try {
-      const entriesForDate = await getApprovedEntriesForDate(selectedDate);
+      const entriesForDate = await getEntriesForDate(selectedDate);
       const selectedEntries = entriesForDate.filter(
         (entry) => entry.id && selectedEntryIds.has(entry.id),
       );
@@ -981,7 +981,7 @@ export function ExportDailyBriefingDialog({
     setShowSendConfirm(false);
     setIsSendingEmail(true);
     try {
-      const entriesForDate = await getApprovedEntriesForDate(selectedDate);
+      const entriesForDate = await getEntriesForDate(selectedDate);
       const selectedEntries = entriesForDate.filter(
         (entry) => entry.id && selectedEntryIds.has(entry.id),
       );
@@ -1101,18 +1101,18 @@ export function ExportDailyBriefingDialog({
 
             <div className="flex max-h-80 min-h-0 flex-1 flex-col space-y-2">
               <label className="text-sm font-medium text-foreground">
-                Entries ({selectedEntryIds.size}/{approvedEntries.length})
+                Entries ({selectedEntryIds.size}/{briefingEntries.length})
               </label>
               <div className="flex-1 overflow-y-auto rounded border border-slate-200 bg-slate-50 p-3">
                 {isLoadingEntries ? (
                   <p className="text-xs text-slate-500">Loading entries...</p>
-                ) : approvedEntries.length === 0 ? (
+                ) : briefingEntries.length === 0 ? (
                   <p className="text-xs text-slate-500">
                     No entries for this date
                   </p>
                 ) : (
                   <ul className="space-y-2">
-                    {approvedEntries.map((entry) => (
+                    {briefingEntries.map((entry) => (
                       <li
                         key={entry.id}
                         className="flex items-start gap-2 text-sm"

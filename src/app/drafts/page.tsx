@@ -108,7 +108,7 @@ export default function DraftsPage() {
             entries={entries}
             onDelete={handleDelete}
             onSubmit={handleSubmit}
-            showApprovedColumn={false}
+            showDiscussionColumn={false}
             emptyMessage={labels.entries.empty.noDrafts}
             resultLabel="drafts"
             hideCommentAction={true}

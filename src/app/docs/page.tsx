@@ -189,8 +189,8 @@ export default function DocsPage() {
                   desc: "Analysts submit news items with structured metadata for each day's briefing.",
                 },
                 {
-                  title: "Review & approve",
-                  desc: "Entries are reviewed, approved, and marked as discussed during the meeting.",
+                  title: "Review & discuss",
+                  desc: "Entries are reviewed and marked as discussed during the meeting.",
                 },
                 {
                   title: "Export briefing",
@@ -454,7 +454,7 @@ export default function DocsPage() {
                 },
                 {
                   status: "Pending",
-                  desc: "Approval status for entries that have been approved for the current briefing. Shown in the daily briefing view.",
+                  desc: "Discussion status for entries included in the current briefing. Shown in the daily briefing view.",
                 },
                 {
                   status: "Discussed",
@@ -610,7 +610,7 @@ export default function DocsPage() {
               <code className="rounded bg-slate-100 px-1 text-xs">
                 /briefing
               </code>
-              ) compiles all approved entries for a given date into the Morning
+              ) compiles all submitted entries for a given date into the Morning
               Meeting Update document.
             </p>
             <div className="mb-4 space-y-3 text-sm">
@@ -643,9 +643,9 @@ export default function DocsPage() {
               </div>
             </div>
             <InfoBox variant="amber">
-              Only entries with <strong>Pending</strong> approval status appear
-              in the briefing view for the selected date. Entries that have been
-              postponed or are still in draft/submitted status are excluded.
+              All <strong>submitted</strong> entries appear in the briefing view
+              for the selected date. Entries in draft status are excluded.
+              During the meeting, entries are marked as <strong>Discussed</strong>.
             </InfoBox>
           </section>
 

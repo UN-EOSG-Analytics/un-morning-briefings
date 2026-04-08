@@ -70,9 +70,9 @@ export async function convertImageReferencesToDataUrls(
         if (imgResponse.ok) {
           const blob = await imgResponse.blob();
           const dataUrl = await blobToDataUrl(blob);
-          updatedHtml = updatedHtml.replace(ref, dataUrl);
+          updatedHtml = updatedHtml.replaceAll(ref, dataUrl);
         } else {
-          updatedHtml = updatedHtml.replace(ref, "");
+          updatedHtml = updatedHtml.replaceAll(ref, "");
         }
       }
     } catch (error) {
@@ -114,7 +114,7 @@ export async function convertImageReferencesServerSide(
         const buffer = await blobStorage.download(img.blobUrl);
         const base64Data = buffer.toString("base64");
         const dataUrl = `data:${img.mimeType};base64,${base64Data}`;
-        updatedHtml = updatedHtml.replace(ref, dataUrl);
+        updatedHtml = updatedHtml.replaceAll(ref, dataUrl);
       }
     } catch (error) {
       console.error(
@@ -124,7 +124,7 @@ export async function convertImageReferencesServerSide(
       // Remove the broken reference
       const position = getImagePosition(img, images);
       const ref = `image-ref://img-${position}`;
-      updatedHtml = updatedHtml.replace(ref, "");
+      updatedHtml = updatedHtml.replaceAll(ref, "");
     }
   }
 

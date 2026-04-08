@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -49,8 +49,14 @@ import {
 } from "@/lib/useEntriesFilter";
 import { generateDocumentBlob } from "@/components/ExportDailyBriefingDialog";
 import { formatExportFilename } from "@/lib/briefing-docx";
+import {
+  groupEntriesByRegionAndCountry,
+  sortCountryKeys,
+} from "@/lib/entry-grouping";
+import { toggleDiscussionStatus } from "@/lib/storage";
 import { saveAs } from "file-saver";
 import labels from "@/lib/labels.json";
+import { usePopup } from "@/lib/popup-context";
 
 interface EntriesTableProps {
   entries: MorningMeetingEntry[];
@@ -80,6 +86,7 @@ export function EntriesTable({
   hideCommentAction = false,
 }: EntriesTableProps) {
   const router = useRouter();
+  const { error: showError } = usePopup();
   const [selectedEntry, setSelectedEntry] =
     useState<MorningMeetingEntry | null>(null);
   const [showViewDialog, setShowViewDialog] = useState(false);
@@ -140,27 +147,22 @@ export function EntriesTable({
   const handleStatusChange = async (entryId: string, newStatus: string) => {
     setUpdatingStatus(entryId);
     try {
-      const response = await fetch(`/api/entries`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ id: entryId, discussionStatus: newStatus }),
-      });
+      await toggleDiscussionStatus(
+        entryId,
+        newStatus as "pending" | "discussed",
+      );
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error("API Error:", response.status, errorData);
-        throw new Error(`Failed to update status: ${response.status}`);
-      }
-
-      // Update the entry in the list
-      const updatedEntry = entries.find((e) => e.id === entryId);
-      if (updatedEntry) {
-        updatedEntry.discussionStatus = newStatus as any;
+      // Trigger a refresh via the parent callback rather than mutating props
+      if (onToggleDiscussion) {
+        const entry = entries.find((e) => e.id === entryId);
+        if (entry) onToggleDiscussion(entry);
       }
     } catch (error) {
       console.error("Error updating status:", error);
+      showError(
+        "Update Failed",
+        "Failed to update discussion status. Please try again.",
+      );
     } finally {
       setUpdatingStatus(null);
       setOpenStatusDropdown(null);
@@ -185,22 +187,16 @@ export function EntriesTable({
         throw new Error(`Failed to postpone entry: ${response.status}`);
       }
 
-      // Update the entry in the list
-      const updatedEntry = entries.find((e) => e.id === entryId);
-      if (updatedEntry) {
-        // Advance date by 1 day
-        const currentDate = new Date(updatedEntry.date);
-        currentDate.setDate(currentDate.getDate() + 1);
-        updatedEntry.date = currentDate.toISOString();
-        updatedEntry.discussionStatus = "pending";
-      }
-
-      // Trigger refresh to reorder entries
+      // Trigger refresh to re-fetch entries from the server
       if (onPostpone) {
         onPostpone();
       }
     } catch (error) {
       console.error("Error postponing entry:", error);
+      showError(
+        "Postpone Failed",
+        "Failed to postpone entry. Please try again.",
+      );
     } finally {
       setUpdatingStatus(null);
       setOpenStatusDropdown(null);
@@ -527,6 +523,10 @@ export function EntriesTable({
                                         "Error exporting briefing:",
                                         error,
                                       );
+                                      showError(
+                                        "Export Failed",
+                                        "Failed to export briefing. Please try again.",
+                                      );
                                     } finally {
                                       setExportingDate(null);
                                     }
@@ -819,66 +819,15 @@ export function EntriesTable({
 
           <div className="mt-0 flex-1 overflow-y-auto px-4 pb-4 md:px-6">
             {(() => {
-              // Sort entries by priority (SG attention first) and date
-              const sortedAgendaEntries = [...agendaEntries].sort((a, b) => {
-                if (
-                  a.priority === "SG's attention" &&
-                  b.priority !== "SG's attention"
-                )
-                  return -1;
-                if (
-                  a.priority !== "SG's attention" &&
-                  b.priority === "SG's attention"
-                )
-                  return 1;
-                return 0;
-              });
-
-              // Group entries by region and country
-              const entriesByRegionAndCountry = sortedAgendaEntries.reduce(
-                (acc, entry) => {
-                  if (!acc[entry.region]) {
-                    acc[entry.region] = {};
-                  }
-
-                  if (
-                    !entry.country ||
-                    entry.country === "" ||
-                    (Array.isArray(entry.country) && entry.country.length === 0)
-                  ) {
-                    if (!acc[entry.region][""]) {
-                      acc[entry.region][""] = [];
-                    }
-                    acc[entry.region][""].push(entry);
-                  } else {
-                    const countries = Array.isArray(entry.country)
-                      ? entry.country
-                      : [entry.country];
-                    const countryKey = countries.join(" / ");
-                    if (!acc[entry.region][countryKey]) {
-                      acc[entry.region][countryKey] = [];
-                    }
-                    acc[entry.region][countryKey].push(entry);
-                  }
-                  return acc;
-                },
-                {} as Record<string, Record<string, MorningMeetingEntry[]>>,
-              );
-
-              const sortedRegions = Object.keys(
-                entriesByRegionAndCountry,
-              ).sort();
+              const { grouped: entriesByRegionAndCountry, sortedRegions } =
+                groupEntriesByRegionAndCountry(agendaEntries);
 
               return (
                 <div className="space-y-6">
                   {sortedRegions.map((region) => {
-                    const countries = Object.keys(
-                      entriesByRegionAndCountry[region],
-                    ).sort((a, b) => {
-                      if (a === "") return 1;
-                      if (b === "") return -1;
-                      return a.localeCompare(b);
-                    });
+                    const countries = sortCountryKeys(
+                      Object.keys(entriesByRegionAndCountry[region]),
+                    );
 
                     return (
                       <div key={region}>
@@ -904,23 +853,20 @@ export function EntriesTable({
                               {countries.map((country) => {
                                 const countryEntries =
                                   entriesByRegionAndCountry[region][country];
-                                let entryIndexInCountry = 0;
 
-                                return countryEntries.map((entry) => {
-                                  const isFirstInCountry =
-                                    entryIndexInCountry === 0;
+                                return countryEntries.map((entry, entryIndex) => {
                                   const displayCountry = Array.isArray(
                                     entry.country,
                                   )
                                     ? entry.country.join(" / ")
                                     : entry.country || "(No country specified)";
 
-                                  const result = (
+                                  return (
                                     <tr
                                       key={entry.id}
                                       className="hover:bg-slate-50"
                                     >
-                                      {isFirstInCountry && (
+                                      {entryIndex === 0 && (
                                         <td
                                           className="border border-slate-200 px-3 py-2 align-top text-sm font-medium break-words whitespace-normal"
                                           rowSpan={countryEntries.length}
@@ -933,9 +879,6 @@ export function EntriesTable({
                                       </td>
                                     </tr>
                                   );
-
-                                  entryIndexInCountry++;
-                                  return result;
                                 });
                               })}
                             </tbody>

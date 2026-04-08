@@ -17,7 +17,6 @@ function extractImagesFromHtml(html: string): {
   updatedHtml: string;
 } {
   const images: any[] = [];
-  let position = 0;
 
   if (typeof window === "undefined") {
     return { images: [], updatedHtml: html };
@@ -25,6 +24,12 @@ function extractImagesFromHtml(html: string): {
 
   const parser = new DOMParser();
   const doc = parser.parseFromString(html, "text/html");
+
+  // Find the highest existing image-ref position to avoid collisions on re-edit
+  const existingRefs = html.match(/image-ref:\/\/img-(\d+)/g) || [];
+  let position = existingRefs.length > 0
+    ? Math.max(...existingRefs.map((r) => parseInt(r.replace("image-ref://img-", "")))) + 1
+    : 0;
   const imgElements = doc.querySelectorAll("img");
 
   imgElements.forEach((img) => {
@@ -142,8 +147,6 @@ export async function deleteEntry(id: string): Promise<void> {
     const errorText = await response.text();
     throw new Error(`Failed to delete entry: ${errorText}`);
   }
-
-  await response.json();
 }
 
 export async function updateEntry(

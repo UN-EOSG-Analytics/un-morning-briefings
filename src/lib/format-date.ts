@@ -52,7 +52,7 @@ const MONTH_NAMES = [
   "Nov",
   "Dec",
 ];
-const MONTH_NAMES_FULL = [
+export const MONTH_NAMES_FULL = [
   "January",
   "February",
   "March",
@@ -66,7 +66,7 @@ const MONTH_NAMES_FULL = [
   "November",
   "December",
 ];
-const WEEKDAY_NAMES = [
+export const WEEKDAY_NAMES = [
   "Sunday",
   "Monday",
   "Tuesday",
@@ -173,16 +173,18 @@ export function formatDateLong(date: string | Date): string {
 }
 
 /**
- * Format current date/time as localized string: "1/15/2026, 3:45 PM"
- * Used for document generation timestamps.
+ * Format current date/time as localized string: "1/15/2026, 3:45 PM ET"
+ * Always uses America/New_York timezone for consistency between
+ * client-side and server-side (Vercel/UTC) document generation.
  */
 export function getCurrentDateTime(): string {
   return new Date().toLocaleString("en-US", {
+    timeZone: "America/New_York",
     year: "numeric",
     month: "numeric",
     day: "numeric",
     hour: "numeric",
     minute: "2-digit",
     hour12: true,
-  });
+  }) + " ET";
 }

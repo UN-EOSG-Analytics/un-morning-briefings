@@ -93,7 +93,7 @@ export async function POST(req: NextRequest) {
     );
 
     // Send verification email — base URL resolved dynamically from the request
-    await sendVerificationEmail(email, verificationToken, firstName, req);
+    await sendVerificationEmail(email, verificationToken, req);
 
     return NextResponse.json({
       success: true,

@@ -147,8 +147,6 @@ export async function deleteEntry(id: string): Promise<void> {
     const errorText = await response.text();
     throw new Error(`Failed to delete entry: ${errorText}`);
   }
-
-  await response.json();
 }
 
 export async function updateEntry(

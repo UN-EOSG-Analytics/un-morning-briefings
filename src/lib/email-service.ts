@@ -220,7 +220,6 @@ export function buildBriefingEmailBody(formattedDate: string): {
 export async function sendVerificationEmail(
   email: string,
   token: string,
-  firstName: string,
   req: NextRequest,
 ): Promise<boolean> {
   const baseUrl = resolveBaseUrl(req);

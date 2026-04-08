@@ -853,23 +853,20 @@ export function EntriesTable({
                               {countries.map((country) => {
                                 const countryEntries =
                                   entriesByRegionAndCountry[region][country];
-                                let entryIndexInCountry = 0;
 
-                                return countryEntries.map((entry) => {
-                                  const isFirstInCountry =
-                                    entryIndexInCountry === 0;
+                                return countryEntries.map((entry, entryIndex) => {
                                   const displayCountry = Array.isArray(
                                     entry.country,
                                   )
                                     ? entry.country.join(" / ")
                                     : entry.country || "(No country specified)";
 
-                                  const result = (
+                                  return (
                                     <tr
                                       key={entry.id}
                                       className="hover:bg-slate-50"
                                     >
-                                      {isFirstInCountry && (
+                                      {entryIndex === 0 && (
                                         <td
                                           className="border border-slate-200 px-3 py-2 align-top text-sm font-medium break-words whitespace-normal"
                                           rowSpan={countryEntries.length}
@@ -882,9 +879,6 @@ export function EntriesTable({
                                       </td>
                                     </tr>
                                   );
-
-                                  entryIndexInCountry++;
-                                  return result;
                                 });
                               })}
                             </tbody>

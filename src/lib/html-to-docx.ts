@@ -242,112 +242,208 @@ function decodeHtmlEntities(text: string): string {
     );
 }
 
-/** Strip inline HTML tags and decode entities from a text fragment */
-function cleanServerText(raw: string): string {
-  return decodeHtmlEntities(raw.replace(/<[^>]*>/g, "")).trim();
-}
-
 /**
  * Build text/image runs from a single paragraph's inner HTML content (server-side).
- * Uses a two-step approach for images: capture the whole tag first, then extract
- * attributes separately so that data-width/data-height are reliably read.
+ * Recursively handles inline formatting tags (<strong>, <em>, <mark>, <u>, <s>, <a>,
+ * <sub>, <sup>) via regex, mirroring the client-side `extractTextRuns` behavior.
  */
 function buildServerRunsFromContent(
-  paraContent: string,
-  baseStyles?: TextStyles,
-): (TextRun | ImageRun)[] {
-  const paraRuns: (TextRun | ImageRun)[] = [];
+  html: string,
+  inherited: TextStyles = {},
+): (TextRun | ImageRun | ExternalHyperlink)[] {
+  const runs: (TextRun | ImageRun | ExternalHyperlink)[] = [];
 
-  // Split content by <br> tags first
-  const parts = paraContent.split(/<br\s*\/?>/i);
+  // Regex that matches: <br>, <img ...>, opening tags, closing tags, or text between tags
+  const tokenRegex =
+    /(<br\s*\/?>)|(<img\s[^>]*>)|(<(a|strong|b|em|i|u|s|del|mark|code|sub|sup)\b[^>]*>)|(<\/(a|strong|b|em|i|u|s|del|mark|code|sub|sup)>)/gi;
 
-  for (let partIndex = 0; partIndex < parts.length; partIndex++) {
-    const part = parts[partIndex];
+  let lastIndex = 0;
+  let match;
 
-    // Two-step image matching: first capture the whole <img> tag, then extract
-    // individual attributes — avoids lazy-quantifier interactions that silently
-    // fail to capture data-width / data-height.
-    const imgTagRegex = /<img([^>]*)>/gi;
-    let lastIndex = 0;
-    let imgMatch;
+  while ((match = tokenRegex.exec(html)) !== null) {
+    // Text before this match
+    if (match.index > lastIndex) {
+      const textBefore = decodeHtmlEntities(
+        html.substring(lastIndex, match.index),
+      );
+      if (textBefore) {
+        runs.push(
+          new TextRun({
+            text: textBefore,
+            font: inherited.font || "Roboto",
+            bold: inherited.bold,
+            italics: inherited.italics,
+            underline: inherited.underline,
+            strike: inherited.strike,
+            shading: inherited.highlight,
+            color: inherited.color,
+            subScript: inherited.subScript,
+            superScript: inherited.superScript,
+          }),
+        );
+      }
+    }
 
-    while ((imgMatch = imgTagRegex.exec(part)) !== null) {
-      const tagAttrs = imgMatch[1];
+    if (match[1]) {
+      // <br>
+      runs.push(new TextRun({ text: "", break: 1 }));
+      lastIndex = match.index + match[0].length;
+    } else if (match[2]) {
+      // <img ...>
+      const tagAttrs = match[2];
       const srcMatch = /src\s*=\s*["']?(data:image[^"'\s>]+)["']?/i.exec(
         tagAttrs,
       );
-      if (!srcMatch) continue;
-
-      // Add text before the image
-      const textBefore = cleanServerText(
-        part.substring(lastIndex, imgMatch.index),
-      );
-      if (textBefore) {
-        paraRuns.push(
-          new TextRun({
-            text: textBefore,
-            font: "Roboto",
-            italics: baseStyles?.italics,
-          }),
-        );
+      if (srcMatch) {
+        const dataUrl = srcMatch[1];
+        const dataWidth =
+          /data-width\s*=\s*["']?(\d+)/i.exec(tagAttrs)?.[1] ?? null;
+        const dataHeight =
+          /data-height\s*=\s*["']?(\d+)/i.exec(tagAttrs)?.[1] ?? null;
+        try {
+          const buffer = base64ToBuffer(dataUrl);
+          const dims = calculateImageDimensions(
+            dataWidth,
+            dataHeight,
+            buffer,
+            500,
+          );
+          const imageType = getImageType(dataUrl);
+          runs.push(
+            new ImageRun({
+              data: buffer as unknown as Uint8Array,
+              type: imageType,
+              transformation: { width: dims.width, height: dims.height },
+            }),
+          );
+        } catch (error) {
+          console.error(
+            "Server parser: Error processing data URL image:",
+            error,
+          );
+          runs.push(
+            new TextRun({
+              text: "[Image]",
+              color: "0563C1",
+              underline: {},
+              font: "Roboto",
+            }),
+          );
+        }
       }
+      lastIndex = match.index + match[0].length;
+    } else if (match[3]) {
+      // Opening inline tag — find matching close, recurse on inner content
+      const tag = match[4].toLowerCase();
+      const openTag = match[3];
+      const closePattern = new RegExp(
+        `</${tag}>`,
+        "i",
+      );
 
-      const dataUrl = srcMatch[1];
-      const dataWidth =
-        /data-width\s*=\s*["']?(\d+)/i.exec(tagAttrs)?.[1] ?? null;
-      const dataHeight =
-        /data-height\s*=\s*["']?(\d+)/i.exec(tagAttrs)?.[1] ?? null;
+      // Find the matching closing tag (simple non-nested search; nesting of
+      // the same tag is extremely rare in TipTap output)
+      const afterOpen = match.index + openTag.length;
+      const closeMatch = closePattern.exec(html.substring(afterOpen));
 
-      try {
-        const buffer = base64ToBuffer(dataUrl);
-        const dims = calculateImageDimensions(
-          dataWidth,
-          dataHeight,
-          buffer,
-          500,
+      if (closeMatch) {
+        const innerHtml = html.substring(
+          afterOpen,
+          afterOpen + closeMatch.index,
         );
-        const imageType = getImageType(dataUrl);
-        paraRuns.push(
-          new ImageRun({
-            data: buffer as unknown as Uint8Array,
-            type: imageType,
-            transformation: { width: dims.width, height: dims.height },
-          }),
-        );
-      } catch (error) {
-        console.error("Server parser: Error processing data URL image:", error);
-        paraRuns.push(
-          new TextRun({
-            text: "[Image]",
+
+        // Build child styles
+        const childStyles: TextStyles = { ...inherited };
+        switch (tag) {
+          case "strong":
+          case "b":
+            childStyles.bold = true;
+            break;
+          case "em":
+          case "i":
+            childStyles.italics = true;
+            break;
+          case "u":
+            childStyles.underline = childStyles.underline ?? {};
+            break;
+          case "s":
+          case "del":
+            childStyles.strike = true;
+            break;
+          case "mark":
+            childStyles.highlight = { type: "clear", fill: "FFFF00" };
+            break;
+          case "sub":
+            childStyles.subScript = true;
+            break;
+          case "sup":
+            childStyles.superScript = true;
+            break;
+        }
+
+        if (tag === "a") {
+          const href =
+            /href\s*=\s*["']([^"']*)["']/i.exec(openTag)?.[1] ?? null;
+          const linkStyles: TextStyles = {
+            ...inherited,
             color: "0563C1",
-            underline: {},
-            font: "Roboto",
-          }),
-        );
+            underline: inherited.underline ?? {},
+          };
+          const childRuns = buildServerRunsFromContent(innerHtml, linkStyles);
+          if (href) {
+            const textRuns = childRuns.filter(
+              (r): r is TextRun => r instanceof TextRun,
+            );
+            if (textRuns.length > 0) {
+              runs.push(
+                new ExternalHyperlink({ link: href, children: textRuns }),
+              );
+            } else {
+              runs.push(...childRuns);
+            }
+          } else {
+            runs.push(...childRuns);
+          }
+        } else {
+          runs.push(...buildServerRunsFromContent(innerHtml, childStyles));
+        }
+
+        // Advance past the closing tag
+        const newIndex = afterOpen + closeMatch.index + closeMatch[0].length;
+        tokenRegex.lastIndex = newIndex;
+        lastIndex = newIndex;
+      } else {
+        // No matching close tag — treat opening tag as text and move on
+        lastIndex = match.index + match[0].length;
       }
-
-      lastIndex = imgMatch.index + imgMatch[0].length;
-    }
-
-    // Add remaining text after the last image
-    const textAfter = cleanServerText(part.substring(lastIndex));
-    if (textAfter) {
-      paraRuns.push(
-        new TextRun({
-          text: textAfter,
-          font: "Roboto",
-          italics: baseStyles?.italics,
-        }),
-      );
-    }
-
-    // Add line break between parts (except after the last part)
-    if (partIndex < parts.length - 1) {
-      paraRuns.push(new TextRun({ text: "", break: 1 }));
+    } else if (match[5]) {
+      // Stray closing tag (no matching open) — skip it
+      lastIndex = match.index + match[0].length;
     }
   }
 
-  return paraRuns;
+  // Trailing text after last match
+  if (lastIndex < html.length) {
+    const textAfter = decodeHtmlEntities(html.substring(lastIndex));
+    if (textAfter) {
+      runs.push(
+        new TextRun({
+          text: textAfter,
+          font: inherited.font || "Roboto",
+          bold: inherited.bold,
+          italics: inherited.italics,
+          underline: inherited.underline,
+          strike: inherited.strike,
+          shading: inherited.highlight,
+          color: inherited.color,
+          subScript: inherited.subScript,
+          superScript: inherited.superScript,
+        }),
+      );
+    }
+  }
+
+  return runs;
 }
 
 /**

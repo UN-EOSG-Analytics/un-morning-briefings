@@ -3,6 +3,7 @@ import * as fs from "fs";
 import * as path from "path";
 import labels from "@/lib/labels.json";
 import type { NextRequest } from "next/server";
+import { query } from "@/lib/db";
 
 /**
  * Resolves the base URL for email links from the incoming request.
@@ -28,18 +29,22 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-/** Load and base64-encode the UN logo for email embedding */
+/** Load and base64-encode the UN logo for email embedding (cached) */
+let cachedLogoDataUri: string | null = null;
 function loadLogoDataUri(): string {
+  if (cachedLogoDataUri !== null) return cachedLogoDataUri;
   try {
     const logoPath = path.join(
       process.cwd(),
       "public/images/un-logo-stacked-colour-english.svg",
     );
     const logoBuffer = fs.readFileSync(logoPath);
-    return `data:image/svg+xml;base64,${logoBuffer.toString("base64")}`;
+    cachedLogoDataUri = `data:image/svg+xml;base64,${logoBuffer.toString("base64")}`;
+    return cachedLogoDataUri;
   } catch (error) {
     console.warn("[EMAIL SERVICE] Warning: Could not read logo file", error);
-    return "";
+    cachedLogoDataUri = "";
+    return cachedLogoDataUri;
   }
 }
 
@@ -99,7 +104,6 @@ export async function sendEmail(
   html: string,
   text: string,
   options?: {
-    previewExtra?: Record<string, string>;
     attachments?: Array<{
       filename: string;
       content: Buffer;
@@ -116,9 +120,9 @@ export async function sendEmail(
       console.warn(
         "[EMAIL SERVICE] Warning: SMTP credentials not configured. Set SMTP_HOST, SMTP_USER, and SMTP_PASS in .env",
       );
-      return true;
+      return false;
     }
-    const info = await transporter.sendMail({
+    await transporter.sendMail({
       from: process.env.SMTP_FROM,
       to,
       subject,
@@ -135,6 +139,83 @@ export async function sendEmail(
 
 /** Build an email using the shared UN-branded template */
 export { buildEmailHtml };
+
+/**
+ * Resolve the briefing email recipient list.
+ * Union of user_whitelist + app_settings.email_recipients, deduplicated.
+ * If CRON_TEST_EMAIL is set, sends only to that address (for testing).
+ * If fallbackEmail is provided and no recipients found, falls back to that address.
+ */
+export async function resolveRecipients(options?: {
+  fallbackEmail?: string;
+}): Promise<string[]> {
+  const testEmail = process.env.CRON_TEST_EMAIL;
+  if (testEmail) {
+    return [testEmail];
+  }
+
+  const recipientSet = new Set<string>();
+
+  const [whitelistResult, settingsResult] = await Promise.all([
+    query<{ email: string }>(
+      `SELECT email FROM morning_briefings.user_whitelist ORDER BY email`,
+    ),
+    query<{ value: string }>(
+      `SELECT value FROM morning_briefings.app_settings WHERE key = 'email_recipients'`,
+    ),
+  ]);
+
+  for (const row of whitelistResult.rows) {
+    recipientSet.add(row.email.toLowerCase());
+  }
+
+  if (settingsResult.rows.length > 0) {
+    try {
+      const extra = JSON.parse(settingsResult.rows[0].value);
+      if (Array.isArray(extra)) {
+        for (const e of extra) {
+          if (typeof e === "string" && e.trim()) {
+            recipientSet.add(e.toLowerCase().trim());
+          }
+        }
+      }
+    } catch {
+      // malformed JSON — ignore
+    }
+  }
+
+  if (recipientSet.size === 0 && options?.fallbackEmail) {
+    return [options.fallbackEmail];
+  }
+
+  return [...recipientSet];
+}
+
+/**
+ * Build the standard briefing email body (HTML + plain text).
+ */
+export function buildBriefingEmailBody(formattedDate: string): {
+  html: string;
+  text: string;
+  subject: string;
+} {
+  const contentHtml = `
+    <p style="margin:0 0 12px;font-size:15px;line-height:1.6;color:#374151;">
+      Please find attached the Morning Meeting Update for <strong>${formattedDate}</strong>, prepared by the Political Unit, EOSG.
+    </p>
+    <p style="margin:0 0 12px;font-size:15px;line-height:1.6;color:#374151;">
+      Have a good day!
+    </p>
+    <p style="margin:0;font-size:15px;line-height:1.6;color:#374151;">
+      For technical assistance, please reach out to the SPMU Data Team.
+    </p>`;
+
+  return {
+    html: buildEmailHtml(contentHtml),
+    text: `Please find attached the Morning Meeting Update for ${formattedDate}, prepared by the Political Unit, EOSG.\n\nHave a good day!\n\nFor technical assistance, please reach out to the SPMU Data Team.`,
+    subject: `Morning Meeting Update - ${formattedDate}`,
+  };
+}
 
 export async function sendVerificationEmail(
   email: string,
@@ -160,7 +241,6 @@ export async function sendVerificationEmail(
     "Verify your UN Morning Briefing System account",
     html,
     text,
-    { previewExtra: { verificationUrl } },
   );
 }
 
@@ -194,6 +274,5 @@ export async function sendPasswordResetEmail(
     "Reset your password - UN Morning Briefing System",
     html,
     text,
-    { previewExtra: { resetUrl } },
   );
 }

@@ -1,7 +1,5 @@
 "use client";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
@@ -15,6 +13,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { getSubmittedEntries } from "@/lib/storage";
+import { convertImageReferencesToDataUrls } from "@/lib/image-conversion";
 import {
   isWithinCutoffRange,
   getCurrentBriefingDate,
@@ -35,7 +34,10 @@ interface ExportDialogProps {
 }
 
 /**
- * Process images in entries - downloads from blob storage and converts to data URLs
+ * Process images in entries for DOCX export.
+ * - Converts image-ref:// references to data URLs via shared image-conversion utility
+ * - Downloads external HTTP/S image URLs and converts to data URLs
+ * - Strips all images if includeImages is false
  */
 const processEntriesImages = async (
   entries: MorningMeetingEntry[],
@@ -46,59 +48,19 @@ const processEntriesImages = async (
   for (const entry of processedEntries) {
     let html = entry.entry;
 
-    // Skip image processing if includeImages is false
     if (!includeImages) {
       html = html.replace(/<img[^>]*>/gi, "");
       entry.entry = html;
       continue;
     }
 
-    // Process tracked images (uploaded via the editor)
+    // Convert image-ref:// references using shared utility
     if (entry.images && entry.images.length > 0) {
-      for (const img of entry.images) {
-        try {
-          if (img.position === null || img.position === undefined) {
-            continue;
-          }
-
-          const ref = `image-ref://img-${img.position}`;
-
-          if (!html.includes(ref)) {
-            continue;
-          }
-
-          const response = await fetch(`/api/images/${img.id}`);
-          if (!response.ok) {
-            html = html.replace(
-              new RegExp(`<img[^>]*src=["']${ref}["'][^>]*>`, "gi"),
-              "",
-            );
-            continue;
-          }
-
-          const arrayBuffer = await response.arrayBuffer();
-          const base64Data = btoa(
-            new Uint8Array(arrayBuffer).reduce(
-              (data, byte) => data + String.fromCharCode(byte),
-              "",
-            ),
-          );
-          const dataUrl = `data:${img.mimeType};base64,${base64Data}`;
-
-          const searchPattern = new RegExp(
-            `src=["']${ref.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}["']`,
-            "gi",
-          );
-          html = html.replace(searchPattern, `src="${dataUrl}"`);
-        } catch (error) {
-          console.error(`Error downloading image ${img.id}:`, error);
-          const ref = `image-ref://img-${img.position}`;
-          html = html.replace(
-            new RegExp(`<img[^>]*src=["']${ref}["'][^>]*>`, "gi"),
-            "",
-          );
-        }
-      }
+      html = await convertImageReferencesToDataUrls(
+        html,
+        entry.images,
+        "exportDialog",
+      );
     }
 
     // Download and convert external image URLs to data URLs
@@ -114,9 +76,7 @@ const processEntriesImages = async (
 
       try {
         const response = await fetch(imageUrl, { mode: "cors" });
-        if (!response.ok) {
-          continue;
-        }
+        if (!response.ok) continue;
 
         const blob = await response.blob();
         const arrayBuffer = await blob.arrayBuffer();
@@ -139,7 +99,7 @@ const processEntriesImages = async (
     }
 
     for (const { from, to } of replacements) {
-      html = html.replace(from, to);
+      html = html.replaceAll(from, to);
     }
 
     entry.entry = html;
@@ -160,7 +120,7 @@ export const generateDocumentBlob = async (
   const processedEntries = await processEntriesImages(entries, includeImages);
 
   // Build document using shared module
-  const doc = await buildBriefingDocument(processedEntries, selectedDate);
+  const doc = buildBriefingDocument(processedEntries, selectedDate);
 
   return Packer.toBlob(doc);
 };

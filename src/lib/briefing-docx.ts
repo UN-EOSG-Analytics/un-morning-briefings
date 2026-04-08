@@ -27,11 +27,16 @@ import {
   formatDateLong,
   formatDateFull,
   getCurrentDateTime,
+  WEEKDAY_NAMES,
+  MONTH_NAMES_FULL,
 } from "@/lib/format-date";
+import {
+  groupEntriesByRegionAndCountry,
+  sortCountryKeys,
+} from "@/lib/entry-grouping";
 import type { MorningMeetingEntry } from "@/types/morning-meeting";
 
 export const createSeparator = (
-  _length: number = 63,
   spacing: { before?: number; after?: number } = { after: 200 },
 ): Paragraph =>
   new Paragraph({
@@ -49,31 +54,8 @@ export const createSeparator = (
 export const formatExportFilename = (dateStr: string): string => {
   const [year, month, day] = dateStr.split("-").map(Number);
   const date = new Date(Date.UTC(year, month - 1, day));
-  const dayNames = [
-    "Sunday",
-    "Monday",
-    "Tuesday",
-    "Wednesday",
-    "Thursday",
-    "Friday",
-    "Saturday",
-  ];
-  const monthNames = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
-  ];
-  const dayOfWeek = dayNames[date.getUTCDay()];
-  const monthName = monthNames[month - 1];
+  const dayOfWeek = WEEKDAY_NAMES[date.getUTCDay()];
+  const monthName = MONTH_NAMES_FULL[month - 1];
   const yymmdd = `${String(year).slice(2)}${String(month).padStart(2, "0")}${String(day).padStart(2, "0")}`;
   return `MM ${yymmdd} ${dayOfWeek} ${day} ${monthName}.docx`;
 };
@@ -174,12 +156,8 @@ const buildTableOfContents = (
     );
 
     // Get countries for this region
-    const countries = Object.keys(entriesByRegionAndCountry[region]).sort(
-      (a, b) => {
-        if (a === "") return 1;
-        if (b === "") return -1;
-        return a.localeCompare(b);
-      },
+    const countries = sortCountryKeys(
+      Object.keys(entriesByRegionAndCountry[region]),
     );
 
     const noBorder = { style: BorderStyle.NONE, size: 0, color: "FFFFFF" };
@@ -291,52 +269,9 @@ const buildTableOfContents = (
 export const buildDocumentChildren = (
   entries: MorningMeetingEntry[],
   selectedDate: string,
-): Paragraph[] => {
-  // Sort by priority (SG Attention first)
-  const sortedEntries = [...entries].sort((a, b) => {
-    if (a.priority === "SG's attention" && b.priority !== "SG's attention")
-      return -1;
-    if (a.priority !== "SG's attention" && b.priority === "SG's attention")
-      return 1;
-    return 0;
-  });
-
-  // Group entries by region and country
-  const entriesByRegionAndCountry = sortedEntries.reduce(
-    (acc, entry) => {
-      if (!acc[entry.region]) {
-        acc[entry.region] = {};
-      }
-
-      // Handle entries without countries
-      if (
-        !entry.country ||
-        entry.country === "" ||
-        (Array.isArray(entry.country) && entry.country.length === 0)
-      ) {
-        // Store entries without countries under empty string key
-        if (!acc[entry.region][""]) {
-          acc[entry.region][""] = [];
-        }
-        acc[entry.region][""].push(entry);
-      } else {
-        // Handle both single country (string) and multiple countries (array)
-        // Group by full country constellation to separate different combinations
-        const countries = Array.isArray(entry.country)
-          ? entry.country
-          : [entry.country];
-        const countryKey = countries.join(" / ");
-        if (!acc[entry.region][countryKey]) {
-          acc[entry.region][countryKey] = [];
-        }
-        acc[entry.region][countryKey].push(entry);
-      }
-      return acc;
-    },
-    {} as Record<string, Record<string, MorningMeetingEntry[]>>,
-  );
-
-  const sortedRegions = Object.keys(entriesByRegionAndCountry).sort();
+): (Paragraph | Table)[] => {
+  const { grouped: entriesByRegionAndCountry, sortedRegions } =
+    groupEntriesByRegionAndCountry(entries);
 
   // Build document children
   const children: any[] = [
@@ -396,12 +331,8 @@ export const buildDocumentChildren = (
     );
 
     // Get countries for this region and sort them (put empty country last)
-    const countries = Object.keys(entriesByRegionAndCountry[region]).sort(
-      (a, b) => {
-        if (a === "") return 1;
-        if (b === "") return -1;
-        return a.localeCompare(b);
-      },
+    const countries = sortCountryKeys(
+      Object.keys(entriesByRegionAndCountry[region]),
     );
 
     // Add entries grouped by country
@@ -569,7 +500,7 @@ export const buildDocumentChildren = (
           // Separator between entries (but not after the last entry in the country)
           const countryEntries = entriesByRegionAndCountry[region][country];
           if (index < countryEntries.length - 1) {
-            children.push(createSeparator(40, { before: 200, after: 200 }));
+            children.push(createSeparator({ before: 200, after: 200 }));
           }
         },
       );
@@ -600,9 +531,8 @@ export const buildDocumentChildren = (
 /**
  * Create a header section with classification text only (UN logo removed)
  */
-export const createDocumentHeader = async (): Promise<Table> => {
-  // Create a table-based header with classification text
-  const headerTable = new Table({
+export const createDocumentHeader = (): Table => {
+  return new Table({
     width: { size: 100, type: "pct" },
     borders: {
       top: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
@@ -616,7 +546,6 @@ export const createDocumentHeader = async (): Promise<Table> => {
       new TableRow({
         height: { value: 400, rule: "atLeast" },
         children: [
-          // Full-width cell with classification text
           new TableCell({
             width: { size: 100, type: "pct" },
             borders: {
@@ -646,20 +575,18 @@ export const createDocumentHeader = async (): Promise<Table> => {
       }),
     ],
   });
-
-  return headerTable;
 };
 
 /**
  * Build a complete Document object from entries and date.
  * Shared between client (ExportDailyBriefingDialog) and server (cron endpoint).
  */
-export async function buildBriefingDocument(
+export function buildBriefingDocument(
   entries: MorningMeetingEntry[],
   selectedDate: string,
-): Promise<Document> {
+): Document {
   const children = buildDocumentChildren(entries, selectedDate);
-  const headerTable = await createDocumentHeader();
+  const headerTable = createDocumentHeader();
 
   return new Document({
     sections: [
@@ -689,6 +616,6 @@ export async function generateDocumentBuffer(
   entries: MorningMeetingEntry[],
   selectedDate: string,
 ): Promise<Buffer> {
-  const doc = await buildBriefingDocument(entries, selectedDate);
+  const doc = buildBriefingDocument(entries, selectedDate);
   return Packer.toBuffer(doc);
 }

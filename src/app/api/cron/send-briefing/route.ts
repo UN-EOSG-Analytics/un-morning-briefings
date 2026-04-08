@@ -5,7 +5,11 @@ import { convertImageReferencesServerSide } from "@/lib/image-conversion";
 import { blobStorage } from "@/lib/blob-storage";
 import { generateDocumentBuffer, formatExportFilename } from "@/lib/briefing-docx";
 import { formatDateLong } from "@/lib/format-date";
-import { sendEmail, buildEmailHtml } from "@/lib/email-service";
+import {
+  sendEmail,
+  resolveRecipients,
+  buildBriefingEmailBody,
+} from "@/lib/email-service";
 
 export const maxDuration = 60;
 
@@ -67,49 +71,6 @@ async function logSend(
   } catch (err) {
     console.error("[CRON] Failed to write send log:", err);
   }
-}
-
-/**
- * Resolve the recipient list: union of user_whitelist + app_settings.email_recipients.
- * If CRON_TEST_EMAIL is set, sends only to that address instead.
- */
-async function resolveRecipients(): Promise<string[]> {
-  const testEmail = process.env.CRON_TEST_EMAIL;
-  if (testEmail) {
-    return [testEmail];
-  }
-
-  const recipientSet = new Set<string>();
-
-  const [whitelistResult, settingsResult] = await Promise.all([
-    query<{ email: string }>(
-      `SELECT email FROM morning_briefings.user_whitelist ORDER BY email`,
-    ),
-    query<{ value: string }>(
-      `SELECT value FROM morning_briefings.app_settings WHERE key = 'email_recipients'`,
-    ),
-  ]);
-
-  for (const row of whitelistResult.rows) {
-    recipientSet.add(row.email.toLowerCase());
-  }
-
-  if (settingsResult.rows.length > 0) {
-    try {
-      const extra = JSON.parse(settingsResult.rows[0].value);
-      if (Array.isArray(extra)) {
-        for (const e of extra) {
-          if (typeof e === "string" && e.trim()) {
-            recipientSet.add(e.toLowerCase().trim());
-          }
-        }
-      }
-    } catch {
-      // malformed JSON — ignore
-    }
-  }
-
-  return [...recipientSet];
 }
 
 export async function GET(request: NextRequest) {
@@ -202,27 +163,13 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Build email
+    // Build and send email
     const formattedDate = formatDateLong(briefingDate);
+    const { html, text, subject } = buildBriefingEmailBody(formattedDate);
 
-    const contentHtml = `
-      <p style="margin:0 0 12px;font-size:15px;line-height:1.6;color:#374151;">
-        Please find attached the Morning Meeting Update for <strong>${formattedDate}</strong>, prepared by the Political Unit, EOSG.
-      </p>
-      <p style="margin:0 0 12px;font-size:15px;line-height:1.6;color:#374151;">
-        Have a good day!
-      </p>
-      <p style="margin:0;font-size:15px;line-height:1.6;color:#374151;">
-        For technical assistance, please reach out to the SPMU Data Team.
-      </p>`;
-
-    const html = buildEmailHtml(contentHtml);
-    const text = `Please find attached the Morning Meeting Update for ${formattedDate}, prepared by the Political Unit, EOSG.\n\nHave a good day!\n\nFor technical assistance, please reach out to the SPMU Data Team.`;
-
-    // Send email
     const success = await sendEmail(
       recipients.join(", "),
-      `Morning Meeting Update - ${formattedDate}`,
+      subject,
       html,
       text,
       {

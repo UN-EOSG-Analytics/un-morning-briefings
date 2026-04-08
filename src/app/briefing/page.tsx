@@ -13,6 +13,10 @@ import {
   getCurrentDateTime,
 } from "@/lib/format-date";
 import type { MorningMeetingEntry } from "@/types/morning-meeting";
+import {
+  groupEntriesByRegionAndCountry,
+  sortCountryKeys,
+} from "@/lib/entry-grouping";
 
 function BriefingContent() {
   const searchParams = useSearchParams();
@@ -61,50 +65,8 @@ function BriefingContent() {
     };
   }, [loadEntries]);
 
-  // Sort by priority (SG Attention first)
-  const sortedEntries = [...entries].sort((a, b) => {
-    if (a.priority === "SG's attention" && b.priority !== "SG's attention")
-      return -1;
-    if (a.priority !== "SG's attention" && b.priority === "SG's attention")
-      return 1;
-    return 0;
-  });
-
-  // Group entries by region and country
-  const entriesByRegionAndCountry = sortedEntries.reduce(
-    (acc, entry) => {
-      if (!acc[entry.region]) {
-        acc[entry.region] = {};
-      }
-
-      // Handle entries without countries
-      if (
-        !entry.country ||
-        entry.country === "" ||
-        (Array.isArray(entry.country) && entry.country.length === 0)
-      ) {
-        if (!acc[entry.region][""]) {
-          acc[entry.region][""] = [];
-        }
-        acc[entry.region][""].push(entry);
-      } else {
-        // Handle both single country (string) and multiple countries (array)
-        // Group by full country constellation to separate different combinations
-        const countries = Array.isArray(entry.country)
-          ? entry.country
-          : [entry.country];
-        const countryKey = countries.join(" / ");
-        if (!acc[entry.region][countryKey]) {
-          acc[entry.region][countryKey] = [];
-        }
-        acc[entry.region][countryKey].push(entry);
-      }
-      return acc;
-    },
-    {} as Record<string, Record<string, MorningMeetingEntry[]>>,
-  );
-
-  const sortedRegions = Object.keys(entriesByRegionAndCountry).sort();
+  const { grouped: entriesByRegionAndCountry, sortedRegions } =
+    groupEntriesByRegionAndCountry(entries);
 
   // Count entries per region
   const entriesPerRegion = sortedRegions.reduce(
@@ -315,13 +277,9 @@ function BriefingContent() {
                 </h2>
 
                 {/* Countries in Region */}
-                {Object.keys(entriesByRegionAndCountry[region])
-                  .sort((a, b) => {
-                    if (a === "") return 1;
-                    if (b === "") return -1;
-                    return a.localeCompare(b);
-                  })
-                  .map((country) => (
+                {sortCountryKeys(
+                  Object.keys(entriesByRegionAndCountry[region]),
+                ).map((country) => (
                     <div key={country} className="space-y-5">
                       {/* Country Header */}
                       {country !== "" && (

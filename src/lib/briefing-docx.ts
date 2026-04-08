@@ -27,6 +27,7 @@ import {
   formatDateLong,
   formatDateFull,
   getCurrentDateTime,
+  formatTimeNYC,
   WEEKDAY_NAMES,
   MONTH_NAMES_FULL,
 } from "@/lib/format-date";
@@ -35,6 +36,25 @@ import {
   sortCountryKeys,
 } from "@/lib/entry-grouping";
 import type { MorningMeetingEntry } from "@/types/morning-meeting";
+
+/**
+ * Check whether a UTC timestamp falls in the "overnight" window (21:00–07:45 NYC time).
+ * Used to flag entries updated outside normal working hours with a visual indicator
+ * in the exported DOCX, so briefing readers know the update came in overnight.
+ */
+function isOvernightUpdate(utcTimestamp: string): boolean {
+  const date = new Date(utcTimestamp);
+  const nycTime = date.toLocaleTimeString("en-US", {
+    timeZone: "America/New_York",
+    hour12: false,
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+  const [hours, minutes] = nycTime.split(":").map(Number);
+  const totalMinutes = hours * 60 + minutes;
+  // 21:00 (9 PM) = 1260 minutes, 07:45 (7:45 AM) = 465 minutes
+  return totalMinutes >= 1260 || totalMinutes < 465;
+}
 
 export const createSeparator = (
   spacing: { before?: number; after?: number } = { after: 200 },
@@ -474,6 +494,44 @@ export const buildDocumentChildren = (
               spacing: { after: 120 },
             }),
           );
+
+          // Last updated timestamp
+          // Shown in its own line between metadata and article content.
+          // If the update occurred overnight (21:00–07:45 NYC time), a blue
+          // circle "●" is prepended so readers can spot late/overnight edits.
+          if (entry.updatedAt) {
+            const timeStr = formatTimeNYC(entry.updatedAt);
+            const overnight = isOvernightUpdate(entry.updatedAt);
+            const lastUpdatedChildren: TextRun[] = [];
+
+            if (overnight) {
+              lastUpdatedChildren.push(
+                new TextRun({
+                  text: "● ",
+                  color: "009edb",
+                  font: "Roboto",
+                  size: 20,
+                }),
+              );
+            }
+
+            lastUpdatedChildren.push(
+              new TextRun({
+                text: `Last updated: ${timeStr} ET`,
+                italics: true,
+                color: "666666",
+                font: "Roboto",
+                size: 18,
+              }),
+            );
+
+            children.push(
+              new Paragraph({
+                children: lastUpdatedChildren,
+                spacing: { after: 120 },
+              }),
+            );
+          }
 
           // Content
           if (entry.entry) {

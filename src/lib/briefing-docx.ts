@@ -331,22 +331,30 @@ export const buildDocumentChildren = (
 
   // Add entries grouped by region and country
   sortedRegions.forEach((region) => {
-    // Add region header
+    // Add region header (larger and more prominent than country headers)
     children.push(
       new Paragraph({
         heading: HeadingLevel.HEADING_2,
         alignment: AlignmentType.LEFT,
-        spacing: { before: 300, after: 200 },
+        spacing: { before: 400, after: 100 },
         keepNext: true,
         children: [
           new TextRun({
-            text: region,
+            text: region.toUpperCase(),
             bold: true,
-            size: 24,
+            size: 28,
             font: "Roboto",
             color: "009edb",
           }),
         ],
+        border: {
+          bottom: {
+            color: "009edb",
+            space: 4,
+            size: 6,
+            style: BorderStyle.SINGLE,
+          },
+        },
       }),
     );
 
@@ -366,12 +374,12 @@ export const buildDocumentChildren = (
               new TextRun({
                 text: country,
                 bold: true,
-                size: 24,
+                size: 22,
                 font: "Roboto",
                 color: "009edb",
               }),
             ],
-            spacing: { before: 300, after: 200 },
+            spacing: { before: 200, after: 150 },
             keepNext: true,
           }),
         );

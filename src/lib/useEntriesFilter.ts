@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { parseDateString } from "./format-date";
+import labels from "./labels.json";
 
 /**
  * Convert date components to a comparable number (minutes since epoch-ish)
@@ -275,11 +276,27 @@ export function useEntriesFilter(entries: any[], initialDateFilter?: string) {
   ]);
 
   /**
-   * Sort filtered entries by specified field and direction
+   * Sort filtered entries by specified field and direction.
+   * When sorting by region, entries are grouped by region (in the order
+   * defined in labels.json) and sorted by date within each region.
    */
   const sortedEntries = useMemo(() => {
     const sorted = [...filteredEntries];
     sorted.sort((a, b) => {
+      if (sortField === "region") {
+        const regionOrder = labels.regions;
+        const aIdx = regionOrder.indexOf(a.region);
+        const bIdx = regionOrder.indexOf(b.region);
+        const aRegion = aIdx === -1 ? regionOrder.length : aIdx;
+        const bRegion = bIdx === -1 ? regionOrder.length : bIdx;
+        const regionCmp = sortDirection === "asc"
+          ? aRegion - bRegion
+          : bRegion - aRegion;
+        if (regionCmp !== 0) return regionCmp;
+        // Within same region, sort by date descending
+        return new Date(b.date).getTime() - new Date(a.date).getTime();
+      }
+
       let aVal = a[sortField];
       let bVal = b[sortField];
 

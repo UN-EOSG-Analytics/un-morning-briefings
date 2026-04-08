@@ -434,6 +434,15 @@ export function EntriesTable({
                     !prevBriefingDate ||
                     prevBriefingDate !== currentBriefingDate;
 
+                  const prevEntryInSameDay =
+                    idx > 0 &&
+                    getBriefingDate(sortedEntries[idx - 1].date) ===
+                      currentBriefingDate;
+                  const showRegionHeader =
+                    sortField === "region" &&
+                    (!prevEntryInSameDay ||
+                      sortedEntries[idx - 1].region !== entry.region);
+
                   return [
                     showSeparator && (
                       <tr key={`sep-${entry.id}`} className="bg-slate-100">
@@ -545,6 +554,22 @@ export function EntriesTable({
                         </td>
                       </tr>
                     ),
+                    showRegionHeader &&
+                      !collapsedBriefings.has(currentBriefingDate) && (
+                        <tr
+                          key={`region-${entry.id}`}
+                          className="bg-un-blue/5"
+                        >
+                          <td
+                            colSpan={showDiscussionColumn ? 7 : 6}
+                            className="px-2 py-1.5 sm:px-4"
+                          >
+                            <span className="text-xs font-bold tracking-wide text-un-blue uppercase">
+                              {entry.region}
+                            </span>
+                          </td>
+                        </tr>
+                      ),
                     !collapsedBriefings.has(currentBriefingDate) && (
                       <tr
                         key={entry.id}

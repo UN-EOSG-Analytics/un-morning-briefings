@@ -33,6 +33,9 @@ import {
   Send,
   ChevronDown,
   ChevronRight,
+  ArrowUp,
+  ArrowDown,
+  ArrowUpDown,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -263,6 +266,17 @@ export function EntriesTable({
     }
   };
 
+  const SortIcon = ({ field }: { field: string }) => {
+    if (sortField === field) {
+      return sortDirection === "asc" ? (
+        <ArrowUp className="h-3 w-3" />
+      ) : (
+        <ArrowDown className="h-3 w-3" />
+      );
+    }
+    return <ArrowUpDown className="h-3 w-3 opacity-40" />;
+  };
+
   // Extract unique briefing dates from entries
   const uniqueDates = Array.from(
     new Set(entries.map((entry) => getBriefingDate(entry.date))),
@@ -315,18 +329,18 @@ export function EntriesTable({
                 <th className="min-w-12 rounded-tl-xl px-2 py-3 text-left text-xs font-semibold tracking-wide text-slate-700 uppercase sm:min-w-26 sm:px-4">
                   <div className="flex items-center gap-1 sm:gap-2">
                     <span
-                      className="hidden cursor-pointer rounded px-1 py-1 whitespace-nowrap hover:bg-slate-100 sm:inline"
-                      onClick={() => handleSort("date")}
-                    >
-                      {labels.entries.columns.date}{" "}
-                      {sortField === "date" &&
-                        (sortDirection === "asc" ? "↑" : "↓")}
-                    </span>
-                    <span
-                      className="cursor-pointer rounded px-1 py-1 hover:bg-slate-100 sm:hidden"
+                      className="hidden cursor-pointer items-center gap-1 rounded px-1 py-1 whitespace-nowrap hover:bg-slate-100 sm:inline-flex"
                       onClick={() => handleSort("date")}
                     >
                       {labels.entries.columns.date}
+                      <SortIcon field="date" />
+                    </span>
+                    <span
+                      className="inline-flex cursor-pointer items-center gap-1 rounded px-1 py-1 hover:bg-slate-100 sm:hidden"
+                      onClick={() => handleSort("date")}
+                    >
+                      {labels.entries.columns.date}
+                      <SortIcon field="date" />
                     </span>
                     <div className="hidden sm:block">
                       <ColumnFilter
@@ -356,23 +370,21 @@ export function EntriesTable({
                 </th>
                 <th className="px-2 py-3 text-left text-xs font-semibold tracking-wide text-slate-700 uppercase sm:px-4">
                   <span
-                    className="inline-block cursor-pointer rounded px-1 py-1 hover:bg-slate-100"
+                    className="inline-flex cursor-pointer items-center gap-1 rounded px-1 py-1 hover:bg-slate-100"
                     onClick={() => handleSort("headline")}
                   >
-                    {labels.entries.columns.headline}{" "}
-                    {sortField === "headline" &&
-                      (sortDirection === "asc" ? "↑" : "↓")}
+                    {labels.entries.columns.headline}
+                    <SortIcon field="headline" />
                   </span>
                 </th>
                 <th className="hidden px-2 py-3 text-left text-xs font-semibold tracking-wide text-slate-700 uppercase sm:table-cell sm:px-3 lg:px-4">
                   <div className="flex items-center gap-2">
                     <span
-                      className="cursor-pointer rounded px-1 py-1 hover:bg-slate-100"
+                      className="inline-flex cursor-pointer items-center gap-1 rounded px-1 py-1 hover:bg-slate-100"
                       onClick={() => handleSort("region")}
                     >
-                      {labels.entries.columns.region}{" "}
-                      {sortField === "region" &&
-                        (sortDirection === "asc" ? "↑" : "↓")}
+                      {labels.entries.columns.region}
+                      <SortIcon field="region" />
                     </span>
                     <ColumnFilter
                       columnName={labels.entries.columns.region}
@@ -385,12 +397,11 @@ export function EntriesTable({
                 <th className="hidden px-2 py-3 text-left text-xs font-semibold tracking-wide text-slate-700 uppercase sm:table-cell sm:px-3 lg:px-4">
                   <div className="flex items-center gap-2">
                     <span
-                      className="cursor-pointer rounded px-1 py-1 hover:bg-slate-100"
+                      className="inline-flex cursor-pointer items-center gap-1 rounded px-1 py-1 hover:bg-slate-100"
                       onClick={() => handleSort("country")}
                     >
-                      {labels.entries.columns.tag}{" "}
-                      {sortField === "country" &&
-                        (sortDirection === "asc" ? "↑" : "↓")}
+                      {labels.entries.columns.tag}
+                      <SortIcon field="country" />
                     </span>
                     <ColumnFilter
                       columnName={labels.entries.columns.tag}

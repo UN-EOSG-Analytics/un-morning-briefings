@@ -1,9 +1,9 @@
-export type PopupType = 'success' | 'error' | 'warning' | 'info' | 'confirm';
+export type PopupType = "success" | "error" | "warning" | "info" | "confirm";
 
 export interface PopupAction {
   label: string;
   onClick: () => void | Promise<void>;
-  variant?: 'default' | 'destructive';
+  variant?: "default" | "destructive";
 }
 
 export interface Popup {

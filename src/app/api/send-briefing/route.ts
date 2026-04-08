@@ -1,159 +1,166 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import nodemailer from 'nodemailer';
-import * as fs from 'fs';
-import * as path from 'path';
+import { NextRequest, NextResponse } from "next/server";
+import { checkAuth } from "@/lib/auth-helper";
+import { sendEmail, buildEmailHtml } from "@/lib/email-service";
+import { formatDateLong } from "@/lib/format-date";
+import { query } from "@/lib/db";
 
-/**
- * Format a date string (YYYY-MM-DD) to long format without timezone conversion
- */
-function formatDateLong(dateStr: string): string {
-  const [year, month, day] = dateStr.split('-').map(Number);
-  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-  
-  // Create date object without timezone issues (use UTC components)
-  const date = new Date(Date.UTC(year, month - 1, day));
-  const dayOfWeek = dayNames[date.getUTCDay()];
-  
-  return `${dayOfWeek}, ${monthNames[month - 1]} ${day}, ${year}`;
+async function logSend(
+  recipients: string[],
+  status: "success" | "failed",
+  triggeredBy: string,
+  briefingDate: string | null,
+  errorMsg?: string,
+) {
+  try {
+    await query(
+      `INSERT INTO morning_briefings.email_send_log
+         (recipients, status, error_msg, briefing_date, triggered_by)
+       VALUES ($1, $2, $3, $4, $5)`,
+      [
+        JSON.stringify(recipients),
+        status,
+        errorMsg ?? null,
+        briefingDate ?? null,
+        triggeredBy,
+      ],
+    );
+  } catch (err) {
+    // Never let a logging failure affect the response
+    console.error("[SEND-BRIEFING] Failed to write send log:", err);
+  }
 }
-
-// Create a transporter using the configured SMTP server
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: parseInt(process.env.SMTP_PORT || '587'),
-  secure: process.env.SMTP_PORT === '465',
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-});
 
 export async function POST(request: NextRequest) {
   try {
     // Check authentication
-    const session = await getServerSession();
-    if (!session?.user?.email) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
+    const auth = await checkAuth();
+    if (!auth.authenticated || !auth.session?.user?.email) {
+      return (
+        auth.response ??
+        NextResponse.json({ error: "Unauthorized" }, { status: 401 })
       );
     }
 
-    const { docxBlob, fileName, briefingDate } = await request.json();
+    const { docxBlob, fileName, briefingDate, sendToSelf } =
+      await request.json();
 
     if (!docxBlob || !fileName) {
       return NextResponse.json(
-        { error: 'Missing docxBlob or fileName' },
-        { status: 400 }
+        { error: "Missing docxBlob or fileName" },
+        { status: 400 },
       );
     }
 
-    // Convert base64 blob to Buffer
-    const base64Data = docxBlob.split(',')[1] || docxBlob;
-    const buffer = Buffer.from(base64Data, 'base64');
+    // When sendToSelf is true, skip the distribution list entirely.
+    let recipients: string[];
 
-    // Read and encode the logo as base64
-    let logoDataUri = '';
-    try {
-      const logoPath = path.join(process.cwd(), 'public/images/UN_Logo_Stacked_Colour_English.png');
-      const logoBuffer = fs.readFileSync(logoPath);
-      logoDataUri = `data:image/png;base64,${logoBuffer.toString('base64')}`;
-    } catch (error) {
-      console.warn('[EMAIL SERVICE] Warning: Could not read logo file', error);
+    if (sendToSelf) {
+      recipients = [auth.session.user.email];
+    } else {
+      // Build recipient list: all whitelisted emails + any additional recipients
+      // from app_settings, deduplicated. Falls back to the current user only if
+      // both sources are empty.
+      const recipientSet = new Set<string>();
+
+      try {
+        const [whitelistResult, settingsResult] = await Promise.all([
+          query<{ email: string }>(
+            `SELECT email FROM morning_briefings.user_whitelist ORDER BY email`,
+          ),
+          query<{ value: string }>(
+            `SELECT value FROM morning_briefings.app_settings WHERE key = 'email_recipients'`,
+          ),
+        ]);
+
+        for (const row of whitelistResult.rows) {
+          recipientSet.add(row.email.toLowerCase());
+        }
+
+        if (settingsResult.rows.length > 0) {
+          try {
+            const extra = JSON.parse(settingsResult.rows[0].value);
+            if (Array.isArray(extra)) {
+              for (const e of extra) {
+                if (typeof e === "string" && e.trim()) {
+                  recipientSet.add(e.toLowerCase().trim());
+                }
+              }
+            }
+          } catch {
+            // malformed JSON — ignore
+          }
+        }
+      } catch (err) {
+        console.error("[SEND-BRIEFING] Failed to load recipients:", err);
+      }
+
+      recipients =
+        recipientSet.size > 0 ? [...recipientSet] : [auth.session.user.email];
     }
 
-    const siteTitle = 'United Nations | Morning Briefings';
+    // Convert base64 blob to Buffer
+    const base64Data = docxBlob.split(",")[1] || docxBlob;
+    const buffer = Buffer.from(base64Data, "base64");
+
     const formattedDate = formatDateLong(briefingDate);
 
-    // Send email with attachment
-    await transporter.sendMail({
-      from: process.env.SMTP_FROM,
-      to: session.user.email,
-      subject: `Morning Briefing - ${formattedDate}`,
-      html: `
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <meta charset="utf-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          </head>
-          <body style="margin:0;padding:0;background:#ffffff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
-            <table width="100%" cellpadding="0" cellspacing="0" style="background:#ffffff;padding:32px 20px;">
-              <tr>
-                <td align="center">
-                  <table width="100%" style="max-width:520px;">
-                    <!-- Header matching website -->
-                    <tr>
-                      <td style="padding:0 0 24px;">
-                        <table cellpadding="0" cellspacing="0">
-                          <tr>
-                            ${logoDataUri ? `<td style="vertical-align:middle;padding-right:16px;">
-                              <img src="${logoDataUri}" alt="UN" width="180" style="display:block;border:none;max-width:100%;" />
-                            </td>` : ''}
-                            <td style="vertical-align:middle;">
-                              <div style="font-size:20px;font-weight:700;color:#000000;line-height:1.2;">${siteTitle}</div>
-                            </td>
-                          </tr>
-                        </table>
-                      </td>
-                    </tr>
-                    <!-- Divider -->
-                    <tr>
-                      <td style="border-top:1px solid #e5e7eb;padding:24px 0 0;"></td>
-                    </tr>
-                    <!-- Content -->
-                    <tr>
-                      <td>
-                        <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#374151;">
-                          Please find the daily morning briefing for <strong>${formattedDate}</strong> attached to this email.
-                        </p>
-                        <p style="margin:16px 0;font-size:15px;line-height:1.6;color:#374151;">
-                          The document contains all approved entries organized by priority with full content and formatting.
-                        </p>
-                      </td>
-                    </tr>
-                    <!-- Footer -->
-                    <tr>
-                      <td style="padding:32px 0 0;">
-                        <p style="margin:0;font-size:12px;color:#9ca3af;line-height:1.5;">
-                          This email was sent from the United Nations Morning Briefing System.
-                        </p>
-                      </td>
-                    </tr>
-                  </table>
-                </td>
-              </tr>
-            </table>
-          </body>
-        </html>
-      `,
-      text: `
-        United Nations | Morning Briefings
+    const contentHtml = `
+      <p style="margin:0 0 12px;font-size:15px;line-height:1.6;color:#374151;">
+        Please find attached the Morning Meeting Update for <strong>${formattedDate}</strong>, prepared by the Political Unit, EOSG.
+      </p>
+      <p style="margin:0 0 12px;font-size:15px;line-height:1.6;color:#374151;">
+        Have a good day!
+      </p>
+      <p style="margin:0;font-size:15px;line-height:1.6;color:#374151;">
+        For technical assistance, please reach out to the SPMU Data Team.
+      </p>`;
 
-        Please find the daily morning briefing for ${formattedDate} attached to this email.
+    const html = buildEmailHtml(contentHtml);
 
-        The document contains all approved entries organized by priority with full content and formatting.
-      `,
-      attachments: [
-        {
-          filename: fileName,
-          content: buffer,
-          contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        },
-      ],
-    });
+    // plain-text fallback
+    const text = `Please find attached the Morning Meeting Update for ${formattedDate}, prepared by the Political Unit, EOSG.\n\nHave a good day!\n\nFor technical assistance, please reach out to the SPMU Data Team.`;
+
+    const success = await sendEmail(
+      recipients.join(", "),
+      `Morning Meeting Update - ${formattedDate}`,
+      html,
+      text,
+      {
+        attachments: [
+          {
+            filename: fileName,
+            content: buffer,
+            contentType:
+              "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+          },
+        ],
+      },
+    );
+
+    await logSend(
+      recipients,
+      success ? "success" : "failed",
+      auth.session.user.email,
+      briefingDate ?? null,
+      success ? undefined : "sendEmail returned false",
+    );
+
+    if (!success) {
+      return NextResponse.json(
+        { error: "Failed to send email" },
+        { status: 500 },
+      );
+    }
 
     return NextResponse.json({
       success: true,
-      message: 'Email sent successfully',
+      message: "Email sent successfully",
     });
   } catch (error) {
-    console.error('[SEND-BRIEFING] Error:', error);
+    console.error("[SEND-BRIEFING] Error:", error);
     return NextResponse.json(
-      { error: 'Failed to send email' },
-      { status: 500 }
+      { error: "Failed to send email" },
+      { status: 500 },
     );
   }
 }

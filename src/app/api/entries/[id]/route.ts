@@ -1,14 +1,32 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { query } from '@/lib/db';
-import { blobStorage } from '@/lib/blob-storage';
-import { convertImageReferencesServerSide } from '@/lib/image-conversion';
-import { checkAuth } from '@/lib/auth-helper';
+import { NextRequest, NextResponse } from "next/server";
+import { query } from "@/lib/db";
+import { blobStorage } from "@/lib/blob-storage";
+import { convertImageReferencesServerSide } from "@/lib/image-conversion";
+import { checkAuth } from "@/lib/auth-helper";
+import {
+  serializeCountry,
+  serializeStringOrArray,
+  stripHtmlToText,
+  fetchEntryById,
+} from "@/lib/entry-queries";
+import labels from "@/lib/labels.json";
+
+const VALID_CATEGORIES = (labels as any).categories as string[];
+const VALID_PRIORITIES = (
+  (labels as any).priorities as { value: string }[]
+).map((p) => p.value);
+const VALID_REGIONS = (labels as any).regions as string[];
+const VALID_STATUSES = ["draft", "submitted"];
+const VALID_DISCUSSION_STATUSES = ["pending", "discussed"];
 
 /**
  * GET /api/entries/[id]
  * Fetch a single entry by ID with image conversion
  */
-export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
   // Check authentication
   const auth = await checkAuth();
   if (!auth.authenticated) {
@@ -17,65 +35,32 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
   try {
     const { id } = await params;
-    const result = await query(
-      `SELECT 
-        e.id,
-        e.category,
-        e.priority,
-        e.region,
-        e.country,
-        e.headline,
-        e.date,
-        e.entry,
-        e.source_url as "sourceUrl",
-        e.source_date as "sourceDate",
-        e.pu_note as "puNote",
-        e.author,
-        e.status,
-        e.approval_status as "approvalStatus",
-        e.ai_summary as "aiSummary",
-        COALESCE(
-          json_agg(
-            json_build_object(
-              'id', i.id,
-              'entryId', i.entry_id,
-              'filename', i.filename,
-              'mimeType', i.mime_type,
-              'blobUrl', i.blob_url,
-              'width', i.width,
-              'height', i.height,
-              'position', i.position
-            ) ORDER BY i.position NULLS LAST
-          ) FILTER (WHERE i.id IS NOT NULL),
-          '[]'
-        ) as images
-      FROM pu_morning_briefings.entries e
-      LEFT JOIN pu_morning_briefings.images i ON e.id = i.entry_id
-      WHERE e.id = $1
-      GROUP BY e.id`,
-      [id]
-    );
+    const entry = await fetchEntryById(id);
 
-    if (result.rows.length === 0) {
-      return NextResponse.json({ error: 'Entry not found' }, { status: 404 });
+    if (!entry) {
+      return NextResponse.json(
+        { error: labels.entries.errors.notFound },
+        { status: 404 },
+      );
     }
 
-    const entry = result.rows[0];
-    
     // Convert blob URLs to data URLs for private blob storage
     if (entry.images && entry.images.length > 0) {
       entry.entry = await convertImageReferencesServerSide(
         entry.entry,
         entry.images,
         blobStorage,
-        'GET /api/entries/[id]'
+        "GET /api/entries/[id]",
       );
     }
 
     return NextResponse.json(entry);
   } catch (error) {
-    console.error('Error fetching entry:', error);
-    return NextResponse.json({ error: 'Failed to fetch entry' }, { status: 500 });
+    console.error("Error fetching entry:", error);
+    return NextResponse.json(
+      { error: labels.entries.errors.fetchFailed },
+      { status: 500 },
+    );
   }
 }
 
@@ -83,7 +68,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
  * PUT /api/entries/[id]
  * Update an entry and handle image replacements
  */
-export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
   // Check authentication
   const auth = await checkAuth();
   if (!auth.authenticated) {
@@ -95,15 +83,40 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     const body = await request.json();
     const { entry: entryContent, images, ...data } = body;
 
-    console.log('PUT /api/entries/[id] - Entry ID:', id);
-    console.log('PUT /api/entries/[id] - Body keys:', Object.keys(body));
-    console.log('PUT /api/entries/[id] - Data:', JSON.stringify(data, null, 2));
+    // Validate domain values
+    if (
+      data.category !== undefined &&
+      !VALID_CATEGORIES.includes(data.category)
+    ) {
+      return NextResponse.json({ error: "Invalid category" }, { status: 400 });
+    }
+    if (
+      data.priority !== undefined &&
+      !VALID_PRIORITIES.includes(data.priority)
+    ) {
+      return NextResponse.json({ error: "Invalid priority" }, { status: 400 });
+    }
+    if (data.region !== undefined && !VALID_REGIONS.includes(data.region)) {
+      return NextResponse.json({ error: "Invalid region" }, { status: 400 });
+    }
+    if (data.status !== undefined && !VALID_STATUSES.includes(data.status)) {
+      return NextResponse.json({ error: "Invalid status" }, { status: 400 });
+    }
+    if (
+      data.discussionStatus !== undefined &&
+      !VALID_DISCUSSION_STATUSES.includes(data.discussionStatus)
+    ) {
+      return NextResponse.json(
+        { error: "Invalid discussion status" },
+        { status: 400 },
+      );
+    }
 
     // Delete existing images from blob storage and database if new ones are provided
     if (images) {
       const existingImagesResult = await query(
-        `SELECT id, blob_url FROM pu_morning_briefings.images WHERE entry_id = $1`,
-        [id]
+        `SELECT id, blob_url FROM morning_briefings.images WHERE entry_id = $1`,
+        [id],
       );
 
       // Delete from blob storage
@@ -111,12 +124,14 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         try {
           await blobStorage.delete(img.blob_url);
         } catch (error) {
-          console.error('Error deleting blob:', error);
+          console.error("Error deleting blob:", error);
         }
       }
 
       // Delete from database
-      await query(`DELETE FROM pu_morning_briefings.images WHERE entry_id = $1`, [id]);
+      await query(`DELETE FROM morning_briefings.images WHERE entry_id = $1`, [
+        id,
+      ]);
     }
 
     // Upload new images to blob storage
@@ -124,8 +139,12 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     if (images && images.length > 0) {
       for (const img of images) {
         try {
-          const buffer = Buffer.from(img.data, 'base64');
-          const result = await blobStorage.upload(buffer, img.filename, img.mimeType);
+          const buffer = Buffer.from(img.data, "base64");
+          const result = await blobStorage.upload(
+            buffer,
+            img.filename,
+            img.mimeType,
+          );
           uploadedImages.push({
             filename: result.filename,
             mimeType: result.mimeType,
@@ -160,7 +179,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     }
     if (data.country !== undefined) {
       updateFields.push(`country = $${paramCount++}`);
-      updateValues.push(data.country);
+      updateValues.push(serializeCountry(data.country));
     }
     if (data.headline !== undefined) {
       updateFields.push(`headline = $${paramCount++}`);
@@ -173,6 +192,14 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     if (entryContent !== undefined) {
       updateFields.push(`entry = $${paramCount++}`);
       updateValues.push(entryContent);
+      updateFields.push(`text_content = $${paramCount++}`);
+      updateValues.push(stripHtmlToText(entryContent));
+    }
+    if (data.sourceName !== undefined) {
+      updateFields.push(`source_name = $${paramCount++}`);
+      updateValues.push(
+        data.sourceName ? serializeStringOrArray(data.sourceName) : null,
+      );
     }
     if (data.sourceUrl !== undefined) {
       updateFields.push(`source_url = $${paramCount++}`);
@@ -186,29 +213,35 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       updateFields.push(`pu_note = $${paramCount++}`);
       updateValues.push(data.puNote);
     }
-    if (data.author !== undefined) {
-      updateFields.push(`author = $${paramCount++}`);
-      updateValues.push(data.author);
+    if (data.thematic !== undefined) {
+      updateFields.push(`thematic = $${paramCount++}`);
+      updateValues.push(
+        data.thematic ? serializeStringOrArray(data.thematic) : null,
+      );
     }
     if (data.status !== undefined) {
       updateFields.push(`status = $${paramCount++}`);
       updateValues.push(data.status);
     }
-    if (data.approvalStatus !== undefined) {
-      updateFields.push(`approval_status = $${paramCount++}`);
-      updateValues.push(data.approvalStatus);
+    if (data.discussionStatus !== undefined) {
+      updateFields.push(`discussion_status = $${paramCount++}`);
+      updateValues.push(data.discussionStatus);
     }
     if (data.aiSummary !== undefined) {
       updateFields.push(`ai_summary = $${paramCount++}`);
       updateValues.push(data.aiSummary ? JSON.stringify(data.aiSummary) : null);
+    }
+    if (data.previousEntryId !== undefined) {
+      updateFields.push(`previous_entry_id = $${paramCount++}`);
+      updateValues.push(data.previousEntryId || null);
     }
 
     updateValues.push(id);
 
     if (updateFields.length > 0) {
       await query(
-        `UPDATE pu_morning_briefings.entries SET ${updateFields.join(', ')} WHERE id = $${paramCount}`,
-        updateValues
+        `UPDATE morning_briefings.entries SET ${updateFields.join(", ")} WHERE id = $${paramCount}`,
+        updateValues,
       );
     }
 
@@ -216,7 +249,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     if (uploadedImages.length > 0) {
       for (const img of uploadedImages) {
         await query(
-          `INSERT INTO pu_morning_briefings.images (
+          `INSERT INTO morning_briefings.images (
             id, entry_id, filename, mime_type, blob_url, width, height, position
           ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
           [
@@ -225,76 +258,34 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
             img.filename,
             img.mimeType,
             img.blobUrl,
-            img.width || null,
-            img.height || null,
-            img.position || null,
-          ]
+            img.width ?? null,
+            img.height ?? null,
+            img.position ?? null,
+          ],
         );
       }
     }
 
-    // Fetch updated entry with images
-    const result = await query(
-      `SELECT 
-        e.id,
-        e.category,
-        e.priority,
-        e.region,
-        e.country,
-        e.headline,
-        e.date,
-        e.entry,
-        e.source_url as "sourceUrl",
-        COALESCE(e.source_date, NULL) as "sourceDate",
-        e.pu_note as "puNote",
-        e.author,
-        e.status,
-        e.approval_status as "approvalStatus",
-        e.ai_summary as "aiSummary",
-        COALESCE(
-          json_agg(
-            json_build_object(
-              'id', i.id,
-              'entryId', i.entry_id,
-              'filename', i.filename,
-              'mimeType', i.mime_type,
-              'blobUrl', i.blob_url,
-              'width', i.width,
-              'height', i.height,
-              'position', i.position
-            ) ORDER BY i.position NULLS LAST
-          ) FILTER (WHERE i.id IS NOT NULL),
-          '[]'
-        ) as images
-      FROM pu_morning_briefings.entries e
-      LEFT JOIN pu_morning_briefings.images i ON e.id = i.entry_id
-      WHERE e.id = $1
-      GROUP BY e.id`,
-      [id]
-    );
+    // Fetch updated entry with images and author info
+    const entry = await fetchEntryById(id);
 
-    const entry = result.rows[0];
-    
     // Convert blob URLs to data URLs for private blob storage
     if (entry.images && entry.images.length > 0) {
       entry.entry = await convertImageReferencesServerSide(
         entry.entry,
         entry.images,
         blobStorage,
-        'PUT /api/entries/[id]'
+        "PUT /api/entries/[id]",
       );
     }
 
     return NextResponse.json(entry);
   } catch (error) {
-    console.error('Error updating entry:', error);
-    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    return NextResponse.json({ 
-      error: 'Failed to update entry', 
-      details: errorMessage,
-      stack: error instanceof Error ? error.stack : undefined
-    }, { status: 500 });
+    console.error("Error updating entry:", error);
+    return NextResponse.json(
+      { error: labels.entries.errors.updateFailed },
+      { status: 500 },
+    );
   }
 }
 
@@ -302,7 +293,10 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
  * DELETE /api/entries/[id]
  * Delete an entry and its associated images
  */
-export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
   // Check authentication
   const auth = await checkAuth();
   if (!auth.authenticated) {
@@ -314,32 +308,37 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
 
     // Delete images from blob storage first
     const existingImagesResult = await query(
-      `SELECT id, blob_url FROM pu_morning_briefings.images WHERE entry_id = $1`,
-      [id]
+      `SELECT id, blob_url FROM morning_briefings.images WHERE entry_id = $1`,
+      [id],
     );
 
     for (const img of existingImagesResult.rows) {
       try {
         await blobStorage.delete(img.blob_url);
       } catch (error) {
-        console.error('Error deleting blob:', error);
+        console.error("Error deleting blob:", error);
       }
     }
 
     // Delete entry (will cascade delete images from database)
-    const deleteResult = await query(`DELETE FROM pu_morning_briefings.entries WHERE id = $1 RETURNING id`, [id]);
-    
+    const deleteResult = await query(
+      `DELETE FROM morning_briefings.entries WHERE id = $1 RETURNING id`,
+      [id],
+    );
+
     if (deleteResult.rowCount === 0) {
-      return NextResponse.json({ error: 'Entry not found' }, { status: 404 });
+      return NextResponse.json(
+        { error: labels.entries.errors.notFound },
+        { status: 404 },
+      );
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Error deleting entry:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    return NextResponse.json({ 
-      error: 'Failed to delete entry',
-      details: errorMessage 
-    }, { status: 500 });
+    console.error("Error deleting entry:", error);
+    return NextResponse.json(
+      { error: labels.entries.errors.deleteFailed },
+      { status: 500 },
+    );
   }
 }

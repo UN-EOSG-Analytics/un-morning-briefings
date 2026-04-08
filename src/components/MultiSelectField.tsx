@@ -1,0 +1,330 @@
+"use client";
+
+import { useState, useMemo } from "react";
+import { Search, X, Check, Sparkles } from "lucide-react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+} from "@/components/ui/command";
+import { cn } from "@/lib/utils";
+import {
+  inputBaseStyles,
+  inputDefaultStyles,
+  inputErrorStyles,
+} from "@/components/TextField";
+import { FieldLabel } from "@/components/FieldLabel";
+import { FieldError } from "@/components/FieldError";
+
+interface MultiSelectFieldProps {
+  label?: string;
+  placeholder?: string;
+  value: string[];
+  onValueChange: (value: string[]) => void;
+  options: Array<{ value: string; label: string; showStar?: boolean }>;
+  error?: string;
+  required?: boolean;
+  className?: string;
+  disabled?: boolean;
+  showLabel?: boolean;
+  searchable?: boolean;
+  existingCustomValues?: string[]; // Custom values that exist in the database
+}
+
+export function MultiSelectField({
+  label,
+  placeholder = "Select options...",
+  value,
+  onValueChange,
+  options,
+  error,
+  required = false,
+  className = "w-full",
+  disabled = false,
+  showLabel = true,
+  searchable = true,
+  existingCustomValues = [],
+}: MultiSelectFieldProps) {
+  const [open, setOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const { selectedOptions, unselectedOptions, matchingCustomOptions } =
+    useMemo(() => {
+      const searchLower = searchQuery.toLowerCase();
+      const filtered = searchQuery
+        ? options.filter((option) =>
+            option.label.toLowerCase().includes(searchLower),
+          )
+        : options;
+
+      const selected = filtered.filter((option) =>
+        value.includes(option.value),
+      );
+      const unselected = filtered.filter(
+        (option) => !value.includes(option.value),
+      );
+
+      // Find custom values that match the search but aren't in the predefined options
+      const predefinedValues = options.map((opt) => opt.value);
+      const matchingCustom = searchQuery
+        ? existingCustomValues
+            .filter(
+              (customValue) =>
+                !predefinedValues.includes(customValue) &&
+                customValue.toLowerCase().includes(searchLower),
+            )
+            .map((customValue) => ({
+              value: customValue,
+              label: customValue,
+              isCustom: true,
+            }))
+        : [];
+
+      return {
+        selectedOptions: selected,
+        unselectedOptions: unselected,
+        matchingCustomOptions: matchingCustom,
+      };
+    }, [options, searchQuery, value, existingCustomValues]);
+
+  const handleToggle = (optionValue: string) => {
+    const newValue = value.includes(optionValue)
+      ? value.filter((v) => v !== optionValue)
+      : [...value, optionValue];
+    onValueChange(newValue);
+  };
+
+  const handleClear = () => {
+    onValueChange([]);
+  };
+
+  const handleAddCustom = () => {
+    const trimmedQuery = searchQuery.trim();
+    if (trimmedQuery && !value.includes(trimmedQuery)) {
+      onValueChange([...value, trimmedQuery]);
+      setSearchQuery("");
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleAddCustom();
+    }
+  };
+
+  const selectedLabels = value
+    .map((v) => {
+      const option = options.find((opt) => opt.value === v);
+      return option ? option.label : v; // Use value itself if not found in options (custom entry)
+    })
+    .filter(Boolean);
+
+  return (
+    <div className={cn("space-y-2", className)}>
+      {showLabel && <FieldLabel label={label} required={required} />}
+
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            role="combobox"
+            aria-expanded={open}
+            disabled={disabled}
+            className={cn(
+              inputBaseStyles,
+              inputDefaultStyles,
+              "h-auto min-h-9 justify-start gap-1 px-3 font-normal hover:bg-[var(--form-field-background)] hover:text-[var(--form-field-text)]",
+              error && inputErrorStyles,
+            )}
+          >
+            <div className="flex flex-wrap items-center gap-1">
+              {value.length === 0 ? (
+                <span className="form-field-placeholder">{placeholder}</span>
+              ) : (
+                <>
+                  {selectedLabels.map((label, index) => (
+                    <span
+                      key={index}
+                      className="inline-flex items-center gap-1 rounded-full bg-un-blue/10 px-2 py-0.5 text-xs whitespace-nowrap text-un-blue"
+                    >
+                      {label}
+                      <div
+                        role="button"
+                        tabIndex={0}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleToggle(value[index]);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            handleToggle(value[index]);
+                          }
+                        }}
+                        className="ml-0.5 flex cursor-pointer items-center hover:text-un-blue/80"
+                      >
+                        <X className="h-3 w-3" />
+                      </div>
+                    </span>
+                  ))}
+                </>
+              )}
+            </div>
+            {value.length > 0 && (
+              <div
+                className="ml-auto cursor-pointer p-1 hover:opacity-100"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleClear();
+                }}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleClear();
+                  }
+                }}
+              >
+                <X className="h-4 w-4 shrink-0 opacity-50 hover:opacity-100" />
+              </div>
+            )}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent
+          className="form-standardized-portal w-full p-0"
+          align="start"
+          side="bottom"
+          sideOffset={4}
+          avoidCollisions={false}
+        >
+          <Command>
+            {searchable && (
+              <div className="flex items-center border-b border-slate-100 px-3">
+                <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+                <input
+                  placeholder="Search..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  className="form-field-search h-9 py-2 outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                />
+              </div>
+            )}
+            <CommandEmpty>
+              {searchQuery.trim() ? (
+                <div className="px-2 py-3 text-center">
+                  <p className="mb-1.5 text-xs text-slate-500">
+                    No matching options
+                  </p>
+                  <p className="text-xs text-slate-400">
+                    Press{" "}
+                    <kbd className="rounded border border-slate-300 bg-slate-100 px-1.5 py-0.5 text-xs font-medium text-slate-700 shadow-sm">
+                      Enter
+                    </kbd>{" "}
+                    or click below to add
+                  </p>
+                </div>
+              ) : (
+                <div className="px-2 py-3 text-center text-xs text-slate-500">
+                  No options found.
+                </div>
+              )}
+            </CommandEmpty>
+            <CommandGroup className="max-h-64 overflow-auto">
+              {/* Show existing custom values that match the search */}
+              {matchingCustomOptions.length > 0 && (
+                <>
+                  <div className="px-2 py-1.5 text-xs font-medium text-slate-500">
+                    Previously added
+                  </div>
+                  {matchingCustomOptions.map((option) => (
+                    <CommandItem
+                      key={option.value}
+                      value={option.value}
+                      onSelect={() => handleToggle(option.value)}
+                      className="cursor-pointer"
+                    >
+                      <Check
+                        className={`mr-2 h-4 w-4 ${value.includes(option.value) ? "text-un-blue opacity-100" : "opacity-0"}`}
+                      />
+                      <span>{option.label}</span>
+                    </CommandItem>
+                  ))}
+                  <div className="mx-2 my-1 h-px bg-slate-200" />
+                </>
+              )}
+              {/* Show "Add new" option only if no matches found */}
+              {searchQuery.trim() &&
+                selectedOptions.length === 0 &&
+                unselectedOptions.length === 0 &&
+                matchingCustomOptions.length === 0 && (
+                  <CommandItem
+                    value={searchQuery.trim()}
+                    onSelect={handleAddCustom}
+                    className="mx-2 my-1 cursor-pointer rounded border border-un-blue/20 bg-un-blue/5"
+                  >
+                    <Check className="mr-2 h-4 w-4 opacity-0" />
+                    <span className="font-medium text-un-blue">
+                      Add &quot;{searchQuery.trim()}&quot;
+                    </span>
+                  </CommandItem>
+                )}
+              {selectedOptions.length > 0 && (
+                <>
+                  {selectedOptions.map((option) => (
+                    <CommandItem
+                      key={option.value}
+                      value={option.value}
+                      onSelect={() => handleToggle(option.value)}
+                      className="cursor-pointer bg-un-blue/5"
+                    >
+                      <Check className="mr-2 h-4 w-4 text-un-blue opacity-100" />
+                      <div className="flex flex-1 items-center gap-2">
+                        <span className="font-medium">{option.label}</span>
+                        {option.showStar && (
+                          <Sparkles className="-ml-1 h-3 w-3 fill-un-blue/20 text-un-blue/30" />
+                        )}
+                      </div>
+                    </CommandItem>
+                  ))}
+                  {unselectedOptions.length > 0 && (
+                    <div className="mx-2 my-1 h-px bg-slate-200" />
+                  )}
+                </>
+              )}
+              {unselectedOptions.map((option) => (
+                <CommandItem
+                  key={option.value}
+                  value={option.value}
+                  onSelect={() => handleToggle(option.value)}
+                  className="cursor-pointer"
+                >
+                  <Check className="mr-2 h-4 w-4 opacity-0" />
+                  <div className="flex flex-1 items-center gap-2">
+                    <span>{option.label}</span>
+                    {option.showStar && (
+                      <Sparkles className="-ml-1 h-3 w-3 fill-un-blue/20 text-un-blue/30" />
+                    )}
+                  </div>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </Command>
+        </PopoverContent>
+      </Popover>
+
+      <FieldError error={error} />
+    </div>
+  );
+}

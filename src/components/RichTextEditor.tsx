@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import { useEditor, EditorContent } from '@tiptap/react';
-import StarterKit from '@tiptap/starter-kit';
-import Link from '@tiptap/extension-link';
-import TextAlign from '@tiptap/extension-text-align';
-import Image from '@tiptap/extension-image';
-import Highlight from '@tiptap/extension-highlight';
-import { Mark } from '@tiptap/core';
+import { useEditor, EditorContent } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import Link from "@tiptap/extension-link";
+import TextAlign from "@tiptap/extension-text-align";
+import Image from "@tiptap/extension-image";
+import Highlight from "@tiptap/extension-highlight";
+import { Mark } from "@tiptap/core";
 import {
   Bold,
   Italic,
@@ -29,10 +29,10 @@ import {
   Minimize,
   MessageCircle,
   Wand2,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { useRef, useState, useEffect, useCallback } from 'react';
-import { usePopup } from '@/lib/popup-context';
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useRef, useState, useEffect, useCallback } from "react";
+import { usePopup } from "@/lib/popup-context";
 
 interface RichTextEditorProps {
   content: string;
@@ -40,13 +40,15 @@ interface RichTextEditorProps {
   placeholder?: string;
   error?: boolean;
   minHeight?: string;
+  minimalMode?: boolean;
 }
 
 export function RichTextEditor({
   content,
   onChange,
   error = false,
-  minHeight = 'min-h-[200px]',
+  minHeight = "min-h-[200px]",
+  minimalMode = false,
 }: RichTextEditorProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { warning: showWarning, success: showSuccess } = usePopup();
@@ -55,29 +57,32 @@ export function RichTextEditor({
 
   const memoizedOnChange = useCallback(onChange, [onChange]);
 
-  const handleChange = useCallback((newContent: string) => {
-    memoizedOnChange(newContent);
-  }, [memoizedOnChange]);
+  const handleChange = useCallback(
+    (newContent: string) => {
+      memoizedOnChange(newContent);
+    },
+    [memoizedOnChange],
+  );
 
   // Custom Comment mark extension
   const CommentMark = Mark.create({
-    name: 'comment',
+    name: "comment",
     parseHTML() {
       return [
         {
-          tag: 'mark[data-comment]',
+          tag: "mark[data-comment]",
           getAttrs: (element) => ({
-            comment: (element as HTMLElement).getAttribute('data-comment'),
+            comment: (element as HTMLElement).getAttribute("data-comment"),
           }),
         },
       ];
     },
     renderHTML({ HTMLAttributes }) {
       return [
-        'mark',
+        "mark",
         {
-          'data-comment': HTMLAttributes.comment,
-          class: 'bg-orange-100 border-b-2 border-orange-400 cursor-help',
+          "data-comment": HTMLAttributes.comment,
+          class: "bg-orange-100 border-b-2 border-orange-400 cursor-help",
           title: HTMLAttributes.comment,
         },
         0,
@@ -86,10 +91,11 @@ export function RichTextEditor({
     addAttributes() {
       return {
         comment: {
-          default: '',
-          parseHTML: (element) => (element as HTMLElement).getAttribute('data-comment'),
+          default: "",
+          parseHTML: (element) =>
+            (element as HTMLElement).getAttribute("data-comment"),
           renderHTML: (attributes) => ({
-            'data-comment': attributes.comment,
+            "data-comment": attributes.comment,
           }),
         },
       };
@@ -102,13 +108,14 @@ export function RichTextEditor({
         heading: {
           levels: [1, 2, 3],
         },
+        link: false,
       }),
       Link.configure({
         openOnClick: false,
         autolink: true,
       }),
       TextAlign.configure({
-        types: ['heading', 'paragraph'],
+        types: ["heading", "paragraph"],
       }),
       Highlight.configure({
         multicolor: true,
@@ -118,7 +125,7 @@ export function RichTextEditor({
         inline: false,
         allowBase64: true,
         HTMLAttributes: {
-          class: 'editor-image rounded cursor-pointer',
+          class: "editor-image rounded cursor-pointer",
           draggable: true,
           contenteditable: false,
         },
@@ -126,25 +133,25 @@ export function RichTextEditor({
         addAttributes() {
           return {
             ...this.parent?.(),
-            'data-width': {
+            "data-width": {
               default: null,
-              parseHTML: (element) => element.getAttribute('data-width'),
+              parseHTML: (element) => element.getAttribute("data-width"),
               renderHTML: (attributes) => {
-                if (attributes['data-width']) {
+                if (attributes["data-width"]) {
                   return {
-                    'data-width': attributes['data-width'],
+                    "data-width": attributes["data-width"],
                   };
                 }
                 return {};
               },
             },
-            'data-height': {
+            "data-height": {
               default: null,
-              parseHTML: (element) => element.getAttribute('data-height'),
+              parseHTML: (element) => element.getAttribute("data-height"),
               renderHTML: (attributes) => {
-                if (attributes['data-height']) {
+                if (attributes["data-height"]) {
                   return {
-                    'data-height': attributes['data-height'],
+                    "data-height": attributes["data-height"],
                   };
                 }
                 return {};
@@ -196,14 +203,14 @@ export function RichTextEditor({
     if (!file) return;
 
     // Check file type
-    if (!file.type.startsWith('image/')) {
-      showWarning('Invalid File', 'Please select an image file');
+    if (!file.type.startsWith("image/")) {
+      showWarning("Invalid File", "Please select an image file");
       return;
     }
 
     // Check file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      showWarning('File Too Large', 'Image size should be less than 5MB');
+      showWarning("File Too Large", "Image size should be less than 5MB");
       return;
     }
 
@@ -215,14 +222,21 @@ export function RichTextEditor({
         // Create image element to get dimensions
         const img = new window.Image();
         img.onload = () => {
-          console.log('Image loaded with dimensions:', img.width, img.height);
-          editor.chain().focus().setImage({ 
-            src: url,
-            alt: `${img.width}x${img.height}`,
-          }).run();
+          editor
+            .chain()
+            .focus()
+            .setImage({
+              src: url,
+              alt: file.name || "uploaded image",
+            })
+            .updateAttributes("image", {
+              "data-width": String(img.width),
+              "data-height": String(img.height),
+            })
+            .run();
         };
         img.onerror = () => {
-          console.error('Failed to load image for dimensions');
+          console.error("Failed to load image for dimensions");
           // Fallback: insert without dimensions
           editor.chain().focus().setImage({ src: url }).run();
         };
@@ -232,54 +246,7 @@ export function RichTextEditor({
     reader.readAsDataURL(file);
 
     // Reset input
-    e.target.value = '';
-  };
-
-  /**
-   * Extract full sentences touched by selection for context-aware regeneration
-   * Returns the complete sentences that contain the selection, preserving all whitespace
-   */
-  const getFullSentenceContext = (text: string, selStart: number, selEnd: number) => {
-    // Find sentence boundaries (., !, ?) with optional whitespace
-    const sentenceEnders = /[.!?]+[\s]*/g;
-    
-    let sentenceStart = 0;
-    let sentenceEnd = text.length;
-    
-    // Find the start of the sentence containing the selection
-    // Look backward from selection start
-    const textBeforeSelection = text.substring(0, selStart);
-    const matches = [...textBeforeSelection.matchAll(sentenceEnders)];
-    if (matches.length > 0) {
-      const lastMatch = matches[matches.length - 1];
-      sentenceStart = (lastMatch.index ?? 0) + lastMatch[0].length;
-    }
-    
-    // Find the end of the sentence containing the selection
-    // Look forward from selection end
-    const textAfterSelection = text.substring(selEnd);
-    const nextMatch = textAfterSelection.match(sentenceEnders);
-    if (nextMatch && nextMatch.index !== undefined) {
-      sentenceEnd = selEnd + nextMatch.index + nextMatch[0].length;
-    }
-    
-    // Extract the full sentence(s) that contain the selection
-    const fullSentence = text.substring(sentenceStart, sentenceEnd);
-    
-    // Calculate relative positions within the sentence
-    const relativeStart = selStart - sentenceStart;
-    const relativeEnd = selEnd - sentenceStart;
-    
-    return {
-      fullSentence,
-      sentenceStart,
-      sentenceEnd,
-      relativeStart,
-      relativeEnd,
-      beforeText: fullSentence.substring(0, relativeStart),
-      selectedText: fullSentence.substring(relativeStart, relativeEnd),
-      afterText: fullSentence.substring(relativeEnd),
-    };
+    e.target.value = "";
   };
 
   const handleReformulate = async () => {
@@ -291,482 +258,561 @@ export function RichTextEditor({
     setIsReformulating(true);
     try {
       if (hasSelection) {
-        // Get the selected text with exact whitespace preservation
-        const selectedText = editor.state.doc.textBetween(from, to, '\n');
-        
+        // Get the selected text - use paragraph separator for multi-paragraph selections
+        const selectedText = editor.state.doc.textBetween(
+          from,
+          to,
+          "\n\n",
+          "\n",
+        );
+
         if (!selectedText.trim()) {
-          showWarning('No Text Selected', 'Please select text to regenerate');
+          showWarning("No Text Selected", "Please select text to regenerate");
           setIsReformulating(false);
           return;
         }
 
-        // Get full plain text to find sentence boundaries
-        const fullText = editor.getText();
-        
-        // Calculate the actual character position in plain text
-        const textBeforeSelection = editor.state.doc.textBetween(0, from, '\n');
-        const selStart = textBeforeSelection.length;
-        const selEnd = selStart + selectedText.length;
-        
-        // Get the full sentence context
-        const context = getFullSentenceContext(fullText, selStart, selEnd);
-        
-        // Send the full sentence to AI but indicate what part should be reformulated
-        const response = await fetch('/api/reformulate', {
-          method: 'POST',
+        // Send the selected text directly to AI for reformulation
+        const response = await fetch("/api/reformulate", {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            mode: 'selection',
-            fullSentence: context.fullSentence,
-            selectionStart: context.relativeStart,
-            selectionEnd: context.relativeEnd,
+            mode: "selection",
+            fullSentence: selectedText,
+            selectionStart: 0,
+            selectionEnd: selectedText.length,
           }),
         });
 
         if (!response.ok) {
           const error = await response.json();
-          const errorMessage = error.error || 'Failed to regenerate text';
-          
-          if (errorMessage.includes('GEMINI_API_KEY') || errorMessage.includes('not configured')) {
-            showWarning('AI Usage not enabled', 'Please wait for Update');
+          const errorMessage = error.error || "Failed to regenerate text";
+
+          if (
+            errorMessage.includes("AZURE_OPENAI_API_KEY") ||
+            errorMessage.includes("not configured")
+          ) {
+            showWarning("AI Usage not enabled", "Please wait for Update");
           } else {
-            showWarning('Regeneration Failed', errorMessage);
+            showWarning("Regeneration Failed", errorMessage);
           }
           return;
         }
 
         const result = await response.json();
         const reformulatedText = result.content;
-        
+
         // Store the selection positions before any modification
         const selectionFrom = from;
         const selectionTo = to;
-        
-        // Replace the selected text using a single command chain
-        // This ensures atomic operation and proper position tracking
-        const success = editor
+
+        // Replace the selected text using deleteRange and insertContentAt
+        // This preserves proper TipTap formatting
+        editor
           .chain()
           .focus()
-          .command(({ tr }) => {
-            // Delete the selection
-            tr.delete(selectionFrom, selectionTo);
-            // Insert the new text at the deletion point
-            tr.insertText(reformulatedText, selectionFrom);
-            return true;
-          })
+          .deleteRange({ from: selectionFrom, to: selectionTo })
+          .insertContentAt(selectionFrom, reformulatedText)
           .run();
-        
-        if (!success) {
-          showWarning('Replacement Failed', 'Could not replace the selected text');
-          return;
-        }
-        
+
         // Calculate the new end position for selection
-        // Since we deleted and inserted at the same position, 
-        // the new end is: start + length of new text
         const newEnd = selectionFrom + reformulatedText.length;
-        
+
         // Wait a tick for the editor to update, then select the new text
         setTimeout(() => {
-          editor.commands.setTextSelection({ 
-            from: selectionFrom, 
-            to: newEnd 
+          editor.commands.setTextSelection({
+            from: selectionFrom,
+            to: newEnd,
           });
         }, 10);
-        
-        showSuccess('Text Regenerated', 'Selected text has been regenerated.');
+
+        showSuccess("Text Regenerated", "Selected text has been regenerated.");
       } else {
         // Regenerate entire content
         const currentContent = editor.getHTML();
-        if (!currentContent || currentContent === '<p></p>') {
-          showWarning('No Content', 'Please enter content to reformulate');
+        if (!currentContent || currentContent === "<p></p>") {
+          showWarning("No Content", "Please enter content to reformulate");
           return;
         }
 
-        const response = await fetch('/api/reformulate', {
-          method: 'POST',
+        const response = await fetch("/api/reformulate", {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
-          body: JSON.stringify({ 
-            mode: 'full',
-            content: currentContent 
+          body: JSON.stringify({
+            mode: "full",
+            content: currentContent,
           }),
         });
 
         if (!response.ok) {
           const error = await response.json();
-          const errorMessage = error.error || 'Failed to reformulate content';
-          
-          if (errorMessage.includes('GEMINI_API_KEY') || errorMessage.includes('not configured')) {
-            showWarning('AI Usage not enabled', 'Please wait for Update');
+          const errorMessage = error.error || "Failed to reformulate content";
+
+          if (
+            errorMessage.includes("GEMINI_API_KEY") ||
+            errorMessage.includes("not configured")
+          ) {
+            showWarning("AI Usage not enabled", "Please wait for Update");
           } else {
-            showWarning('Reformulation Failed', errorMessage);
+            showWarning("Reformulation Failed", errorMessage);
           }
           return;
         }
 
         const result = await response.json();
         editor.commands.setContent(result.content);
-        showSuccess('Content Reformulated', 'Your briefing has been reformulated.');
+        showSuccess(
+          "Content Reformulated",
+          "Your briefing has been reformulated.",
+        );
       }
     } catch (error) {
-      console.error('[REFORMULATE] Error:', error);
-      showWarning('AI Usage not enabled', 'Please wait for Update');
+      console.error("[REFORMULATE] Error:", error);
+      showWarning("AI Usage not enabled", "Please wait for Update");
     } finally {
       setIsReformulating(false);
     }
   };
 
   return (
-    <div className={`transition-all duration-100 ease-in-out ${isFullscreen ? 'fixed top-16 left-0 right-0 bottom-0 z-40 bg-slate-100 flex flex-col' : ''}`}>
+    <div
+      className={`transition-all duration-100 ease-in-out ${isFullscreen ? "fixed top-16 right-0 bottom-0 left-0 z-40 flex flex-col bg-slate-100" : ""}`}
+    >
       {/* Toolbar */}
-      <div className={`transition-all duration-100 ${isFullscreen ? 'bg-slate-100 px-4 py-2 border-b border-slate-200' : ''}`}>
-        <div className={`transition-all duration-100 ${isFullscreen ? 'max-w-[280mm] mx-auto rounded-lg bg-white shadow-sm' : 'rounded-t'} border p-2 ${
-          error
-            ? 'border-red-500 bg-red-50'
-            : 'border-slate-300 bg-slate-50'
-        }`}>
-          <div className="flex flex-wrap items-center gap-1 justify-between">
-          {/* Fullscreen Toggle */}
-          <Button
-            type="button"
-            size="sm"
-            variant={isFullscreen ? 'default' : 'outline'}
-            onClick={() => setIsFullscreen(!isFullscreen)}
-            className="h-8 w-8 p-0"
-            title={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
+      <div
+        className={`transition-all duration-100 ${isFullscreen ? "border-b border-slate-200 bg-slate-100 px-4 py-2" : ""}`}
+      >
+        <div
+          className={`transition-all duration-100 ${isFullscreen ? "mx-auto max-w-[280mm] rounded-lg bg-white shadow-sm" : "rounded-t"} border p-2 ${
+            error
+              ? "border-[var(--form-field-error-border)] bg-[var(--form-field-error-background)]"
+              : "border-[var(--form-field-border)] bg-[var(--form-field-background)]"
+          }`}
+        >
+          <div
+            className={`flex flex-wrap items-center gap-1 ${!minimalMode ? "justify-between" : ""}`}
           >
-            {isFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
-          </Button>
+            {!minimalMode && (
+              <>
+                {/* Fullscreen Toggle */}
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={isFullscreen ? "default" : "outline"}
+                  onClick={() => setIsFullscreen(!isFullscreen)}
+                  className="h-8 w-8 p-0"
+                  title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+                >
+                  {isFullscreen ? (
+                    <Minimize className="h-4 w-4" />
+                  ) : (
+                    <Maximize className="h-4 w-4" />
+                  )}
+                </Button>
 
-          <div className="h-6 w-px bg-slate-300" />
-          {/* Text Formatting */}
-          <Button
-            type="button"
-            size="sm"
-            variant={editor.isActive('bold') ? 'default' : 'outline'}
-            onClick={() => editor.chain().focus().toggleBold().run()}
-            className="h-8 w-8 p-0"
-            title="Bold (Ctrl+B)"
-          >
-            <Bold className="h-4 w-4" />
-          </Button>
+                <div className="h-6 w-px bg-slate-300" />
+              </>
+            )}
+            {/* Text Formatting */}
+            <Button
+              type="button"
+              size="sm"
+              variant={editor.isActive("bold") ? "default" : "outline"}
+              onClick={() => editor.chain().focus().toggleBold().run()}
+              className="h-8 w-8 p-0"
+              title="Bold (Ctrl+B)"
+            >
+              <Bold className="h-4 w-4" />
+            </Button>
 
-          <Button
-            type="button"
-            size="sm"
-            variant={editor.isActive('italic') ? 'default' : 'outline'}
-            onClick={() => editor.chain().focus().toggleItalic().run()}
-            className="h-8 w-8 p-0"
-            title="Italic (Ctrl+I)"
-          >
-            <Italic className="h-4 w-4" />
-          </Button>
+            {!minimalMode && (
+              <>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={editor.isActive("italic") ? "default" : "outline"}
+                  onClick={() => editor.chain().focus().toggleItalic().run()}
+                  className="h-8 w-8 p-0"
+                  title="Italic (Ctrl+I)"
+                >
+                  <Italic className="h-4 w-4" />
+                </Button>
 
-          <Button
-            type="button"
-            size="sm"
-            variant={editor.isActive('strike') ? 'default' : 'outline'}
-            onClick={() => editor.chain().focus().toggleStrike().run()}
-            className="h-8 w-8 p-0"
-            title="Strikethrough"
-          >
-            <Strikethrough className="h-4 w-4" />
-          </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={editor.isActive("strike") ? "default" : "outline"}
+                  onClick={() => editor.chain().focus().toggleStrike().run()}
+                  className="h-8 w-8 p-0"
+                  title="Strikethrough"
+                >
+                  <Strikethrough className="h-4 w-4" />
+                </Button>
+              </>
+            )}
 
-          {/* Highlight */}
-          <Button
-            type="button"
-            size="sm"
-            variant={editor.isActive('highlight') ? 'default' : 'outline'}
-            onClick={() => editor.chain().focus().toggleHighlight({ color: '#FFFF00' }).run()}
-            className="h-8 w-8 p-0"
-            title="Highlight text"
-          >
-            <div className="h-2 w-6 rounded bg-yellow-300" />
-          </Button>
-
-          {/* Comment Mark */}
-          <Button
-            type="button"
-            size="sm"
-            variant={editor.isActive('comment') ? 'default' : 'outline'}
-            onClick={() => {
-              const comment = prompt('Add a comment/note:');
-              if (comment) {
-                editor.chain().focus().toggleMark('comment', { comment }).run();
-              }
-            }}
-            className="h-8 w-8 p-0"
-            title="Add comment to selected text"
-          >
-            <MessageCircle className="h-4 w-4" />
-          </Button>
-
-          <div className="h-6 w-px bg-slate-300" />
-
-          {/* Headings */}
-          <Button
-            type="button"
-            size="sm"
-            variant={editor.isActive('heading', { level: 2 }) ? 'default' : 'outline'}
-            onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-            className="h-8 w-8 p-0"
-            title="Heading 2"
-          >
-            <Heading2 className="h-4 w-4" />
-          </Button>
-
-          <Button
-            type="button"
-            size="sm"
-            variant={editor.isActive('heading', { level: 3 }) ? 'default' : 'outline'}
-            onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-            className="h-8 w-8 p-0"
-            title="Heading 3"
-          >
-            <Heading3 className="h-4 w-4" />
-          </Button>
-
-          <div className="h-6 w-px bg-slate-300" />
-
-          {/* Lists */}
-          <Button
-            type="button"
-            size="sm"
-            variant={editor.isActive('bulletList') ? 'default' : 'outline'}
-            onClick={() => editor.chain().focus().toggleBulletList().run()}
-            className="h-8 w-8 p-0"
-            title="Bullet List"
-          >
-            <List className="h-4 w-4" />
-          </Button>
-
-          <Button
-            type="button"
-            size="sm"
-            variant={editor.isActive('orderedList') ? 'default' : 'outline'}
-            onClick={() => editor.chain().focus().toggleOrderedList().run()}
-            className="h-8 w-8 p-0"
-            title="Ordered List"
-          >
-            <ListOrdered className="h-4 w-4" />
-          </Button>
-
-          <div className="h-6 w-px bg-slate-300" />
-
-          {/* Block Elements */}
-          <Button
-            type="button"
-            size="sm"
-            variant={editor.isActive('blockquote') ? 'default' : 'outline'}
-            onClick={() => editor.chain().focus().toggleBlockquote().run()}
-            className="h-8 w-8 p-0"
-            title="Blockquote"
-          >
-            <Quote className="h-4 w-4" />
-          </Button>
-
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            onClick={() => editor.chain().focus().setHorizontalRule().run()}
-            className="h-8 w-8 p-0"
-            title="Horizontal Line"
-          >
-            <Minus className="h-4 w-4" />
-          </Button>
-
-          <div className="h-6 w-px bg-slate-300" />
-
-          {/* Alignment */}
-          <Button
-            type="button"
-            size="sm"
-            variant={editor.isActive({ textAlign: 'left' }) ? 'default' : 'outline'}
-            onClick={() => editor.chain().focus().setTextAlign('left').run()}
-            className="h-8 w-8 p-0"
-            title="Align Left"
-          >
-            <AlignLeft className="h-4 w-4" />
-          </Button>
-
-          <Button
-            type="button"
-            size="sm"
-            variant={editor.isActive({ textAlign: 'center' }) ? 'default' : 'outline'}
-            onClick={() => editor.chain().focus().setTextAlign('center').run()}
-            className="h-8 w-8 p-0"
-            title="Align Center"
-          >
-            <AlignCenter className="h-4 w-4" />
-          </Button>
-
-          <Button
-            type="button"
-            size="sm"
-            variant={editor.isActive({ textAlign: 'right' }) ? 'default' : 'outline'}
-            onClick={() => editor.chain().focus().setTextAlign('right').run()}
-            className="h-8 w-8 p-0"
-            title="Align Right"
-          >
-            <AlignRight className="h-4 w-4" />
-          </Button>
-
-          <div className="h-6 w-px bg-slate-300" />
-
-          {/* Link */}
-          <Button
-            type="button"
-            size="sm"
-            variant={editor.isActive('link') ? 'default' : 'outline'}
-            onClick={() => {
-              const url = window.prompt('URL:');
-              if (url) {
-                editor.chain().focus().toggleLink({ href: url }).run();
-              }
-            }}
-            className="h-8 w-8 p-0"
-            title="Add Link"
-          >
-            <LinkIcon className="h-4 w-4" />
-          </Button>
-
-          {/* Image Upload */}
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            onClick={handleImageUpload}
-            className="h-8 w-8 p-0"
-            title="Upload Image"
-          >
-            <ImagePlus className="h-4 w-4" />
-          </Button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            onChange={handleFileChange}
-            className="hidden"
-          />
-
-          {/* Image Sizing */}
-          <select
-            onChange={(e) => {
-              const size = e.target.value;
-              if (size === 'default') {
-                e.target.value = 'default';
-                return;
-              }
-              
-              let width: string | undefined;
-              
-              switch (size) {
-                case 'small':
-                  width = '250px';
-                  break;
-                case 'medium':
-                  width = '400px';
-                  break;
-                case 'large':
-                  width = '600px';
-                  break;
-                case 'full':
-                  width = '100%';
-                  break;
-              }
-
-              if (width) {
+            {/* Highlight */}
+            <Button
+              type="button"
+              size="sm"
+              variant={editor.isActive("highlight") ? "default" : "outline"}
+              onClick={() =>
                 editor
                   .chain()
                   .focus()
-                  .updateAttributes('image', { width })
-                  .run();
+                  .toggleHighlight({ color: "#FFFF00" })
+                  .run()
               }
-              e.target.value = 'default';
-            }}
-            className="h-8 rounded border border-slate-300 bg-white px-2 py-1 text-xs"
-            title="Image Size (select an image first)"
-            defaultValue="default"
-          >
-            <option value="default" disabled>
-              Image Size
-            </option>
-            <option value="small">Small (250px)</option>
-            <option value="medium">Medium (400px)</option>
-            <option value="large">Large (600px)</option>
-            <option value="full">Full Width</option>
-          </select>
+              className="h-8 w-8 p-0"
+              title="Highlight text"
+            >
+              <div className="h-2 w-6 rounded bg-yellow-300" />
+            </Button>
 
-          <div className="h-6 w-px bg-slate-300" />
+            {!minimalMode && (
+              <>
+                {/* Comment Mark */}
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={editor.isActive("comment") ? "default" : "outline"}
+                  onClick={() => {
+                    const comment = prompt("Add a comment/note:");
+                    if (comment) {
+                      editor
+                        .chain()
+                        .focus()
+                        .toggleMark("comment", { comment })
+                        .run();
+                    }
+                  }}
+                  className="h-8 w-8 p-0"
+                  title="Add comment to selected text"
+                >
+                  <MessageCircle className="h-4 w-4" />
+                </Button>
+              </>
+            )}
 
-          {/* Undo/Redo */}
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            onClick={() => editor.chain().focus().undo().run()}
-            className="h-8 w-8 p-0"
-            disabled={!editor.can().undo()}
-            title="Undo"
-          >
-            <Undo2 className="h-4 w-4" />
-          </Button>
+            {!minimalMode && (
+              <>
+                <div className="h-6 w-px bg-slate-300" />
 
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            onClick={() => editor.chain().focus().redo().run()}
-            className="h-8 w-8 p-0"
-            disabled={!editor.can().redo()}
-            title="Redo"
-          >
-            <Redo2 className="h-4 w-4" />
-          </Button>
+                {/* Headings */}
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={
+                    editor.isActive("heading", { level: 2 })
+                      ? "default"
+                      : "outline"
+                  }
+                  onClick={() =>
+                    editor.chain().focus().toggleHeading({ level: 2 }).run()
+                  }
+                  className="h-8 w-8 p-0"
+                  title="Heading 2"
+                >
+                  <Heading2 className="h-4 w-4" />
+                </Button>
 
-          <div className="h-6 w-px bg-slate-300" />
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={
+                    editor.isActive("heading", { level: 3 })
+                      ? "default"
+                      : "outline"
+                  }
+                  onClick={() =>
+                    editor.chain().focus().toggleHeading({ level: 3 }).run()
+                  }
+                  className="h-8 w-8 p-0"
+                  title="Heading 3"
+                >
+                  <Heading3 className="h-4 w-4" />
+                </Button>
 
-          {/* Regenerate Button */}
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            onClick={handleReformulate}
-            disabled={isReformulating}
-            className="h-8 px-2 gap-1"
-            title="Reformulate content to be concise and professional"
-          >
-            <Wand2 className="h-4 w-4" />
-            <span className="text-xs hidden sm:inline">
-              {isReformulating ? 'Reformulating...' : 'Regenerate'}
-            </span>
-          </Button>
-        </div>
+                <div className="h-6 w-px bg-slate-300" />
+
+                {/* Lists */}
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={
+                    editor.isActive("bulletList") ? "default" : "outline"
+                  }
+                  onClick={() =>
+                    editor.chain().focus().toggleBulletList().run()
+                  }
+                  className="h-8 w-8 p-0"
+                  title="Bullet List"
+                >
+                  <List className="h-4 w-4" />
+                </Button>
+
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={
+                    editor.isActive("orderedList") ? "default" : "outline"
+                  }
+                  onClick={() =>
+                    editor.chain().focus().toggleOrderedList().run()
+                  }
+                  className="h-8 w-8 p-0"
+                  title="Ordered List"
+                >
+                  <ListOrdered className="h-4 w-4" />
+                </Button>
+
+                <div className="h-6 w-px bg-slate-300" />
+
+                {/* Block Elements */}
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={
+                    editor.isActive("blockquote") ? "default" : "outline"
+                  }
+                  onClick={() =>
+                    editor.chain().focus().toggleBlockquote().run()
+                  }
+                  className="h-8 w-8 p-0"
+                  title="Blockquote"
+                >
+                  <Quote className="h-4 w-4" />
+                </Button>
+
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() =>
+                    editor.chain().focus().setHorizontalRule().run()
+                  }
+                  className="h-8 w-8 p-0"
+                  title="Horizontal Line"
+                >
+                  <Minus className="h-4 w-4" />
+                </Button>
+
+                <div className="h-6 w-px bg-slate-300" />
+
+                {/* Alignment */}
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={
+                    editor.isActive({ textAlign: "left" })
+                      ? "default"
+                      : "outline"
+                  }
+                  onClick={() =>
+                    editor.chain().focus().setTextAlign("left").run()
+                  }
+                  className="h-8 w-8 p-0"
+                  title="Align Left"
+                >
+                  <AlignLeft className="h-4 w-4" />
+                </Button>
+
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={
+                    editor.isActive({ textAlign: "center" })
+                      ? "default"
+                      : "outline"
+                  }
+                  onClick={() =>
+                    editor.chain().focus().setTextAlign("center").run()
+                  }
+                  className="h-8 w-8 p-0"
+                  title="Align Center"
+                >
+                  <AlignCenter className="h-4 w-4" />
+                </Button>
+
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={
+                    editor.isActive({ textAlign: "right" })
+                      ? "default"
+                      : "outline"
+                  }
+                  onClick={() =>
+                    editor.chain().focus().setTextAlign("right").run()
+                  }
+                  className="h-8 w-8 p-0"
+                  title="Align Right"
+                >
+                  <AlignRight className="h-4 w-4" />
+                </Button>
+
+                <div className="h-6 w-px bg-slate-300" />
+
+                {/* Link */}
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={editor.isActive("link") ? "default" : "outline"}
+                  onClick={() => {
+                    const url = window.prompt("URL:");
+                    if (url) {
+                      editor.chain().focus().toggleLink({ href: url }).run();
+                    }
+                  }}
+                  className="h-8 w-8 p-0"
+                  title="Add Link"
+                >
+                  <LinkIcon className="h-4 w-4" />
+                </Button>
+
+                {/* Image Upload */}
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={handleImageUpload}
+                  className="h-8 w-8 p-0"
+                  title="Upload Image"
+                >
+                  <ImagePlus className="h-4 w-4" />
+                </Button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+
+                {/* Image Sizing */}
+                <select
+                  onChange={(e) => {
+                    const size = e.target.value;
+                    if (size === "default") {
+                      e.target.value = "default";
+                      return;
+                    }
+
+                    let width: string | undefined;
+
+                    switch (size) {
+                      case "small":
+                        width = "250px";
+                        break;
+                      case "medium":
+                        width = "400px";
+                        break;
+                      case "large":
+                        width = "600px";
+                        break;
+                      case "full":
+                        width = "100%";
+                        break;
+                    }
+
+                    if (width) {
+                      editor
+                        .chain()
+                        .focus()
+                        .updateAttributes("image", { width })
+                        .run();
+                    }
+                    e.target.value = "default";
+                  }}
+                  className="editor-image-size-select h-8 rounded border border-slate-300 bg-white px-2 py-1 text-xs"
+                  title="Image Size (select an image first)"
+                  defaultValue="default"
+                >
+                  <option value="default" disabled>
+                    Image Size
+                  </option>
+                  <option value="small">Small (250px)</option>
+                  <option value="medium">Medium (400px)</option>
+                  <option value="large">Large (600px)</option>
+                  <option value="full">Full Width</option>
+                </select>
+
+                <div className="h-6 w-px bg-slate-300" />
+
+                {/* Undo/Redo */}
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => editor.chain().focus().undo().run()}
+                  className="h-8 w-8 p-0"
+                  disabled={!editor.can().undo()}
+                  title="Undo"
+                >
+                  <Undo2 className="h-4 w-4" />
+                </Button>
+
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => editor.chain().focus().redo().run()}
+                  className="h-8 w-8 p-0"
+                  disabled={!editor.can().redo()}
+                  title="Redo"
+                >
+                  <Redo2 className="h-4 w-4" />
+                </Button>
+
+                <div className="h-6 w-px bg-slate-300" />
+
+                {/* Regenerate Button */}
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={handleReformulate}
+                  disabled={isReformulating}
+                  className="h-8 gap-1 px-2"
+                  title="Reformulate content to be concise and professional"
+                >
+                  <Wand2 className="h-4 w-4" />
+                  <span className="hidden text-xs sm:inline">
+                    {isReformulating ? "Reformulating..." : "Regenerate"}
+                  </span>
+                </Button>
+              </>
+            )}
+          </div>
         </div>
       </div>
 
       {/* Editor */}
-      <div className={`transition-all duration-300 ${isFullscreen ? 'flex-1 overflow-y-auto py-8 px-4' : ''}`}>
-        <div className={`transition-all duration-300 ${isFullscreen ? 'max-w-[280mm] mx-auto bg-white shadow-lg rounded-lg min-h-[297mm] p-16' : 'rounded-b'} ${isFullscreen ? '' : 'border -mt-1'} ${
-          error
-            ? 'border-t-0 border-red-500 bg-red-50'
-            : 'border-t-0 border-slate-300 bg-slate-50'
-        }`}>
-          <EditorContent 
+      <div
+        className={`transition-all duration-300 ${isFullscreen ? "flex-1 overflow-y-auto px-4 py-8" : ""}`}
+      >
+        <div
+          className={`transition-all duration-300 ${isFullscreen ? "mx-auto min-h-[297mm] max-w-[280mm] rounded-lg bg-white p-16 shadow-lg" : "rounded-b"} ${isFullscreen ? "" : "-mt-1 border"} ${
+            error
+              ? "border-t-0 border-[var(--form-field-error-border)] bg-[var(--form-field-error-background)]"
+              : "border-t-0 border-[var(--form-field-border)] bg-[var(--form-field-background)]"
+          }`}
+        >
+          <EditorContent
             editor={editor}
-            className={isFullscreen ? 'prose prose-slate max-w-none' : minHeight}
+            className={
+              isFullscreen ? "prose prose-slate max-w-none" : minHeight
+            }
           />
         </div>
       </div>
 
       {/* Character count and error */}
-      <div className="flex items-start justify-between text-xs mt-2">
+      <div className="mt-2 flex items-start justify-between text-xs">
         <div className="text-slate-500">
           {getCharacterCount()} characters | {getWordCount()} words
         </div>

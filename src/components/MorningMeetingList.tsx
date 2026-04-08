@@ -1,73 +1,83 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { deleteEntry, getSubmittedEntries } from '@/lib/storage';
-import { Download, FileDown, List, RefreshCw } from 'lucide-react';
-import { ExportDailyBriefingDialog } from './ExportDailyBriefingDialog';
-import { EntriesTable } from './EntriesTable';
-import { usePopup } from '@/lib/popup-context';
-import type { MorningMeetingEntry } from '@/types/morning-meeting';
+import { useState, useEffect, useCallback } from "react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { deleteEntry, getSubmittedEntries } from "@/lib/storage";
+import { Eye, FileDown, List } from "lucide-react";
+import Link from "next/link";
+import { ExportDailyBriefingDialog } from "./ExportDailyBriefingDialog";
+import { getCurrentBriefingDate } from "@/lib/useEntriesFilter";
+import { EntriesTable } from "./EntriesTable";
+import { usePopup } from "@/lib/popup-context";
+import type { MorningMeetingEntry } from "@/types/morning-meeting";
+import labels from "@/lib/labels.json";
 
-export function MorningMeetingList({ initialDateFilter }: { initialDateFilter?: string } = {}) {
-  const { confirm: showConfirm, success: showSuccess, info: showInfo } = usePopup();
+export function MorningMeetingList({
+  initialDateFilter,
+}: { initialDateFilter?: string } = {}) {
+  const {
+    confirm: showConfirm,
+    success: showSuccess,
+    info: showInfo,
+  } = usePopup();
   const [entries, setEntries] = useState<MorningMeetingEntry[]>([]);
   const [showExportDialog, setShowExportDialog] = useState(false);
-  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const loadEntries = async () => {
+  const loadEntries = useCallback(async () => {
     const data = await getSubmittedEntries();
     setEntries(data);
-  };
-
-  const handleRefresh = async () => {
-    setIsRefreshing(true);
-    try {
-      await loadEntries();
-      showSuccess('Refreshed', 'Table data refreshed successfully');
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to refresh data';
-      showInfo('Error', errorMessage);
-    } finally {
-      setIsRefreshing(false);
-    }
-  };
+  }, []);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadEntries();
-  }, []);
+  }, [loadEntries]);
+
+  useEffect(() => {
+    const interval = setInterval(loadEntries, 30_000);
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") loadEntries();
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [loadEntries]);
 
   const handleDelete = async (id: string) => {
     const confirmed = await showConfirm(
-      'Delete Entry',
-      'Are you sure you want to delete this entry? This action cannot be undone.'
+      labels.entries.confirm.deleteTitle,
+      labels.entries.confirm.deleteMessage,
     );
-    
+
     if (confirmed) {
       try {
         await deleteEntry(id);
-        showSuccess('Deleted', 'Entry deleted successfully');
+        showSuccess(
+          labels.entries.success.deleted,
+          labels.entries.success.deletedMessage,
+        );
         await loadEntries();
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Failed to delete entry';
-        showInfo('Error', errorMessage);
+        const errorMessage =
+          error instanceof Error ? error.message : "Failed to delete entry";
+        showInfo("Error", errorMessage);
       }
     }
   };
 
-  const handleToggleApproval = async (entry: MorningMeetingEntry) => {
+  const handleToggleDiscussion = async (entry: MorningMeetingEntry) => {
     try {
       if (!entry.id) {
-        showInfo('Error', 'Cannot update entry without ID');
+        showInfo("Error", labels.entries.errors.idRequired);
         return;
       }
-      
+
       // Just refresh the data - the dialog has already updated the status via API
       loadEntries();
     } catch {
-      showSuccess('Error', 'Failed to update approval status');
+      showSuccess("Error", labels.viewEntry.discussion.updateFailedMessage);
     }
   };
 
@@ -76,49 +86,53 @@ export function MorningMeetingList({ initialDateFilter }: { initialDateFilter?: 
     await loadEntries();
   };
 
-  const exportToJSON = () => {
-    const entriesToExport = entries;
-    if (entriesToExport.length === 0) {
-      showInfo('No Entries', 'There are no entries to export.');
-      return;
-    }
-    const dataStr = JSON.stringify(entriesToExport, null, 2);
-    const dataBlob = new Blob([dataStr], { type: 'application/json' });
-    const url = URL.createObjectURL(dataBlob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `morning-meetings-${new Date().toISOString().split('T')[0]}.json`;
-    link.click();
-    URL.revokeObjectURL(url);
+  const handleUpdateEntry = async (id: string, updates: any) => {
+    // Update local state immediately for responsiveness
+    setEntries((prevEntries) =>
+      prevEntries.map((entry) =>
+        entry.id === id ? { ...entry, ...updates } : entry,
+      ),
+    );
   };
 
   return (
-    
-    <div className="space-y-4 mx-auto w-full max-w-6xl">
+    <div className="mx-auto w-full max-w-6xl space-y-4">
       {/* Header */}
-      <Card className="border-slate-200">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 sm:p-6">
+      <Card className="border-slate-200 px-4 sm:p-0">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:p-6">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded bg-slate-700">
-             <List className="h-5 w-5 text-white" />
+              <List className="h-5 w-5 text-white" />
             </div>
             <div className="min-w-0">
-              <h1 className="text-xl sm:text-2xl font-semibold text-foreground">Morning Meeting Entries</h1>
-              <p className="text-xs sm:text-sm text-slate-600">View and manage submitted entries</p>
+              <h1 className="text-xl font-semibold text-foreground sm:text-2xl">
+                {labels.entries.title}
+              </h1>
+              <p className="text-xs text-slate-600 sm:text-sm">
+                {labels.entries.subtitle}
+              </p>
             </div>
           </div>
-          <div className="flex flex-col sm:flex-row gap-2 sm:shrink-0">
-            <Button variant="outline" size="sm" onClick={handleRefresh} disabled={isRefreshing} className="w-full sm:w-auto justify-center">
-              <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-              <span className="sm:inline">Refresh</span>
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => setShowExportDialog(true)} className="w-full sm:w-auto justify-center">
+          <div className="flex flex-col gap-2 sm:shrink-0 sm:flex-row">
+            <Link href={`/briefing?date=${getCurrentBriefingDate()}`}>
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full justify-center sm:h-10 sm:w-auto sm:px-6"
+              >
+                <Eye className="h-4 w-4" />
+                <span className="sm:inline">View Briefing</span>
+              </Button>
+            </Link>
+            <Button
+              size="sm"
+              onClick={() => setShowExportDialog(true)}
+              className="w-full justify-center bg-un-blue hover:bg-un-blue/90 sm:h-10 sm:w-auto sm:px-6"
+            >
               <FileDown className="h-4 w-4" />
-              <span className="sm:inline">Export Daily Briefing</span>
-            </Button>
-            <Button variant="outline" size="sm" onClick={exportToJSON} className="hidden w-full sm:w-auto justify-center">
-              <Download className="h-4 w-4" />
-              <span className="sm:inline">Export JSON</span>
+              <span className="sm:inline">
+                {labels.entries.actions.exportBriefing}
+              </span>
             </Button>
           </div>
         </div>
@@ -128,10 +142,11 @@ export function MorningMeetingList({ initialDateFilter }: { initialDateFilter?: 
       <EntriesTable
         entries={entries}
         onDelete={handleDelete}
-        onToggleApproval={handleToggleApproval}
+        onToggleDiscussion={handleToggleDiscussion}
         onPostpone={handlePostpone}
-        showApprovedColumn={true}
-        emptyMessage="No entries found."
+        onUpdate={handleUpdateEntry}
+        showDiscussionColumn={true}
+        emptyMessage={labels.entries.empty.noEntries}
         resultLabel="entries"
         initialDateFilter={initialDateFilter}
       />

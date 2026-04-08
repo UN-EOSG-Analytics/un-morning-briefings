@@ -4,8 +4,13 @@ import { Roboto } from "next/font/google";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { PopupProvider } from "@/lib/popup-context";
+import { UnsavedChangesProvider } from "@/lib/unsaved-changes-context";
 import { PopupContainer } from "@/components/Popup";
 import { AuthProvider } from "@/components/AuthProvider";
+import { ShellWrapper } from "@/components/ShellWrapper";
+import { AnimatedCornerLogo } from "@/components/AnimatedCornerLogo";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import "./globals.css";
 
 // https://fonts.google.com/specimen/Roboto
@@ -17,10 +22,12 @@ const roboto = Roboto({
 
 export const metadata: Metadata = {
   title: "United Nations | Morning Briefings",
-  description: "A web application to manage Morning Briefings for the United Nations.",
+  description:
+    "A web application to manage Morning Briefings for the United Nations.",
   openGraph: {
     title: "United Nations Morning Briefings",
-    description: "A web application to manage Morning Briefings for the United Nations.",
+    description:
+      "A web application to manage Morning Briefings for the United Nations.",
     type: "website",
     locale: "en_US",
   },
@@ -32,22 +39,23 @@ export const viewport: Viewport = {
   themeColor: "#009edb",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const session = await getServerSession(authOptions);
+
   return (
     <html lang="en" className={`${roboto.className} antialiased`}>
-      <body className="flex flex-col min-h-screen">
-        <AuthProvider>
+      <body className="bg-white">
+        <AuthProvider session={session}>
           <PopupProvider>
-            <Navbar />
-            <div className="pt-16 flex-1">
-              {children}
-            </div>
-            <Footer />
-            <PopupContainer />
+            <UnsavedChangesProvider>
+              <ShellWrapper>{children}</ShellWrapper>
+              <AnimatedCornerLogo />
+              <PopupContainer />
+            </UnsavedChangesProvider>
           </PopupProvider>
         </AuthProvider>
         <GoogleAnalytics gaId="G-XYZ" />

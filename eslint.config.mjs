@@ -13,7 +13,7 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
     // Utility scripts
-    "*.js",
+    "*.mjs",
     "python/**",
     "sql/**",
     "scripts/**",

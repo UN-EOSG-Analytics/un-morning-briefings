@@ -1,29 +1,37 @@
-import labels from '@/lib/labels.json';
+import labels from "@/lib/labels.json";
 
-export type ApprovalStatus = 'pending' | 'discussed' | 'left-out';
+export type DiscussionStatus = "pending" | "discussed";
 
 // Morning Meeting Form Types
 export interface MorningMeetingEntry {
   id?: string;
   category: string;
-  priority: 'sg-attention' | 'situational-awareness' | '';
+  priority: "SG's attention" | "Situational Awareness" | "";
   region: string;
-  country: string;
+  country: string | string[]; // Support both single and multiple countries
   headline: string;
   date: string; // Now includes both date and time
   entry: string;
-  sourceUrl?: string;
+  sourceName?: string | string[];
   sourceDate?: string; // Date from the source
+  sourceUrl?: string;
   puNote?: string;
-  author?: string;
+  thematic?: string | string[];
+  author?: string; // Joined from users table via author_id
+  authorId?: number; // Foreign key to users table
+  authorEmail?: string; // Author's email for convenience
+  comment?: string;
   aiSummary?: string[] | null;
   images?: Array<{
     id: string;
     position: number | null;
     mimeType: string;
   }>;
-  status?: 'draft' | 'submitted';
-  approvalStatus?: ApprovalStatus;
+  status?: "draft" | "submitted";
+  discussionStatus?: DiscussionStatus;
+  previousEntryId?: string | null;
+  createdAt?: string; // TIMESTAMPTZ — UTC ISO string, display with formatTimeNYC
+  updatedAt?: string; // TIMESTAMPTZ — UTC ISO string, display with formatTimeNYC
 }
 
 export interface FormFieldError {
@@ -33,4 +41,4 @@ export interface FormFieldError {
 export const CATEGORIES = labels.categories;
 export const PRIORITIES = labels.priorities;
 export const REGIONS = labels.regions;
-export const COUNTRIES_BY_REGION = labels.countriesByRegion as Record<string, string[]>;
+export const COUNTRIES = labels.countries;

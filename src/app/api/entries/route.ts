@@ -1,10 +1,26 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { NextRequest, NextResponse } from 'next/server';
-import { query } from '@/lib/db';
-import { blobStorage } from '@/lib/blob-storage';
-import { convertImageReferencesServerSide } from '@/lib/image-conversion';
-import { checkAuth } from '@/lib/auth-helper';
+import { NextRequest, NextResponse } from "next/server";
+import { query } from "@/lib/db";
+import { blobStorage } from "@/lib/blob-storage";
+import { convertImageReferencesServerSide } from "@/lib/image-conversion";
+import { checkAuth } from "@/lib/auth-helper";
+import {
+  serializeCountry,
+  serializeStringOrArray,
+  stripHtmlToText,
+  fetchEntries,
+  fetchEntryById,
+  getAuthorId,
+} from "@/lib/entry-queries";
+import labels from "@/lib/labels.json";
+
+const VALID_CATEGORIES = (labels as any).categories as string[];
+const VALID_PRIORITIES = (
+  (labels as any).priorities as { value: string }[]
+).map((p) => p.value);
+const VALID_REGIONS = (labels as any).regions as string[];
+const VALID_STATUSES = ["draft", "submitted"];
 
 /**
  * GET /api/entries
@@ -20,113 +36,38 @@ export async function GET(request: NextRequest) {
 
   try {
     const { searchParams } = new URL(request.url);
-    const date = searchParams.get('date');
-    const status = searchParams.get('status');
-    const author = searchParams.get('author');
+    const date = searchParams.get("date");
+    const status = searchParams.get("status");
+    const author = searchParams.get("author");
+    const noConvert = searchParams.get("noConvert") === "true";
 
-    console.log('GET /api/entries: Params -', { date, status, author });
+    const entries = await fetchEntries({ date, status, author });
 
-    let sql = `
-      SELECT 
-        e.id,
-        e.category,
-        e.priority,
-        e.region,
-        e.country,
-        e.headline,
-        e.date,
-        e.entry,
-        e.source_url as "sourceUrl",
-        e.source_date as "sourceDate",
-        e.pu_note as "puNote",
-        e.author,
-        e.status,
-        e.ai_summary as "aiSummary",
-        e.approval_status as "approvalStatus",
-        COALESCE(
-          json_agg(
-            json_build_object(
-              'id', i.id,
-              'entryId', i.entry_id,
-              'filename', i.filename,
-              'mimeType', i.mime_type,
-              'blobUrl', i.blob_url,
-              'width', i.width,
-              'height', i.height,
-              'position', i.position
-            ) ORDER BY i.position NULLS LAST
-          ) FILTER (WHERE i.id IS NOT NULL),
-          '[]'
-        ) as images
-      FROM pu_morning_briefings.entries e
-      LEFT JOIN pu_morning_briefings.images i ON e.id = i.entry_id
-    `;
-
-    const params: any[] = [];
-    const conditions: string[] = [];
-
-    if (date) {
-      conditions.push(`DATE(e.date) = $${params.length + 1}`);
-      params.push(date);
+    // Skip image conversion for list views (performance optimization)
+    if (noConvert) {
+      return NextResponse.json(entries, {
+        headers: { "Cache-Control": "private, max-age=5" },
+      });
     }
 
-    if (status) {
-      conditions.push(`e.status = $${params.length + 1}`);
-      params.push(status);
-    }
-
-    if (author) {
-      conditions.push(`e.author = $${params.length + 1}`);
-      params.push(author);
-    }
-
-    if (conditions.length > 0) {
-      sql += ` WHERE ${conditions.join(' AND ')}`;
-    }
-
-    sql += ` GROUP BY e.id ORDER BY e.date DESC`;
-
-    console.log('GET /api/entries: Executing SQL with params:', { sql, params });
-    const result = await query(sql, params);
-    console.log('GET /api/entries: Query returned', result.rows.length, 'rows');
-    
     // Convert blob URLs to data URLs for private blob storage
-    for (const entry of result.rows) {
+    for (const entry of entries) {
       if (entry.images && entry.images.length > 0) {
-        console.log(`GET /api/entries: Processing ${entry.images.length} images for entry ${entry.id}`);
         entry.entry = await convertImageReferencesServerSide(
           entry.entry,
           entry.images,
           blobStorage,
-          'GET /api/entries'
         );
       }
     }
-    
-    return NextResponse.json(result.rows);
+
+    return NextResponse.json(entries);
   } catch (error) {
-    console.error('Error fetching entries:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    const errorStack = error instanceof Error ? error.stack : undefined;
-    
-    // Check if it's a database connection error
-    const isDatabaseError = errorMessage.includes('connect') || 
-                           errorMessage.includes('ECONNREFUSED') ||
-                           errorMessage.includes('FATAL') ||
-                           errorMessage.includes('password');
-    
-    console.error('Error details:', { 
-      message: errorMessage, 
-      isDatabaseError,
-      stack: errorStack 
-    });
-    
-    return NextResponse.json({ 
-      error: 'Failed to fetch entries',
-      details: errorMessage,
-      isDatabaseError,
-      hint: isDatabaseError ? 'Check DATABASE_URL in .env.local' : undefined
-    }, { status: 500 });
+    console.error("Error fetching entries:", error);
+    return NextResponse.json(
+      { error: labels.entries.errors.fetchFailed },
+      { status: 500 },
+    );
   }
 }
 
@@ -145,19 +86,31 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { entry: entryContent, images, ...data } = body;
 
-    console.log('POST /api/entries: Received request with', images?.length || 0, 'images');
-    console.log('POST /api/entries: Entry content length:', entryContent?.length);
+    // Validate domain values
+    if (data.category && !VALID_CATEGORIES.includes(data.category)) {
+      return NextResponse.json({ error: "Invalid category" }, { status: 400 });
+    }
+    if (data.priority && !VALID_PRIORITIES.includes(data.priority)) {
+      return NextResponse.json({ error: "Invalid priority" }, { status: 400 });
+    }
+    if (data.region && !VALID_REGIONS.includes(data.region)) {
+      return NextResponse.json({ error: "Invalid region" }, { status: 400 });
+    }
+    if (data.status && !VALID_STATUSES.includes(data.status)) {
+      return NextResponse.json({ error: "Invalid status" }, { status: 400 });
+    }
 
     // Upload images to blob storage
     const uploadedImages = [];
     if (images && images.length > 0) {
-      console.log('POST /api/entries: Starting image upload to blob storage');
       for (const img of images) {
         try {
-          console.log(`POST /api/entries: Uploading image ${img.filename} (${img.mimeType}), position: ${img.position}`);
-          const buffer = Buffer.from(img.data, 'base64');
-          const result = await blobStorage.upload(buffer, img.filename, img.mimeType);
-          console.log(`POST /api/entries: Successfully uploaded to ${result.url}`);
+          const buffer = Buffer.from(img.data, "base64");
+          const result = await blobStorage.upload(
+            buffer,
+            img.filename,
+            img.mimeType,
+          );
           uploadedImages.push({
             filename: result.filename,
             mimeType: result.mimeType,
@@ -168,46 +121,53 @@ export async function POST(request: NextRequest) {
           });
         } catch (error) {
           console.error(`Error uploading image ${img.filename}:`, error);
-          // Continue with other images, skip this one
         }
       }
-      console.log('POST /api/entries: Uploaded', uploadedImages.length, 'images successfully');
     }
 
     // Generate ID
     const id = crypto.randomUUID();
     const now = new Date();
 
-    // Insert entry
+    // Look up author_id from session user email
+    const userEmail = auth.session?.user?.email;
+    const authorId = userEmail ? await getAuthorId(userEmail) : null;
+
+    // Insert entry with author_id foreign key
     // Store date as-is without timezone conversion
+    const textContent = stripHtmlToText(entryContent);
     await query(
-      `INSERT INTO pu_morning_briefings.entries (
+      `INSERT INTO morning_briefings.entries (
         id, category, priority, region, country, headline, date, entry,
-        source_url, source_date, pu_note, author, status, approval_status
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`,
+        source_name, source_url, source_date, pu_note, thematic, author_id, status, discussion_status, previous_entry_id, text_content
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)`,
       [
         id,
         data.category,
         data.priority,
         data.region,
-        data.country,
+        serializeCountry(data.country),
         data.headline,
         data.date, // Store as string, no Date conversion
         entryContent,
+        data.sourceName ? serializeStringOrArray(data.sourceName) : null,
         data.sourceUrl || null,
         data.sourceDate || null,
         data.puNote || null,
-        data.author || null,
+        data.thematic ? serializeStringOrArray(data.thematic) : null,
+        authorId,
         data.status || null,
-        'pending',
-      ]
+        "pending",
+        data.previousEntryId || null,
+        textContent,
+      ],
     );
 
     // Insert images if any
     if (uploadedImages.length > 0) {
       for (const img of uploadedImages) {
         await query(
-          `INSERT INTO pu_morning_briefings.images (
+          `INSERT INTO morning_briefings.images (
             id, entry_id, filename, mime_type, blob_url, width, height, position
           ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
           [
@@ -216,77 +176,36 @@ export async function POST(request: NextRequest) {
             img.filename,
             img.mimeType,
             img.blobUrl,
-            img.width || null,
-            img.height || null,
-            img.position !== undefined && img.position !== null ? img.position : null,
-          ]
+            img.width ?? null,
+            img.height ?? null,
+            img.position ?? null,
+          ],
         );
       }
     }
 
-    // Fetch created entry with images
-    const result = await query(
-      `SELECT 
-        e.id,
-        e.category,
-        e.priority,
-        e.region,
-        e.country,
-        e.headline,
-        e.date,
-        e.entry,
-        e.source_url as "sourceUrl",
-        e.source_date as "sourceDate",
-        e.pu_note as "puNote",
-        e.author,
-        e.status,
-        COALESCE(e.approval_status, 'pending') as "approvalStatus",
-        COALESCE(
-          json_agg(
-            json_build_object(
-              'id', i.id,
-              'entryId', i.entry_id,
-              'filename', i.filename,
-              'mimeType', i.mime_type,
-              'blobUrl', i.blob_url,
-              'width', i.width,
-              'height', i.height,
-              'position', i.position
-            ) ORDER BY i.position NULLS LAST
-          ) FILTER (WHERE i.id IS NOT NULL),
-          '[]'
-        ) as images
-      FROM pu_morning_briefings.entries e
-      LEFT JOIN pu_morning_briefings.images i ON e.id = i.entry_id
-      WHERE e.id = $1
-      GROUP BY e.id`,
-      [id]
-    );
-
-    const createdEntry = result.rows[0];
+    // Fetch created entry with images and author info
+    const createdEntry = await fetchEntryById(id);
     createdEntry.entry = await convertImageReferencesServerSide(
-        createdEntry.entry,
-        createdEntry.images,
-        blobStorage,
-        'POST /api/entries'
-      );
+      createdEntry.entry,
+      createdEntry.images,
+      blobStorage,
+      "POST /api/entries",
+    );
 
     return NextResponse.json(createdEntry, { status: 201 });
   } catch (error) {
-    console.error('Error creating entry:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    const errorStack = error instanceof Error ? error.stack : undefined;
-    console.error('Error details:', { message: errorMessage, stack: errorStack });
-    return NextResponse.json({ 
-      error: 'Failed to create entry',
-      details: errorMessage 
-    }, { status: 500 });
+    console.error("Error creating entry:", error);
+    return NextResponse.json(
+      { error: labels.entries.errors.createFailed },
+      { status: 500 },
+    );
   }
 }
 
 /**
  * PATCH /api/entries
- * Update entry approval status
+ * Update entry discussion status
  */
 export async function PATCH(request: NextRequest) {
   // Check authentication
@@ -297,35 +216,52 @@ export async function PATCH(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { id, approvalStatus, aiSummary, action } = body;
+    const { id, discussionStatus, aiSummary, action, status } = body;
 
     if (!id) {
-      return NextResponse.json({ error: 'Entry ID is required' }, { status: 400 });
+      return NextResponse.json(
+        { error: labels.entries.errors.idRequired },
+        { status: 400 },
+      );
     }
-
-    const now = new Date().toISOString();
 
     // Build update query based on what fields are provided
-    if (approvalStatus && !['pending', 'discussed', 'left-out'].includes(approvalStatus)) {
-      return NextResponse.json({ error: 'Invalid approval status' }, { status: 400 });
+    if (discussionStatus && !["pending", "discussed"].includes(discussionStatus)) {
+      return NextResponse.json(
+        { error: (labels as any).entries.errors.invalidDiscussionStatus },
+        { status: 400 },
+      );
     }
 
-    let updateQuery = 'UPDATE pu_morning_briefings.entries SET';
+    if (status && !["draft", "submitted"].includes(status)) {
+      return NextResponse.json(
+        { error: labels.entries.errors.invalidStatus },
+        { status: 400 },
+      );
+    }
+
+    let updateQuery = "UPDATE morning_briefings.entries SET";
     const params: any[] = [];
     let paramIndex = 1;
     const updateParts: string[] = [];
 
     // Handle postpone action: set status to pending and advance date by 1 day
-    if (action === 'postpone') {
-      updateParts.push(`approval_status = $${paramIndex}`);
-      params.push('pending');
+    if (action === "postpone") {
+      updateParts.push(`discussion_status = $${paramIndex}`);
+      params.push("pending");
       paramIndex++;
-      
+
       updateParts.push(`date = (date + INTERVAL '1 day')`);
     } else {
-      if (approvalStatus) {
-        updateParts.push(`approval_status = $${paramIndex}`);
-        params.push(approvalStatus);
+      if (status) {
+        updateParts.push(`status = $${paramIndex}`);
+        params.push(status);
+        paramIndex++;
+      }
+
+      if (discussionStatus) {
+        updateParts.push(`discussion_status = $${paramIndex}`);
+        params.push(discussionStatus);
         paramIndex++;
       }
 
@@ -337,48 +273,33 @@ export async function PATCH(request: NextRequest) {
     }
 
     if (updateParts.length === 0) {
-      return NextResponse.json({ error: 'No fields to update' }, { status: 400 });
+      return NextResponse.json(
+        { error: labels.entries.errors.noFieldsToUpdate },
+        { status: 400 },
+      );
     }
 
-    updateQuery += ` ${updateParts.join(', ')} WHERE id = $${paramIndex}`;
+    updateQuery += ` ${updateParts.join(", ")} WHERE id = $${paramIndex}`;
     params.push(id);
 
     // Update entry
     await query(updateQuery, params);
 
-    // Fetch updated entry
-    const result = await query(
-      `SELECT 
-        id,
-        category,
-        priority,
-        region,
-        country,
-        headline,
-        date,
-        entry,
-        source_url as "sourceUrl",
-        pu_note as "puNote",
-        author,
-        status,
-        ai_summary as "aiSummary",
-        COALESCE(approval_status, 'pending') as "approvalStatus"
-      FROM pu_morning_briefings.entries
-      WHERE id = $1`,
-      [id]
-    );
-
-    if (result.rows.length === 0) {
-      return NextResponse.json({ error: 'Entry not found' }, { status: 404 });
+    // Fetch updated entry with author info
+    const entry = await fetchEntryById(id);
+    if (!entry) {
+      return NextResponse.json(
+        { error: labels.entries.errors.notFound },
+        { status: 404 },
+      );
     }
 
-    return NextResponse.json(result.rows[0]);
+    return NextResponse.json(entry);
   } catch (error) {
-    console.error('Error updating entry:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    return NextResponse.json({ 
-      error: 'Failed to update entry',
-      details: errorMessage 
-    }, { status: 500 });
+    console.error("Error updating entry:", error);
+    return NextResponse.json(
+      { error: labels.entries.errors.updateFailed },
+      { status: 500 },
+    );
   }
 }

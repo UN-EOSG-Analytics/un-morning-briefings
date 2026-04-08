@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import { Suspense } from 'react';
-import { MorningMeetingList } from '@/components/MorningMeetingList';
-import { useSearchParams } from 'next/navigation';
+import { Suspense } from "react";
+import { MorningMeetingList } from "@/components/MorningMeetingList";
+import { useSearchParams } from "next/navigation";
 
 function ListPageContent() {
   const searchParams = useSearchParams();
-  const dateFilter = searchParams.get('date') || undefined;
+  const dateFilter = searchParams.get("date") || undefined;
 
   return (
     <div className="bg-background">

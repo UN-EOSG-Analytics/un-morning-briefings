@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useState, useRef, useEffect } from 'react';
-import { Filter } from 'lucide-react';
+import { useState, useRef, useEffect } from "react";
+import { Filter } from "lucide-react";
 
 interface ColumnFilterProps {
   columnName: string;
@@ -34,8 +34,9 @@ export function ColumnFilter({
     }
 
     if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
+      document.addEventListener("mousedown", handleClickOutside);
+      return () =>
+        document.removeEventListener("mousedown", handleClickOutside);
     }
   }, [isOpen]);
 
@@ -58,9 +59,9 @@ export function ColumnFilter({
           setIsOpen(!isOpen);
         }}
         className={`inline-flex items-center gap-1 rounded px-1.5 py-1 ${
-          selectedValue !== 'all'
-            ? 'bg-un-blue/10 text-un-blue'
-            : 'text-slate-600 hover:bg-slate-100'
+          selectedValue !== "all"
+            ? "bg-un-blue/10 text-un-blue"
+            : "text-slate-600 hover:bg-slate-100"
         }`}
       >
         <Filter className="h-4 w-4" />
@@ -78,13 +79,13 @@ export function ColumnFilter({
           <div className="max-h-64 overflow-y-auto">
             <button
               onClick={() => {
-                onValueChange('all');
+                onValueChange("all");
                 setIsOpen(false);
               }}
               className={`block w-full px-3 py-2 text-left text-sm ${
-                selectedValue === 'all'
-                  ? 'bg-un-blue/10 text-un-blue font-semibold'
-                  : 'text-slate-700 hover:bg-slate-50'
+                selectedValue === "all"
+                  ? "bg-un-blue/10 font-semibold text-un-blue"
+                  : "text-slate-700 hover:bg-slate-50"
               }`}
             >
               All {columnName}s
@@ -98,8 +99,8 @@ export function ColumnFilter({
                 }}
                 className={`block w-full px-3 py-2 text-left text-sm ${
                   selectedValue === option
-                    ? 'bg-un-blue/10 text-un-blue font-semibold'
-                    : 'text-slate-700 hover:bg-slate-50'
+                    ? "bg-un-blue/10 font-semibold text-un-blue"
+                    : "text-slate-700 hover:bg-slate-50"
                 }`}
               >
                 {option}

@@ -1,24 +1,22 @@
-'use client';
+"use client";
 
-import { Search, RotateCcw } from 'lucide-react';
+import { Search, RotateCcw } from "lucide-react";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { REGIONS, CATEGORIES, PRIORITIES } from '@/types/morning-meeting';
+} from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { REGIONS, PRIORITIES } from "@/types/morning-meeting";
 
 interface FilterBarProps {
   searchTerm: string;
   onSearchChange: (value: string) => void;
   filterRegion: string;
   onRegionChange: (value: string) => void;
-  filterCategory: string;
-  onCategoryChange: (value: string) => void;
   filterPriority: string;
   onPriorityChange: (value: string) => void;
   filterDate: string;
@@ -33,8 +31,6 @@ export function FilterBar({
   onSearchChange,
   filterRegion,
   onRegionChange,
-  filterCategory,
-  onCategoryChange,
   filterPriority,
   onPriorityChange,
   filterDate,
@@ -45,22 +41,22 @@ export function FilterBar({
 }: FilterBarProps) {
   return (
     <Card className="border-slate-200 p-3">
-      <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-2">
+      <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:flex-wrap sm:items-center">
         {/* Search */}
         <div className="relative flex-1 sm:max-w-[350px]">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
             placeholder="Search entries..."
             value={searchTerm}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="h-9 w-full rounded-md border border-slate-300 bg-white pl-9 pr-3 text-sm focus:border-un-blue focus:outline-none focus:ring-2 focus:ring-un-blue/20"
+            className="h-9 w-full rounded-md border border-slate-300 bg-white pr-3 pl-9 text-sm focus:border-un-blue focus:ring-2 focus:ring-un-blue/20 focus:outline-none"
           />
         </div>
 
         {/* Region Filter */}
         <Select value={filterRegion} onValueChange={onRegionChange}>
-          <SelectTrigger className="w-full sm:w-[180px] h-9 text-sm">
+          <SelectTrigger className="h-9 w-full text-sm sm:w-[180px]">
             <SelectValue placeholder="All Regions" />
           </SelectTrigger>
           <SelectContent>
@@ -73,24 +69,9 @@ export function FilterBar({
           </SelectContent>
         </Select>
 
-        {/* Category Filter */}
-        <Select value={filterCategory} onValueChange={onCategoryChange}>
-          <SelectTrigger className="w-full sm:w-[180px] h-9 text-sm">
-            <SelectValue placeholder="All Categories" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Categories</SelectItem>
-            {CATEGORIES.map((category) => (
-              <SelectItem key={category} value={category}>
-                {category}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
         {/* Priority Filter */}
         <Select value={filterPriority} onValueChange={onPriorityChange}>
-          <SelectTrigger className="w-full sm:w-[180px] h-9 text-sm">
+          <SelectTrigger className="h-9 w-full text-sm sm:w-[180px]">
             <SelectValue placeholder="All Priorities" />
           </SelectTrigger>
           <SelectContent>
@@ -108,7 +89,7 @@ export function FilterBar({
           type="date"
           value={filterDate}
           onChange={(e) => onDateChange(e.target.value)}
-          className="h-9 rounded-md border border-slate-300 bg-white px-3 text-sm focus:border-un-blue focus:outline-none focus:ring-2 focus:ring-un-blue/20"
+          className="h-9 rounded-md border border-slate-300 bg-white px-3 text-sm focus:border-un-blue focus:ring-2 focus:ring-un-blue/20 focus:outline-none"
         />
 
         {/* Reset Button */}

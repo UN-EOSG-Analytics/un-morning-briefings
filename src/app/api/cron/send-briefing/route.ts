@@ -107,21 +107,23 @@ export async function GET(request: NextRequest) {
     const briefingDate = getTodayNYC();
     console.log(`[CRON] Processing briefing for ${briefingDate}`);
 
-    // Duplicate prevention: check if already sent today
-    const logCheck = await query(
-      `SELECT id FROM morning_briefings.email_send_log
-       WHERE briefing_date = $1 AND status = 'success' AND triggered_by = 'cron'
-       LIMIT 1`,
-      [briefingDate],
-    );
+    // Duplicate prevention: check if already sent today (skip in test mode)
+    if (!process.env.CRON_TEST_EMAIL) {
+      const logCheck = await query(
+        `SELECT id FROM morning_briefings.email_send_log
+         WHERE briefing_date = $1 AND status = 'success' AND triggered_by = 'cron'
+         LIMIT 1`,
+        [briefingDate],
+      );
 
-    if (logCheck.rows.length > 0) {
-      console.log(`[CRON] Briefing for ${briefingDate} already sent, skipping`);
-      return NextResponse.json({
-        skipped: true,
-        reason: "already sent",
-        briefingDate,
-      });
+      if (logCheck.rows.length > 0) {
+        console.log(`[CRON] Briefing for ${briefingDate} already sent, skipping`);
+        return NextResponse.json({
+          skipped: true,
+          reason: "already sent",
+          briefingDate,
+        });
+      }
     }
 
     // Fetch entries for this briefing date

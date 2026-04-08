@@ -173,6 +173,48 @@ export function formatDateLong(date: string | Date): string {
 }
 
 /**
+ * Get current date/time components in America/New_York timezone.
+ * Uses Intl.DateTimeFormat so it works correctly regardless of the
+ * browser's or server's local timezone setting.
+ */
+export function getNycNow(): {
+  year: number;
+  month: number;
+  day: number;
+  hour: number;
+  minute: number;
+  dayOfWeek: number; // 0 = Sunday, 6 = Saturday
+} {
+  const now = new Date();
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/New_York",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    weekday: "short",
+    hour12: false,
+  }).formatToParts(now);
+
+  const get = (type: string) => parts.find((p) => p.type === type)!.value;
+  const hour = parseInt(get("hour"));
+
+  return {
+    year: parseInt(get("year")),
+    month: parseInt(get("month")),
+    day: parseInt(get("day")),
+    hour: hour === 24 ? 0 : hour,
+    minute: parseInt(get("minute")),
+    dayOfWeek: new Date(
+      parseInt(get("year")),
+      parseInt(get("month")) - 1,
+      parseInt(get("day")),
+    ).getDay(),
+  };
+}
+
+/**
  * Format current date/time as localized string: "1/15/2026, 3:45 PM ET"
  * Always uses America/New_York timezone for consistency between
  * client-side and server-side (Vercel/UTC) document generation.

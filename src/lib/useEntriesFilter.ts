@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useState, useMemo } from "react";
-import { parseDateString } from "./format-date";
+import { parseDateString, getNycNow } from "./format-date";
 import labels from "./labels.json";
 
 /**
@@ -27,18 +27,13 @@ function dateToMinutes(
  *        Weekends (Saturday/Sunday) are skipped - Friday 8AM to Monday 8AM counts for Monday
  */
 export function getCurrentBriefingDate(): string {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth() + 1;
-  const day = now.getDate();
-  const hour = now.getHours();
-  const dayOfWeek = now.getDay(); // 0 = Sunday, 6 = Saturday
+  const { year, month, day, hour } = getNycNow();
 
   let briefingDay = day;
   let briefingMonth = month;
   let briefingYear = year;
 
-  // If >= 8AM, working on tomorrow's briefing
+  // If >= 8AM ET, working on tomorrow's briefing
   if (hour >= 8) {
     briefingDay += 1;
     // Handle month overflow
@@ -277,13 +272,22 @@ export function useEntriesFilter(entries: any[], initialDateFilter?: string) {
 
   /**
    * Sort filtered entries by specified field and direction.
-   * When sorting by region, entries are grouped by region (in the order
-   * defined in labels.json) and sorted by date within each region.
+   * When sorting by region, entries are first grouped by briefing date
+   * (newest first), then sorted by region within each date group.
    */
   const sortedEntries = useMemo(() => {
     const sorted = [...filteredEntries];
     sorted.sort((a, b) => {
       if (sortField === "region") {
+        // Primary sort: briefing date descending (preserve day groups)
+        const aDate = new Date(a.date).getTime();
+        const bDate = new Date(b.date).getTime();
+        const aBriefing = getBriefingDate(a.date);
+        const bBriefing = getBriefingDate(b.date);
+        if (aBriefing !== bBriefing) {
+          return aBriefing > bBriefing ? -1 : 1;
+        }
+        // Secondary sort: region in labels.json order
         const regionOrder = labels.regions;
         const aIdx = regionOrder.indexOf(a.region);
         const bIdx = regionOrder.indexOf(b.region);
@@ -293,8 +297,8 @@ export function useEntriesFilter(entries: any[], initialDateFilter?: string) {
           ? aRegion - bRegion
           : bRegion - aRegion;
         if (regionCmp !== 0) return regionCmp;
-        // Within same region, sort by date descending
-        return new Date(b.date).getTime() - new Date(a.date).getTime();
+        // Tertiary: by date within same region
+        return bDate - aDate;
       }
 
       let aVal = a[sortField];

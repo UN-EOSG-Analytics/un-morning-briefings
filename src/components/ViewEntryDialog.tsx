@@ -13,7 +13,7 @@ import { MorningMeetingEntry, PRIORITIES } from "@/types/morning-meeting";
 import { getPriorityBadgeClass } from "@/lib/useEntriesFilter";
 import { usePopup } from "@/lib/popup-context";
 import labels from "@/lib/labels.json";
-import { formatDateResponsive, formatDateFull } from "@/lib/format-date";
+import { formatDateResponsive, formatDateFull, parseDateString } from "@/lib/format-date";
 import { sanitizeHtml } from "@/lib/sanitize";
 import {
   Edit,
@@ -199,13 +199,19 @@ export function ViewEntryDialog({
         labels.viewEntry.discussion.postponedMessage,
       );
 
-      // Update the entry with new date and status
+      // Update the entry with new date and status.
+      // Use parseDateString to avoid timezone-dependent Date parsing —
+      // entry.date is a naive NYC timestamp, not UTC.
       if (onDiscuss) {
-        const newDate = new Date(displayEntry.date);
-        newDate.setDate(newDate.getDate() + 1);
+        const { year, month, day, hour, minute } = parseDateString(displayEntry.date);
+        // +1 day using a Date in local calendar arithmetic (month is 0-indexed)
+        const next = new Date(year, month - 1, day + 1);
+        const newDateStr =
+          `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, "0")}-${String(next.getDate()).padStart(2, "0")}` +
+          `T${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
         onDiscuss({
           ...displayEntry,
-          date: newDate.toISOString(),
+          date: newDateStr,
           discussionStatus: "pending",
         });
       }

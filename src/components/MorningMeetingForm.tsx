@@ -35,7 +35,7 @@ import {
   REGIONS,
 } from "@/types/morning-meeting";
 import labelsData from "@/lib/labels.json";
-import { formatDateDesktop } from "@/lib/format-date";
+import { formatDateDesktop, getNycNow } from "@/lib/format-date";
 import {
   FileText,
   AlertCircle,
@@ -124,13 +124,13 @@ export function MorningMeetingForm({
   // Format date to YYYY-MM-DDTHH:MM format - extract literal string without any parsing
   const formatDateForInput = (dateValue: any): string => {
     if (!dateValue) {
-      // Return current time as-is
-      const now = new Date();
-      const year = now.getFullYear();
-      const month = String(now.getMonth() + 1).padStart(2, "0");
-      const day = String(now.getDate()).padStart(2, "0");
-      const hour = String(now.getHours()).padStart(2, "0");
-      const minute = String(now.getMinutes()).padStart(2, "0");
+      // Return current NYC time (entries.date stores NYC wall-clock time)
+      const nyc = getNycNow();
+      const year = nyc.year;
+      const month = String(nyc.month).padStart(2, "0");
+      const day = String(nyc.day).padStart(2, "0");
+      const hour = String(nyc.hour).padStart(2, "0");
+      const minute = String(nyc.minute).padStart(2, "0");
       return `${year}-${month}-${day}T${hour}:${minute}`;
     }
 

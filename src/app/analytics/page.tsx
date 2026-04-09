@@ -43,6 +43,7 @@ import {
   BarChart3,
 } from "lucide-react";
 import { WorldMapHeatmap } from "@/components/WorldMapHeatmap";
+import { parseDateString } from "@/lib/format-date";
 
 const COUNTRIES: string[] = ((labelsData as Record<string, unknown>)
   .countries || []) as string[];
@@ -226,8 +227,9 @@ export default function AnalyticsPage() {
   // Transform chronological data for area chart (exclude weekends)
   const chronologicalMap = new Map<string, Record<string, number>>();
   analyticsData?.chronologicalData.forEach((item) => {
-    const date = new Date(item.date);
-    const dayOfWeek = date.getDay(); // 0 = Sunday, 6 = Saturday
+    // Parse date components directly to avoid UTC shift from new Date()
+    const { year, month, day } = parseDateString(item.date);
+    const dayOfWeek = new Date(year, month - 1, day).getDay();
 
     // Skip weekends (Saturday = 6, Sunday = 0)
     if (dayOfWeek === 0 || dayOfWeek === 6) {
@@ -246,20 +248,21 @@ export default function AnalyticsPage() {
       date,
       ...regions,
     }))
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    .sort((a, b) => (a.date > b.date ? 1 : a.date < b.date ? -1 : 0));
 
   const allRegionsInChronological = Array.from(
     new Set(analyticsData?.chronologicalData.map((item) => item.region) || []),
   );
 
   const monthlyData =
-    analyticsData?.entriesPerMonth.map((item) => ({
-      month: new Date(item.month).toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "short",
-      }),
-      count: parseInt(item.count),
-    })) || [];
+    analyticsData?.entriesPerMonth.map((item) => {
+      const { year, month } = parseDateString(item.month);
+      const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      return {
+        month: `${MONTHS[month - 1]} ${year}`,
+        count: parseInt(item.count),
+      };
+    }) || [];
 
   return (
     <div className="bg-background">
@@ -336,10 +339,7 @@ export default function AnalyticsPage() {
                     className="w-full **:data-[slot=slider-range]:bg-un-blue **:data-[slot=slider-track]:bg-blue-200"
                   />
                   <div className="text-xs text-slate-600">
-                    {startDate
-                      ? new Date(startDate).toLocaleDateString()
-                      : "Start"}{" "}
-                    → {endDate ? new Date(endDate).toLocaleDateString() : "End"}
+                    {startDate || "Start"} → {endDate || "End"}
                   </div>
                 </div>
               </div>
@@ -771,12 +771,11 @@ export default function AnalyticsPage() {
                       <XAxis
                         dataKey="date"
                         tick={{ fontSize: 12 }}
-                        tickFormatter={(value) =>
-                          new Date(value).toLocaleDateString("en-US", {
-                            month: "short",
-                            day: "numeric",
-                          })
-                        }
+                        tickFormatter={(value) => {
+                          const { month, day } = parseDateString(value);
+                          const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+                          return `${MONTHS[month - 1]} ${day}`;
+                        }}
                       />
                       <YAxis tick={{ fontSize: 12 }} />
                       <Tooltip
@@ -785,13 +784,11 @@ export default function AnalyticsPage() {
                           border: "1px solid #e2e8f0",
                           borderRadius: "8px",
                         }}
-                        labelFormatter={(value) =>
-                          new Date(value).toLocaleDateString("en-US", {
-                            year: "numeric",
-                            month: "long",
-                            day: "numeric",
-                          })
-                        }
+                        labelFormatter={(value) => {
+                          const { year, month, day } = parseDateString(value);
+                          const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+                          return `${MONTHS[month - 1]} ${day}, ${year}`;
+                        }}
                       />
                       <Legend />
                       {allRegionsInChronological.map((region, index) => (

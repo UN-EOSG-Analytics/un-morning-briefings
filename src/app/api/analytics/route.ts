@@ -22,14 +22,14 @@ export async function GET(request: NextRequest) {
     let paramIndex = 1;
 
     if (startDate) {
-      conditions.push(`date >= $${paramIndex}`);
-      params.push(new Date(startDate));
+      conditions.push(`DATE(date) >= $${paramIndex}::date`);
+      params.push(startDate);
       paramIndex++;
     }
 
     if (endDate) {
-      conditions.push(`date <= $${paramIndex}`);
-      params.push(new Date(endDate));
+      conditions.push(`DATE(date) <= $${paramIndex}::date`);
+      params.push(endDate);
       paramIndex++;
     }
 

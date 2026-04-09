@@ -4,20 +4,6 @@ import { useState, useMemo } from "react";
 import { parseDateString, getNycNow } from "./format-date";
 import labels from "./labels.json";
 
-/**
- * Convert date components to a comparable number (minutes since epoch-ish)
- * Used for comparing dates without timezone issues
- */
-function dateToMinutes(
-  year: number,
-  month: number,
-  day: number,
-  hour: number,
-  minute: number,
-): number {
-  // Simple calculation for comparison purposes
-  return year * 525600 + month * 43800 + day * 1440 + hour * 60 + minute;
-}
 
 /**
  * Get the current briefing date based on local time
@@ -87,12 +73,8 @@ export function getCurrentBriefingDate(): string {
  * Example: Entry "2026-01-15T05:00" → 05:00 < 8:00 → briefing for Jan 15
  * Example: Friday entry after 8AM → Monday briefing
  */
-export function getBriefingDate(entryDate: string | Date): string {
-  // Convert Date to string if needed
-  const dateStr =
-    typeof entryDate === "string" ? entryDate : entryDate.toISOString();
-
-  const { year, month, day, hour } = parseDateString(dateStr);
+export function getBriefingDate(entryDate: string): string {
+  const { year, month, day, hour } = parseDateString(entryDate);
 
   let briefingDay = day;
   let briefingMonth = month;
@@ -151,7 +133,7 @@ export function getBriefingDate(entryDate: string | Date): string {
  *   → 13:30 >= 8:00 on Jan 15, so YES it's in Jan 16's briefing
  */
 export function isWithinCutoffRange(
-  entryDate: string | Date,
+  entryDate: string,
   briefingDateStr: string,
 ): boolean {
   // Simply check if the entry's calculated briefing date matches
@@ -280,8 +262,6 @@ export function useEntriesFilter(entries: any[], initialDateFilter?: string) {
     sorted.sort((a, b) => {
       if (sortField === "region") {
         // Primary sort: briefing date descending (preserve day groups)
-        const aDate = new Date(a.date).getTime();
-        const bDate = new Date(b.date).getTime();
         const aBriefing = getBriefingDate(a.date);
         const bBriefing = getBriefingDate(b.date);
         if (aBriefing !== bBriefing) {
@@ -297,17 +277,12 @@ export function useEntriesFilter(entries: any[], initialDateFilter?: string) {
           ? aRegion - bRegion
           : bRegion - aRegion;
         if (regionCmp !== 0) return regionCmp;
-        // Tertiary: by date within same region
-        return bDate - aDate;
+        // Tertiary: by date within same region (descending)
+        return b.date > a.date ? 1 : b.date < a.date ? -1 : 0;
       }
 
       let aVal = a[sortField];
       let bVal = b[sortField];
-
-      if (sortField === "date") {
-        aVal = new Date(aVal).getTime();
-        bVal = new Date(bVal).getTime();
-      }
 
       if (aVal < bVal) return sortDirection === "asc" ? -1 : 1;
       if (aVal > bVal) return sortDirection === "asc" ? 1 : -1;

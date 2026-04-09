@@ -5,38 +5,6 @@ import bcrypt from "bcryptjs";
 import { sendPasswordResetEmail } from "@/lib/email-service";
 import labels from "@/lib/labels.json";
 
-// Rate limiting map (in production, use Redis or similar)
-const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
-
-// Clean up old rate limit entries periodically
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, value] of rateLimitMap.entries()) {
-    if (now > value.resetAt) {
-      rateLimitMap.delete(key);
-    }
-  }
-}, 60000); // Clean up every minute
-
-function checkRateLimit(identifier: string): boolean {
-  const now = Date.now();
-  const record = rateLimitMap.get(identifier);
-
-  if (!record || now > record.resetAt) {
-    // New window - allow request
-    rateLimitMap.set(identifier, { count: 1, resetAt: now + 15 * 60 * 1000 }); // 15 min window
-    return true;
-  }
-
-  if (record.count >= 3) {
-    // Too many requests
-    return false;
-  }
-
-  record.count++;
-  return true;
-}
-
 export async function POST(request: NextRequest) {
   try {
     const { email } = await request.json();
@@ -49,29 +17,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Rate limiting by email (3 requests per 15 minutes)
-    if (!checkRateLimit(email.toLowerCase())) {
-      return NextResponse.json(
-        {
-          message: labels.auth.rateLimit.tooManyEmailRequests,
-        },
-        { status: 429 },
-      );
-    }
-
-    // Rate limiting by IP (10 requests per 15 minutes)
     const ip =
       request.headers.get("x-forwarded-for") ||
       request.headers.get("x-real-ip") ||
       "unknown";
-    if (!checkRateLimit(`ip:${ip}`)) {
-      return NextResponse.json(
-        {
-          message: labels.auth.rateLimit.tooManyIpRequests,
-        },
-        { status: 429 },
-      );
-    }
 
     // Look up user - but don't reveal if they exist (security best practice)
     const userResult = await query(

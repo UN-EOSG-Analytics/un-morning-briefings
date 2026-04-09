@@ -3,7 +3,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { query } from "@/lib/db";
 import { checkAuth } from "@/lib/auth-helper";
-import { serializeCountry, stripHtmlToText } from "@/lib/entry-queries";
+import { serializeCountry, stripHtmlToText, sanitizeUrl } from "@/lib/entry-queries";
+import { sanitizeHtml } from "@/lib/sanitize";
 
 /**
  * POST /api/entries/import
@@ -58,6 +59,10 @@ export async function POST(request: NextRequest) {
           }
         }
 
+        // Sanitize HTML content before storage
+        const sanitizedEntry = entry.entry ? sanitizeHtml(entry.entry) : entry.entry;
+        const sanitizedPuNote = entry.puNote ? sanitizeHtml(entry.puNote) : null;
+
         // Insert the entry with author_id foreign key
         await query(
           `INSERT INTO morning_briefings.entries (
@@ -72,17 +77,17 @@ export async function POST(request: NextRequest) {
             serializeCountry(entry.country),
             entry.headline,
             entry.date,
-            entry.entry,
+            sanitizedEntry,
             entry.sourceName || null,
-            entry.sourceUrl || null,
+            sanitizeUrl(entry.sourceUrl),
             entry.sourceDate || null,
-            entry.puNote || null,
+            sanitizedPuNote || null,
             entry.thematic || null,
             authorId,
             entry.status || "draft",
             entry.aiSummary || null,
             entry.discussionStatus || entry.approvalStatus || "pending",
-            stripHtmlToText(entry.entry),
+            stripHtmlToText(sanitizedEntry),
           ],
         );
 

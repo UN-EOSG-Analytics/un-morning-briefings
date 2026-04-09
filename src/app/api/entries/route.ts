@@ -9,10 +9,12 @@ import {
   serializeCountry,
   serializeStringOrArray,
   stripHtmlToText,
+  sanitizeUrl,
   fetchEntries,
   fetchEntryById,
   getAuthorId,
 } from "@/lib/entry-queries";
+import { sanitizeHtml } from "@/lib/sanitize";
 import labels from "@/lib/labels.json";
 
 const VALID_CATEGORIES = (labels as any).categories as string[];
@@ -125,6 +127,10 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Sanitize HTML content before storage
+    const sanitizedEntry = entryContent ? sanitizeHtml(entryContent) : entryContent;
+    const sanitizedPuNote = data.puNote ? sanitizeHtml(data.puNote) : data.puNote;
+
     // Generate ID
     const id = crypto.randomUUID();
     const now = new Date();
@@ -135,7 +141,7 @@ export async function POST(request: NextRequest) {
 
     // Insert entry with author_id foreign key
     // Store date as-is without timezone conversion
-    const textContent = stripHtmlToText(entryContent);
+    const textContent = stripHtmlToText(sanitizedEntry);
     await query(
       `INSERT INTO morning_briefings.entries (
         id, category, priority, region, country, headline, date, entry,
@@ -149,11 +155,11 @@ export async function POST(request: NextRequest) {
         serializeCountry(data.country),
         data.headline,
         data.date, // Store as string, no Date conversion
-        entryContent,
+        sanitizedEntry,
         data.sourceName ? serializeStringOrArray(data.sourceName) : null,
-        data.sourceUrl || null,
+        sanitizeUrl(data.sourceUrl),
         data.sourceDate || null,
-        data.puNote || null,
+        sanitizedPuNote || null,
         data.thematic ? serializeStringOrArray(data.thematic) : null,
         authorId,
         data.status || null,

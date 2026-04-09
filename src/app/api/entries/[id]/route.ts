@@ -7,8 +7,10 @@ import {
   serializeCountry,
   serializeStringOrArray,
   stripHtmlToText,
+  sanitizeUrl,
   fetchEntryById,
 } from "@/lib/entry-queries";
+import { sanitizeHtml } from "@/lib/sanitize";
 import labels from "@/lib/labels.json";
 
 const VALID_CATEGORIES = (labels as any).categories as string[];
@@ -190,10 +192,11 @@ export async function PUT(
       updateValues.push(data.date); // Store as string, no Date conversion
     }
     if (entryContent !== undefined) {
+      const sanitizedEntry = sanitizeHtml(entryContent);
       updateFields.push(`entry = $${paramCount++}`);
-      updateValues.push(entryContent);
+      updateValues.push(sanitizedEntry);
       updateFields.push(`text_content = $${paramCount++}`);
-      updateValues.push(stripHtmlToText(entryContent));
+      updateValues.push(stripHtmlToText(sanitizedEntry));
     }
     if (data.sourceName !== undefined) {
       updateFields.push(`source_name = $${paramCount++}`);
@@ -203,7 +206,7 @@ export async function PUT(
     }
     if (data.sourceUrl !== undefined) {
       updateFields.push(`source_url = $${paramCount++}`);
-      updateValues.push(data.sourceUrl);
+      updateValues.push(sanitizeUrl(data.sourceUrl));
     }
     if (data.sourceDate !== undefined) {
       updateFields.push(`source_date = $${paramCount++}`);
@@ -211,7 +214,7 @@ export async function PUT(
     }
     if (data.puNote !== undefined) {
       updateFields.push(`pu_note = $${paramCount++}`);
-      updateValues.push(data.puNote);
+      updateValues.push(data.puNote ? sanitizeHtml(data.puNote) : data.puNote);
     }
     if (data.thematic !== undefined) {
       updateFields.push(`thematic = $${paramCount++}`);

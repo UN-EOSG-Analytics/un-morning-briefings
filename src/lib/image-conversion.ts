@@ -6,6 +6,7 @@
  * This module provides functions for:
  * - Converting image-ref:// references to data URLs (client-side)
  * - Converting image-ref:// references to data URLs (server-side with blob storage)
+ * - Internalizing external HTTP(S) images into blob storage at save time
  */
 
 /**
@@ -129,6 +130,104 @@ export async function convertImageReferencesServerSide(
   }
 
   return updatedHtml;
+}
+
+interface BlobUploadResult {
+  url: string;
+  filename: string;
+  mimeType: string;
+}
+
+interface InternalizedImage {
+  filename: string;
+  mimeType: string;
+  blobUrl: string;
+  width: null;
+  height: null;
+  position: number;
+}
+
+/**
+ * Server-side: download external HTTP(S) image URLs in HTML, upload them to blob storage,
+ * and replace with image-ref:// references so they are stored like user-uploaded images.
+ *
+ * @param html - HTML content potentially containing external <img> src URLs
+ * @param startPosition - Position number to start from (avoids collision with existing images)
+ * @param blobStorage - Blob storage instance with upload method
+ * @param contextName - Name for logging context
+ * @returns Updated HTML with image-ref:// refs and array of image metadata for DB insertion
+ */
+export async function internalizeExternalImages(
+  html: string,
+  startPosition: number,
+  blobStorage: { upload: (buf: Buffer, name: string, mime: string) => Promise<BlobUploadResult> },
+  contextName: string = "internalizeExternalImages",
+): Promise<{ html: string; images: InternalizedImage[] }> {
+  const externalImgRegex =
+    /<img[^>]*src=["']?(https?:\/\/[^"'\s>]+)["']?([^>]*)>/gi;
+  let match;
+  const images: InternalizedImage[] = [];
+  // Deduplicate: if the same URL appears multiple times, download once
+  const urlToRef = new Map<string, string>();
+  const replacements: Array<{ from: string; to: string }> = [];
+  let position = startPosition;
+
+  while ((match = externalImgRegex.exec(html)) !== null) {
+    const fullTag = match[0];
+    const imageUrl = match[1];
+    const restOfTag = match[2];
+
+    // Already processed this URL
+    if (urlToRef.has(imageUrl)) {
+      const ref = urlToRef.get(imageUrl)!;
+      replacements.push({ from: fullTag, to: `<img src="${ref}"${restOfTag}>` });
+      continue;
+    }
+
+    try {
+      const response = await fetch(imageUrl, {
+        signal: AbortSignal.timeout(15000),
+        headers: {
+          "User-Agent": "Mozilla/5.0 (compatible; UN-Briefings/1.0)",
+        },
+      });
+      if (!response.ok) continue;
+
+      const contentType = response.headers.get("content-type") || "";
+      if (!contentType.startsWith("image/")) continue;
+
+      const buffer = Buffer.from(await response.arrayBuffer());
+
+      // Derive filename from URL path, fallback to generic name
+      const urlPath = new URL(imageUrl).pathname;
+      const filename = decodeURIComponent(urlPath.split("/").pop() || `external-image-${position}.jpg`);
+
+      const result = await blobStorage.upload(buffer, filename, contentType);
+      const ref = `image-ref://img-${position}`;
+
+      images.push({
+        filename: result.filename,
+        mimeType: result.mimeType,
+        blobUrl: result.url,
+        width: null,
+        height: null,
+        position,
+      });
+
+      urlToRef.set(imageUrl, ref);
+      replacements.push({ from: fullTag, to: `<img src="${ref}"${restOfTag}>` });
+      position++;
+    } catch (error) {
+      console.error(`${contextName}: Error internalizing external image:`, imageUrl, error);
+      // Leave the original <img> tag untouched
+    }
+  }
+
+  for (const { from, to } of replacements) {
+    html = html.replaceAll(from, to);
+  }
+
+  return { html, images };
 }
 
 /**

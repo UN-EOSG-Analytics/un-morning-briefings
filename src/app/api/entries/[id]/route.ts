@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { query } from "@/lib/db";
 import { blobStorage } from "@/lib/blob-storage";
-import { convertImageReferencesServerSide } from "@/lib/image-conversion";
+import { convertImageReferencesServerSide, internalizeExternalImages } from "@/lib/image-conversion";
 import { checkAuth } from "@/lib/auth-helper";
 import {
   serializeCountry,
@@ -162,6 +162,32 @@ export async function PUT(
       }
     }
 
+    // Sanitize and internalize external images before building update fields
+    let sanitizedEntry: string | undefined;
+    if (entryContent !== undefined) {
+      sanitizedEntry = sanitizeHtml(entryContent);
+
+      // Compute start position: if images were re-uploaded, use their count;
+      // otherwise check existing images in DB to avoid position collisions
+      let startPosition = uploadedImages.length;
+      if (!images) {
+        const existingPositions = await query(
+          `SELECT COALESCE(MAX(position), -1) as max_pos FROM morning_briefings.images WHERE entry_id = $1`,
+          [id],
+        );
+        startPosition = (existingPositions.rows[0]?.max_pos ?? -1) + 1;
+      }
+
+      const result = await internalizeExternalImages(
+        sanitizedEntry,
+        startPosition,
+        blobStorage,
+        "PUT /api/entries",
+      );
+      sanitizedEntry = result.html;
+      uploadedImages.push(...result.images);
+    }
+
     // Update entry
     const updateFields = [];
     const updateValues = [];
@@ -191,8 +217,7 @@ export async function PUT(
       updateFields.push(`date = $${paramCount++}`);
       updateValues.push(data.date); // Store as string, no Date conversion
     }
-    if (entryContent !== undefined) {
-      const sanitizedEntry = sanitizeHtml(entryContent);
+    if (sanitizedEntry !== undefined) {
       updateFields.push(`entry = $${paramCount++}`);
       updateValues.push(sanitizedEntry);
       updateFields.push(`text_content = $${paramCount++}`);

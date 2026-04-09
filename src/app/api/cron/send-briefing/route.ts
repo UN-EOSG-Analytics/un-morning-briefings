@@ -138,7 +138,7 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Convert image references to data URLs server-side
+    // Convert image references and external images to data URLs server-side
     for (const entry of entries) {
       if (entry.images && entry.images.length > 0 && entry.entry) {
         entry.entry = await convertImageReferencesServerSide(

@@ -299,7 +299,7 @@ export function useEntriesFilter(entries: any[], initialDateFilter?: string) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc");
     } else {
       setSortField(field);
-      setSortDirection("desc");
+      setSortDirection(field === "region" ? "asc" : "desc");
     }
   };
 

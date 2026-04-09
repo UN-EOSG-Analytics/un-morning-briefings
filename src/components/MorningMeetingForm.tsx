@@ -35,7 +35,7 @@ import {
   REGIONS,
 } from "@/types/morning-meeting";
 import labelsData from "@/lib/labels.json";
-import { formatDateDesktop } from "@/lib/format-date";
+import { formatDateDesktop, getNycNow } from "@/lib/format-date";
 import {
   FileText,
   AlertCircle,
@@ -124,13 +124,13 @@ export function MorningMeetingForm({
   // Format date to YYYY-MM-DDTHH:MM format - extract literal string without any parsing
   const formatDateForInput = (dateValue: any): string => {
     if (!dateValue) {
-      // Return current time as-is
-      const now = new Date();
-      const year = now.getFullYear();
-      const month = String(now.getMonth() + 1).padStart(2, "0");
-      const day = String(now.getDate()).padStart(2, "0");
-      const hour = String(now.getHours()).padStart(2, "0");
-      const minute = String(now.getMinutes()).padStart(2, "0");
+      // Return current NYC time (entries.date stores NYC wall-clock time)
+      const nyc = getNycNow();
+      const year = nyc.year;
+      const month = String(nyc.month).padStart(2, "0");
+      const day = String(nyc.day).padStart(2, "0");
+      const hour = String(nyc.hour).padStart(2, "0");
+      const minute = String(nyc.minute).padStart(2, "0");
       return `${year}-${month}-${day}T${hour}:${minute}`;
     }
 
@@ -456,9 +456,11 @@ export function MorningMeetingForm({
   useEffect(() => {
     const fetchFrequentSelections = async () => {
       try {
-        // Get date from 2 weeks ago
-        const twoWeeksAgo = new Date();
-        twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
+        // Get date from 2 weeks ago in NYC time
+        const nyc = getNycNow();
+        const twoWeeksAgoDate = new Date(nyc.year, nyc.month - 1, nyc.day - 14);
+        const twoWeeksAgoStr =
+          `${twoWeeksAgoDate.getFullYear()}-${String(twoWeeksAgoDate.getMonth() + 1).padStart(2, "0")}-${String(twoWeeksAgoDate.getDate()).padStart(2, "0")}`;
 
         const response = await fetch(`/api/entries`);
         if (!response.ok) return;
@@ -478,10 +480,10 @@ export function MorningMeetingForm({
         const userEmail = session?.user?.email?.trim().toLowerCase();
         const userId = session?.user?.id ? String(session.user.id) : null;
         const recentEntries = entries.filter((entry: any) => {
-          const entryDate = new Date(entry.date);
-          if (Number.isNaN(entryDate.getTime())) {
-            return false;
-          }
+          // Compare date strings directly — both are YYYY-MM-DD format,
+          // so lexicographic comparison is correct and avoids new Date() parsing issues
+          const entryDateStr = entry.date?.slice(0, 10) || "";
+          if (!entryDateStr) return false;
 
           const entryEmail =
             typeof entry.authorEmail === "string"
@@ -496,7 +498,7 @@ export function MorningMeetingForm({
             (!!userEmail && !!entryEmail && entryEmail === userEmail) ||
             (!!userId && !!entryAuthorId && entryAuthorId === userId);
 
-          return entryDate >= twoWeeksAgo && matchesUser;
+          return entryDateStr >= twoWeeksAgoStr && matchesUser;
         });
 
         if (recentEntries.length === 0) return;
@@ -871,6 +873,7 @@ export function MorningMeetingForm({
   };
 
   const currentDate = new Date().toLocaleDateString("en-US", {
+    timeZone: "America/New_York",
     weekday: "long",
     year: "numeric",
     month: "long",

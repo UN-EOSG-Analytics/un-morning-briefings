@@ -4,7 +4,7 @@ import { Suspense, useEffect, useState, useRef, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { getSubmittedEntries } from "@/lib/storage";
-import { isWithinCutoffRange } from "@/lib/useEntriesFilter";
+import { isWithinCutoffRange, getCurrentBriefingDate } from "@/lib/useEntriesFilter";
 import { X } from "lucide-react";
 import { sanitizeHtml } from "@/lib/sanitize";
 import {
@@ -22,7 +22,7 @@ function BriefingContent() {
   const searchParams = useSearchParams();
   const { data: session } = useSession();
   const dateParam =
-    searchParams.get("date") || new Date().toISOString().split("T")[0];
+    searchParams.get("date") || getCurrentBriefingDate();
   const [entries, setEntries] = useState<MorningMeetingEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeSection, setActiveSection] = useState<string>("");

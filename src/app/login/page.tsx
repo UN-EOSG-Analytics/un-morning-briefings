@@ -157,9 +157,7 @@ function LoginPageContent() {
         password,
         redirect: false,
       });
-      if (result?.error === "NOT_AUTHORIZED") {
-        setError(labels.auth.messages.notAuthorized);
-      } else if (result?.error) {
+      if (result?.error) {
         setError(labels.auth.messages.invalidCredentials);
       } else if (result?.ok) {
         window.location.href = "/";

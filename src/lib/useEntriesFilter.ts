@@ -1,22 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useState, useMemo } from "react";
-import { parseDateString } from "./format-date";
+import { parseDateString, getNycNow } from "./format-date";
+import labels from "./labels.json";
 
-/**
- * Convert date components to a comparable number (minutes since epoch-ish)
- * Used for comparing dates without timezone issues
- */
-function dateToMinutes(
-  year: number,
-  month: number,
-  day: number,
-  hour: number,
-  minute: number,
-): number {
-  // Simple calculation for comparison purposes
-  return year * 525600 + month * 43800 + day * 1440 + hour * 60 + minute;
-}
 
 /**
  * Get the current briefing date based on local time
@@ -26,18 +13,13 @@ function dateToMinutes(
  *        Weekends (Saturday/Sunday) are skipped - Friday 8AM to Monday 8AM counts for Monday
  */
 export function getCurrentBriefingDate(): string {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth() + 1;
-  const day = now.getDate();
-  const hour = now.getHours();
-  const dayOfWeek = now.getDay(); // 0 = Sunday, 6 = Saturday
+  const { year, month, day, hour } = getNycNow();
 
   let briefingDay = day;
   let briefingMonth = month;
   let briefingYear = year;
 
-  // If >= 8AM, working on tomorrow's briefing
+  // If >= 8AM ET, working on tomorrow's briefing
   if (hour >= 8) {
     briefingDay += 1;
     // Handle month overflow
@@ -91,12 +73,8 @@ export function getCurrentBriefingDate(): string {
  * Example: Entry "2026-01-15T05:00" → 05:00 < 8:00 → briefing for Jan 15
  * Example: Friday entry after 8AM → Monday briefing
  */
-export function getBriefingDate(entryDate: string | Date): string {
-  // Convert Date to string if needed
-  const dateStr =
-    typeof entryDate === "string" ? entryDate : entryDate.toISOString();
-
-  const { year, month, day, hour } = parseDateString(dateStr);
+export function getBriefingDate(entryDate: string): string {
+  const { year, month, day, hour } = parseDateString(entryDate);
 
   let briefingDay = day;
   let briefingMonth = month;
@@ -155,7 +133,7 @@ export function getBriefingDate(entryDate: string | Date): string {
  *   → 13:30 >= 8:00 on Jan 15, so YES it's in Jan 16's briefing
  */
 export function isWithinCutoffRange(
-  entryDate: string | Date,
+  entryDate: string,
   briefingDateStr: string,
 ): boolean {
   // Simply check if the entry's calculated briefing date matches
@@ -275,18 +253,36 @@ export function useEntriesFilter(entries: any[], initialDateFilter?: string) {
   ]);
 
   /**
-   * Sort filtered entries by specified field and direction
+   * Sort filtered entries by specified field and direction.
+   * When sorting by region, entries are first grouped by briefing date
+   * (newest first), then sorted by region within each date group.
    */
   const sortedEntries = useMemo(() => {
     const sorted = [...filteredEntries];
     sorted.sort((a, b) => {
+      if (sortField === "region") {
+        // Primary sort: briefing date descending (preserve day groups)
+        const aBriefing = getBriefingDate(a.date);
+        const bBriefing = getBriefingDate(b.date);
+        if (aBriefing !== bBriefing) {
+          return aBriefing > bBriefing ? -1 : 1;
+        }
+        // Secondary sort: region in labels.json order
+        const regionOrder = labels.regions;
+        const aIdx = regionOrder.indexOf(a.region);
+        const bIdx = regionOrder.indexOf(b.region);
+        const aRegion = aIdx === -1 ? regionOrder.length : aIdx;
+        const bRegion = bIdx === -1 ? regionOrder.length : bIdx;
+        const regionCmp = sortDirection === "asc"
+          ? aRegion - bRegion
+          : bRegion - aRegion;
+        if (regionCmp !== 0) return regionCmp;
+        // Tertiary: by date within same region (descending)
+        return b.date > a.date ? 1 : b.date < a.date ? -1 : 0;
+      }
+
       let aVal = a[sortField];
       let bVal = b[sortField];
-
-      if (sortField === "date") {
-        aVal = new Date(aVal).getTime();
-        bVal = new Date(bVal).getTime();
-      }
 
       if (aVal < bVal) return sortDirection === "asc" ? -1 : 1;
       if (aVal > bVal) return sortDirection === "asc" ? 1 : -1;
@@ -303,7 +299,7 @@ export function useEntriesFilter(entries: any[], initialDateFilter?: string) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc");
     } else {
       setSortField(field);
-      setSortDirection("desc");
+      setSortDirection(field === "region" ? "asc" : "desc");
     }
   };
 

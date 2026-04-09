@@ -29,7 +29,7 @@ export const authOptions: NextAuthOptions = {
           );
 
           if (whitelistCheck.rows.length === 0) {
-            throw new Error("NOT_AUTHORIZED");
+            return null;
           }
 
           // Query user from database
@@ -71,9 +71,6 @@ export const authOptions: NextAuthOptions = {
             role: user.role,
           };
         } catch (error) {
-          if (error instanceof Error && error.message === "NOT_AUTHORIZED") {
-            throw error;
-          }
           console.error("authorize: Database error:", error);
           return null;
         }

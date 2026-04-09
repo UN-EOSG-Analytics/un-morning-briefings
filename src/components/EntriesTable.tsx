@@ -33,6 +33,9 @@ import {
   Send,
   ChevronDown,
   ChevronRight,
+  ArrowUp,
+  ArrowDown,
+  ArrowUpDown,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -60,6 +63,7 @@ import { usePopup } from "@/lib/popup-context";
 
 interface EntriesTableProps {
   entries: MorningMeetingEntry[];
+  loading?: boolean;
   onDelete: (id: string) => void;
   onToggleDiscussion?: (entry: MorningMeetingEntry) => void;
   onPostpone?: () => void;
@@ -74,6 +78,7 @@ interface EntriesTableProps {
 
 export function EntriesTable({
   entries,
+  loading = false,
   onDelete,
   onToggleDiscussion,
   onPostpone,
@@ -263,6 +268,17 @@ export function EntriesTable({
     }
   };
 
+  const SortIcon = ({ field }: { field: string }) => {
+    if (sortField === field) {
+      return sortDirection === "asc" ? (
+        <ArrowUp className="h-3 w-3" />
+      ) : (
+        <ArrowDown className="h-3 w-3" />
+      );
+    }
+    return <ArrowUpDown className="h-3 w-3 opacity-40" />;
+  };
+
   // Extract unique briefing dates from entries
   const uniqueDates = Array.from(
     new Set(entries.map((entry) => getBriefingDate(entry.date))),
@@ -315,18 +331,18 @@ export function EntriesTable({
                 <th className="min-w-12 rounded-tl-xl px-2 py-3 text-left text-xs font-semibold tracking-wide text-slate-700 uppercase sm:min-w-26 sm:px-4">
                   <div className="flex items-center gap-1 sm:gap-2">
                     <span
-                      className="hidden cursor-pointer rounded px-1 py-1 whitespace-nowrap hover:bg-slate-100 sm:inline"
-                      onClick={() => handleSort("date")}
-                    >
-                      {labels.entries.columns.date}{" "}
-                      {sortField === "date" &&
-                        (sortDirection === "asc" ? "↑" : "↓")}
-                    </span>
-                    <span
-                      className="cursor-pointer rounded px-1 py-1 hover:bg-slate-100 sm:hidden"
+                      className="hidden cursor-pointer items-center gap-1 rounded px-1 py-1 whitespace-nowrap hover:bg-slate-100 sm:inline-flex"
                       onClick={() => handleSort("date")}
                     >
                       {labels.entries.columns.date}
+                      <SortIcon field="date" />
+                    </span>
+                    <span
+                      className="inline-flex cursor-pointer items-center gap-1 rounded px-1 py-1 hover:bg-slate-100 sm:hidden"
+                      onClick={() => handleSort("date")}
+                    >
+                      {labels.entries.columns.date}
+                      <SortIcon field="date" />
                     </span>
                     <div className="hidden sm:block">
                       <ColumnFilter
@@ -355,24 +371,16 @@ export function EntriesTable({
                   </div>
                 </th>
                 <th className="px-2 py-3 text-left text-xs font-semibold tracking-wide text-slate-700 uppercase sm:px-4">
-                  <span
-                    className="inline-block cursor-pointer rounded px-1 py-1 hover:bg-slate-100"
-                    onClick={() => handleSort("headline")}
-                  >
-                    {labels.entries.columns.headline}{" "}
-                    {sortField === "headline" &&
-                      (sortDirection === "asc" ? "↑" : "↓")}
-                  </span>
+                  {labels.entries.columns.headline}
                 </th>
                 <th className="hidden px-2 py-3 text-left text-xs font-semibold tracking-wide text-slate-700 uppercase sm:table-cell sm:px-3 lg:px-4">
                   <div className="flex items-center gap-2">
                     <span
-                      className="cursor-pointer rounded px-1 py-1 hover:bg-slate-100"
+                      className="inline-flex cursor-pointer items-center gap-1 rounded px-1 py-1 hover:bg-slate-100"
                       onClick={() => handleSort("region")}
                     >
-                      {labels.entries.columns.region}{" "}
-                      {sortField === "region" &&
-                        (sortDirection === "asc" ? "↑" : "↓")}
+                      {labels.entries.columns.region}
+                      <SortIcon field="region" />
                     </span>
                     <ColumnFilter
                       columnName={labels.entries.columns.region}
@@ -384,13 +392,8 @@ export function EntriesTable({
                 </th>
                 <th className="hidden px-2 py-3 text-left text-xs font-semibold tracking-wide text-slate-700 uppercase sm:table-cell sm:px-3 lg:px-4">
                   <div className="flex items-center gap-2">
-                    <span
-                      className="cursor-pointer rounded px-1 py-1 hover:bg-slate-100"
-                      onClick={() => handleSort("country")}
-                    >
-                      {labels.entries.columns.tag}{" "}
-                      {sortField === "country" &&
-                        (sortDirection === "asc" ? "↑" : "↓")}
+                    <span className="inline-flex items-center gap-1 px-1 py-1">
+                      {labels.entries.columns.tag}
                     </span>
                     <ColumnFilter
                       columnName={labels.entries.columns.tag}
@@ -411,7 +414,16 @@ export function EntriesTable({
               </tr>
             </thead>
             <tbody>
-              {sortedEntries.length === 0 ? (
+              {loading ? (
+                <tr>
+                  <td
+                    colSpan={showDiscussionColumn ? 7 : 6}
+                    className="px-2 py-12 text-center text-slate-400 sm:px-4"
+                  >
+                    Loading entries…
+                  </td>
+                </tr>
+              ) : sortedEntries.length === 0 ? (
                 <tr>
                   <td
                     colSpan={showDiscussionColumn ? 7 : 6}
@@ -433,6 +445,15 @@ export function EntriesTable({
                   const showSeparator =
                     !prevBriefingDate ||
                     prevBriefingDate !== currentBriefingDate;
+
+                  const prevEntryInSameDay =
+                    idx > 0 &&
+                    getBriefingDate(sortedEntries[idx - 1].date) ===
+                      currentBriefingDate;
+                  const showRegionHeader =
+                    sortField === "region" &&
+                    (!prevEntryInSameDay ||
+                      sortedEntries[idx - 1].region !== entry.region);
 
                   return [
                     showSeparator && (
@@ -545,6 +566,22 @@ export function EntriesTable({
                         </td>
                       </tr>
                     ),
+                    showRegionHeader &&
+                      !collapsedBriefings.has(currentBriefingDate) && (
+                        <tr
+                          key={`region-${entry.id}`}
+                          className="bg-un-blue/5"
+                        >
+                          <td
+                            colSpan={showDiscussionColumn ? 7 : 6}
+                            className="px-2 py-1.5 sm:px-4"
+                          >
+                            <span className="text-xs font-bold tracking-wide text-un-blue uppercase">
+                              {entry.region}
+                            </span>
+                          </td>
+                        </tr>
+                      ),
                     !collapsedBriefings.has(currentBriefingDate) && (
                       <tr
                         key={entry.id}

@@ -1,4 +1,3 @@
-import { GoogleAnalytics } from "@next/third-parties/google";
 import type { Metadata, Viewport } from "next";
 import { Roboto } from "next/font/google";
 import { Navbar } from "@/components/Navbar";
@@ -58,7 +57,6 @@ export default async function RootLayout({
             </UnsavedChangesProvider>
           </PopupProvider>
         </AuthProvider>
-        <GoogleAnalytics gaId="G-XYZ" />
       </body>
     </html>
   );

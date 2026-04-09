@@ -83,12 +83,11 @@ export const WEEKDAY_NAMES = [
  *
  * NO timezone conversion - uses literal string values
  */
-export function formatDateResponsive(date: string | Date): {
+export function formatDateResponsive(date: string): {
   desktop: string;
   mobile: string;
 } {
-  const dateStr = typeof date === "string" ? date : date.toISOString();
-  const { year, month, day } = parseDateString(dateStr);
+  const { year, month, day } = parseDateString(date);
 
   const desktop = `${MONTH_NAMES[month - 1]} ${day}, ${year}`;
   const mobile = `${String(month).padStart(2, "0")}/${String(day).padStart(2, "0")}`;
@@ -100,9 +99,8 @@ export function formatDateResponsive(date: string | Date): {
  * Format date for desktop view: "Jan 14, 2026"
  * NO timezone conversion - uses literal string values
  */
-export function formatDateDesktop(date: string | Date): string {
-  const dateStr = typeof date === "string" ? date : date.toISOString();
-  const { year, month, day } = parseDateString(dateStr);
+export function formatDateDesktop(date: string): string {
+  const { year, month, day } = parseDateString(date);
   return `${MONTH_NAMES[month - 1]} ${day}, ${year}`;
 }
 
@@ -110,9 +108,8 @@ export function formatDateDesktop(date: string | Date): string {
  * Format date with weekday: "Monday, Jan 14, 2026"
  * NO timezone conversion - uses literal string values
  */
-export function formatDateWithWeekday(date: string | Date): string {
-  const dateStr = typeof date === "string" ? date : date.toISOString();
-  const { year, month, day } = parseDateString(dateStr);
+export function formatDateWithWeekday(date: string): string {
+  const { year, month, day } = parseDateString(date);
 
   // Create a Date object to get the day of the week
   const dateObj = new Date(year, month - 1, day);
@@ -126,9 +123,8 @@ export function formatDateWithWeekday(date: string | Date): string {
  * NO timezone conversion - entry.date stores NYC local time as a naive
  * timestamp (no tz offset), so we read the literal hour/minute from the string.
  */
-export function formatTime(date: string | Date): string {
-  const dateStr = typeof date === "string" ? date : date.toISOString();
-  const { hour, minute } = parseDateString(dateStr);
+export function formatTime(date: string): string {
+  const { hour, minute } = parseDateString(date);
   return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
 }
 
@@ -151,10 +147,9 @@ export function formatTimeNYC(date: string | Date): string {
  * Used in documents, emails, and source date display.
  * NO timezone conversion.
  */
-export function formatDateFull(date: string | Date): string {
-  const dateStr = typeof date === "string" ? date : date.toISOString();
-  const { year, month, day } = parseDateString(dateStr);
-  if (!year || !month) return dateStr.toString();
+export function formatDateFull(date: string): string {
+  const { year, month, day } = parseDateString(date);
+  if (!year || !month) return date;
   return `${MONTH_NAMES_FULL[month - 1]} ${day}, ${year}`;
 }
 
@@ -163,13 +158,47 @@ export function formatDateFull(date: string | Date): string {
  * Used in document headers and briefing titles.
  * NO timezone conversion.
  */
-export function formatDateLong(date: string | Date): string {
-  const dateStr = typeof date === "string" ? date : date.toISOString();
-  const { year, month, day } = parseDateString(dateStr);
-  if (!year || !month) return dateStr.toString();
+export function formatDateLong(date: string): string {
+  const { year, month, day } = parseDateString(date);
+  if (!year || !month) return date;
   const dateObj = new Date(year, month - 1, day);
   const weekday = WEEKDAY_NAMES[dateObj.getDay()];
   return `${weekday}, ${MONTH_NAMES_FULL[month - 1]} ${day}, ${year}`;
+}
+
+/**
+ * Get current date/time components in America/New_York timezone.
+ * Uses Intl.DateTimeFormat so it works correctly regardless of the
+ * browser's or server's local timezone setting.
+ */
+export function getNycNow(): {
+  year: number;
+  month: number;
+  day: number;
+  hour: number;
+  minute: number;
+} {
+  const now = new Date();
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/New_York",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).formatToParts(now);
+
+  const get = (type: string) => parts.find((p) => p.type === type)!.value;
+  const hour = parseInt(get("hour"));
+
+  return {
+    year: parseInt(get("year")),
+    month: parseInt(get("month")),
+    day: parseInt(get("day")),
+    hour: hour === 24 ? 0 : hour,
+    minute: parseInt(get("minute")),
+  };
 }
 
 /**

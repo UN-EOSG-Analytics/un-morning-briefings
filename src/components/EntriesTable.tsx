@@ -371,13 +371,7 @@ export function EntriesTable({
                   </div>
                 </th>
                 <th className="px-2 py-3 text-left text-xs font-semibold tracking-wide text-slate-700 uppercase sm:px-4">
-                  <span
-                    className="inline-flex cursor-pointer items-center gap-1 rounded px-1 py-1 hover:bg-slate-100"
-                    onClick={() => handleSort("headline")}
-                  >
-                    {labels.entries.columns.headline}
-                    <SortIcon field="headline" />
-                  </span>
+                  {labels.entries.columns.headline}
                 </th>
                 <th className="hidden px-2 py-3 text-left text-xs font-semibold tracking-wide text-slate-700 uppercase sm:table-cell sm:px-3 lg:px-4">
                   <div className="flex items-center gap-2">
@@ -398,12 +392,8 @@ export function EntriesTable({
                 </th>
                 <th className="hidden px-2 py-3 text-left text-xs font-semibold tracking-wide text-slate-700 uppercase sm:table-cell sm:px-3 lg:px-4">
                   <div className="flex items-center gap-2">
-                    <span
-                      className="inline-flex cursor-pointer items-center gap-1 rounded px-1 py-1 hover:bg-slate-100"
-                      onClick={() => handleSort("country")}
-                    >
+                    <span className="inline-flex items-center gap-1 px-1 py-1">
                       {labels.entries.columns.tag}
-                      <SortIcon field="country" />
                     </span>
                     <ColumnFilter
                       columnName={labels.entries.columns.tag}

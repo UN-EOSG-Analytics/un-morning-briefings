@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { parseDateString, getNycNow } from "./format-date";
-import labels from "./labels.json";
+
 
 
 /**
@@ -199,6 +199,14 @@ export function useEntriesFilter(entries: any[], initialDateFilter?: string) {
   const [sortField, setSortField] = useState<string>("date");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
 
+  // Sync sort preferences from localStorage after hydration
+  useEffect(() => {
+    const storedField = localStorage.getItem("sortField");
+    const storedDirection = localStorage.getItem("sortDirection");
+    if (storedField) setSortField(storedField);
+    if (storedDirection === "asc" || storedDirection === "desc") setSortDirection(storedDirection);
+  }, []);
+
   /**
    * Filter entries based on search term and filter criteria
    */
@@ -267,17 +275,18 @@ export function useEntriesFilter(entries: any[], initialDateFilter?: string) {
         if (aBriefing !== bBriefing) {
           return aBriefing > bBriefing ? -1 : 1;
         }
-        // Secondary sort: region in labels.json order
-        const regionOrder = labels.regions;
-        const aIdx = regionOrder.indexOf(a.region);
-        const bIdx = regionOrder.indexOf(b.region);
-        const aRegion = aIdx === -1 ? regionOrder.length : aIdx;
-        const bRegion = bIdx === -1 ? regionOrder.length : bIdx;
-        const regionCmp = sortDirection === "asc"
-          ? aRegion - bRegion
-          : bRegion - aRegion;
-        if (regionCmp !== 0) return regionCmp;
-        // Tertiary: by date within same region (descending)
+        // Secondary sort: region alphabetically
+        const regionCmp = a.region.localeCompare(b.region);
+        const directedRegionCmp = sortDirection === "asc" ? regionCmp : -regionCmp;
+        if (directedRegionCmp !== 0) return directedRegionCmp;
+        // Tertiary sort: country alphabetically (empty last)
+        const aCountry = Array.isArray(a.country) ? a.country.join(" / ") : (a.country || "");
+        const bCountry = Array.isArray(b.country) ? b.country.join(" / ") : (b.country || "");
+        if (aCountry === "" && bCountry !== "") return 1;
+        if (aCountry !== "" && bCountry === "") return -1;
+        const countryCmp = aCountry.localeCompare(bCountry);
+        if (countryCmp !== 0) return sortDirection === "asc" ? countryCmp : -countryCmp;
+        // Final tiebreaker: by date descending
         return b.date > a.date ? 1 : b.date < a.date ? -1 : 0;
       }
 
@@ -295,12 +304,16 @@ export function useEntriesFilter(entries: any[], initialDateFilter?: string) {
    * Handle sort field click - toggle direction if same field, else set new field
    */
   const handleSort = (field: string) => {
+    let newDirection: "asc" | "desc";
     if (sortField === field) {
-      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+      newDirection = sortDirection === "asc" ? "desc" : "asc";
     } else {
-      setSortField(field);
-      setSortDirection(field === "region" ? "asc" : "desc");
+      newDirection = field === "region" ? "asc" : "desc";
     }
+    setSortField(field);
+    setSortDirection(newDirection);
+    localStorage.setItem("sortField", field);
+    localStorage.setItem("sortDirection", newDirection);
   };
 
   /**

@@ -604,6 +604,9 @@ export function EntriesTable({
                         </td>
                         <td className="max-w-md px-2 py-3 text-sm sm:px-4">
                           <div className="line-clamp-3 sm:line-clamp-2">
+                            {entry.priority === "SG's attention" && (
+                              <span className="mr-1.5 inline-block text-red-500">●</span>
+                            )}
                             {entry.headline}
                           </div>
                         </td>

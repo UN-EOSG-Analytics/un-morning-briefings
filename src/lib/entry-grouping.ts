@@ -6,7 +6,7 @@ export type GroupedEntries = Record<
 >;
 
 /**
- * Sort entries by priority (SG's attention first), then group by region and country.
+ * Group entries by region and country.
  * Returns the grouped structure and the sorted region keys.
  *
  * Used by: briefing-docx.ts (TOC + body), EntriesTable.tsx (agenda dialog).
@@ -14,15 +14,7 @@ export type GroupedEntries = Record<
 export function groupEntriesByRegionAndCountry(
   entries: MorningMeetingEntry[],
 ): { grouped: GroupedEntries; sortedRegions: string[] } {
-  const sorted = [...entries].sort((a, b) => {
-    if (a.priority === "SG's attention" && b.priority !== "SG's attention")
-      return -1;
-    if (a.priority !== "SG's attention" && b.priority === "SG's attention")
-      return 1;
-    return 0;
-  });
-
-  const grouped = sorted.reduce<GroupedEntries>((acc, entry) => {
+  const grouped = entries.reduce<GroupedEntries>((acc, entry) => {
     if (!acc[entry.region]) {
       acc[entry.region] = {};
     }

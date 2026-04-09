@@ -19,6 +19,7 @@ import {
   formatDateDesktop,
   formatDateWithWeekday,
   formatTime,
+  isOvernightUpdate,
 } from "@/lib/format-date";
 import {
   Trash2,
@@ -597,6 +598,9 @@ export function EntriesTable({
                               {formatDateResponsive(entry.date).mobile}
                             </span>
                             <span className="text-xs text-slate-500">
+                              {entry.updatedAt && isOvernightUpdate(entry.updatedAt) && (
+                                <span className="mr-1 text-[#009edb]" title="Overnight update">●</span>
+                              )}
                               {formatTime(entry.date)}{" "}
                               <span className="text-slate-400">ET</span>
                             </span>
@@ -605,7 +609,7 @@ export function EntriesTable({
                         <td className="max-w-md px-2 py-3 text-sm sm:px-4">
                           <div className="line-clamp-3 sm:line-clamp-2">
                             {entry.priority === "SG's attention" && (
-                              <span className="mr-1.5 inline-block text-red-500">●</span>
+                              <span className="mr-1.5 inline-block text-red-500" title="SG's attention">●</span>
                             )}
                             {entry.headline}
                           </div>

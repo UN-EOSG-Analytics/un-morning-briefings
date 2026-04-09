@@ -7,6 +7,15 @@
 
 import { query } from "@/lib/db";
 
+// ─── URL Sanitization ───────────────────────────────────────────────────────
+
+/** Strip URLs with non-http(s) protocols (e.g. javascript:) to prevent XSS. */
+export function sanitizeUrl(url: string | null | undefined): string | null {
+  if (!url) return null;
+  if (/^https?:\/\//i.test(url)) return url;
+  return null;
+}
+
 // ─── HTML → Plain Text ──────────────────────────────────────────────────────
 
 /** Strip HTML tags from entry content and return clean plain text.

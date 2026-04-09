@@ -6,11 +6,14 @@ import type { NextRequest } from "next/server";
 import { query } from "@/lib/db";
 
 /**
- * Resolves the base URL for email links from the incoming request.
- * Reads x-forwarded-proto/host (set by Vercel and most proxies) so the link
- * always matches the actual domain — no env vars required.
+ * Resolves the base URL for email links.
+ * Uses NEXTAUTH_URL env var to prevent host header injection attacks.
+ * Falls back to request headers only if NEXTAUTH_URL is not set.
  */
 export function resolveBaseUrl(req: NextRequest): string {
+  if (process.env.NEXTAUTH_URL) {
+    return process.env.NEXTAUTH_URL.replace(/\/+$/, "");
+  }
   const proto =
     req.headers.get("x-forwarded-proto") ??
     (req.url.startsWith("https") ? "https" : "http");

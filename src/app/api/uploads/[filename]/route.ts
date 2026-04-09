@@ -30,7 +30,13 @@ export async function GET(
     const uploadsPath =
       process.env.BLOB_STORAGE_PATH ||
       path.join(/*turbopackIgnore: true*/ process.cwd(), "uploads");
-    const filePath = path.join(uploadsPath, sanitizedFilename);
+    const filePath = path.resolve(uploadsPath, sanitizedFilename);
+    const resolvedBase = path.resolve(uploadsPath);
+
+    // Verify resolved path is within the uploads directory
+    if (!filePath.startsWith(resolvedBase + path.sep) && filePath !== resolvedBase) {
+      return NextResponse.json({ error: "Invalid file path" }, { status: 400 });
+    }
 
     // Check if file exists
     if (!existsSync(filePath)) {

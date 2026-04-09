@@ -316,6 +316,26 @@ function parseHtmlToParagraphs(
   const parser = getDOMParser();
   const doc = parser.parseFromString(html, "text/html");
 
+  // Handle top-level text nodes (plain text not wrapped in HTML tags)
+  // doc.body.children only returns Element nodes, so unwrapped text is missed.
+  // Check childNodes and emit paragraphs for any text nodes at the top level.
+  const hasOnlyTextNodes = Array.from(doc.body.childNodes).every(
+    (node) => node.nodeType === 3 /* TEXT_NODE */,
+  );
+  if (hasOnlyTextNodes) {
+    const text = doc.body.textContent || "";
+    const lines = text.split("\n").filter((l) => l.trim() !== "");
+    for (const line of lines) {
+      paragraphs.push(
+        new Paragraph({
+          children: [new TextRun({ text: line.trim(), font: "Roboto" })],
+          spacing: { after: 100 },
+        }),
+      );
+    }
+    return paragraphs;
+  }
+
   for (const element of Array.from(doc.body.children)) {
     const tagName = element.tagName.toLowerCase();
 

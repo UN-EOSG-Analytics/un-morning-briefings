@@ -63,6 +63,7 @@ import { usePopup } from "@/lib/popup-context";
 
 interface EntriesTableProps {
   entries: MorningMeetingEntry[];
+  loading?: boolean;
   onDelete: (id: string) => void;
   onToggleDiscussion?: (entry: MorningMeetingEntry) => void;
   onPostpone?: () => void;
@@ -77,6 +78,7 @@ interface EntriesTableProps {
 
 export function EntriesTable({
   entries,
+  loading = false,
   onDelete,
   onToggleDiscussion,
   onPostpone,
@@ -422,7 +424,16 @@ export function EntriesTable({
               </tr>
             </thead>
             <tbody>
-              {sortedEntries.length === 0 ? (
+              {loading ? (
+                <tr>
+                  <td
+                    colSpan={showDiscussionColumn ? 7 : 6}
+                    className="px-2 py-12 text-center text-slate-400 sm:px-4"
+                  >
+                    Loading entries…
+                  </td>
+                </tr>
+              ) : sortedEntries.length === 0 ? (
                 <tr>
                   <td
                     colSpan={showDiscussionColumn ? 7 : 6}

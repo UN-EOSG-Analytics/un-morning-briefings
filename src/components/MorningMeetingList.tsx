@@ -22,11 +22,13 @@ export function MorningMeetingList({
     info: showInfo,
   } = usePopup();
   const [entries, setEntries] = useState<MorningMeetingEntry[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showExportDialog, setShowExportDialog] = useState(false);
 
   const loadEntries = useCallback(async () => {
     const data = await getSubmittedEntries();
     setEntries(data);
+    setLoading(false);
   }, []);
 
   useEffect(() => {
@@ -141,6 +143,7 @@ export function MorningMeetingList({
       {/* Entries Table */}
       <EntriesTable
         entries={entries}
+        loading={loading}
         onDelete={handleDelete}
         onToggleDiscussion={handleToggleDiscussion}
         onPostpone={handlePostpone}

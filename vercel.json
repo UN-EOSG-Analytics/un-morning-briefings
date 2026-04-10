@@ -2,11 +2,15 @@
   "crons": [
     {
       "path": "/api/cron/send-briefing",
-      "schedule": "45 11 * * 1-5"
+      "schedule": "44 11 * * 1-5"
     },
     {
       "path": "/api/cron/send-briefing",
-      "schedule": "45 12 * * 1-5"
+      "schedule": "44 12 * * 1-5"
+    },
+    {
+      "path": "/api/cron/backup-briefing",
+      "schedule": "*/15 * * * 1-5"
     }
   ]
 }

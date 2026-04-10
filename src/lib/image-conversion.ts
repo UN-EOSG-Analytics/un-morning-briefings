@@ -6,6 +6,7 @@
  * This module provides functions for:
  * - Converting image-ref:// references to data URLs (client-side)
  * - Converting image-ref:// references to data URLs (server-side with blob storage)
+ * - Internalizing external HTTP(S) images into blob storage at save time
  */
 
 /**
@@ -129,6 +130,136 @@ export async function convertImageReferencesServerSide(
   }
 
   return updatedHtml;
+}
+
+interface BlobUploadResult {
+  url: string;
+  filename: string;
+  mimeType: string;
+}
+
+interface InternalizedImage {
+  filename: string;
+  mimeType: string;
+  blobUrl: string;
+  width: null;
+  height: null;
+  position: number;
+}
+
+export function isPrivateHostname(hostname: string): boolean {
+  return (
+    hostname === "localhost" ||
+    hostname === "127.0.0.1" ||
+    hostname === "::1" ||
+    hostname === "0.0.0.0" ||
+    hostname.endsWith(".local") ||
+    hostname.startsWith("10.") ||
+    hostname.startsWith("192.168.") ||
+    /^172\.(1[6-9]|2\d|3[01])\./.test(hostname)
+  );
+}
+
+async function fetchImageBuffer(
+  imageUrl: string,
+): Promise<{ buffer: Buffer; contentType: string } | null> {
+  const { hostname } = new URL(imageUrl);
+  if (isPrivateHostname(hostname)) return null;
+
+  const response = await fetch(imageUrl, {
+    signal: AbortSignal.timeout(15000),
+    headers: { "User-Agent": "Mozilla/5.0 (compatible; UN-Briefings/1.0)" },
+  });
+  if (!response.ok) return null;
+
+  const contentType = response.headers.get("content-type") || "";
+  if (!contentType.startsWith("image/")) return null;
+
+  return { buffer: Buffer.from(await response.arrayBuffer()), contentType };
+}
+
+/**
+ * Server-side: download external HTTP(S) image URLs in HTML, upload them to blob storage,
+ * and replace with image-ref:// references so they are stored like user-uploaded images.
+ * Downloads are parallelized across unique URLs.
+ */
+export async function internalizeExternalImages(
+  html: string,
+  startPosition: number,
+  blobStorage: { upload: (buf: Buffer, name: string, mime: string) => Promise<BlobUploadResult> },
+  contextName: string = "internalizeExternalImages",
+): Promise<{ html: string; images: InternalizedImage[] }> {
+  const externalImgRegex =
+    /<img[^>]*src=["']?(https?:\/\/[^"'\s>]+)["']?([^>]*)>/gi;
+
+  // Collect all matches without awaiting
+  const matches: Array<{ fullTag: string; imageUrl: string; restOfTag: string }> = [];
+  let match;
+  while ((match = externalImgRegex.exec(html)) !== null) {
+    matches.push({ fullTag: match[0], imageUrl: match[1], restOfTag: match[2] });
+  }
+  if (matches.length === 0) return { html, images: [] };
+
+  // Deduplicate URLs, preserving first-occurrence order
+  const uniqueUrls = [...new Set(matches.map((m) => m.imageUrl))];
+
+  // Fetch and upload all unique URLs in parallel
+  const fetchResults = await Promise.all(
+    uniqueUrls.map(async (imageUrl) => {
+      try {
+        const fetched = await fetchImageBuffer(imageUrl);
+        if (!fetched) return null;
+
+        const urlPath = new URL(imageUrl).pathname;
+        const filename = decodeURIComponent(
+          urlPath.split("/").pop() || "external-image.jpg",
+        );
+        const uploadResult = await blobStorage.upload(
+          fetched.buffer,
+          filename,
+          fetched.contentType,
+        );
+        return { imageUrl, uploadResult, contentType: fetched.contentType };
+      } catch (error) {
+        console.error(
+          `${contextName}: Error internalizing external image:`,
+          imageUrl,
+          error,
+        );
+        return null;
+      }
+    }),
+  );
+
+  // Assign positions to successful results in original URL order
+  const urlToRef = new Map<string, string>();
+  const images: InternalizedImage[] = [];
+  let position = startPosition;
+
+  for (const result of fetchResults) {
+    if (!result) continue;
+    const ref = `image-ref://img-${position}`;
+    urlToRef.set(result.imageUrl, ref);
+    images.push({
+      filename: result.uploadResult.filename,
+      mimeType: result.uploadResult.mimeType,
+      blobUrl: result.uploadResult.url,
+      width: null,
+      height: null,
+      position,
+    });
+    position++;
+  }
+
+  // Apply replacements
+  for (const { fullTag, imageUrl, restOfTag } of matches) {
+    const ref = urlToRef.get(imageUrl);
+    if (ref) {
+      html = html.replaceAll(fullTag, `<img src="${ref}"${restOfTag}>`);
+    }
+  }
+
+  return { html, images };
 }
 
 /**

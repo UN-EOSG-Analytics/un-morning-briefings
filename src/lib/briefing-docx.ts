@@ -28,6 +28,7 @@ import {
   formatDateFull,
   getCurrentDateTime,
   formatTimeNYC,
+  isOvernightUpdate,
   WEEKDAY_NAMES,
   MONTH_NAMES_FULL,
 } from "@/lib/format-date";
@@ -37,24 +38,6 @@ import {
 } from "@/lib/entry-grouping";
 import type { MorningMeetingEntry } from "@/types/morning-meeting";
 
-/**
- * Check whether a UTC timestamp falls in the "overnight" window (21:00–07:45 NYC time).
- * Used to flag entries updated outside normal working hours with a visual indicator
- * in the exported DOCX, so briefing readers know the update came in overnight.
- */
-function isOvernightUpdate(utcTimestamp: string): boolean {
-  const date = new Date(utcTimestamp);
-  const nycTime = date.toLocaleTimeString("en-US", {
-    timeZone: "America/New_York",
-    hour12: false,
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-  const [hours, minutes] = nycTime.split(":").map(Number);
-  const totalMinutes = hours * 60 + minutes;
-  // 21:00 (9 PM) = 1260 minutes, 07:45 (7:45 AM) = 465 minutes
-  return totalMinutes >= 1260 || totalMinutes < 465;
-}
 
 export const createSeparator = (
   spacing: { before?: number; after?: number } = { after: 200 },
@@ -527,9 +510,8 @@ export const buildDocumentChildren = (
               new TextRun({
                 text: `Last updated: ${timeStr} ET`,
                 italics: true,
-                color: "666666",
                 font: "Roboto",
-                size: 18,
+                size: 20,
               }),
             );
 

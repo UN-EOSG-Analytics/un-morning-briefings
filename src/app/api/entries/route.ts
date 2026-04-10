@@ -3,7 +3,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { query } from "@/lib/db";
 import { blobStorage } from "@/lib/blob-storage";
-import { convertImageReferencesServerSide } from "@/lib/image-conversion";
+import { convertImageReferencesServerSide, internalizeExternalImages } from "@/lib/image-conversion";
 import { checkAuth } from "@/lib/auth-helper";
 import {
   serializeCountry,
@@ -128,8 +128,21 @@ export async function POST(request: NextRequest) {
     }
 
     // Sanitize HTML content before storage
-    const sanitizedEntry = entryContent ? sanitizeHtml(entryContent) : entryContent;
+    let sanitizedEntry = entryContent ? sanitizeHtml(entryContent) : entryContent;
     const sanitizedPuNote = data.puNote ? sanitizeHtml(data.puNote) : data.puNote;
+
+    // Internalize external images (download, upload to blob storage, replace with image-ref://)
+    if (sanitizedEntry) {
+      const startPosition = uploadedImages.length;
+      const result = await internalizeExternalImages(
+        sanitizedEntry,
+        startPosition,
+        blobStorage,
+        "POST /api/entries",
+      );
+      sanitizedEntry = result.html;
+      uploadedImages.push(...result.images);
+    }
 
     // Generate ID
     const id = crypto.randomUUID();

@@ -217,3 +217,21 @@ export function getCurrentDateTime(): string {
     hour12: true,
   }) + " ET";
 }
+
+/**
+ * Check whether a UTC timestamp falls in the "overnight" window (21:00–07:45 NYC time).
+ * Used to flag entries updated outside normal working hours with a visual indicator.
+ */
+export function isOvernightUpdate(utcTimestamp: string): boolean {
+  const date = new Date(utcTimestamp);
+  const nycTime = date.toLocaleTimeString("en-US", {
+    timeZone: "America/New_York",
+    hour12: false,
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+  const [hours, minutes] = nycTime.split(":").map(Number);
+  const totalMinutes = hours * 60 + minutes;
+  // 21:00 (9 PM) = 1260 minutes, 07:45 (7:45 AM) = 465 minutes
+  return totalMinutes >= 1260 || totalMinutes < 465;
+}

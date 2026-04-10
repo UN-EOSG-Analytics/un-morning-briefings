@@ -63,45 +63,6 @@ const processEntriesImages = async (
       );
     }
 
-    // Download and convert external image URLs to data URLs
-    const externalImgRegex =
-      /<img[^>]*src=["']?(https?:\/\/[^"'\s>]+)["']?([^>]*)>/gi;
-    let match;
-    const replacements: Array<{ from: string; to: string }> = [];
-
-    while ((match = externalImgRegex.exec(html)) !== null) {
-      const fullTag = match[0];
-      const imageUrl = match[1];
-      const restOfTag = match[2];
-
-      try {
-        const response = await fetch(imageUrl, { mode: "cors" });
-        if (!response.ok) continue;
-
-        const blob = await response.blob();
-        const arrayBuffer = await blob.arrayBuffer();
-        const base64Data = btoa(
-          new Uint8Array(arrayBuffer).reduce(
-            (data, byte) => data + String.fromCharCode(byte),
-            "",
-          ),
-        );
-
-        const mimeType =
-          blob.type || response.headers.get("content-type") || "image/png";
-        const dataUrl = `data:${mimeType};base64,${base64Data}`;
-
-        const newTag = `<img src="${dataUrl}"${restOfTag}>`;
-        replacements.push({ from: fullTag, to: newTag });
-      } catch (error) {
-        console.error("Error downloading external image:", imageUrl, error);
-      }
-    }
-
-    for (const { from, to } of replacements) {
-      html = html.replaceAll(from, to);
-    }
-
     entry.entry = html;
   }
 

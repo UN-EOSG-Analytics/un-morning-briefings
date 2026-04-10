@@ -225,16 +225,6 @@ const buildTableOfContents = (
                 children: [
                   new Paragraph({
                     children: [
-                      ...(entry.priority === "SG's attention"
-                        ? [
-                            new TextRun({
-                              text: "● ",
-                              color: "FF0000",
-                              font: "Roboto",
-                              size: 20,
-                            }),
-                          ]
-                        : []),
                       new TextRun({
                         text: entry.headline,
                         size: 20,
@@ -479,31 +469,19 @@ export const buildDocumentChildren = (
           }
 
           // Priority
-          const priorityChildren: TextRun[] = [];
-          if (entry.priority === "SG's attention") {
-            priorityChildren.push(
-              new TextRun({
-                text: "● ",
-                color: "FF0000",
-                font: "Roboto",
-                size: 20,
-              }),
-            );
-          }
-          priorityChildren.push(
-            new TextRun({
-              text:
-                entry.priority === "SG's attention"
-                  ? "SG's attention"
-                  : "Situational Awareness",
-              italics: true,
-              size: 20,
-              font: "Roboto",
-            }),
-          );
           children.push(
             new Paragraph({
-              children: priorityChildren,
+              children: [
+                new TextRun({
+                  text:
+                    entry.priority === "SG's attention"
+                      ? "SG's attention"
+                      : "Situational Awareness",
+                  italics: true,
+                  size: 20,
+                  font: "Roboto",
+                }),
+              ],
               spacing: { after: 120 },
             }),
           );

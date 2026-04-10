@@ -299,6 +299,117 @@ class BlobStorageService {
     await blockBlobClient.deleteIfExists();
   }
 
+  /**
+   * Upload a blob with an exact name (no timestamp prefix, no sanitization).
+   * Overwrites if the blob already exists. Used for deterministic paths
+   * like scheduled backups where the same blob is updated repeatedly.
+   */
+  async uploadFixed(
+    buffer: Buffer,
+    blobName: string,
+    mimeType: string,
+  ): Promise<BlobUploadResult> {
+    switch (this.storageType) {
+      case "azure":
+        return this.uploadAzureFixed(buffer, blobName, mimeType);
+      case "local":
+      default:
+        return this.uploadLocalFixed(buffer, blobName, mimeType);
+    }
+  }
+
+  /**
+   * Delete a blob by its exact name (not URL). No-op if blob doesn't exist.
+   */
+  async deleteByName(blobName: string): Promise<void> {
+    switch (this.storageType) {
+      case "azure":
+        return this.deleteAzureByName(blobName);
+      case "local":
+      default:
+        return this.deleteLocalByName(blobName);
+    }
+  }
+
+  private async uploadLocalFixed(
+    buffer: Buffer,
+    blobName: string,
+    mimeType: string,
+  ): Promise<BlobUploadResult> {
+    const filePath = path.resolve(this.localStoragePath, blobName);
+
+    // Prevent path traversal
+    const resolvedBase = path.resolve(this.localStoragePath);
+    if (!filePath.startsWith(resolvedBase)) {
+      throw new Error("Invalid blob name");
+    }
+
+    // Ensure parent directory exists
+    await mkdir(path.dirname(filePath), { recursive: true });
+    await writeFile(filePath, buffer);
+
+    return {
+      url: `/uploads/${blobName}`,
+      filename: blobName,
+      mimeType,
+      size: buffer.length,
+    };
+  }
+
+  private async deleteLocalByName(blobName: string): Promise<void> {
+    const filePath = path.resolve(this.localStoragePath, blobName);
+
+    const resolvedBase = path.resolve(this.localStoragePath);
+    if (!filePath.startsWith(resolvedBase)) {
+      throw new Error("Invalid blob name");
+    }
+
+    if (existsSync(filePath)) {
+      await unlink(filePath);
+    }
+  }
+
+  private async uploadAzureFixed(
+    buffer: Buffer,
+    blobName: string,
+    mimeType: string,
+  ): Promise<BlobUploadResult> {
+    if (!this.blobServiceClient || !this.azureContainer) {
+      throw new Error(
+        "Azure Blob Storage not configured. Check AZURE_STORAGE_ACCOUNT and AZURE_STORAGE_KEY.",
+      );
+    }
+
+    const containerClient = this.blobServiceClient.getContainerClient(
+      this.azureContainer,
+    );
+    await containerClient.createIfNotExists();
+
+    const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+    await blockBlobClient.upload(buffer, buffer.length, {
+      blobHTTPHeaders: { blobContentType: mimeType },
+    });
+
+    return {
+      url: blockBlobClient.url,
+      filename: blobName,
+      mimeType,
+      size: buffer.length,
+    };
+  }
+
+  private async deleteAzureByName(blobName: string): Promise<void> {
+    if (!this.blobServiceClient || !this.azureContainer) {
+      throw new Error("Azure Blob Storage not configured.");
+    }
+
+    const containerClient = this.blobServiceClient.getContainerClient(
+      this.azureContainer,
+    );
+    const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+    await blockBlobClient.deleteIfExists();
+  }
+
   // Cloudinary implementation (placeholder - requires cloudinary)
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   private async uploadCloudinary(

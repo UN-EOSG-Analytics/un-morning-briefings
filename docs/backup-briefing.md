@@ -110,6 +110,6 @@ The flow is only 2-3 steps, so recreating from these instructions takes ~10 minu
 |----------|-------|
 | Container | `morning-briefings` (default, configurable via `AZURE_STORAGE_CONTAINER`) |
 | Blob path | `briefing-backup/YYYY-MM-DD.docx` |
-| Updated | Every 15 min on weekdays (UTC) |
-| Cleanup | Previous weekday's blob is auto-deleted |
+| Updated | Every 15 min, every day (UTC) |
+| Cleanup | Yesterday's blob is auto-deleted |
 | Auth | Storage account key (same as image storage) |

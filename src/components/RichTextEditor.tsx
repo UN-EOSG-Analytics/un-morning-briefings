@@ -1,6 +1,7 @@
 "use client";
 
 import { useEditor, EditorContent } from "@tiptap/react";
+import { DOMParser as ProseMirrorDOMParser } from "@tiptap/pm/model";
 import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
 import TextAlign from "@tiptap/extension-text-align";
@@ -169,6 +170,63 @@ export function RichTextEditor({
     editorProps: {
       attributes: {
         class: `prose prose-sm max-w-none focus:outline-none px-3 py-2 text-sm ${minHeight}`,
+      },
+      handlePaste(view, event) {
+        const html = event.clipboardData?.getData("text/html");
+        if (!html) return false;
+
+        // Check if pasted HTML contains external images
+        const doc = new DOMParser().parseFromString(html, "text/html");
+        const imgs = Array.from(doc.querySelectorAll("img"));
+        const externalImgs = imgs.filter(
+          (img) =>
+            img.src.startsWith("http://") || img.src.startsWith("https://"),
+        );
+
+        if (externalImgs.length === 0) return false;
+
+        // Suppress default paste — we'll insert content async after proxying images
+        event.preventDefault();
+
+        // Deduplicate URLs
+        const uniqueUrls = [...new Set(externalImgs.map((img) => img.src))];
+
+        // Download each external image via server-side proxy
+        const urlToDataUrl = new Map<string, string>();
+        Promise.all(
+          uniqueUrls.map(async (url) => {
+            try {
+              const resp = await fetch(
+                `/api/image-proxy?url=${encodeURIComponent(url)}`,
+              );
+              if (!resp.ok) return;
+              const { dataUrl } = await resp.json();
+              if (dataUrl) urlToDataUrl.set(url, dataUrl);
+            } catch {
+              // Leave as external URL — save-time internalization will retry
+            }
+          }),
+        ).then(() => {
+          // Skip if editor was unmounted before fetches completed
+          if (!view.dom.isConnected) return;
+
+          // Replace external src with base64 in the parsed DOM
+          for (const img of externalImgs) {
+            const dataUrl = urlToDataUrl.get(img.src);
+            if (dataUrl) img.src = dataUrl;
+          }
+
+          // Parse the modified HTML into a ProseMirror slice and insert
+          const wrapper = document.createElement("div");
+          wrapper.innerHTML = doc.body.innerHTML;
+          const pmParser = ProseMirrorDOMParser.fromSchema(view.state.schema);
+          const slice = pmParser.parseSlice(wrapper);
+          view.dispatch(view.state.tr.replaceSelection(slice));
+        }).catch((err) => {
+          console.error("handlePaste: error processing pasted images:", err);
+        });
+
+        return true;
       },
     },
   });

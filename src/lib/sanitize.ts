@@ -50,6 +50,6 @@ export function sanitizeHtml(html: string): string {
       img: ["src", "alt", "width", "height"],
       "*": ["class", "style"],
     },
-    allowedSchemes: ["http", "https", "mailto", "image-ref"],
+    allowedSchemes: ["http", "https", "mailto", "image-ref", "data"],
   });
 }

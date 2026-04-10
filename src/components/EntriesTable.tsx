@@ -598,7 +598,7 @@ export function EntriesTable({
                               {formatDateResponsive(entry.date).mobile}
                             </span>
                             <span className="text-xs text-slate-500">
-                              {entry.updatedAt && isOvernightUpdate(entry.updatedAt) && (
+                              {isOvernightUpdate(entry.updatedAt ?? entry.date) && (
                                 <span className="mr-1 text-[#009edb]" title="Overnight update">●</span>
                               )}
                               {formatTime(entry.date)}{" "}

@@ -10,7 +10,7 @@
     },
     {
       "path": "/api/cron/backup-briefing",
-      "schedule": "*/15 * * * 1-5"
+      "schedule": "*/15 * * * *"
     }
   ]
 }

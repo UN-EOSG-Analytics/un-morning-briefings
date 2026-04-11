@@ -24,26 +24,6 @@ function getTodayNYC(): string {
   return formatter.format(new Date());
 }
 
-/**
- * Get the previous weekday's date string.
- * Monday returns Friday, all other weekdays return the day before.
- */
-function getPreviousWeekday(dateStr: string): string {
-  const [year, month, day] = dateStr.split("-").map(Number);
-  const date = new Date(Date.UTC(year, month - 1, day));
-  const dow = date.getUTCDay(); // 0=Sun, 1=Mon, ..., 6=Sat
-
-  let daysBack = 1;
-  if (dow === 1) daysBack = 3; // Monday -> Friday
-  if (dow === 0) daysBack = 2; // Sunday -> Friday (shouldn't happen with weekday cron)
-
-  date.setUTCDate(date.getUTCDate() - daysBack);
-
-  const y = date.getUTCFullYear();
-  const m = String(date.getUTCMonth() + 1).padStart(2, "0");
-  const d = String(date.getUTCDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
-}
 
 export async function GET(request: NextRequest) {
   try {
@@ -97,16 +77,6 @@ export async function GET(request: NextRequest) {
     // Upload (overwrites previous version for today)
     const result = await blobStorage.uploadFixed(buffer, blobName, DOCX_MIME);
     console.log(`[BACKUP] Uploaded ${blobName} (${buffer.length} bytes)`);
-
-    // Clean up previous weekday's backup blob (best-effort)
-    try {
-      const previousDate = getPreviousWeekday(briefingDate);
-      const oldBlobName = `${BLOB_PREFIX}/${previousDate}.docx`;
-      await blobStorage.deleteByName(oldBlobName);
-      console.log(`[BACKUP] Cleaned up old backup: ${oldBlobName}`);
-    } catch (err) {
-      console.warn("[BACKUP] Failed to clean up old backup:", err);
-    }
 
     return NextResponse.json({
       success: true,

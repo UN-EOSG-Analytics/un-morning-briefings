@@ -104,7 +104,7 @@ const metadataJsonSchema = {
     headline: {
       type: "string" as const,
       description:
-        "Concise headline (max 300 chars) derived directly from content",
+        "Concise UN-style headline (max 120 chars), subject + action, no leading article",
     },
     sourceDate: {
       type: ["string" as const, "null" as const],
@@ -130,24 +130,36 @@ const metadataJsonSchema = {
 };
 
 async function extractMetadata(content: string) {
-  const systemPrompt = `You are a UN briefing assistant. Extract metadata from the provided news content.
+  const systemPrompt = `You are a metadata extraction assistant for the UN Executive Office of the Secretary-General (EOSG). Classify and tag the provided news or document content for the daily morning briefing.
 
-Categories: ${categoryValues.join(", ")}
-Priorities: ${priorityValues.join(", ")}
-Regions: ${regionValues.join(", ")}
-Countries: ${countryValues.join(", ")}
+CATEGORY — choose the best fit:
+- "Article": news article, press report, or media coverage (most common)
+- "Meeting Note": record or summary of a meeting
+- "Code Cable": UN internal cable communication
+- "Situational Update": ongoing crisis or situation report
+- "UN Internal Document": internal UN memo, report, or official document
+- "Other": does not fit any of the above
 
-COUNTRY SELECTION (STRICT):
-- Extract ONLY countries explicitly mentioned in the content (use the name from the provided country list)
-- If ONE country is mentioned, return as a string (e.g., "France")
-- If MULTIPLE countries are mentioned and involved in the topic, return as an array (e.g., ["France", "Germany"])
-- If no specific country is mentioned, return null
-- Do NOT infer or assume countries based on context
+PRIORITY — always set one:
+- "SG's attention": high-stakes developments directly relevant to the Secretary-General — major conflicts, diplomatic crises, Security Council actions, senior UN leadership decisions, significant humanitarian emergencies
+- "Situational Awareness": everything else — background news, routine updates, general awareness items (use this as the default)
 
-SOURCE NAME EXTRACTION:
-- Extract the name of the news source or publication (e.g., "BBC", "Reuters", "The Guardian", "AFP")
-- Look for attribution phrases like "(Source Name)", "via Source Name", "Source Name reported", or similar
-- If no explicit source is mentioned, return null`;
+REGION — pick the single most relevant region:
+- "Africa", "The Americas", "Asia and the Pacific", "Europe", "Middle East"
+- "Thematic updates": cross-regional or global topics (climate, human rights, UN system-wide issues, etc.)
+- null only if truly no region can be determined
+
+COUNTRY — countries that are primary subjects of the content:
+- Use exact names from this list: ${countryValues.join(", ")}
+- Return a single string if one country, an array if multiple are central to the topic
+- null if the content is global/regional with no specific country focus
+- Do NOT include countries merely mentioned in passing
+
+HEADLINE — concise, factual, telegraphic UN-style title (max 120 characters). Lead with the subject and action (e.g., "Security Council adopts resolution on Sudan ceasefire"). No articles ("the", "a") at the start.
+
+SOURCE DATE — YYYY-MM-DD if a publication or event date is explicitly stated in the content, otherwise null.
+
+SOURCE NAME — name of the news outlet or originating organisation (e.g., "Reuters", "BBC", "AFP", "Al Jazeera"). Look for bylines, datelines, or attribution phrases. null if not mentioned.`;
 
   const text = await chat(systemPrompt, content, {
     responseFormat: {

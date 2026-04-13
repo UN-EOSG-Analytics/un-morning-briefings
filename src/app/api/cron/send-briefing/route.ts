@@ -13,6 +13,10 @@ import {
 
 export const maxDuration = 60;
 
+// Must match the cron minute in vercel.json (currently "44 11" / "44 12").
+// If you change one, change the other.
+const SEND_MINUTE_NYC = 44;
+
 /**
  * Get today's date string in America/New_York timezone.
  * Vercel runs in UTC, so we need explicit timezone conversion.
@@ -91,10 +95,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // DST-safe: two crons fire at 11:45 and 12:45 UTC. Only proceed if
-    // it's >= 7:45 AM in NYC. The duplicate guard handles the second hit.
+    // DST-safe: two crons fire at 11:44 and 12:44 UTC. Only proceed if
+    // it's >= 7:44 AM in NYC. The duplicate guard handles the second hit.
     const { hour, minute } = getNycTime();
-    if (hour < 7 || (hour === 7 && minute < 45)) {
+    if (hour < 7 || (hour === 7 && minute < SEND_MINUTE_NYC)) {
       console.log(`[CRON] Too early in NYC (${hour}:${String(minute).padStart(2, "0")}), skipping`);
       return NextResponse.json({
         skipped: true,

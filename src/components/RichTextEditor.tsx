@@ -1,7 +1,10 @@
 "use client";
 
 import { useEditor, EditorContent } from "@tiptap/react";
-import { DOMParser as ProseMirrorDOMParser } from "@tiptap/pm/model";
+import {
+  DOMParser as ProseMirrorDOMParser,
+  DOMSerializer,
+} from "@tiptap/pm/model";
 import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
 import TextAlign from "@tiptap/extension-text-align";
@@ -315,113 +318,68 @@ export function RichTextEditor({
 
     setIsReformulating(true);
     try {
-      if (hasSelection) {
-        // Get the selected text - use paragraph separator for multi-paragraph selections
-        const selectedText = editor.state.doc.textBetween(
-          from,
-          to,
-          "\n\n",
-          "\n",
-        );
+      let htmlContent: string;
 
-        if (!selectedText.trim()) {
+      if (hasSelection) {
+        // Get HTML of the selected range (preserves inline formatting)
+        const slice = editor.state.doc.slice(from, to);
+        const div = document.createElement("div");
+        const fragment =
+          DOMSerializer.fromSchema(editor.schema).serializeFragment(
+            slice.content,
+          );
+        div.appendChild(fragment);
+        htmlContent = div.innerHTML;
+
+        if (!htmlContent.trim()) {
           showWarning("No Text Selected", "Please select text to regenerate");
           setIsReformulating(false);
           return;
         }
-
-        // Send the selected text directly to AI for reformulation
-        const response = await fetch("/api/reformulate", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            mode: "selection",
-            fullSentence: selectedText,
-            selectionStart: 0,
-            selectionEnd: selectedText.length,
-          }),
-        });
-
-        if (!response.ok) {
-          const error = await response.json();
-          const errorMessage = error.error || "Failed to regenerate text";
-
-          if (
-            errorMessage.includes("AZURE_OPENAI_API_KEY") ||
-            errorMessage.includes("not configured")
-          ) {
-            showWarning("AI Usage not enabled", "Please wait for Update");
-          } else {
-            showWarning("Regeneration Failed", errorMessage);
-          }
+      } else {
+        // Regenerate entire content
+        htmlContent = editor.getHTML();
+        if (!htmlContent || htmlContent === "<p></p>") {
+          showWarning("No Content", "Please enter content to reformulate");
+          setIsReformulating(false);
           return;
         }
+      }
 
-        const result = await response.json();
-        const reformulatedText = result.content;
+      const response = await fetch("/api/reformulate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: htmlContent }),
+      });
 
-        // Store the selection positions before any modification
-        const selectionFrom = from;
-        const selectionTo = to;
+      if (!response.ok) {
+        const error = await response.json();
+        const errorMessage = error.error || "Failed to reformulate content";
 
-        // Replace the selected text using deleteRange and insertContentAt
-        // This preserves proper TipTap formatting
+        if (
+          errorMessage.includes("AZURE_OPENAI_API_KEY") ||
+          errorMessage.includes("not configured")
+        ) {
+          showWarning("AI Usage not enabled", "Please wait for Update");
+        } else {
+          showWarning("Reformulation Failed", errorMessage);
+        }
+        return;
+      }
+
+      const result = await response.json();
+
+      if (hasSelection) {
+        // Replace the selected range with reformulated HTML
         editor
           .chain()
           .focus()
-          .deleteRange({ from: selectionFrom, to: selectionTo })
-          .insertContentAt(selectionFrom, reformulatedText)
+          .deleteRange({ from, to })
+          .insertContentAt(from, result.content)
           .run();
-
-        // Calculate the new end position for selection
-        const newEnd = selectionFrom + reformulatedText.length;
-
-        // Wait a tick for the editor to update, then select the new text
-        setTimeout(() => {
-          editor.commands.setTextSelection({
-            from: selectionFrom,
-            to: newEnd,
-          });
-        }, 10);
 
         showSuccess("Text Regenerated", "Selected text has been regenerated.");
       } else {
-        // Regenerate entire content
-        const currentContent = editor.getHTML();
-        if (!currentContent || currentContent === "<p></p>") {
-          showWarning("No Content", "Please enter content to reformulate");
-          return;
-        }
-
-        const response = await fetch("/api/reformulate", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            mode: "full",
-            content: currentContent,
-          }),
-        });
-
-        if (!response.ok) {
-          const error = await response.json();
-          const errorMessage = error.error || "Failed to reformulate content";
-
-          if (
-            errorMessage.includes("GEMINI_API_KEY") ||
-            errorMessage.includes("not configured")
-          ) {
-            showWarning("AI Usage not enabled", "Please wait for Update");
-          } else {
-            showWarning("Reformulation Failed", errorMessage);
-          }
-          return;
-        }
-
-        const result = await response.json();
         editor.commands.setContent(result.content);
         showSuccess(
           "Content Reformulated",

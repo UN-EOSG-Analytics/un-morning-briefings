@@ -1,8 +1,7 @@
 import { CheckCircle, XCircle, Activity } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { query } from "@/lib/db";
-import { generateText } from "ai";
-import { createAzure } from "@ai-sdk/azure";
+import { AzureOpenAI } from "openai";
 import type { EmailSendLogEntry } from "@/app/api/email-send-log/route";
 
 type Check = { ok: boolean; error?: string };
@@ -77,16 +76,15 @@ async function runChecks(): Promise<Record<string, Check>> {
 
   // Azure OpenAI / AI Foundry
   try {
-    const azure = createAzure({
+    const client = new AzureOpenAI({
+      apiVersion: "2025-04-01-preview",
+      endpoint: process.env.AZURE_OPENAI_ENDPOINT,
       apiKey: process.env.AZURE_OPENAI_API_KEY,
-      resourceName: process.env.AZURE_OPENAI_ENDPOINT?.match(
-        /https?:\/\/([^.]+)\.openai\.azure\.com/,
-      )?.[1],
     });
-    await generateText({
-      model: azure("gpt-4o"),
-      prompt: "Reply with the single word: ok",
-      maxOutputTokens: 16,
+    await client.chat.completions.create({
+      model: "gpt-5.4-mini",
+      messages: [{ role: "user", content: "Reply with the single word: ok" }],
+      max_completion_tokens: 16,
     });
     checks.ai = { ok: true };
   } catch (e) {

@@ -5,9 +5,10 @@
   "packageManager": "pnpm@10.30.3",
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "pnpm check-cron-sync && next build",
     "start": "next start",
-    "lint": "eslint",
+    "check-cron-sync": "node scripts/check-cron-sync.js",
+    "lint": "eslint && pnpm check-cron-sync",
     "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx,css,scss,json,md}\"",
     "format:check": "prettier --check \"src/**/*.{js,jsx,ts,tsx,css,scss,json,md}\""
   },

@@ -30,7 +30,7 @@ No test suite exists in this project.
 - **Next.js 16** canary (App Router) with **React 19**, **TypeScript**
 - **Tailwind CSS v4.1** with `@theme inline` directive in `globals.css` for custom tokens
 - **shadcn/ui** components in `src/components/ui/` (Radix primitives + CVA)
-- **PostgreSQL** via `pg` (raw SQL, no ORM) - all tables in `pu_morning_briefings` schema
+- **PostgreSQL** via `pg` (raw SQL, no ORM) - all tables in `morning_briefings` schema
 - **NextAuth.js v4** with credentials provider (email/password, `@un.org` domain only, whitelist-gated)
 - **Azure Blob Storage** for images (with local filesystem fallback via `BLOB_STORAGE_TYPE`)
 - **Azure OpenAI** (GPT-4o) via Vercel AI SDK for auto-fill, summarize, reformulate features
@@ -46,10 +46,10 @@ Entries are grouped into daily briefings using an 8AM local time cutoff:
 - This logic lives in `src/lib/useEntriesFilter.ts` (`getCurrentBriefingDate`, `getBriefingDate`, `isWithinCutoffRange`)
 
 ### Database Layer
-- `src/lib/db.ts` - Connection pool singleton + `query()` helper that auto-sets `search_path` to `pu_morning_briefings`
+- `src/lib/db.ts` - Connection pool singleton + `query()` helper (all SQL uses explicit `morning_briefings.` schema prefix)
 - `src/lib/entry-queries.ts` - Shared SQL for entries (SELECT with JOINs to users/images, country serialization)
 - `sql/init.sql` - Full schema: `users`, `entries`, `images`, `user_whitelist`, `password_resets` tables
-- All entry queries use `pu_morning_briefings.` explicit schema prefix in SQL
+- All entry queries use `morning_briefings.` explicit schema prefix in SQL
 
 ### Image Pipeline
 Images go through a specific pipeline:
@@ -104,6 +104,16 @@ Images go through a specific pipeline:
 - All error messages come from `labels.json`, not hardcoded strings
 - API routes use `checkAuth()` guard and return `NextResponse.json()`
 - DB queries use parameterized SQL (`$1`, `$2`, etc.) - never string interpolation
+
+## Cron Schedule (vercel.json ↔ route.ts coupling)
+
+The briefing email is sent at **7:44 AM New York time** on weekdays. Because Vercel crons use UTC and NYC switches between UTC-4 (EDT) and UTC-5 (EST), two cron entries exist in `vercel.json`:
+- `44 11 * * 1-5` — hits 7:44 AM during EDT
+- `44 12 * * 1-5` — hits 7:44 AM during EST
+
+The route handler in `src/app/api/cron/send-briefing/route.ts` has a **time guard** that skips execution if it's before 7:44 AM NYC (so the wrong-timezone cron is a no-op), plus a **duplicate guard** via `email_send_log` (so the second cron doesn't re-send).
+
+**IMPORTANT:** If you change the cron minute in `vercel.json`, you MUST also update the time guard in the route handler (`hour === 7 && minute < XX`), and vice versa. These two values must match.
 
 ## Environment Variables
 

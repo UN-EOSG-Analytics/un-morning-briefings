@@ -1,12 +1,12 @@
 # Automated Briefing Email (Vercel Cron)
 
-The morning briefing email is sent automatically at **7:45 AM New York time, Monday through Friday** via Vercel Cron.
+The morning briefing email is sent automatically at **7:44 AM New York time, Monday through Friday** via Vercel Cron.
 
 ## How it works
 
 1. Vercel fires a GET request to `/api/cron/send-briefing` on schedule
 2. The route authenticates the request using the `CRON_SECRET` env var
-3. It checks the current time in America/New_York and skips if before 7:45 AM
+3. It checks the current time in America/New_York and skips if before 7:44 AM
 4. It checks `email_send_log` to prevent duplicate sends for the same briefing date
 5. It fetches all submitted entries for today's briefing date (8 AM cutoff window)
 6. It converts image references to data URLs server-side via blob storage
@@ -18,24 +18,26 @@ The morning briefing email is sent automatically at **7:45 AM New York time, Mon
 
 Vercel cron schedules are static UTC expressions with no timezone support. New York switches between EDT (UTC-4) and EST (UTC-5), so a single UTC schedule would drift by 1 hour across daylight saving transitions.
 
-To always send at 7:45 AM ET year-round, two cron triggers are configured in `vercel.json`:
+To always send at 7:44 AM ET year-round, two cron triggers are configured in `vercel.json`:
 
 ```
-"45 11 * * 1-5"   →  11:45 UTC  →  7:45 AM EDT  /  6:45 AM EST
-"45 12 * * 1-5"   →  12:45 UTC  →  8:45 AM EDT  /  7:45 AM EST
+"44 11 * * 1-5"   →  11:44 UTC  →  7:44 AM EDT  /  6:44 AM EST
+"44 12 * * 1-5"   →  12:44 UTC  →  8:44 AM EDT  /  7:44 AM EST
 ```
+
+> **IMPORTANT:** The cron minute (`44`) and the time guard in `src/app/api/cron/send-briefing/route.ts` (`SEND_MINUTE_NYC = 44`) must match. If you change one, change the other.
 
 The route has two guards that make this work:
 
-- **Time check**: Skips if NYC wall-clock time is before 7:45 AM. This prevents the early cron (11:45 UTC) from sending during EST when it maps to 6:45 AM.
-- **Duplicate guard**: Skips if a successful cron send for today's briefing date already exists in `email_send_log`. This prevents the late cron (12:45 UTC) from re-sending during EDT when the 11:45 UTC run already sent it.
+- **Time check**: Skips if NYC wall-clock time is before 7:44 AM. This prevents the early cron (11:44 UTC) from sending during EST when it maps to 6:44 AM.
+- **Duplicate guard**: Skips if a successful cron send for today's briefing date already exists in `email_send_log`. This prevents the late cron (12:44 UTC) from re-sending during EDT when the 11:44 UTC run already sent it.
 
 ### All scenarios
 
-| Period | Cron 1 (11:45 UTC) | Cron 2 (12:45 UTC) |
+| Period | Cron 1 (11:44 UTC) | Cron 2 (12:44 UTC) |
 |--------|--------------------|--------------------|
-| **EDT** (Mar-Nov) | 7:45 AM ET — time check passes, **sends** | 8:45 AM ET — duplicate guard **skips** |
-| **EST** (Nov-Mar) | 6:45 AM ET — time check fails, **skips** | 7:45 AM ET — time check passes, **sends** |
+| **EDT** (Mar-Nov) | 7:44 AM ET — time check passes, **sends** | 8:44 AM ET — duplicate guard **skips** |
+| **EST** (Nov-Mar) | 6:44 AM ET — time check fails, **skips** | 7:44 AM ET — time check passes, **sends** |
 
 US DST transitions happen on Sundays. The cron schedule is weekdays only (`1-5`), so the cron never fires on a transition day. By Monday, NYC is fully in the new offset.
 

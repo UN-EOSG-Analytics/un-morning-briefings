@@ -332,12 +332,12 @@ export function RichTextEditor({
         htmlContent = div.innerHTML;
 
         if (!htmlContent.trim()) {
-          showWarning("No Text Selected", "Please select text to regenerate");
+          showWarning("No Text Selected", "Please select text to reformulate");
           setIsReformulating(false);
           return;
         }
       } else {
-        // Regenerate entire content
+        // Reformulate entire content
         htmlContent = editor.getHTML();
         if (!htmlContent || htmlContent === "<p></p>") {
           showWarning("No Content", "Please enter content to reformulate");
@@ -378,7 +378,7 @@ export function RichTextEditor({
           .insertContentAt(from, result.content)
           .run();
 
-        showSuccess("Text Regenerated", "Selected text has been regenerated.");
+        showSuccess("Text Reformulated", "Selected text has been reformulated.");
       } else {
         editor.commands.setContent(result.content);
         showSuccess(
@@ -786,7 +786,7 @@ export function RichTextEditor({
 
                 <div className="h-6 w-px bg-slate-300" />
 
-                {/* Regenerate Button */}
+                {/* Reformulate Button */}
                 <Button
                   type="button"
                   size="sm"
@@ -798,7 +798,7 @@ export function RichTextEditor({
                 >
                   <Wand2 className="h-4 w-4" />
                   <span className="hidden text-xs sm:inline">
-                    {isReformulating ? "Reformulating..." : "Regenerate"}
+                    {isReformulating ? "Reformulating..." : "Reformulate"}
                   </span>
                 </Button>
               </>

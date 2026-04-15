@@ -2,63 +2,9 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { parseDateString, getNycNow } from "./format-date";
+export { getCurrentBriefingDate } from "./format-date";
 
 
-
-/**
- * Get the current briefing date based on local time
- *
- * Logic: If current time is >= 8AM, we're working on tomorrow's briefing
- *        If current time is < 8AM, we're working on today's briefing
- *        Weekends (Saturday/Sunday) are skipped - Friday 8AM to Monday 8AM counts for Monday
- */
-export function getCurrentBriefingDate(): string {
-  const { year, month, day, hour } = getNycNow();
-
-  let briefingDay = day;
-  let briefingMonth = month;
-  let briefingYear = year;
-
-  // If >= 8AM ET, working on tomorrow's briefing
-  if (hour >= 8) {
-    briefingDay += 1;
-    // Handle month overflow
-    const daysInMonth = new Date(year, month, 0).getDate();
-    if (briefingDay > daysInMonth) {
-      briefingDay = 1;
-      briefingMonth += 1;
-      if (briefingMonth > 12) {
-        briefingMonth = 1;
-        briefingYear += 1;
-      }
-    }
-  }
-
-  // Skip weekends: if the briefing date is Saturday or Sunday, move to Monday
-  const briefingDate = new Date(briefingYear, briefingMonth - 1, briefingDay);
-  const briefingDayOfWeek = briefingDate.getDay();
-
-  if (briefingDayOfWeek === 6) {
-    // Saturday -> Monday
-    briefingDay += 2;
-  } else if (briefingDayOfWeek === 0) {
-    // Sunday -> Monday
-    briefingDay += 1;
-  }
-
-  // Handle month overflow after weekend adjustment
-  const daysInMonth = new Date(briefingYear, briefingMonth, 0).getDate();
-  if (briefingDay > daysInMonth) {
-    briefingDay -= daysInMonth;
-    briefingMonth += 1;
-    if (briefingMonth > 12) {
-      briefingMonth = 1;
-      briefingYear += 1;
-    }
-  }
-
-  return `${briefingYear}-${String(briefingMonth).padStart(2, "0")}-${String(briefingDay).padStart(2, "0")}`;
-}
 
 /**
  * Get the briefing date for an entry based on 8AM cutoff.

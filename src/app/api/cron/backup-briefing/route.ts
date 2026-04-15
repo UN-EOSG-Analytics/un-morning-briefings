@@ -3,26 +3,13 @@ import { fetchEntriesForBriefingDate } from "@/lib/entry-queries";
 import { convertImageReferencesServerSide } from "@/lib/image-conversion";
 import { blobStorage } from "@/lib/blob-storage";
 import { generateDocumentBuffer } from "@/lib/briefing-docx";
+import { getCurrentBriefingDate } from "@/lib/format-date";
 
 export const maxDuration = 60;
 
 const DOCX_MIME =
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 const BLOB_PREFIX = "briefing-backup";
-
-/**
- * Get today's date string in America/New_York timezone.
- * Vercel runs in UTC, so we need explicit timezone conversion.
- */
-function getTodayNYC(): string {
-  const formatter = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "America/New_York",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  });
-  return formatter.format(new Date());
-}
 
 
 export async function GET(request: NextRequest) {
@@ -43,7 +30,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const briefingDate = getTodayNYC();
+    const briefingDate = getCurrentBriefingDate();
     console.log(`[BACKUP] Generating DOCX backup for ${briefingDate}`);
 
     // Fetch entries for this briefing date

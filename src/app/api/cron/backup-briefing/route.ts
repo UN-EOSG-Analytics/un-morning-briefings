@@ -3,7 +3,7 @@ import { fetchEntriesForBriefingDate } from "@/lib/entry-queries";
 import { convertImageReferencesServerSide } from "@/lib/image-conversion";
 import { blobStorage } from "@/lib/blob-storage";
 import { generateDocumentBuffer } from "@/lib/briefing-docx";
-import { getCurrentBriefingDate } from "@/lib/useEntriesFilter";
+import { getCurrentBriefingDate } from "@/lib/format-date";
 
 export const maxDuration = 60;
 

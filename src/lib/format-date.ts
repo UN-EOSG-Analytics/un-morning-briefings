@@ -202,6 +202,51 @@ export function getNycNow(): {
 }
 
 /**
+ * Get the current briefing date based on NYC time and the 8AM cutoff.
+ *
+ * If current time >= 8AM ET, we're working on tomorrow's briefing.
+ * If current time < 8AM ET, we're working on today's briefing.
+ * Weekends are skipped: Friday 8AM+ → Monday, Saturday/Sunday → Monday.
+ */
+export function getCurrentBriefingDate(): string {
+  const { year, month, day, hour } = getNycNow();
+
+  let briefingDay = day;
+  let briefingMonth = month;
+  let briefingYear = year;
+
+  if (hour >= 8) {
+    briefingDay += 1;
+    const daysInMonth = new Date(year, month, 0).getDate();
+    if (briefingDay > daysInMonth) {
+      briefingDay = 1;
+      briefingMonth += 1;
+      if (briefingMonth > 12) {
+        briefingMonth = 1;
+        briefingYear += 1;
+      }
+    }
+  }
+
+  const briefingDate = new Date(briefingYear, briefingMonth - 1, briefingDay);
+  const dow = briefingDate.getDay();
+  if (dow === 6) briefingDay += 2; // Saturday → Monday
+  else if (dow === 0) briefingDay += 1; // Sunday → Monday
+
+  const daysInMonth = new Date(briefingYear, briefingMonth, 0).getDate();
+  if (briefingDay > daysInMonth) {
+    briefingDay -= daysInMonth;
+    briefingMonth += 1;
+    if (briefingMonth > 12) {
+      briefingMonth = 1;
+      briefingYear += 1;
+    }
+  }
+
+  return `${briefingYear}-${String(briefingMonth).padStart(2, "0")}-${String(briefingDay).padStart(2, "0")}`;
+}
+
+/**
  * Format current date/time as localized string: "1/15/2026, 3:45 PM ET"
  * Always uses America/New_York timezone for consistency between
  * client-side and server-side (Vercel/UTC) document generation.

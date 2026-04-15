@@ -1,115 +1,165 @@
-# DOCX Backup to SharePoint via Power Automate
+# DOCX Backup to SharePoint via Azure Logic App
 
 ## How it works
 
-1. A Vercel Cron job runs every 15 minutes on weekdays
-2. It generates the current briefing as a DOCX and uploads it to Azure Blob Storage
-3. A Power Automate flow detects the new/updated blob and copies it to SharePoint
+1. A Vercel Cron job runs every 15 minutes (every day, including weekends)
+2. It generates the current briefing as a DOCX and uploads it to Azure Blob Storage, overwriting the previous version for that day
+3. An Azure Logic App detects the new/updated blob and copies it to SharePoint — creating the file on the first run of the day, and updating it on subsequent runs
 
 The blob is stored at: `briefing-backup/<YYYY-MM-DD>.docx` (e.g. `briefing-backup/2026-04-10.docx`).
-Each day gets its own blob, overwritten every 15 minutes as entries are updated.
-The previous weekday's blob is automatically cleaned up.
+Old blobs are kept indefinitely (storage cost is negligible: ~2MB/day → ~$0.16/year).
+
+## Why Azure Logic App, not Power Automate
+
+Power Automate was blocked by the UN's M365 DLP policy (`DLP-ENV-DEFAULT`), which disallows the Azure Blob Storage connector in Power Platform. Azure Logic Apps runs in the Azure subscription instead of M365, so it's governed by Azure RBAC and bypasses that policy.
 
 ## Prerequisites
 
-- Access to Azure Blob Storage credentials (account name + key) — same ones used by the app for image storage
-- A Microsoft 365 account with Power Automate access
-- A SharePoint site/library where the DOCX should land
+- Access to the Azure subscription where `un80analyticsstg` lives (you need Contributor access to create Logic App resources)
+- The `AZURE_STORAGE_KEY` value from `.env.local`
+- A Microsoft 365 account with access to the target SharePoint site
 
 ## Vercel Cron setup
 
-Already configured in `vercel.json`. Requires:
+Already configured in `vercel.json` as `*/15 * * * *`. Requires:
 - **Vercel Pro plan** (Hobby plan is limited to 2 cron jobs)
-- `CRON_SECRET` environment variable set in Vercel project settings (same one used by the send-briefing cron)
+- `CRON_SECRET` environment variable set in Vercel project settings
 
 Test manually:
 ```bash
 curl -H "Authorization: Bearer $CRON_SECRET" https://your-app.vercel.app/api/cron/backup-briefing
 ```
 
-## Power Automate flow setup
+If there are no submitted entries for today the route returns `"skipped": true` and no blob is uploaded (so the Logic App won't trigger). Submit at least one entry first if you need a test blob.
 
-### Step 1: Create a new flow
+## Azure Logic App setup
 
-1. Go to [Power Automate](https://make.powerautomate.com/)
-2. Click **Create** > **Automated cloud flow**
-3. Name it "Briefing DOCX Backup to SharePoint"
-4. Skip the trigger selection (we'll add it manually)
+### Step 1: Find an allowed region
 
-### Step 2: Add the trigger
+The UN Azure subscription has a `DenyNotAllowedLocations` policy. Before creating the Logic App, find out which regions are allowed:
 
-1. Search for **Azure Blob Storage** connector
+**Via the Azure Portal:**
+Go to **Azure Portal → Policy → Assignments**, find the `DenyNotAllowedLocations` policy, click into it, and check the **Parameters** tab for the list of allowed locations.
+
+**Via Azure CLI:**
+```bash
+az policy assignment list --query "[?displayName=='DenyNotAllowedLocations Policy link'].parameters" -o json
+```
+
+Create the Logic App in one of the allowed regions.
+
+### Step 2: Create the Logic App
+
+1. Go to **Azure Portal → Create a resource → Logic App**
+2. Choose **Consumption** plan (pay-per-execution, cheapest — costs under $0.15/month for this use case)
+3. Pick an allowed region from Step 1
+4. Once created, open the Logic App and go to **Logic App Designer**
+
+### Step 3: Add the blob trigger
+
+1. Search for **Azure Blob Storage**
 2. Select trigger: **When a blob is added or modified (V2)**
-3. Configure the connection:
+3. Create a new connection:
+   - **Connection name**: e.g. `morning-briefings-blob`
    - **Authentication type**: Access Key
-   - **Azure Storage account name**: *(same as `AZURE_STORAGE_ACCOUNT` env var)*
-   - **Azure Storage account key**: *(same as `AZURE_STORAGE_KEY` env var)*
+   - **Azure Storage account name**: `un80analyticsstg`
+   - **Azure Storage account key**: your `AZURE_STORAGE_KEY` value
 4. Configure the trigger:
-   - **Container**: `/morning-briefings` (or whatever `AZURE_STORAGE_CONTAINER` is set to)
+   - **Container**: `/pu-morning-briefing-images` (or whatever `AZURE_STORAGE_CONTAINER` is set to)
    - **Folder path**: `/briefing-backup`
-   - **Number of blobs to return**: 1
-   - **How often do you want to check for items?**: Every 1 minute (or 5 minutes — this is how often Power Automate polls, independent of the cron interval)
+   - **Number of blobs to return**: leave at default (10)
+   - **How often do you want to check for items?**: Every 5 minutes (this is the Logic App's polling interval, independent of the Vercel cron)
 
-### Step 3: Add the SharePoint action
+> **Note:** The V2 trigger returns **metadata only**, not the file content. You need a separate step to get the actual blob content (Step 4 below).
+
+### Step 4: Add "Get blob content (V2)"
 
 1. Click **+ New step**
-2. Search for **SharePoint** connector
-3. Select action: **Create file**
+2. Search for **Azure Blob Storage**, select action: **Get blob content (V2)**
+3. Use the same connection you created in Step 3
 4. Configure:
-   - **Site Address**: pick your SharePoint site from the dropdown
-   - **Folder Path**: pick the target document library/folder (e.g. `/Shared Documents/Morning Briefings`)
-   - **File Name**: use the expression `last(split(triggerBody()?['Name'], '/'))` to extract just the filename (e.g. `2026-04-10.docx`), or use a fixed name like `Morning Briefing.docx` if you want the same file overwritten
-   - **File Content**: select **File Content** from the trigger's dynamic content
+   - **Container**: `/pu-morning-briefing-images`
+   - **Blob**: click the field → **Dynamic content** → select **List of Files Path** from the trigger outputs
 
-### Step 4: Handle overwrites (important!)
+This step fetches the actual DOCX bytes that you'll write to SharePoint.
 
-The SharePoint "Create file" action will **fail** if the file already exists. Since the blob is updated every 15 minutes, you need to handle this:
+### Step 5: Add "Create file" (SharePoint)
 
-**Option A — Update existing file (recommended):**
-Replace "Create file" with these two steps:
-1. **Get file metadata using path** — check if the file exists at the target path
-2. **If yes → Update file** / **If no → Create file**
+1. Click **+ New step**
+2. Search for **SharePoint**, select action: **Create file**
+3. Sign in with your M365 account when prompted
+4. Configure:
+   - **Site Address**: pick your SharePoint site from the dropdown (e.g. `EOSG Strategic Planning and Monitoring Unit`)
+   - **Folder Path**: pick or type the target document library/folder (e.g. `/Shared Documents/PU Morning Briefings`)
+   - **File Name**: click the field → **Dynamic content** → select **List of Files Name** from the trigger outputs (this gives you `briefing-backup/2026-04-10.docx`). If that includes the full path prefix, switch to the **Expression** tab and use: `last(split(triggerBody()?['List of Files']?[0]?['Name'], '/'))`
+   - **File Content**: click the field → **Dynamic content** → select **File Content** from the "Get blob content (V2)" step
 
-Or more simply:
+> **Note:** "Create file" **fails** if the file already exists. This is expected after the first run of each day. Steps 6–7 handle that case.
 
-**Option B — Delete then create:**
-1. Add **Delete file** (SharePoint) before Create file, with the same path
-2. Configure the Delete step to **not fail** if file doesn't exist: click `...` > **Configure run after** > check **has failed** and **is successful**
+### Step 6: Add "Get file metadata using path" (SharePoint)
 
-**Option C — Use "Create or Replace file" (simplest if available):**
-Some SharePoint connector versions offer this. Search for "Update file" in the SharePoint connector actions — it overwrites by ID.
+This step runs **only when "Create file" fails** (i.e. the file already exists) so it can look up the file ID needed to update it.
 
-### Step 5: Test
+1. Click **+ New step**
+2. Search for **SharePoint**, select action: **Get file metadata using path**
+3. Use the **same SharePoint connection** you authenticated in Step 5 (important: make sure it's not using an Azure Files connection — click "Change connection" if needed)
+4. Configure:
+   - **Site Address**: same SharePoint site
+   - **File Path**: type the folder path + `/` then insert **List of Files Name** from dynamic content (e.g. `/Shared Documents/PU Morning Briefings/2026-04-10.docx`)
+5. Configure "run after": click on this step → **Settings** tab → find **Run After** → expand → uncheck **is successful** → check **has failed**. This makes the step run only when "Create file" failed.
 
-1. Save the flow
-2. Manually trigger the backup cron: `curl -H "Authorization: Bearer $CRON_SECRET" <app-url>/api/cron/backup-briefing`
-3. Wait for Power Automate to poll (up to the interval you set in Step 2)
-4. Check the SharePoint library for the file
+### Step 7: Add "Update file" (SharePoint)
+
+1. Click **+ New step**
+2. Search for **SharePoint**, select action: **Update file**
+3. Use the same SharePoint connection
+4. Configure:
+   - **Site Address**: same SharePoint site
+   - **File**: click the field → **Dynamic content** → select **Id** from the "Get file metadata using path" step
+   - **File Content**: click the field → **Dynamic content** → select **File Content** from the "Get blob content (V2)" step
+5. The "run after" for this step stays at the default (runs when "Get file metadata using path" succeeds)
+
+### The resulting flow
+
+```
+Trigger: blob modified
+  → Get blob content (V2)
+    → Create file (SharePoint)
+        ↓ succeeds: done (first run of the day)
+        ↓ fails (file exists):
+          → Get file metadata using path
+            → Update file (SharePoint)
+```
+
+No deletion — the file is always present in SharePoint.
+
+### Step 8: Test
+
+1. Make sure there are submitted entries for today in the app
+2. Trigger the backup cron manually:
+   ```bash
+   curl -H "Authorization: Bearer $CRON_SECRET" https://your-app.vercel.app/api/cron/backup-briefing
+   ```
+3. In the Logic App designer, click **Run** to force an immediate poll (instead of waiting up to 5 minutes)
+4. Check the **Run history** tab to see if it succeeded
+5. Check your SharePoint folder for the file
+
+For the second test (to verify the update path works), run the curl command again and then trigger again — this time "Create file" should fail and "Update file" should take over.
 
 ## Transferring to another team
 
-The political unit team needs to set up this flow in their own environment:
+The Logic App is only a few steps, so the easiest handover is to recreate it from this doc (~15 minutes). They will need:
 
-### Option A: Export and import (recommended)
-
-1. In Power Automate, go to your flow > **Export** > **Package (.zip)**
-2. Send the .zip to the other team
-3. They go to Power Automate > **Import** > upload the .zip
-4. They re-authenticate both connectors:
-   - **Azure Blob Storage**: same account name + key (shared infra)
-   - **SharePoint**: their own M365 account, pointing to their SharePoint site
-5. Update the SharePoint folder path to their target library
-
-### Option B: Recreate from this doc
-
-The flow is only 2-3 steps, so recreating from these instructions takes ~10 minutes.
+- Access to the Azure subscription (or you export the Logic App from Azure Portal → **Export** and share the ARM template)
+- The Azure storage account name + key (shared infra)
+- Their own M365 account to authenticate the SharePoint connector (this step can't be pre-done — it's their permissions, pointing to their SharePoint site)
 
 ## Blob storage details
 
 | Property | Value |
 |----------|-------|
-| Container | `morning-briefings` (default, configurable via `AZURE_STORAGE_CONTAINER`) |
+| Container | `pu-morning-briefing-images` (configurable via `AZURE_STORAGE_CONTAINER`) |
 | Blob path | `briefing-backup/YYYY-MM-DD.docx` |
 | Updated | Every 15 min, every day (UTC) |
-| Cleanup | Yesterday's blob is auto-deleted |
+| Retention | Kept indefinitely (no cleanup) |
 | Auth | Storage account key (same as image storage) |

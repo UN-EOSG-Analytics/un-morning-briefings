@@ -17,8 +17,10 @@ import {
 import {
   formatDateResponsive,
   formatDateDesktop,
+  formatDateDesktopNYC,
+  formatDateMobileNYC,
   formatDateWithWeekday,
-  formatTime,
+  formatTimeNYC,
   isOvernightUpdate,
 } from "@/lib/format-date";
 import {
@@ -592,16 +594,16 @@ export function EntriesTable({
                         <td className="px-2 py-3 text-sm whitespace-nowrap text-slate-600 sm:px-4">
                           <div className="flex flex-col gap-1">
                             <span className="hidden sm:inline">
-                              {formatDateDesktop(entry.date)}
+                              {formatDateDesktopNYC(entry.updatedAt ?? entry.createdAt ?? entry.date)}
                             </span>
                             <span className="sm:hidden">
-                              {formatDateResponsive(entry.date).mobile}
+                              {formatDateMobileNYC(entry.updatedAt ?? entry.createdAt ?? entry.date)}
                             </span>
                             <span className="text-xs text-slate-500">
-                              {isOvernightUpdate(entry.updatedAt ?? entry.date) && (
+                              {isOvernightUpdate(entry.updatedAt ?? entry.createdAt ?? entry.date) && (
                                 <span className="mr-1 text-[#009edb]" title="Overnight update">●</span>
                               )}
-                              {formatTime(entry.date)}{" "}
+                              {formatTimeNYC(entry.updatedAt ?? entry.createdAt ?? entry.date)}{" "}
                               <span className="text-slate-400">ET</span>
                             </span>
                           </div>

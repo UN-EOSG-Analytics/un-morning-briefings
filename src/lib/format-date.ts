@@ -143,6 +143,31 @@ export function formatTimeNYC(date: string | Date): string {
 }
 
 /**
+ * Format a UTC timestamp as "Jan 14, 2026" in New York time.
+ */
+export function formatDateDesktopNYC(date: string | Date): string {
+  const dateObj = typeof date === "string" ? new Date(date) : date;
+  return dateObj.toLocaleDateString("en-US", {
+    timeZone: "America/New_York",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+/**
+ * Format a UTC timestamp as "MM/DD" in New York time (mobile).
+ */
+export function formatDateMobileNYC(date: string | Date): string {
+  const dateObj = typeof date === "string" ? new Date(date) : date;
+  return dateObj.toLocaleDateString("en-US", {
+    timeZone: "America/New_York",
+    month: "2-digit",
+    day: "2-digit",
+  });
+}
+
+/**
  * Format date with full month name: "January 14, 2026"
  * Used in documents, emails, and source date display.
  * NO timezone conversion.

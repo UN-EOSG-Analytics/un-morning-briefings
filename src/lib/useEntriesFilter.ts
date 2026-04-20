@@ -239,6 +239,11 @@ export function useEntriesFilter(entries: any[], initialDateFilter?: string) {
       let aVal = a[sortField];
       let bVal = b[sortField];
 
+      if (sortField === "date") {
+        aVal = a.updatedAt ?? a.createdAt ?? a.date;
+        bVal = b.updatedAt ?? b.createdAt ?? b.date;
+      }
+
       if (aVal < bVal) return sortDirection === "asc" ? -1 : 1;
       if (aVal > bVal) return sortDirection === "asc" ? 1 : -1;
       return 0;

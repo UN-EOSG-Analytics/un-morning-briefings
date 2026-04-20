@@ -493,7 +493,7 @@ export const buildDocumentChildren = (
           // If the update occurred overnight (21:00–07:45 NYC time), a blue
           // circle "●" is prepended so readers can spot late/overnight edits.
           {
-            const timestamp = entry.updatedAt ?? entry.date;
+            const timestamp = entry.updatedAt ?? entry.createdAt ?? entry.date;
             const timeStr = formatTimeNYC(timestamp);
             const overnight = isOvernightUpdate(timestamp);
             const lastUpdatedChildren: TextRun[] = [];

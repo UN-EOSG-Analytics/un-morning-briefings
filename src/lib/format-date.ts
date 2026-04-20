@@ -289,11 +289,11 @@ export function getCurrentDateTime(): string {
 }
 
 /**
- * Check whether a UTC timestamp falls in the "overnight" window (21:00–07:45 NYC time).
- * Used to flag entries updated outside normal working hours with a visual indicator.
+ * Check whether a UTC timestamp falls in the overnight window (21:00–06:45 NYC time).
+ * Used to flag entries updated outside normal working hours with a blue dot.
  */
-export function isOvernightUpdate(utcTimestamp: string): boolean {
-  const date = new Date(utcTimestamp);
+export function isOvernightUpdate(utcTimestamp: string | Date): boolean {
+  const date = typeof utcTimestamp === "string" ? new Date(utcTimestamp) : utcTimestamp;
   const nycTime = date.toLocaleTimeString("en-US", {
     timeZone: "America/New_York",
     hour12: false,
@@ -302,6 +302,35 @@ export function isOvernightUpdate(utcTimestamp: string): boolean {
   });
   const [hours, minutes] = nycTime.split(":").map(Number);
   const totalMinutes = hours * 60 + minutes;
-  // 21:00 (9 PM) = 1260 minutes, 07:45 (7:45 AM) = 465 minutes
-  return totalMinutes >= 1260 || totalMinutes < 465;
+  return totalMinutes >= 1260 || totalMinutes < 405; // 21:00=1260, 06:45=405
+}
+
+/**
+ * Check whether a UTC timestamp falls after 6:15 AM NYC on a given briefing date.
+ * Used to flag late updates with a red dot.
+ */
+export function isLateUpdate(utcTimestamp: string | Date, briefingDate: string): boolean {
+  const date = typeof utcTimestamp === "string" ? new Date(utcTimestamp) : utcTimestamp;
+  const fmt = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/New_York",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).formatToParts(date);
+
+  const get = (type: string) => fmt.find((p) => p.type === type)!.value;
+  const nycYear = parseInt(get("year"));
+  const nycMonth = parseInt(get("month"));
+  const nycDay = parseInt(get("day"));
+  const nycHour = parseInt(get("hour")) % 24;
+  const nycMinute = parseInt(get("minute"));
+
+  const [bYear, bMonth, bDay] = briefingDate.split("-").map(Number);
+  if (nycYear !== bYear || nycMonth !== bMonth || nycDay !== bDay) return false;
+
+  const totalMinutes = nycHour * 60 + nycMinute;
+  return totalMinutes >= 375; // 6:15 AM = 6*60+15
 }

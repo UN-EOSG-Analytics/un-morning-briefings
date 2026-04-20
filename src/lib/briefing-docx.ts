@@ -31,6 +31,7 @@ import {
   getCurrentDateTime,
   formatTimeNYC,
   isOvernightUpdate,
+  isLateUpdate,
   WEEKDAY_NAMES,
   MONTH_NAMES_FULL,
 } from "@/lib/format-date";
@@ -489,16 +490,25 @@ export const buildDocumentChildren = (
           );
 
           // Last updated timestamp
-          // Shown in its own line between metadata and article content.
-          // If the update occurred overnight (21:00–07:45 NYC time), a blue
-          // circle "●" is prepended so readers can spot late/overnight edits.
+          // Red dot: updated after 6:15 AM on the briefing day.
+          // Blue dot: updated overnight (21:00–06:45 NYC).
           {
             const timestamp = entry.updatedAt ?? entry.createdAt ?? entry.date;
             const timeStr = formatTimeNYC(timestamp);
-            const overnight = isOvernightUpdate(timestamp);
+            const late = isLateUpdate(timestamp, selectedDate);
+            const overnight = !late && isOvernightUpdate(timestamp);
             const lastUpdatedChildren: TextRun[] = [];
 
-            if (overnight) {
+            if (late) {
+              lastUpdatedChildren.push(
+                new TextRun({
+                  text: "● ",
+                  color: "EF4444",
+                  font: "Roboto",
+                  size: 20,
+                }),
+              );
+            } else if (overnight) {
               lastUpdatedChildren.push(
                 new TextRun({
                   text: "● ",

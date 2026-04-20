@@ -321,7 +321,7 @@ export const buildDocumentChildren = (
     children.push(
       new Paragraph({
         heading: HeadingLevel.HEADING_2,
-        alignment: AlignmentType.LEFT,
+        alignment: AlignmentType.CENTER,
         spacing: { before: 400, after: 100 },
         keepNext: true,
         children: [

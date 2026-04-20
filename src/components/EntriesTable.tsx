@@ -878,7 +878,7 @@ export function EntriesTable({
                     return (
                       <div key={region}>
                         {/* Region Header */}
-                        <h3 className="border border-slate-200 bg-slate-50 px-4 py-3 text-lg font-semibold text-un-blue">
+                        <h3 className="border border-slate-200 bg-slate-50 px-4 py-3 text-center text-lg font-semibold text-un-blue">
                           {region}
                         </h3>
 

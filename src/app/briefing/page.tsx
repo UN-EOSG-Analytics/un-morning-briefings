@@ -272,7 +272,7 @@ function BriefingContent() {
                 className="scroll-mt-24 space-y-6"
               >
                 {/* Region Header */}
-                <h2 className="sticky top-0 z-30 border-b-2 border-un-blue bg-white py-3 text-2xl font-bold tracking-tight text-un-blue print:static print:border-none">
+                <h2 className="sticky top-0 z-30 border-b-2 border-un-blue bg-white py-3 text-center text-2xl font-bold tracking-tight text-un-blue print:static print:border-none">
                   {region}
                 </h2>
 

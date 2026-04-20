@@ -872,7 +872,7 @@ export function MorningMeetingForm({
     }
   };
 
-  const currentDate = new Date().toLocaleDateString("en-US", {
+  const currentDate = new Date().toLocaleDateString("en-GB", {
     timeZone: "America/New_York",
     weekday: "long",
     year: "numeric",

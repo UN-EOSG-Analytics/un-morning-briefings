@@ -78,8 +78,8 @@ export const WEEKDAY_NAMES = [
 
 /**
  * Format date responsively for desktop and mobile
- * Desktop: "Jan 14, 2026"
- * Mobile: "01/14"
+ * Desktop: "14 Jan 2026"
+ * Mobile: "14/01"
  *
  * NO timezone conversion - uses literal string values
  */
@@ -89,33 +89,32 @@ export function formatDateResponsive(date: string): {
 } {
   const { year, month, day } = parseDateString(date);
 
-  const desktop = `${MONTH_NAMES[month - 1]} ${day}, ${year}`;
-  const mobile = `${String(month).padStart(2, "0")}/${String(day).padStart(2, "0")}`;
+  const desktop = `${day} ${MONTH_NAMES[month - 1]} ${year}`;
+  const mobile = `${String(day).padStart(2, "0")}/${String(month).padStart(2, "0")}`;
 
   return { desktop, mobile };
 }
 
 /**
- * Format date for desktop view: "Jan 14, 2026"
+ * Format date for desktop view: "14 Jan 2026"
  * NO timezone conversion - uses literal string values
  */
 export function formatDateDesktop(date: string): string {
   const { year, month, day } = parseDateString(date);
-  return `${MONTH_NAMES[month - 1]} ${day}, ${year}`;
+  return `${day} ${MONTH_NAMES[month - 1]} ${year}`;
 }
 
 /**
- * Format date with weekday: "Monday, Jan 14, 2026"
+ * Format date with weekday: "Monday, 14 Jan 2026"
  * NO timezone conversion - uses literal string values
  */
 export function formatDateWithWeekday(date: string): string {
   const { year, month, day } = parseDateString(date);
 
-  // Create a Date object to get the day of the week
   const dateObj = new Date(year, month - 1, day);
   const weekday = WEEKDAY_NAMES[dateObj.getDay()];
 
-  return `${weekday}, ${MONTH_NAMES[month - 1]} ${day}, ${year}`;
+  return `${weekday}, ${day} ${MONTH_NAMES[month - 1]} ${year}`;
 }
 
 /**
@@ -143,43 +142,45 @@ export function formatTimeNYC(date: string | Date): string {
 }
 
 /**
- * Format a UTC timestamp as "Jan 14, 2026" in New York time.
+ * Format a UTC timestamp as "14 Jan 2026" in New York time.
  */
 export function formatDateDesktopNYC(date: string | Date): string {
   const dateObj = typeof date === "string" ? new Date(date) : date;
-  return dateObj.toLocaleDateString("en-US", {
+  const fmt = new Intl.DateTimeFormat("en-GB", {
     timeZone: "America/New_York",
-    month: "short",
     day: "numeric",
+    month: "short",
     year: "numeric",
   });
+  return fmt.format(dateObj);
 }
 
 /**
- * Format a UTC timestamp as "MM/DD" in New York time (mobile).
+ * Format a UTC timestamp as "DD/MM" in New York time (mobile).
  */
 export function formatDateMobileNYC(date: string | Date): string {
   const dateObj = typeof date === "string" ? new Date(date) : date;
-  return dateObj.toLocaleDateString("en-US", {
+  const fmt = new Intl.DateTimeFormat("en-GB", {
     timeZone: "America/New_York",
-    month: "2-digit",
     day: "2-digit",
+    month: "2-digit",
   });
+  return fmt.format(dateObj);
 }
 
 /**
- * Format date with full month name: "January 14, 2026"
+ * Format date with full month name: "14 January 2026"
  * Used in documents, emails, and source date display.
  * NO timezone conversion.
  */
 export function formatDateFull(date: string): string {
   const { year, month, day } = parseDateString(date);
   if (!year || !month) return date;
-  return `${MONTH_NAMES_FULL[month - 1]} ${day}, ${year}`;
+  return `${day} ${MONTH_NAMES_FULL[month - 1]} ${year}`;
 }
 
 /**
- * Format date with weekday and full month: "Wednesday, January 14, 2026"
+ * Format date with weekday and full month: "Wednesday, 14 January 2026"
  * Used in document headers and briefing titles.
  * NO timezone conversion.
  */
@@ -188,7 +189,7 @@ export function formatDateLong(date: string): string {
   if (!year || !month) return date;
   const dateObj = new Date(year, month - 1, day);
   const weekday = WEEKDAY_NAMES[dateObj.getDay()];
-  return `${weekday}, ${MONTH_NAMES_FULL[month - 1]} ${day}, ${year}`;
+  return `${weekday}, ${day} ${MONTH_NAMES_FULL[month - 1]} ${year}`;
 }
 
 /**

@@ -18,6 +18,8 @@ import {
   TableCell,
   BorderStyle,
   Header,
+  Footer,
+  PageNumber,
   ExternalHyperlink,
   WidthType,
   VerticalAlign,
@@ -649,6 +651,23 @@ export function buildBriefingDocument(
         headers: {
           default: new Header({
             children: [headerTable],
+          }),
+        },
+        footers: {
+          default: new Footer({
+            children: [
+              new Paragraph({
+                alignment: AlignmentType.CENTER,
+                children: [
+                  new TextRun({
+                    children: [PageNumber.CURRENT],
+                    font: "Roboto",
+                    size: 18,
+                    color: "7C7067",
+                  }),
+                ],
+              }),
+            ],
           }),
         },
         children,

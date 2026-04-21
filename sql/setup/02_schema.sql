@@ -89,7 +89,7 @@ CREATE TABLE IF NOT EXISTS morning_briefings.entries (
         priority IN ('SG''s attention', 'Situational Awareness')
     ),
     CONSTRAINT chk_category CHECK (
-        category IN ('Article', 'Meeting Note', 'Code Cable', 'Situational Update', 'UN Internal Document', 'Other')
+        category IN ('Article', 'Meeting Note', 'Code Cable', 'Situational Update', 'UN Internal Document', 'Weekly Outlook', 'Other')
     )
 );
 

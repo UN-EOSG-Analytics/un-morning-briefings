@@ -6,6 +6,7 @@ import {
   REGIONS,
   COUNTRIES,
 } from "@/types/morning-meeting";
+import type { EntrySource } from "@/types/morning-meeting";
 
 interface AutoFillResult {
   category: string;
@@ -17,6 +18,7 @@ interface AutoFillResult {
   entry: string;
   sourceDate?: string;
   sourceName?: string;
+  sources?: EntrySource[];
 }
 
 const MODEL = "gpt-5.4-mini";
@@ -106,15 +108,25 @@ const metadataJsonSchema = {
       description:
         "Concise UN-style headline (max 120 chars), subject + action, no leading article",
     },
-    sourceDate: {
-      type: ["string" as const, "null" as const],
+    sources: {
+      type: "array" as const,
+      items: {
+        type: "object" as const,
+        properties: {
+          name: {
+            type: ["string" as const, "null" as const],
+            description: "Name of news source/publication (e.g. BBC, Reuters)",
+          },
+          date: {
+            type: ["string" as const, "null" as const],
+            description: "YYYY-MM-DD if explicitly stated, otherwise null",
+          },
+        },
+        required: ["name"],
+        additionalProperties: false,
+      },
       description:
-        "YYYY-MM-DD if explicitly stated in content, otherwise null",
-    },
-    sourceName: {
-      type: ["string" as const, "null" as const],
-      description:
-        "Name of news source/publication (e.g. BBC, Reuters) if mentioned, otherwise null",
+        "Sources mentioned in the content. One object per distinct source/publication.",
     },
   },
   required: [
@@ -123,8 +135,7 @@ const metadataJsonSchema = {
     "region",
     "country",
     "headline",
-    "sourceDate",
-    "sourceName",
+    "sources",
   ],
   additionalProperties: false,
 };
@@ -230,8 +241,9 @@ export async function autoFillFromContent(
       country: metadata.country || "",
       headline: metadata.headline || "",
       entry: entry || content,
-      sourceDate: metadata.sourceDate || "",
-      sourceName: metadata.sourceName || "",
+      sources: Array.isArray(metadata.sources)
+        ? metadata.sources.filter((s: EntrySource) => s.name || s.date)
+        : [],
     };
   } catch (error) {
     console.error("[AI SERVICE] Error details:", error);

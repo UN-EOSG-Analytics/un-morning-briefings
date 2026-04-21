@@ -73,6 +73,7 @@ CREATE TABLE IF NOT EXISTS morning_briefings.entries (
     author_id         INTEGER REFERENCES morning_briefings.users ON DELETE SET NULL,
     previous_entry_id TEXT REFERENCES morning_briefings.entries ON DELETE SET NULL,
     thematic          TEXT,
+    sources           JSONB,
     text_content      TEXT,
     search_vector     TSVECTOR,
     created_at        TIMESTAMP(3) WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,

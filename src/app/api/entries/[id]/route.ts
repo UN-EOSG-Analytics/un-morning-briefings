@@ -6,6 +6,7 @@ import { checkAuth } from "@/lib/auth-helper";
 import {
   serializeCountry,
   serializeStringOrArray,
+  serializeSources,
   stripHtmlToText,
   sanitizeUrl,
   fetchEntryById,
@@ -223,6 +224,10 @@ export async function PUT(
       updateFields.push(`text_content = $${paramCount++}`);
       updateValues.push(stripHtmlToText(sanitizedEntry));
     }
+    if (data.sources !== undefined) {
+      updateFields.push(`sources = $${paramCount++}`);
+      updateValues.push(serializeSources(data.sources));
+    }
     if (data.sourceName !== undefined) {
       updateFields.push(`source_name = $${paramCount++}`);
       updateValues.push(
@@ -235,7 +240,7 @@ export async function PUT(
     }
     if (data.sourceDate !== undefined) {
       updateFields.push(`source_date = $${paramCount++}`);
-      updateValues.push(data.sourceDate || null); // Convert empty string to null
+      updateValues.push(data.sourceDate || null);
     }
     if (data.puNote !== undefined) {
       updateFields.push(`pu_note = $${paramCount++}`);

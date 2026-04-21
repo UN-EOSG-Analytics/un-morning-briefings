@@ -186,6 +186,8 @@
       "saveDraft": "Save Draft",
       "reset": "Reset",
       "cancel": "Cancel",
+      "addSource": "Add Source",
+      "removeSource": "Remove",
       "submit": "Submit Entry",
       "update": "Update Entry",
       "submitting": "Submitting...",

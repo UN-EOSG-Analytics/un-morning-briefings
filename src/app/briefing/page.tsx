@@ -298,7 +298,23 @@ function BriefingContent() {
                                 <h4 className="sticky top-28 z-10 border-b border-slate-200 bg-white py-2 text-lg leading-snug font-bold text-slate-900 print:static print:border-none">
                                   • {entry.headline}
                                 </h4>
-                                {(() => {
+                                {entry.sources && entry.sources.length > 0 ? (
+                                    <p className="mt-1 text-sm text-slate-600 italic">
+                                      Source:{" "}
+                                      {entry.sources.map((src: { name?: string; url?: string; date?: string }, idx: number) => (
+                                        <span key={idx}>
+                                          {idx > 0 && " | "}
+                                          {src.name && (src.url ? (
+                                            <a href={src.url} target="_blank" rel="noopener noreferrer" className="text-un-blue hover:underline">{src.name}</a>
+                                          ) : (
+                                            <span>{src.name}</span>
+                                          ))}
+                                          {src.name && src.date && " "}
+                                          {src.date && `(${formatDateFull(src.date)})`}
+                                        </span>
+                                      ))}
+                                    </p>
+                                ) : (() => {
                                   const sn = Array.isArray(entry.sourceName)
                                     ? entry.sourceName.join(", ")
                                     : entry.sourceName;
@@ -307,20 +323,12 @@ function BriefingContent() {
                                       Source:{" "}
                                       {sn &&
                                         (entry.sourceUrl ? (
-                                          <a
-                                            href={entry.sourceUrl}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="text-un-blue hover:underline"
-                                          >
-                                            {sn}
-                                          </a>
+                                          <a href={entry.sourceUrl} target="_blank" rel="noopener noreferrer" className="text-un-blue hover:underline">{sn}</a>
                                         ) : (
                                           <span>{sn}</span>
                                         ))}
                                       {sn && entry.sourceDate && " | "}
-                                      {entry.sourceDate &&
-                                        formatDateFull(entry.sourceDate)}
+                                      {entry.sourceDate && formatDateFull(entry.sourceDate)}
                                     </p>
                                   ) : null;
                                 })()}

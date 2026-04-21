@@ -34,6 +34,7 @@ import {
   PRIORITIES,
   REGIONS,
 } from "@/types/morning-meeting";
+import type { EntrySource } from "@/types/morning-meeting";
 import labelsData from "@/lib/labels.json";
 import { formatDateDesktop, getNycNow } from "@/lib/format-date";
 import {
@@ -50,6 +51,8 @@ import {
   Type,
   Sparkles,
   ChevronDown,
+  Plus,
+  Trash2,
 } from "lucide-react";
 import { usePopup } from "@/lib/popup-context";
 import { useUnsavedChanges } from "@/lib/unsaved-changes-context";
@@ -177,6 +180,25 @@ export function MorningMeetingForm({
 
     return "";
   };
+
+  const initSources = (): EntrySource[] => {
+    if (initialData?.sources && initialData.sources.length > 0) {
+      return initialData.sources;
+    }
+    const names = parseCountryField(initialData?.sourceName);
+    const namesArr = Array.isArray(names) ? names : names ? [names] : [];
+    if (namesArr.length === 0 && !initialData?.sourceUrl && !initialData?.sourceDate) return [{ name: "", url: "", date: "" }];
+    if (namesArr.length === 0) {
+      return [{ url: initialData?.sourceUrl || "", date: formatSourceDateForInput(initialData?.sourceDate) }];
+    }
+    return namesArr.map((name: string, i: number) => ({
+      name,
+      url: i === 0 ? initialData?.sourceUrl || "" : "",
+      date: i === 0 ? formatSourceDateForInput(initialData?.sourceDate) : "",
+    }));
+  };
+
+  const [sources, setSources] = useState<EntrySource[]>(initSources);
 
   const [formData, setFormData] = useState<MorningMeetingEntry>({
     category: initialData?.category || "",
@@ -714,7 +736,8 @@ export function MorningMeetingForm({
     if (onSubmit) {
       setIsSubmitting(true);
       try {
-        await onSubmit(formData);
+        const nonEmptySources = sources.filter((s) => s.name || s.url || s.date);
+        await onSubmit({ ...formData, sources: nonEmptySources.length > 0 ? nonEmptySources : undefined });
         setHasUnsavedChanges(false);
       } finally {
         setIsSubmitting(false);
@@ -726,7 +749,8 @@ export function MorningMeetingForm({
     if (onSaveDraft) {
       try {
         setIsSubmitting(true);
-        await onSaveDraft(formData);
+        const nonEmptySources = sources.filter((s) => s.name || s.url || s.date);
+        await onSaveDraft({ ...formData, sources: nonEmptySources.length > 0 ? nonEmptySources : undefined });
         setHasUnsavedChanges(false);
         setDraftSaved(true);
         setTimeout(() => setDraftSaved(false), 3000);
@@ -748,6 +772,7 @@ export function MorningMeetingForm({
     );
 
     if (confirmed) {
+      setSources([{ name: "", url: "", date: "" }]);
       setFormData({
         category: "",
         priority: "Situational Awareness",
@@ -854,6 +879,18 @@ export function MorningMeetingForm({
             : [result.sourceName]
           : prev.sourceName,
       }));
+
+      if (result.sources && result.sources.length > 0) {
+        setSources(result.sources);
+      } else if (result.sourceName || result.sourceDate) {
+        const name = result.sourceName
+          ? Array.isArray(result.sourceName) ? result.sourceName[0] : result.sourceName
+          : "";
+        setSources((prev) => {
+          if (prev.length === 0) return [{ name, date: result.sourceDate || "" }];
+          return [{ ...prev[0], name: name || prev[0].name, date: result.sourceDate || prev[0].date }, ...prev.slice(1)];
+        });
+      }
 
       setShowAutoFillDialog(false);
       setAutoFillContent("");
@@ -1170,41 +1207,67 @@ export function MorningMeetingForm({
                   )}
                 </div>
 
-                {/* Source Data Row: Name, Date, URL */}
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
-                  <MultiSelectField
-                    label={labelsData.form.labels.sourceName}
-                    placeholder={labelsData.form.placeholders.sourceName}
-                    value={
-                      Array.isArray(formData.sourceName)
-                        ? formData.sourceName
-                        : formData.sourceName
-                          ? [formData.sourceName]
-                          : []
-                    }
-                    onValueChange={(value) =>
-                      setFormData((prev) => ({ ...prev, sourceName: value }))
-                    }
-                    options={sourceNames.map((s) => ({ value: s, label: s }))}
-                    searchable={true}
-                  />
-
-                  <TextField
-                    type="date"
-                    label={labelsData.form.labels.sourceDate}
-                    name="sourceDate"
-                    value={formData.sourceDate || ""}
-                    onChange={handleInputChange}
-                  />
-
-                  <TextField
-                    type="url"
-                    label={labelsData.form.labels.sourceUrl}
-                    name="sourceUrl"
-                    value={formData.sourceUrl || ""}
-                    onChange={handleInputChange}
-                    placeholder="https://..."
-                  />
+                {/* Sources — repeatable rows */}
+                <div className="space-y-2">
+                  {sources.map((source, idx) => (
+                    <div key={idx} className="flex items-end gap-2">
+                      <div className="grid flex-1 grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
+                        <AutocompleteField
+                          label={idx === 0 ? labelsData.form.labels.sourceName : undefined}
+                          placeholder={labelsData.form.placeholders.sourceName}
+                          suggestions={sourceNames}
+                          value={source.name || ""}
+                          onChange={(val) => {
+                            const next = [...sources];
+                            next[idx] = { ...next[idx], name: val };
+                            setSources(next);
+                          }}
+                        />
+                        <TextField
+                          type="date"
+                          label={idx === 0 ? labelsData.form.labels.sourceDate : undefined}
+                          name={`sourceDate-${idx}`}
+                          value={source.date || ""}
+                          onChange={(e) => {
+                            const next = [...sources];
+                            next[idx] = { ...next[idx], date: e.target.value };
+                            setSources(next);
+                          }}
+                        />
+                        <TextField
+                          type="url"
+                          label={idx === 0 ? labelsData.form.labels.sourceUrl : undefined}
+                          name={`sourceUrl-${idx}`}
+                          value={source.url || ""}
+                          onChange={(e) => {
+                            const next = [...sources];
+                            next[idx] = { ...next[idx], url: e.target.value };
+                            setSources(next);
+                          }}
+                          placeholder="https://..."
+                        />
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className={cn("mb-0.5 h-8 w-8 shrink-0 text-slate-400 hover:text-red-500", idx === 0 && sources.length === 1 && "invisible")}
+                        onClick={() => setSources(sources.filter((_, i) => i !== idx))}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 gap-1.5 text-xs text-slate-500 hover:text-slate-700"
+                    onClick={() => setSources([...sources, { name: "", url: "", date: "" }])}
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    {(labelsData.form.actions as any).addSource}
+                  </Button>
                 </div>
 
                 {/* PU Note */}

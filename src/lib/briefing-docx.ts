@@ -399,11 +399,17 @@ export const buildDocumentChildren = (
           );
 
           // Source Information (right under headline)
-          const sourceNameStr = Array.isArray(entry.sourceName)
-            ? entry.sourceName.join(", ")
-            : entry.sourceName;
+          const entrySources = entry.sources && entry.sources.length > 0
+            ? entry.sources
+            : (() => {
+                const nameStr = Array.isArray(entry.sourceName)
+                  ? entry.sourceName.join(", ")
+                  : entry.sourceName;
+                if (!nameStr && !entry.sourceDate) return [];
+                return [{ name: nameStr, url: entry.sourceUrl, date: entry.sourceDate }];
+              })();
 
-          if (sourceNameStr || entry.sourceDate) {
+          if (entrySources.length > 0) {
             const sourceChildren: (TextRun | ExternalHyperlink)[] = [
               new TextRun({
                 text: "Source: ",
@@ -413,55 +419,48 @@ export const buildDocumentChildren = (
               }),
             ];
 
-            if (sourceNameStr) {
-              if (entry.sourceUrl) {
+            entrySources.forEach((src: { name?: string; url?: string; date?: string }, idx: number) => {
+              if (idx > 0) {
                 sourceChildren.push(
-                  new ExternalHyperlink({
-                    children: [
-                      new TextRun({
-                        text: sourceNameStr,
-                        italics: true,
-                        font: "Roboto",
-                        size: 20,
-                        style: "Hyperlink",
-                      }),
-                    ],
-                    link: entry.sourceUrl,
-                  }),
-                );
-              } else {
-                sourceChildren.push(
-                  new TextRun({
-                    text: sourceNameStr,
-                    italics: true,
-                    font: "Roboto",
-                    size: 20,
-                  }),
+                  new TextRun({ text: " | ", italics: true, font: "Roboto", size: 20 }),
                 );
               }
-            }
 
-            if (sourceNameStr && entry.sourceDate) {
-              sourceChildren.push(
-                new TextRun({
-                  text: " | ",
-                  italics: true,
-                  font: "Roboto",
-                  size: 20,
-                }),
-              );
-            }
+              if (src.name) {
+                if (src.url) {
+                  sourceChildren.push(
+                    new ExternalHyperlink({
+                      children: [
+                        new TextRun({
+                          text: src.name,
+                          italics: true,
+                          font: "Roboto",
+                          size: 20,
+                          style: "Hyperlink",
+                        }),
+                      ],
+                      link: src.url,
+                    }),
+                  );
+                } else {
+                  sourceChildren.push(
+                    new TextRun({ text: src.name, italics: true, font: "Roboto", size: 20 }),
+                  );
+                }
+              }
 
-            if (entry.sourceDate) {
-              sourceChildren.push(
-                new TextRun({
-                  text: formatDateFull(entry.sourceDate),
-                  italics: true,
-                  font: "Roboto",
-                  size: 20,
-                }),
-              );
-            }
+              if (src.date) {
+                if (src.name) {
+                  sourceChildren.push(
+                    new TextRun({ text: ` (${formatDateFull(src.date)})`, italics: true, font: "Roboto", size: 20 }),
+                  );
+                } else {
+                  sourceChildren.push(
+                    new TextRun({ text: formatDateFull(src.date), italics: true, font: "Roboto", size: 20 }),
+                  );
+                }
+              }
+            });
 
             children.push(
               new Paragraph({

@@ -116,6 +116,7 @@ const buildTableOfContents = (
     Record<string, MorningMeetingEntry[]>
   >,
   sortedRegions: string[],
+  hasWeeklyOutlook: boolean,
 ): (Paragraph | Table)[] => {
   const tocElements: (Paragraph | Table)[] = [
     // TOC Title
@@ -133,6 +134,32 @@ const buildTableOfContents = (
       ],
     }),
   ];
+
+  if (hasWeeklyOutlook) {
+    tocElements.push(
+      new Paragraph({
+        spacing: { before: 480, after: 80 },
+        keepNext: true,
+        border: {
+          bottom: {
+            style: BorderStyle.SINGLE,
+            size: 4,
+            color: "009edb",
+            space: 4,
+          },
+        },
+        children: [
+          new TextRun({
+            text: "Weekly Outlook",
+            bold: true,
+            size: 24,
+            font: "Roboto",
+            color: "009edb",
+          }),
+        ],
+      }),
+    );
+  }
 
   // Build per-region header + table
   sortedRegions.forEach((region) => {
@@ -276,8 +303,15 @@ export const buildDocumentChildren = (
   entries: MorningMeetingEntry[],
   selectedDate: string,
 ): (Paragraph | Table)[] => {
+  const weeklyOutlookEntries = entries.filter(
+    (e) => e.category === "Weekly Outlook",
+  );
+  const regularEntries = entries.filter(
+    (e) => e.category !== "Weekly Outlook",
+  );
+
   const { grouped: entriesByRegionAndCountry, sortedRegions } =
-    groupEntriesByRegionAndCountry(entries);
+    groupEntriesByRegionAndCountry(regularEntries);
 
   // Build document children
   const children: any[] = [
@@ -312,8 +346,38 @@ export const buildDocumentChildren = (
     // Separator
     createSeparator(),
     // Add Table of Contents
-    ...buildTableOfContents(entriesByRegionAndCountry, sortedRegions),
+    ...buildTableOfContents(entriesByRegionAndCountry, sortedRegions, weeklyOutlookEntries.length > 0),
   ];
+
+  // Render Weekly Outlook section(s) before region-grouped entries
+  weeklyOutlookEntries.forEach((entry) => {
+    children.push(
+      new Paragraph({
+        heading: HeadingLevel.HEADING_2,
+        alignment: AlignmentType.CENTER,
+        spacing: { before: 400, after: 100 },
+        keepNext: true,
+        children: [
+          new TextRun({
+            text: "WEEKLY OUTLOOK",
+            bold: true,
+            size: 28,
+            font: "Roboto",
+            color: "009edb",
+          }),
+        ],
+        border: {
+          bottom: {
+            color: "009edb",
+            space: 4,
+            size: 6,
+            style: BorderStyle.SINGLE,
+          },
+        },
+      }),
+    );
+    children.push(...parseHtmlContent(entry.entry));
+  });
 
   // Add entries grouped by region and country
   sortedRegions.forEach((region) => {

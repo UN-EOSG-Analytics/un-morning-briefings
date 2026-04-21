@@ -37,6 +37,7 @@ import {
 import type { EntrySource } from "@/types/morning-meeting";
 import labelsData from "@/lib/labels.json";
 import { formatDateDesktop, getNycNow } from "@/lib/format-date";
+import { generateWeeklyOutlookHTML } from "@/lib/weekly-outlook-template";
 import {
   FileText,
   AlertCircle,
@@ -216,6 +217,8 @@ export function MorningMeetingForm({
     author: initialData?.author || "Current User",
     previousEntryId: initialData?.previousEntryId || null,
   });
+
+  const isWeeklyOutlook = formData.category === "Weekly Outlook";
 
   const [errors, setErrors] = useState<FormFieldError>({});
   const [showPuNote, setShowPuNote] = useState(!!initialData?.puNote);
@@ -665,6 +668,49 @@ export function MorningMeetingForm({
 
   const handleSelectChange = useCallback(
     (name: string, value: string) => {
+      if (name === "category" && value === "Weekly Outlook") {
+        setFormData((prev) => {
+          return {
+            ...prev,
+            category: "Weekly Outlook",
+            headline: "Weekly Outlook",
+            region: "Weekly Outlook",
+            priority: "SG's attention",
+            // Only inject template if entry is empty (don't overwrite existing content)
+            entry: prev.entry.trim() ? prev.entry : generateWeeklyOutlookHTML(prev.date),
+          };
+        });
+        setErrors((prev) => {
+          const next = { ...prev };
+          delete next.category;
+          delete next.headline;
+          delete next.region;
+          delete next.priority;
+          delete next.entry;
+          return next;
+        });
+        return;
+      }
+
+      if (name === "category" && value !== "Weekly Outlook") {
+        setFormData((prev) => ({
+          ...prev,
+          category: value,
+          // Clear auto-filled fields when switching away
+          ...(prev.category === "Weekly Outlook"
+            ? { headline: "", region: "", priority: "", entry: "" }
+            : {}),
+        }));
+        if (errors[name]) {
+          setErrors((prev) => {
+            const next = { ...prev };
+            delete next[name];
+            return next;
+          });
+        }
+        return;
+      }
+
       setFormData((prev) => ({ ...prev, [name]: value }));
 
       // Clear error for this field
@@ -697,20 +743,8 @@ export function MorningMeetingForm({
   const validateForm = useCallback((): boolean => {
     const newErrors: FormFieldError = {};
 
-    if (!formData.region) {
-      newErrors.region = labelsData.form.validation.regionRequired;
-    }
-
-    if (!formData.headline.trim()) {
-      newErrors.headline = labelsData.form.validation.headlineRequired;
-    }
-
     if (!formData.category) {
       newErrors.category = labelsData.form.validation.categoryRequired;
-    }
-
-    if (!formData.priority) {
-      newErrors.priority = labelsData.form.validation.priorityRequired;
     }
 
     if (!formData.date) {
@@ -720,6 +754,18 @@ export function MorningMeetingForm({
     const entryValue = formData.entry.trim();
     if (!entryValue || entryValue.length < 50) {
       newErrors.entry = labelsData.form.validation.entryMinLength;
+    }
+
+    if (formData.category !== "Weekly Outlook") {
+      if (!formData.region) {
+        newErrors.region = labelsData.form.validation.regionRequired;
+      }
+      if (!formData.headline.trim()) {
+        newErrors.headline = labelsData.form.validation.headlineRequired;
+      }
+      if (!formData.priority) {
+        newErrors.priority = labelsData.form.validation.priorityRequired;
+      }
     }
 
     setErrors(newErrors);
@@ -978,77 +1024,83 @@ export function MorningMeetingForm({
                   />
 
                   {/* Priority */}
-                  <SelectField
-                    label={labelsData.form.labels.priority}
-                    placeholder={labelsData.form.placeholders.priority}
-                    value={formData.priority}
-                    onValueChange={(value) =>
-                      handleSelectChange(
-                        "priority",
-                        value as "SG's attention" | "Situational Awareness",
-                      )
-                    }
-                    options={PRIORITIES}
-                    error={errors.priority}
-                    required={true}
-                  />
+                  {!isWeeklyOutlook && (
+                    <SelectField
+                      label={labelsData.form.labels.priority}
+                      placeholder={labelsData.form.placeholders.priority}
+                      value={formData.priority}
+                      onValueChange={(value) =>
+                        handleSelectChange(
+                          "priority",
+                          value as "SG's attention" | "Situational Awareness",
+                        )
+                      }
+                      options={PRIORITIES}
+                      error={errors.priority}
+                      required={true}
+                    />
+                  )}
 
                   {/* Region */}
-                  <SelectField
-                    label={labelsData.form.labels.region}
-                    placeholder={labelsData.form.placeholders.region}
-                    value={formData.region}
-                    onValueChange={(value) =>
-                      handleSelectChange("region", value)
-                    }
-                    options={regionOptions}
-                    error={errors.region}
-                    required={true}
-                    searchable={false}
-                  />
+                  {!isWeeklyOutlook && (
+                    <SelectField
+                      label={labelsData.form.labels.region}
+                      placeholder={labelsData.form.placeholders.region}
+                      value={formData.region}
+                      onValueChange={(value) =>
+                        handleSelectChange("region", value)
+                      }
+                      options={regionOptions}
+                      error={errors.region}
+                      required={true}
+                      searchable={false}
+                    />
+                  )}
                 </div>
 
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
-                  {/* Tag */}
-                  <MultiSelectField
-                    label={labelsData.form.labels.tags}
-                    placeholder={labelsData.form.placeholders.tags}
-                    value={
-                      Array.isArray(formData.country)
-                        ? formData.country
-                        : formData.country
-                          ? [formData.country]
-                          : []
-                    }
-                    onValueChange={handleCountryChange}
-                    options={countryOptions}
-                    error={errors.country}
-                    required={false}
-                    searchable={true}
-                    existingCustomValues={existingCustomCountries}
-                  />
+                {!isWeeklyOutlook && (
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
+                    {/* Tag */}
+                    <MultiSelectField
+                      label={labelsData.form.labels.tags}
+                      placeholder={labelsData.form.placeholders.tags}
+                      value={
+                        Array.isArray(formData.country)
+                          ? formData.country
+                          : formData.country
+                            ? [formData.country]
+                            : []
+                      }
+                      onValueChange={handleCountryChange}
+                      options={countryOptions}
+                      error={errors.country}
+                      required={false}
+                      searchable={true}
+                      existingCustomValues={existingCustomCountries}
+                    />
 
-                  {/* Thematic */}
-                  <MultiSelectField
-                    label={labelsData.form.labels.thematic}
-                    placeholder={labelsData.form.placeholders.thematic}
-                    value={
-                      Array.isArray(formData.thematic)
-                        ? formData.thematic
-                        : formData.thematic
-                          ? [formData.thematic]
-                          : []
-                    }
-                    onValueChange={(value) =>
-                      setFormData((prev) => ({ ...prev, thematic: value }))
-                    }
-                    options={existingThematics.map((t) => ({
-                      value: t,
-                      label: t,
-                    }))}
-                    searchable={true}
-                  />
-                </div>
+                    {/* Thematic */}
+                    <MultiSelectField
+                      label={labelsData.form.labels.thematic}
+                      placeholder={labelsData.form.placeholders.thematic}
+                      value={
+                        Array.isArray(formData.thematic)
+                          ? formData.thematic
+                          : formData.thematic
+                            ? [formData.thematic]
+                            : []
+                      }
+                      onValueChange={(value) =>
+                        setFormData((prev) => ({ ...prev, thematic: value }))
+                      }
+                      options={existingThematics.map((t) => ({
+                        value: t,
+                        label: t,
+                      }))}
+                      searchable={true}
+                    />
+                  </div>
+                )}
               </section>
 
               {/* Entry Details Section */}
@@ -1057,47 +1109,49 @@ export function MorningMeetingForm({
                   {labelsData.form.sections.entryDetails}
                 </h2>
 
-                <div className="grid grid-cols-4 gap-3 sm:gap-4">
-                  {/* Headline - Full width */}
-                  <div className="col-span-4 space-y-2">
-                    <label className="text-sm font-medium text-slate-900">
-                      {labelsData.form.labels.headline}{" "}
-                      <span className="text-red-500">*</span>
-                      <span className="ml-2 text-xs text-slate-500">
-                        ({formData.headline.length}/300)
-                      </span>
-                    </label>
-                    <textarea
-                      name="headline"
-                      value={formData.headline}
-                      onChange={handleInputChange}
-                      placeholder={labelsData.form.placeholders.headline}
-                      maxLength={300}
-                      rows={1}
-                      className={`form-field-textarea resize-none overflow-hidden ${
-                        errors.headline
-                          ? "form-field-error"
-                          : "form-field-focus"
-                      }`}
-                      style={{
-                        minHeight: "2.5rem",
-                        maxHeight: "10rem",
-                      }}
-                      onInput={(e) => {
-                        const target = e.target as HTMLTextAreaElement;
-                        target.style.height = "auto";
-                        target.style.height =
-                          Math.min(target.scrollHeight, 160) + "px";
-                      }}
-                    />
-                    {errors.headline && (
-                      <div className="flex items-center gap-1 text-xs text-red-600">
-                        <AlertCircle className="h-3.5 w-3.5" />
-                        {errors.headline}
-                      </div>
-                    )}
+                {!isWeeklyOutlook && (
+                  <div className="grid grid-cols-4 gap-3 sm:gap-4">
+                    {/* Headline - Full width */}
+                    <div className="col-span-4 space-y-2">
+                      <label className="text-sm font-medium text-slate-900">
+                        {labelsData.form.labels.headline}{" "}
+                        <span className="text-red-500">*</span>
+                        <span className="ml-2 text-xs text-slate-500">
+                          ({formData.headline.length}/300)
+                        </span>
+                      </label>
+                      <textarea
+                        name="headline"
+                        value={formData.headline}
+                        onChange={handleInputChange}
+                        placeholder={labelsData.form.placeholders.headline}
+                        maxLength={300}
+                        rows={1}
+                        className={`form-field-textarea resize-none overflow-hidden ${
+                          errors.headline
+                            ? "form-field-error"
+                            : "form-field-focus"
+                        }`}
+                        style={{
+                          minHeight: "2.5rem",
+                          maxHeight: "10rem",
+                        }}
+                        onInput={(e) => {
+                          const target = e.target as HTMLTextAreaElement;
+                          target.style.height = "auto";
+                          target.style.height =
+                            Math.min(target.scrollHeight, 160) + "px";
+                        }}
+                      />
+                      {errors.headline && (
+                        <div className="flex items-center gap-1 text-xs text-red-600">
+                          <AlertCircle className="h-3.5 w-3.5" />
+                          {errors.headline}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
+                )}
 
                 {/* Entry Content */}
                 <div className="space-y-2">

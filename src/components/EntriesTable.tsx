@@ -865,11 +865,22 @@ export function EntriesTable({
 
           <div className="mt-0 flex-1 overflow-y-auto px-4 pb-4 md:px-6">
             {(() => {
+              const isWeeklyOutlookEntry = (e: MorningMeetingEntry) =>
+                e.category === "Weekly Outlook" || e.region === "Weekly Outlook";
+              const weeklyOutlookAgendaEntries = agendaEntries.filter(isWeeklyOutlookEntry);
+              const regularAgendaEntries = agendaEntries.filter((e) => !isWeeklyOutlookEntry(e));
               const { grouped: entriesByRegionAndCountry, sortedRegions } =
-                groupEntriesByRegionAndCountry(agendaEntries);
+                groupEntriesByRegionAndCountry(regularAgendaEntries);
 
               return (
                 <div className="space-y-6">
+                  {weeklyOutlookAgendaEntries.length > 0 && (
+                    <div>
+                      <h3 className="border border-slate-200 bg-slate-50 px-4 py-3 text-center text-lg font-semibold text-un-blue">
+                        Weekly Outlook
+                      </h3>
+                    </div>
+                  )}
                   {sortedRegions.map((region) => {
                     const countries = sortCountryKeys(
                       Object.keys(entriesByRegionAndCountry[region]),

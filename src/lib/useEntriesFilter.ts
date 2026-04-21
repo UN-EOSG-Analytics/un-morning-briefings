@@ -248,7 +248,24 @@ export function useEntriesFilter(entries: any[], initialDateFilter?: string) {
       if (aVal > bVal) return sortDirection === "asc" ? 1 : -1;
       return 0;
     });
-    return sorted;
+
+    // Pin Weekly Outlook entries to the top of their briefing date group,
+    // regardless of sort mode. Map preserves insertion order, so date groups
+    // stay in the order established by the sort above.
+    const dateGroups = new Map<string, any[]>();
+    for (const entry of sorted) {
+      const date = getBriefingDate(entry.date);
+      if (!dateGroups.has(date)) dateGroups.set(date, []);
+      dateGroups.get(date)!.push(entry);
+    }
+
+    const result: any[] = [];
+    for (const group of dateGroups.values()) {
+      const weekly = group.filter((e) => e.category === "Weekly Outlook");
+      const regular = group.filter((e) => e.category !== "Weekly Outlook");
+      result.push(...weekly, ...regular);
+    }
+    return result;
   }, [filteredEntries, sortField, sortDirection]);
 
   /**

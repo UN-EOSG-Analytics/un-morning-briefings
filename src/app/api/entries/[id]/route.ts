@@ -18,7 +18,10 @@ const VALID_CATEGORIES = (labels as any).categories as string[];
 const VALID_PRIORITIES = (
   (labels as any).priorities as { value: string }[]
 ).map((p) => p.value);
-const VALID_REGIONS = (labels as any).regions as string[];
+const VALID_REGIONS = [
+  ...((labels as any).regions as string[]),
+  "Weekly Outlook",
+];
 const VALID_STATUSES = ["draft", "submitted"];
 const VALID_DISCUSSION_STATUSES = ["pending", "discussed"];
 

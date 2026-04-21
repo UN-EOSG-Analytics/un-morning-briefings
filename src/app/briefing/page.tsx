@@ -65,8 +65,15 @@ function BriefingContent() {
     };
   }, [loadEntries]);
 
+  const weeklyOutlookEntries = entries.filter(
+    (e) => e.category === "Weekly Outlook" || e.region === "Weekly Outlook",
+  );
+  const regularEntries = entries.filter(
+    (e) => e.category !== "Weekly Outlook" && e.region !== "Weekly Outlook",
+  );
+
   const { grouped: entriesByRegionAndCountry, sortedRegions } =
-    groupEntriesByRegionAndCountry(entries);
+    groupEntriesByRegionAndCountry(regularEntries);
 
   // Count entries per region
   const entriesPerRegion = sortedRegions.reduce(
@@ -95,7 +102,9 @@ function BriefingContent() {
       },
     );
 
-    // Observe all region sections
+    // Observe Weekly Outlook section and all region sections
+    const weeklyEl = document.getElementById("region-weekly-outlook");
+    if (weeklyEl) observer.observe(weeklyEl);
     sortedRegions.forEach((region) => {
       const element = document.getElementById(`region-${region}`);
       if (element) {
@@ -104,7 +113,7 @@ function BriefingContent() {
     });
 
     return () => observer.disconnect();
-  }, [sortedRegions]);
+  }, [sortedRegions, weeklyOutlookEntries]);
 
   // Track scroll position for percentage display
   useEffect(() => {
@@ -199,6 +208,18 @@ function BriefingContent() {
               <span className="text-xs opacity-75">({scrollPercentage}%)</span>
             </h3>
             <nav className="space-y-1">
+              {weeklyOutlookEntries.length > 0 && (
+                <button
+                  onClick={() => scrollToSection("region-weekly-outlook")}
+                  className={`w-full rounded px-3 py-2 text-left text-sm transition-colors ${
+                    activeSection === "region-weekly-outlook"
+                      ? "bg-un-blue font-semibold text-white"
+                      : "text-slate-700 hover:bg-slate-100 hover:text-slate-900"
+                  }`}
+                >
+                  <span>Weekly Outlook</span>
+                </button>
+              )}
               {sortedRegions.map((region) => {
                 const regionId = `region-${region}`;
                 const isActive = activeSection === regionId;
@@ -259,12 +280,31 @@ function BriefingContent() {
         <div className="mb-10 border-t border-slate-400"></div>
 
         {/* Content */}
-        {sortedRegions.length === 0 ? (
+        {sortedRegions.length === 0 && weeklyOutlookEntries.length === 0 ? (
           <p className="text-center text-slate-600">
             No entries found for this date.
           </p>
         ) : (
           <div className="space-y-10">
+            {weeklyOutlookEntries.map((entry) => (
+              <div
+                key={entry.id}
+                id="region-weekly-outlook"
+                className="scroll-mt-24 space-y-6"
+              >
+                <h2 className="sticky top-0 z-30 border-b-2 border-un-blue bg-white py-3 text-center text-2xl font-bold tracking-tight text-un-blue print:static print:border-none">
+                  Weekly Outlook
+                </h2>
+                {entry.entry && (
+                  <div
+                    className="text-base leading-relaxed text-slate-900 [&_a]:text-un-blue [&_a]:underline [&_a]:hover:opacity-80 [&_b]:font-semibold [&_h2]:my-3 [&_h2]:text-xl [&_h2]:font-bold [&_h2]:text-un-blue [&_h3]:my-2 [&_h3]:text-lg [&_h3]:font-semibold [&_li]:mb-1 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:mb-2 [&_strong]:font-semibold [&_ul]:list-disc [&_ul]:pl-5 [&>ul]:mb-3"
+                    dangerouslySetInnerHTML={{
+                      __html: sanitizeHtml(entry.entry),
+                    }}
+                  />
+                )}
+              </div>
+            ))}
             {sortedRegions.map((region) => (
               <div
                 key={region}

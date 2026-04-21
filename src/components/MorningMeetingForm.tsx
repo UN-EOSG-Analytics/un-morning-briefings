@@ -872,24 +872,10 @@ export function MorningMeetingForm({
         headline: result.headline || prev.headline,
         date: result.date || prev.date,
         entry: result.entry || prev.entry,
-        sourceDate: result.sourceDate || prev.sourceDate,
-        sourceName: result.sourceName
-          ? Array.isArray(result.sourceName)
-            ? result.sourceName
-            : [result.sourceName]
-          : prev.sourceName,
       }));
 
       if (result.sources && result.sources.length > 0) {
         setSources(result.sources);
-      } else if (result.sourceName || result.sourceDate) {
-        const name = result.sourceName
-          ? Array.isArray(result.sourceName) ? result.sourceName[0] : result.sourceName
-          : "";
-        setSources((prev) => {
-          if (prev.length === 0) return [{ name, date: result.sourceDate || "" }];
-          return [{ ...prev[0], name: name || prev[0].name, date: result.sourceDate || prev[0].date }, ...prev.slice(1)];
-        });
       }
 
       setShowAutoFillDialog(false);

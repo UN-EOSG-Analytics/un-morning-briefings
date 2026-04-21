@@ -16,8 +16,6 @@ interface AutoFillResult {
   headline: string;
   date?: string;
   entry: string;
-  sourceDate?: string;
-  sourceName?: string;
   sources?: EntrySource[];
 }
 
@@ -122,7 +120,7 @@ const metadataJsonSchema = {
             description: "YYYY-MM-DD if explicitly stated, otherwise null",
           },
         },
-        required: ["name"],
+        required: ["name", "date"],
         additionalProperties: false,
       },
       description:

@@ -9,11 +9,11 @@ type Check = { ok: boolean; error?: string };
 /** Format a UTC timestamp as New York time (America/New_York). */
 function formatET(ts: string): string {
   return (
-    new Intl.DateTimeFormat("en-US", {
+    new Intl.DateTimeFormat("en-GB", {
       timeZone: "America/New_York",
       year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
+      month: "short",
+      day: "numeric",
       hour: "2-digit",
       minute: "2-digit",
       hour12: false,

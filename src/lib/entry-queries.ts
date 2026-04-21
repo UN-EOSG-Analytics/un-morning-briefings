@@ -6,6 +6,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { query } from "@/lib/db";
+import type { EntrySource } from "@/types/morning-meeting";
 
 // ─── URL Sanitization ───────────────────────────────────────────────────────
 
@@ -72,6 +73,56 @@ export function parseStringOrArray(value: string): string | string[] {
 export const serializeCountry = serializeStringOrArray;
 export const parseCountry = parseStringOrArray;
 
+// ─── Sources Serialization ──────────────────────────────────────────────────
+
+export function serializeSources(sources: EntrySource[] | undefined | null): string | null {
+  if (!sources || sources.length === 0) return null;
+  return JSON.stringify(
+    sources.map((s) => ({
+      name: s.name || null,
+      url: sanitizeUrl(s.url) || null,
+      date: s.date || null,
+    })),
+  );
+}
+
+export function parseSources(value: unknown): EntrySource[] | undefined {
+  if (!value) return undefined;
+  if (typeof value === "string") {
+    try {
+      const parsed = JSON.parse(value);
+      if (Array.isArray(parsed)) return parsed;
+    } catch {
+      return undefined;
+    }
+  }
+  if (Array.isArray(value)) return value;
+  return undefined;
+}
+
+export function legacyToSources(row: {
+  sourceName?: string | string[] | null;
+  sourceUrl?: string | null;
+  sourceDate?: string | null;
+}): EntrySource[] | undefined {
+  const names = row.sourceName
+    ? Array.isArray(row.sourceName)
+      ? row.sourceName
+      : typeof row.sourceName === "string" && row.sourceName.startsWith("[")
+        ? (() => { try { return JSON.parse(row.sourceName); } catch { return [row.sourceName]; } })()
+        : [row.sourceName]
+    : [];
+  if (names.length === 0 && !row.sourceUrl && !row.sourceDate) return undefined;
+  if (names.length === 0) {
+    return [{ url: row.sourceUrl || undefined, date: row.sourceDate || undefined }];
+  }
+  return names.map((name: string, i: number) => ({
+    name,
+    url: i === 0 ? row.sourceUrl || undefined : undefined,
+    date: i === 0 ? row.sourceDate || undefined : undefined,
+  }));
+}
+
 // ─── Entry SQL Fragments ─────────────────────────────────────────────────────
 
 /** Base SELECT for entries with author info and aggregated images */
@@ -85,6 +136,7 @@ const ENTRY_SELECT = `
     e.headline,
     e.date,
     e.entry,
+    e.sources,
     e.source_name as "sourceName",
     e.source_url as "sourceUrl",
     e.source_date as "sourceDate",
@@ -128,13 +180,13 @@ export async function fetchEntryById(id: string) {
   if (result.rows.length === 0) return null;
 
   const row = result.rows[0];
+  const parsedSourceName = row.sourceName ? parseStringOrArray(row.sourceName) : row.sourceName;
   return {
     ...row,
     country: parseStringOrArray(row.country),
     thematic: row.thematic ? parseStringOrArray(row.thematic) : row.thematic,
-    sourceName: row.sourceName
-      ? parseStringOrArray(row.sourceName)
-      : row.sourceName,
+    sources: parseSources(row.sources) ?? legacyToSources({ sourceName: parsedSourceName, sourceUrl: row.sourceUrl, sourceDate: row.sourceDate }),
+    sourceName: parsedSourceName,
   };
 }
 
@@ -169,14 +221,16 @@ export async function fetchEntries(filters: {
   sql += ` GROUP BY e.id, u.id ORDER BY e.date DESC`;
 
   const result = await query(sql, params);
-  return result.rows.map((row) => ({
-    ...row,
-    country: parseStringOrArray(row.country),
-    thematic: row.thematic ? parseStringOrArray(row.thematic) : row.thematic,
-    sourceName: row.sourceName
-      ? parseStringOrArray(row.sourceName)
-      : row.sourceName,
-  }));
+  return result.rows.map((row) => {
+    const parsedSourceName = row.sourceName ? parseStringOrArray(row.sourceName) : row.sourceName;
+    return {
+      ...row,
+      country: parseStringOrArray(row.country),
+      thematic: row.thematic ? parseStringOrArray(row.thematic) : row.thematic,
+      sources: parseSources(row.sources) ?? legacyToSources({ sourceName: parsedSourceName, sourceUrl: row.sourceUrl, sourceDate: row.sourceDate }),
+      sourceName: parsedSourceName,
+    };
+  });
 }
 
 /** Fetch all submitted entries for a specific briefing date using the 8AM cutoff window.
@@ -206,14 +260,16 @@ export async function fetchEntriesForBriefingDate(briefingDate: string) {
     ORDER BY e.date DESC`;
 
   const result = await query(sql, [start, end]);
-  return result.rows.map((row) => ({
-    ...row,
-    country: parseStringOrArray(row.country),
-    thematic: row.thematic ? parseStringOrArray(row.thematic) : row.thematic,
-    sourceName: row.sourceName
-      ? parseStringOrArray(row.sourceName)
-      : row.sourceName,
-  }));
+  return result.rows.map((row) => {
+    const parsedSourceName = row.sourceName ? parseStringOrArray(row.sourceName) : row.sourceName;
+    return {
+      ...row,
+      country: parseStringOrArray(row.country),
+      thematic: row.thematic ? parseStringOrArray(row.thematic) : row.thematic,
+      sources: parseSources(row.sources) ?? legacyToSources({ sourceName: parsedSourceName, sourceUrl: row.sourceUrl, sourceDate: row.sourceDate }),
+      sourceName: parsedSourceName,
+    };
+  });
 }
 
 /** Look up author_id from a user's email */

@@ -78,8 +78,8 @@ export const WEEKDAY_NAMES = [
 
 /**
  * Format date responsively for desktop and mobile
- * Desktop: "Jan 14, 2026"
- * Mobile: "01/14"
+ * Desktop: "14 Jan 2026"
+ * Mobile: "14/01"
  *
  * NO timezone conversion - uses literal string values
  */
@@ -89,33 +89,32 @@ export function formatDateResponsive(date: string): {
 } {
   const { year, month, day } = parseDateString(date);
 
-  const desktop = `${MONTH_NAMES[month - 1]} ${day}, ${year}`;
-  const mobile = `${String(month).padStart(2, "0")}/${String(day).padStart(2, "0")}`;
+  const desktop = `${day} ${MONTH_NAMES[month - 1]} ${year}`;
+  const mobile = `${String(day).padStart(2, "0")}/${String(month).padStart(2, "0")}`;
 
   return { desktop, mobile };
 }
 
 /**
- * Format date for desktop view: "Jan 14, 2026"
+ * Format date for desktop view: "14 Jan 2026"
  * NO timezone conversion - uses literal string values
  */
 export function formatDateDesktop(date: string): string {
   const { year, month, day } = parseDateString(date);
-  return `${MONTH_NAMES[month - 1]} ${day}, ${year}`;
+  return `${day} ${MONTH_NAMES[month - 1]} ${year}`;
 }
 
 /**
- * Format date with weekday: "Monday, Jan 14, 2026"
+ * Format date with weekday: "Monday, 14 Jan 2026"
  * NO timezone conversion - uses literal string values
  */
 export function formatDateWithWeekday(date: string): string {
   const { year, month, day } = parseDateString(date);
 
-  // Create a Date object to get the day of the week
   const dateObj = new Date(year, month - 1, day);
   const weekday = WEEKDAY_NAMES[dateObj.getDay()];
 
-  return `${weekday}, ${MONTH_NAMES[month - 1]} ${day}, ${year}`;
+  return `${weekday}, ${day} ${MONTH_NAMES[month - 1]} ${year}`;
 }
 
 /**
@@ -143,18 +142,45 @@ export function formatTimeNYC(date: string | Date): string {
 }
 
 /**
- * Format date with full month name: "January 14, 2026"
+ * Format a UTC timestamp as "14 Jan 2026" in New York time.
+ */
+export function formatDateDesktopNYC(date: string | Date): string {
+  const dateObj = typeof date === "string" ? new Date(date) : date;
+  const fmt = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "America/New_York",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+  return fmt.format(dateObj);
+}
+
+/**
+ * Format a UTC timestamp as "DD/MM" in New York time (mobile).
+ */
+export function formatDateMobileNYC(date: string | Date): string {
+  const dateObj = typeof date === "string" ? new Date(date) : date;
+  const fmt = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "America/New_York",
+    day: "2-digit",
+    month: "2-digit",
+  });
+  return fmt.format(dateObj);
+}
+
+/**
+ * Format date with full month name: "14 January 2026"
  * Used in documents, emails, and source date display.
  * NO timezone conversion.
  */
 export function formatDateFull(date: string): string {
   const { year, month, day } = parseDateString(date);
   if (!year || !month) return date;
-  return `${MONTH_NAMES_FULL[month - 1]} ${day}, ${year}`;
+  return `${day} ${MONTH_NAMES_FULL[month - 1]} ${year}`;
 }
 
 /**
- * Format date with weekday and full month: "Wednesday, January 14, 2026"
+ * Format date with weekday and full month: "Wednesday, 14 January 2026"
  * Used in document headers and briefing titles.
  * NO timezone conversion.
  */
@@ -163,7 +189,7 @@ export function formatDateLong(date: string): string {
   if (!year || !month) return date;
   const dateObj = new Date(year, month - 1, day);
   const weekday = WEEKDAY_NAMES[dateObj.getDay()];
-  return `${weekday}, ${MONTH_NAMES_FULL[month - 1]} ${day}, ${year}`;
+  return `${weekday}, ${day} ${MONTH_NAMES_FULL[month - 1]} ${year}`;
 }
 
 /**
@@ -264,11 +290,11 @@ export function getCurrentDateTime(): string {
 }
 
 /**
- * Check whether a UTC timestamp falls in the "overnight" window (21:00–07:45 NYC time).
- * Used to flag entries updated outside normal working hours with a visual indicator.
+ * Check whether a UTC timestamp falls in the overnight window (21:00–06:45 NYC time).
+ * Used to flag entries updated outside normal working hours with a blue dot.
  */
-export function isOvernightUpdate(utcTimestamp: string): boolean {
-  const date = new Date(utcTimestamp);
+export function isOvernightUpdate(utcTimestamp: string | Date): boolean {
+  const date = typeof utcTimestamp === "string" ? new Date(utcTimestamp) : utcTimestamp;
   const nycTime = date.toLocaleTimeString("en-US", {
     timeZone: "America/New_York",
     hour12: false,
@@ -277,6 +303,35 @@ export function isOvernightUpdate(utcTimestamp: string): boolean {
   });
   const [hours, minutes] = nycTime.split(":").map(Number);
   const totalMinutes = hours * 60 + minutes;
-  // 21:00 (9 PM) = 1260 minutes, 07:45 (7:45 AM) = 465 minutes
-  return totalMinutes >= 1260 || totalMinutes < 465;
+  return totalMinutes >= 1260 || totalMinutes < 405; // 21:00=1260, 06:45=405
+}
+
+/**
+ * Check whether a UTC timestamp falls after 6:15 AM NYC on a given briefing date.
+ * Used to flag late updates with a red dot.
+ */
+export function isLateUpdate(utcTimestamp: string | Date, briefingDate: string): boolean {
+  const date = typeof utcTimestamp === "string" ? new Date(utcTimestamp) : utcTimestamp;
+  const fmt = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/New_York",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).formatToParts(date);
+
+  const get = (type: string) => fmt.find((p) => p.type === type)!.value;
+  const nycYear = parseInt(get("year"));
+  const nycMonth = parseInt(get("month"));
+  const nycDay = parseInt(get("day"));
+  const nycHour = parseInt(get("hour")) % 24;
+  const nycMinute = parseInt(get("minute"));
+
+  const [bYear, bMonth, bDay] = briefingDate.split("-").map(Number);
+  if (nycYear !== bYear || nycMonth !== bMonth || nycDay !== bDay) return false;
+
+  const totalMinutes = nycHour * 60 + nycMinute;
+  return totalMinutes >= 375; // 6:15 AM = 6*60+15
 }

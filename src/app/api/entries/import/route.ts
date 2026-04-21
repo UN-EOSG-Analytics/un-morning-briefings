@@ -3,7 +3,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { query } from "@/lib/db";
 import { checkAuth } from "@/lib/auth-helper";
-import { serializeCountry, stripHtmlToText, sanitizeUrl } from "@/lib/entry-queries";
+import { serializeCountry, serializeSources, stripHtmlToText, sanitizeUrl } from "@/lib/entry-queries";
 import { sanitizeHtml } from "@/lib/sanitize";
 
 /**
@@ -67,8 +67,8 @@ export async function POST(request: NextRequest) {
         await query(
           `INSERT INTO morning_briefings.entries (
             id, category, priority, region, country, headline, date, entry,
-            source_name, source_url, source_date, pu_note, thematic, author_id, status, ai_summary, discussion_status, text_content
-          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)`,
+            sources, source_name, source_url, source_date, pu_note, thematic, author_id, status, ai_summary, discussion_status, text_content
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)`,
           [
             entry.id,
             entry.category,
@@ -78,6 +78,7 @@ export async function POST(request: NextRequest) {
             entry.headline,
             entry.date,
             sanitizedEntry,
+            serializeSources(entry.sources),
             entry.sourceName || null,
             sanitizeUrl(entry.sourceUrl),
             entry.sourceDate || null,

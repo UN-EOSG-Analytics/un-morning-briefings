@@ -2,6 +2,12 @@ import labels from "@/lib/labels.json";
 
 export type DiscussionStatus = "pending" | "discussed";
 
+export interface EntrySource {
+  name?: string;
+  url?: string;
+  date?: string;
+}
+
 // Morning Meeting Form Types
 export interface MorningMeetingEntry {
   id?: string;
@@ -12,8 +18,9 @@ export interface MorningMeetingEntry {
   headline: string;
   date: string; // Now includes both date and time
   entry: string;
+  sources?: EntrySource[];
   sourceName?: string | string[];
-  sourceDate?: string; // Date from the source
+  sourceDate?: string;
   sourceUrl?: string;
   puNote?: string;
   thematic?: string | string[];

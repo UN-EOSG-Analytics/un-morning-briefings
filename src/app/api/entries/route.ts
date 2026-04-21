@@ -8,6 +8,7 @@ import { checkAuth } from "@/lib/auth-helper";
 import {
   serializeCountry,
   serializeStringOrArray,
+  serializeSources,
   stripHtmlToText,
   sanitizeUrl,
   fetchEntries,
@@ -155,11 +156,12 @@ export async function POST(request: NextRequest) {
     // Insert entry with author_id foreign key
     // Store date as-is without timezone conversion
     const textContent = stripHtmlToText(sanitizedEntry);
+    const sourcesJson = serializeSources(data.sources);
     await query(
       `INSERT INTO morning_briefings.entries (
         id, category, priority, region, country, headline, date, entry,
-        source_name, source_url, source_date, pu_note, thematic, author_id, status, discussion_status, previous_entry_id, text_content
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)`,
+        sources, source_name, source_url, source_date, pu_note, thematic, author_id, status, discussion_status, previous_entry_id, text_content
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)`,
       [
         id,
         data.category,
@@ -167,8 +169,9 @@ export async function POST(request: NextRequest) {
         data.region,
         serializeCountry(data.country),
         data.headline,
-        data.date, // Store as string, no Date conversion
+        data.date,
         sanitizedEntry,
+        sourcesJson,
         data.sourceName ? serializeStringOrArray(data.sourceName) : null,
         sanitizeUrl(data.sourceUrl),
         data.sourceDate || null,

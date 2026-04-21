@@ -352,9 +352,34 @@ export function ExportDailyBriefingDialog({
             </div>
 
             <div className="flex max-h-80 min-h-0 flex-1 flex-col space-y-2">
-              <label className="text-sm font-medium text-foreground">
-                Entries ({selectedEntryIds.size}/{briefingEntries.length})
-              </label>
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium text-foreground">
+                  Entries ({selectedEntryIds.size}/{briefingEntries.length})
+                </label>
+                {briefingEntries.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (selectedEntryIds.size === briefingEntries.length) {
+                        setSelectedEntryIds(new Set());
+                      } else {
+                        setSelectedEntryIds(
+                          new Set(
+                            briefingEntries
+                              .map((e) => e.id)
+                              .filter((id): id is string => Boolean(id)),
+                          ),
+                        );
+                      }
+                    }}
+                    className="text-xs text-un-blue hover:underline"
+                  >
+                    {selectedEntryIds.size === briefingEntries.length
+                      ? "Deselect all"
+                      : "Select all"}
+                  </button>
+                )}
+              </div>
               <div className="flex-1 overflow-y-auto rounded border border-slate-200 bg-slate-50 p-3">
                 {isLoadingEntries ? (
                   <p className="text-xs text-slate-500">Loading entries...</p>

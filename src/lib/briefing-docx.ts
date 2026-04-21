@@ -18,6 +18,8 @@ import {
   TableCell,
   BorderStyle,
   Header,
+  Footer,
+  PageNumber,
   ExternalHyperlink,
   WidthType,
   VerticalAlign,
@@ -29,6 +31,7 @@ import {
   getCurrentDateTime,
   formatTimeNYC,
   isOvernightUpdate,
+  isLateUpdate,
   WEEKDAY_NAMES,
   MONTH_NAMES_FULL,
 } from "@/lib/format-date";
@@ -318,7 +321,7 @@ export const buildDocumentChildren = (
     children.push(
       new Paragraph({
         heading: HeadingLevel.HEADING_2,
-        alignment: AlignmentType.LEFT,
+        alignment: AlignmentType.CENTER,
         spacing: { before: 400, after: 100 },
         keepNext: true,
         children: [
@@ -396,11 +399,17 @@ export const buildDocumentChildren = (
           );
 
           // Source Information (right under headline)
-          const sourceNameStr = Array.isArray(entry.sourceName)
-            ? entry.sourceName.join(", ")
-            : entry.sourceName;
+          const entrySources = entry.sources && entry.sources.length > 0
+            ? entry.sources
+            : (() => {
+                const nameStr = Array.isArray(entry.sourceName)
+                  ? entry.sourceName.join(", ")
+                  : entry.sourceName;
+                if (!nameStr && !entry.sourceDate) return [];
+                return [{ name: nameStr, url: entry.sourceUrl, date: entry.sourceDate }];
+              })();
 
-          if (sourceNameStr || entry.sourceDate) {
+          if (entrySources.length > 0) {
             const sourceChildren: (TextRun | ExternalHyperlink)[] = [
               new TextRun({
                 text: "Source: ",
@@ -410,55 +419,48 @@ export const buildDocumentChildren = (
               }),
             ];
 
-            if (sourceNameStr) {
-              if (entry.sourceUrl) {
+            entrySources.forEach((src: { name?: string; url?: string; date?: string }, idx: number) => {
+              if (idx > 0) {
                 sourceChildren.push(
-                  new ExternalHyperlink({
-                    children: [
-                      new TextRun({
-                        text: sourceNameStr,
-                        italics: true,
-                        font: "Roboto",
-                        size: 20,
-                        style: "Hyperlink",
-                      }),
-                    ],
-                    link: entry.sourceUrl,
-                  }),
-                );
-              } else {
-                sourceChildren.push(
-                  new TextRun({
-                    text: sourceNameStr,
-                    italics: true,
-                    font: "Roboto",
-                    size: 20,
-                  }),
+                  new TextRun({ text: " | ", italics: true, font: "Roboto", size: 20 }),
                 );
               }
-            }
 
-            if (sourceNameStr && entry.sourceDate) {
-              sourceChildren.push(
-                new TextRun({
-                  text: " | ",
-                  italics: true,
-                  font: "Roboto",
-                  size: 20,
-                }),
-              );
-            }
+              if (src.name) {
+                if (src.url) {
+                  sourceChildren.push(
+                    new ExternalHyperlink({
+                      children: [
+                        new TextRun({
+                          text: src.name,
+                          italics: true,
+                          font: "Roboto",
+                          size: 20,
+                          style: "Hyperlink",
+                        }),
+                      ],
+                      link: src.url,
+                    }),
+                  );
+                } else {
+                  sourceChildren.push(
+                    new TextRun({ text: src.name, italics: true, font: "Roboto", size: 20 }),
+                  );
+                }
+              }
 
-            if (entry.sourceDate) {
-              sourceChildren.push(
-                new TextRun({
-                  text: formatDateFull(entry.sourceDate),
-                  italics: true,
-                  font: "Roboto",
-                  size: 20,
-                }),
-              );
-            }
+              if (src.date) {
+                if (src.name) {
+                  sourceChildren.push(
+                    new TextRun({ text: ` (${formatDateFull(src.date)})`, italics: true, font: "Roboto", size: 20 }),
+                  );
+                } else {
+                  sourceChildren.push(
+                    new TextRun({ text: formatDateFull(src.date), italics: true, font: "Roboto", size: 20 }),
+                  );
+                }
+              }
+            });
 
             children.push(
               new Paragraph({
@@ -487,16 +489,25 @@ export const buildDocumentChildren = (
           );
 
           // Last updated timestamp
-          // Shown in its own line between metadata and article content.
-          // If the update occurred overnight (21:00–07:45 NYC time), a blue
-          // circle "●" is prepended so readers can spot late/overnight edits.
+          // Red dot: updated after 6:15 AM on the briefing day.
+          // Blue dot: updated overnight (21:00–06:45 NYC).
           {
-            const timestamp = entry.updatedAt ?? entry.date;
+            const timestamp = entry.updatedAt ?? entry.createdAt ?? entry.date;
             const timeStr = formatTimeNYC(timestamp);
-            const overnight = isOvernightUpdate(timestamp);
+            const late = isLateUpdate(timestamp, selectedDate);
+            const overnight = !late && isOvernightUpdate(timestamp);
             const lastUpdatedChildren: TextRun[] = [];
 
-            if (overnight) {
+            if (late) {
+              lastUpdatedChildren.push(
+                new TextRun({
+                  text: "● ",
+                  color: "EF4444",
+                  font: "Roboto",
+                  size: 20,
+                }),
+              );
+            } else if (overnight) {
               lastUpdatedChildren.push(
                 new TextRun({
                   text: "● ",
@@ -649,6 +660,23 @@ export function buildBriefingDocument(
         headers: {
           default: new Header({
             children: [headerTable],
+          }),
+        },
+        footers: {
+          default: new Footer({
+            children: [
+              new Paragraph({
+                alignment: AlignmentType.CENTER,
+                children: [
+                  new TextRun({
+                    children: [PageNumber.CURRENT],
+                    font: "Roboto",
+                    size: 18,
+                    color: "7C7067",
+                  }),
+                ],
+              }),
+            ],
           }),
         },
         children,

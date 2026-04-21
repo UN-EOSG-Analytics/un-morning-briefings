@@ -16,19 +16,34 @@ export async function GET() {
       return NextResponse.json({ sourceNames: [] });
     }
 
-    // Get unique source names used by this user via author_id foreign key
-    const result = await query(
+    const sourceNames = new Set<string>();
+
+    // Extract names from the new JSONB sources column
+    const jsonbResult = await query(
+      `SELECT DISTINCT elem->>'name' AS name
+       FROM morning_briefings.entries e
+       INNER JOIN morning_briefings.users u ON e.author_id = u.id,
+       jsonb_array_elements(e.sources) AS elem
+       WHERE u.email = $1
+         AND e.sources IS NOT NULL
+         AND elem->>'name' IS NOT NULL
+         AND elem->>'name' != ''`,
+      [userEmail],
+    );
+    jsonbResult.rows.forEach((row: { name: string }) => sourceNames.add(row.name));
+
+    // Also extract from legacy source_name column for unmigrated entries
+    const legacyResult = await query(
       `SELECT e.source_name
        FROM morning_briefings.entries e
        INNER JOIN morning_briefings.users u ON e.author_id = u.id
        WHERE u.email = $1
          AND e.source_name IS NOT NULL
-         AND e.source_name != ''`,
+         AND e.source_name != ''
+         AND e.sources IS NULL`,
       [userEmail],
     );
-
-    const sourceNames = new Set<string>();
-    result.rows.forEach((row: { source_name: string }) => {
+    legacyResult.rows.forEach((row: { source_name: string }) => {
       const val = row.source_name;
       if (val.startsWith("[")) {
         try {

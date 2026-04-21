@@ -545,9 +545,21 @@ export function ViewEntryDialog({
           )}
 
           {/* Source Information */}
-          {(displayEntry.sourceName ||
-            displayEntry.sourceUrl ||
-            displayEntry.sourceDate) && (
+          {displayEntry.sources && displayEntry.sources.length > 0 ? (
+            <div className="flex flex-wrap items-center gap-2 text-sm text-slate-700">
+              {displayEntry.sources.map((src: { name?: string; url?: string; date?: string }, idx: number) => (
+                <span key={idx} className="inline-flex items-center gap-1.5">
+                  {idx > 0 && <span className="text-slate-400">|</span>}
+                  {src.name && (src.url ? (
+                    <a href={src.url} target="_blank" rel="noopener noreferrer" className="font-medium text-un-blue hover:underline">{src.name}</a>
+                  ) : (
+                    <span className="font-medium">{src.name}</span>
+                  ))}
+                  {src.date && <span>{src.name ? `(${formatDateFull(src.date)})` : formatDateFull(src.date)}</span>}
+                </span>
+              ))}
+            </div>
+          ) : (displayEntry.sourceName || displayEntry.sourceUrl || displayEntry.sourceDate) && (
             <div className="flex flex-wrap items-center gap-2 text-sm text-slate-700">
               {displayEntry.sourceName &&
                 (() => {
@@ -555,24 +567,13 @@ export function ViewEntryDialog({
                     ? displayEntry.sourceName.join(", ")
                     : displayEntry.sourceName;
                   return displayEntry.sourceUrl ? (
-                    <a
-                      href={displayEntry.sourceUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="font-medium text-un-blue hover:underline"
-                    >
-                      {name}
-                    </a>
+                    <a href={displayEntry.sourceUrl} target="_blank" rel="noopener noreferrer" className="font-medium text-un-blue hover:underline">{name}</a>
                   ) : (
                     <span className="font-medium">{name}</span>
                   );
                 })()}
-              {displayEntry.sourceName && displayEntry.sourceDate && (
-                <span className="text-slate-400">|</span>
-              )}
-              {displayEntry.sourceDate && (
-                <span>{formatDateFull(displayEntry.sourceDate)}</span>
-              )}
+              {displayEntry.sourceName && displayEntry.sourceDate && <span className="text-slate-400">|</span>}
+              {displayEntry.sourceDate && <span>{formatDateFull(displayEntry.sourceDate)}</span>}
             </div>
           )}
         </div>

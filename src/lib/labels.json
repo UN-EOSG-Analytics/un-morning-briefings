@@ -164,7 +164,8 @@
       "categoryRequired": "Category is required",
       "priorityRequired": "Priority is required",
       "dateRequired": "Date is required",
-      "entryMinLength": "Entry must be at least 50 characters"
+      "entryMinLength": "Entry must be at least 50 characters",
+      "weeklyOutlookExists": "A Weekly Outlook already exists for this briefing date"
     },
     "options": {
       "thematics": [

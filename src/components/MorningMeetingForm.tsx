@@ -37,6 +37,7 @@ import {
 import type { EntrySource } from "@/types/morning-meeting";
 import labelsData from "@/lib/labels.json";
 import { formatDateDesktop, getNycNow } from "@/lib/format-date";
+import { getBriefingDate } from "@/lib/useEntriesFilter";
 import { generateWeeklyOutlookHTML } from "@/lib/weekly-outlook-template";
 import {
   FileText,
@@ -259,6 +260,7 @@ export function MorningMeetingForm({
       date: string;
       country: string | string[];
       region: string;
+      category: string;
       author: string;
     }[]
   >([]);
@@ -613,6 +615,7 @@ export function MorningMeetingForm({
               date: e.date,
               country: e.country,
               region: e.region,
+              category: e.category || "",
               author: e.author || "",
             })),
         );
@@ -669,17 +672,15 @@ export function MorningMeetingForm({
   const handleSelectChange = useCallback(
     (name: string, value: string) => {
       if (name === "category" && value === "Weekly Outlook") {
-        setFormData((prev) => {
-          return {
-            ...prev,
-            category: "Weekly Outlook",
-            headline: "Weekly Outlook",
-            region: "Weekly Outlook",
-            priority: "SG's attention",
-            // Only inject template if entry is empty (don't overwrite existing content)
-            entry: prev.entry.trim() ? prev.entry : generateWeeklyOutlookHTML(prev.date),
-          };
-        });
+        setFormData((prev) => ({
+          ...prev,
+          category: "Weekly Outlook",
+          headline: "Weekly Outlook",
+          region: "Weekly Outlook",
+          priority: "SG's attention",
+          // Only inject template if entry is empty (don't overwrite existing content)
+          entry: prev.entry.trim() ? prev.entry : generateWeeklyOutlookHTML(prev.date),
+        }));
         setErrors((prev) => {
           const next = { ...prev };
           delete next.category;
@@ -756,7 +757,15 @@ export function MorningMeetingForm({
       newErrors.entry = labelsData.form.validation.entryMinLength;
     }
 
-    if (formData.category !== "Weekly Outlook") {
+    if (formData.category === "Weekly Outlook") {
+      const briefingDate = getBriefingDate(formData.date);
+      const conflict = userEntries.some(
+        (e) => (e.category === "Weekly Outlook" || e.region === "Weekly Outlook") && getBriefingDate(e.date) === briefingDate,
+      );
+      if (conflict) {
+        newErrors.category = labelsData.form.validation.weeklyOutlookExists;
+      }
+    } else {
       if (!formData.region) {
         newErrors.region = labelsData.form.validation.regionRequired;
       }
@@ -770,7 +779,7 @@ export function MorningMeetingForm({
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  }, [formData]);
+  }, [formData, userEntries]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1012,9 +1021,24 @@ export function MorningMeetingForm({
                     label={labelsData.form.labels.category}
                     placeholder={labelsData.form.placeholders.category}
                     value={formData.category}
-                    onValueChange={(value) =>
-                      handleSelectChange("category", value)
-                    }
+                    onValueChange={(value) => {
+                      if (value === "Weekly Outlook") {
+                        const briefingDate = getBriefingDate(formData.date);
+                        const conflict = userEntries.some(
+                          (e) =>
+                            (e.category === "Weekly Outlook" || e.region === "Weekly Outlook") &&
+                            getBriefingDate(e.date) === briefingDate,
+                        );
+                        if (conflict) {
+                          setErrors((prev) => ({
+                            ...prev,
+                            category: labelsData.form.validation.weeklyOutlookExists,
+                          }));
+                          return;
+                        }
+                      }
+                      handleSelectChange("category", value);
+                    }}
                     options={CATEGORIES.map((cat) => ({
                       value: cat,
                       label: cat,

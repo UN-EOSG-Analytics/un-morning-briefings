@@ -42,7 +42,7 @@
     "linkedom": "^0.18.12",
     "lucide-react": "^0.555.0",
     "next": "16.2.3",
-    "next-auth": "^4.24.13",
+    "next-auth": "^4.24.14",
     "nodemailer": "^8.0.5",
     "openai": "^6.34.0",
     "pg": "^8.20.0",
@@ -50,12 +50,15 @@
     "react-dom": "19.2.4",
     "react-simple-maps": "^3.0.0",
     "recharts": "^3.8.0",
-    "sanitize-html": "^2.17.2",
+    "sanitize-html": "^2.17.3",
     "tailwind-merge": "^3.5.0"
   },
   "pnpm": {
     "overrides": {
-      "@azure/core-rest-pipeline": "1.22.2"
+      "@azure/core-rest-pipeline": "1.22.2",
+      "d3-color": ">=3.1.0",
+      "uuid": ">=14.0.0",
+      "brace-expansion": ">=5.0.5"
     }
   },
   "devDependencies": {

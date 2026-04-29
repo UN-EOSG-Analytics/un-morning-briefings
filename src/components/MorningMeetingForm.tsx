@@ -49,8 +49,6 @@ import {
   Save,
   Info,
   Calendar,
-  Zap,
-  Type,
   Sparkles,
   ChevronDown,
   Plus,
@@ -91,40 +89,6 @@ export function MorningMeetingForm({
     );
   };
 
-  // Extract plain text from HTML content
-  const extractPlainText = (html: string) => {
-    if (!html) return "";
-
-    // Check if we're in browser environment
-    if (typeof document === "undefined") return html;
-
-    // If it's already plain text (no HTML tags), return as-is
-    if (!html.includes("<")) return html;
-
-    const tempDiv = document.createElement("div");
-    tempDiv.innerHTML = html;
-
-    // Replace block elements with newlines
-    tempDiv
-      .querySelectorAll("p, div, h1, h2, h3, h4, h5, h6, li")
-      .forEach((element) => {
-        element.appendChild(document.createTextNode("\n"));
-      });
-
-    // Remove script and style elements
-    tempDiv.querySelectorAll("script, style").forEach((element) => {
-      element.remove();
-    });
-
-    // Get text content and clean up
-    let text = tempDiv.textContent || "";
-
-    // Replace multiple newlines with double newline (for paragraph breaks)
-    text = text.replace(/\n\n+/g, "\n\n");
-
-    // Trim trailing whitespace but preserve leading for structure
-    return text.trim();
-  };
 
   // Format date to YYYY-MM-DDTHH:MM format - extract literal string without any parsing
   const formatDateForInput = (dateValue: any): string => {
@@ -230,8 +194,7 @@ export function MorningMeetingForm({
   // Use full countries list from labels.json - no filtering by region
   const [availableCountries] = useState<string[]>(COUNTRIES);
 
-  const [useRichText, setUseRichText] = useState<boolean | null>(null);
-  const [hasUserToggled, setHasUserToggled] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(true);
   const [showAutoFillDialog, setShowAutoFillDialog] = useState(false);
   const [autoFillContent, setAutoFillContent] = useState("");
   const [isAutoFilling, setIsAutoFilling] = useState(false);
@@ -387,27 +350,13 @@ export function MorningMeetingForm({
     }
   }, [session, initialData?.author]);
 
-  // Set default editor mode based on screen size
   useEffect(() => {
     const mediaQuery = window.matchMedia("(min-width: 768px)");
-
-    const handleMediaChange = (e: MediaQueryListEvent | MediaQueryList) => {
-      if (!hasUserToggled) {
-        // Only auto-switch if user hasn't manually toggled
-        setUseRichText(e.matches);
-      }
-    };
-
-    // Set initial value
-    if (!hasUserToggled) {
-      setUseRichText(mediaQuery.matches);
-    }
-
-    // Listen for screen size changes
-    mediaQuery.addEventListener("change", handleMediaChange);
-
-    return () => mediaQuery.removeEventListener("change", handleMediaChange);
-  }, [hasUserToggled]);
+    setIsDesktop(mediaQuery.matches);
+    const handler = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
+    mediaQuery.addEventListener("change", handler);
+    return () => mediaQuery.removeEventListener("change", handler);
+  }, []);
 
   // Track unsaved changes
   useEffect(() => {
@@ -1179,89 +1128,28 @@ export function MorningMeetingForm({
 
                 {/* Entry Content */}
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <label className="text-sm font-medium text-slate-900">
-                      {labelsData.form.labels.entryContent}{" "}
-                      <span className="text-red-500">*</span>
-                    </label>
-                    {/* Text Mode Toggle Switch */}
-                    <div className="inline-flex gap-1 rounded-lg border border-slate-300 bg-slate-100 p-1">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setUseRichText(false);
-                          setHasUserToggled(true);
-                        }}
-                        className={`inline-flex items-center gap-1.5 rounded px-3 py-1.5 text-xs font-medium transition ${
-                          !useRichText
-                            ? "border border-slate-200 bg-white text-slate-900 shadow-sm"
-                            : "text-slate-600 hover:text-slate-700"
-                        }`}
-                      >
-                        <Type className="h-3.5 w-3.5" />
-                        {labelsData.form.editorMode.plainText}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setUseRichText(true);
-                          setHasUserToggled(true);
-                        }}
-                        className={`inline-flex items-center gap-1.5 rounded px-3 py-1.5 text-xs font-medium transition ${
-                          useRichText
-                            ? "border border-slate-200 bg-white text-slate-900 shadow-sm"
-                            : "text-slate-600 hover:text-slate-700"
-                        }`}
-                      >
-                        <Zap className="h-3.5 w-3.5" />
-                        {labelsData.form.editorMode.richText}
-                      </button>
-                    </div>
-                  </div>
+                  <label className="text-sm font-medium text-slate-900">
+                    {labelsData.form.labels.entryContent}{" "}
+                    <span className="text-red-500">*</span>
+                  </label>
 
-                  {useRichText === null ? (
-                    // Show plain text while loading (will switch to rich text on desktop)
-                    <div className="form-field-textarea min-h-62.5" />
-                  ) : useRichText ? (
-                    <RichTextEditor
-                      content={formData.entry}
-                      onChange={(content) => {
-                        setFormData((prev) => ({ ...prev, entry: content }));
-                        if (errors.entry) {
-                          setErrors((prev) => {
-                            const newErrors = { ...prev };
-                            delete newErrors.entry;
-                            return newErrors;
-                          });
-                        }
-                      }}
-                      placeholder={labelsData.form.placeholders.entry}
-                      error={!!errors.entry}
-                      minHeight="min-h-62.5"
-                    />
-                  ) : (
-                    <textarea
-                      value={extractPlainText(formData.entry)}
-                      onChange={(e) => {
-                        setFormData((prev) => ({
-                          ...prev,
-                          entry: e.target.value,
-                        }));
-                        if (errors.entry) {
-                          setErrors((prev) => {
-                            const newErrors = { ...prev };
-                            delete newErrors.entry;
-                            return newErrors;
-                          });
-                        }
-                      }}
-                      placeholder={labelsData.form.placeholders.entry}
-                      className={`form-field-textarea min-h-62.5 ${
-                        errors.entry ? "form-field-error" : "form-field-focus"
-                      }`}
-                      spellCheck="true"
-                    />
-                  )}
+                  <RichTextEditor
+                    content={formData.entry}
+                    onChange={(content) => {
+                      setFormData((prev) => ({ ...prev, entry: content }));
+                      if (errors.entry) {
+                        setErrors((prev) => {
+                          const newErrors = { ...prev };
+                          delete newErrors.entry;
+                          return newErrors;
+                        });
+                      }
+                    }}
+                    placeholder={labelsData.form.placeholders.entry}
+                    error={!!errors.entry}
+                    minHeight="min-h-62.5"
+                    minimalMode={!isDesktop}
+                  />
 
                   {errors.entry && (
                     <div className="flex items-center gap-1 text-xs text-red-600">

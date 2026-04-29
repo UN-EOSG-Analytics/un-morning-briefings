@@ -154,10 +154,6 @@
       "entryDetails": "Entry Details",
       "metadata": "Metadata"
     },
-    "editorMode": {
-      "plainText": "Plain Text",
-      "richText": "Rich Text"
-    },
     "validation": {
       "regionRequired": "Region is required",
       "headlineRequired": "Headline is required",

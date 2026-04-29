@@ -12,7 +12,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { getSubmittedEntries } from "@/lib/storage";
+import { getSubmittedEntriesFull } from "@/lib/storage";
 import { convertImageReferencesToDataUrls } from "@/lib/image-conversion";
 import {
   isWithinCutoffRange,
@@ -118,7 +118,7 @@ export function ExportDailyBriefingDialog({
   // Unified function to get all entries for a date using 8AM cutoff (regardless of discussion status)
   const getEntriesForDate = useCallback(
     async (dateStr: string): Promise<MorningMeetingEntry[]> => {
-      const allEntries = await getSubmittedEntries();
+      const allEntries = await getSubmittedEntriesFull();
       return allEntries.filter((entry: MorningMeetingEntry) => {
         return isWithinCutoffRange(entry.date, dateStr);
       });

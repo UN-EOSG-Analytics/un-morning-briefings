@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useState, useRef, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { getSubmittedEntries } from "@/lib/storage";
+import { getSubmittedEntriesFull } from "@/lib/storage";
 import { isWithinCutoffRange, getCurrentBriefingDate } from "@/lib/useEntriesFilter";
 import { X } from "lucide-react";
 import { sanitizeHtml } from "@/lib/sanitize";
@@ -35,7 +35,7 @@ function BriefingContent() {
       if (!session?.user) return;
       if (showLoader) setIsLoading(true);
       try {
-        const allEntries = await getSubmittedEntries();
+        const allEntries = await getSubmittedEntriesFull();
         const entriesForDate = allEntries.filter(
           (entry: MorningMeetingEntry) => isWithinCutoffRange(entry.date, dateParam),
         );

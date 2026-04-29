@@ -550,7 +550,7 @@ export function MorningMeetingForm({
   useEffect(() => {
     const fetchAllEntries = async () => {
       try {
-        const response = await fetch(`/api/entries?noConvert=true`);
+        const response = await fetch(`/api/entries?lite=true`);
         if (!response.ok) return;
         const data = await response.json();
         const entries = Array.isArray(data) ? data : [];

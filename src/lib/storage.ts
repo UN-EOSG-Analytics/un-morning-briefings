@@ -226,10 +226,8 @@ export async function getEntryById(id: string): Promise<any> {
  */
 export async function getDraftEntries(authorEmail: string): Promise<any[]> {
   try {
-    // Use noConvert=true to skip expensive image conversion for list view
-    // API filters by author email (foreign key lookup)
     const response = await fetch(
-      `/api/entries?status=draft&author=${encodeURIComponent(authorEmail)}&noConvert=true`,
+      `/api/entries?status=draft&author=${encodeURIComponent(authorEmail)}&lite=true`,
     );
 
     if (!response.ok) {
@@ -239,10 +237,7 @@ export async function getDraftEntries(authorEmail: string): Promise<any[]> {
       );
     }
 
-    const entries = await response.json();
-
-    // Client-side fallback: Convert image-ref:// to data URLs using images array
-    return await convertEntriesImageReferences(entries, "getDraftEntries");
+    return await response.json();
   } catch (error) {
     console.error("Error fetching draft entries:", error);
     return [];
@@ -257,9 +252,8 @@ export async function getDraftEntries(authorEmail: string): Promise<any[]> {
  */
 export async function getSubmittedEntries(): Promise<any[]> {
   try {
-    // Use noConvert=true to skip expensive image conversion for list view
     const response = await fetch(
-      "/api/entries?status=submitted&noConvert=true",
+      "/api/entries?status=submitted&lite=true",
     );
 
     if (!response.ok) {
@@ -278,10 +272,28 @@ export async function getSubmittedEntries(): Promise<any[]> {
       );
     }
 
-    const entries = await response.json();
+    return await response.json();
+  } catch (error) {
+    console.error("Error fetching submitted entries:", error);
+    return [];
+  }
+}
 
-    // Client-side fallback: Convert image-ref:// to data URLs using images array
-    return await convertEntriesImageReferences(entries, "getSubmittedEntries");
+/**
+ * Fetch submitted entries with full content (entry body, puNote, aiSummary, images).
+ * Use for views that render entry content (briefing page, export).
+ */
+export async function getSubmittedEntriesFull(): Promise<any[]> {
+  try {
+    const response = await fetch(
+      "/api/entries?status=submitted&noConvert=true",
+    );
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch submitted entries (${response.status})`);
+    }
+
+    return await response.json();
   } catch (error) {
     console.error("Error fetching submitted entries:", error);
     return [];

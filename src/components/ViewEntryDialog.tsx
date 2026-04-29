@@ -103,7 +103,36 @@ export function ViewEntryDialog({
   }, [entry?.id]);
 
   // Get the current entry from allEntries if available
-  const displayEntry = allEntries.length > 0 ? allEntries[currentIndex] : entry;
+  const listEntry = allEntries.length > 0 ? allEntries[currentIndex] : entry;
+
+  // Fetch full entry data (with entry/puNote/aiSummary) on demand
+  const [fullEntryData, setFullEntryData] = useState<Record<string, any> | null>(null);
+  const [isLoadingFull, setIsLoadingFull] = useState(false);
+
+  useEffect(() => {
+    if (!open || !listEntry?.id) {
+      setFullEntryData(null);
+      return;
+    }
+    // Skip fetch if the list entry already has the body (e.g. from getAllEntries)
+    if (listEntry.entry !== undefined) {
+      setFullEntryData(null);
+      return;
+    }
+    let cancelled = false;
+    setIsLoadingFull(true);
+    fetch(`/api/entries/${listEntry.id}`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => {
+        if (!cancelled && data) setFullEntryData(data);
+      })
+      .finally(() => { if (!cancelled) setIsLoadingFull(false); });
+    return () => { cancelled = true; };
+  }, [open, listEntry?.id, listEntry?.entry]);
+
+  const displayEntry = fullEntryData
+    ? { ...listEntry, ...fullEntryData } as typeof listEntry
+    : listEntry;
 
   // Initialize headline value when entry changes
   useEffect(() => {
@@ -521,12 +550,18 @@ export function ViewEntryDialog({
 
           {/* Entry content */}
           <div className="mb-0">
-            <div
-              className="entry-content"
-              dangerouslySetInnerHTML={{
-                __html: sanitizeHtml(displayEntry.entry),
-              }}
-            />
+            {isLoadingFull ? (
+              <div className="flex items-center justify-center py-8 text-sm text-slate-400">
+                Loading…
+              </div>
+            ) : displayEntry.entry ? (
+              <div
+                className="entry-content"
+                dangerouslySetInnerHTML={{
+                  __html: sanitizeHtml(displayEntry.entry),
+                }}
+              />
+            ) : null}
           </div>
 
           {/* PU notes */}

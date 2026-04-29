@@ -523,9 +523,13 @@ export function EntriesTable({
                                   onClick={async () => {
                                     setExportingDate(currentBriefingDate);
                                     try {
-                                      // Filter entries for this briefing date
-                                      const entriesForDate = entries.filter(
-                                        (e) =>
+                                      // Fetch full entries for the briefing date (list data is lite)
+                                      const res = await fetch(
+                                        `/api/entries?status=submitted&noConvert=true`,
+                                      );
+                                      const allFull = res.ok ? await res.json() : [];
+                                      const entriesForDate = allFull.filter(
+                                        (e: any) =>
                                           isWithinCutoffRange(
                                             e.date,
                                             currentBriefingDate,

@@ -223,6 +223,7 @@ export async function fetchEntries(filters: {
   date?: string | null;
   status?: string | null;
   author?: string | null;
+  search?: string | null;
   lite?: boolean;
 }) {
   const params: any[] = [];
@@ -241,6 +242,10 @@ export async function fetchEntries(filters: {
       `(u.email = $${params.length + 1} OR CONCAT(u.first_name, ' ', u.last_name) = $${params.length + 1})`,
     );
     params.push(filters.author);
+  }
+  if (filters.search) {
+    conditions.push(`e.search_vector @@ websearch_to_tsquery('english', $${params.length + 1})`);
+    params.push(filters.search);
   }
 
   const base = filters.lite ? ENTRY_SELECT_LITE : ENTRY_SELECT_FULL;

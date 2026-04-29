@@ -106,25 +106,34 @@ export function ViewEntryDialog({
   const listEntry = allEntries.length > 0 ? allEntries[currentIndex] : entry;
 
   // Fetch full entry data (with entry/puNote/aiSummary) on demand
-  const [fullEntryData, setFullEntryData] = useState<Record<string, any> | null>(null);
+  const [fullEntryData, setFullEntryData] = useState<Partial<MorningMeetingEntry> | null>(null);
   const [isLoadingFull, setIsLoadingFull] = useState(false);
+  const [errorLoadingFull, setErrorLoadingFull] = useState(false);
 
   useEffect(() => {
     if (!open || !listEntry?.id) {
       setFullEntryData(null);
+      setErrorLoadingFull(false);
       return;
     }
-    // Skip fetch if the list entry already has the body (e.g. from getAllEntries)
     if (listEntry.entry !== undefined) {
       setFullEntryData(null);
+      setErrorLoadingFull(false);
       return;
     }
     let cancelled = false;
     setIsLoadingFull(true);
+    setErrorLoadingFull(false);
     fetch(`/api/entries/${listEntry.id}`)
-      .then((r) => r.ok ? r.json() : null)
+      .then((r) => {
+        if (!r.ok) throw new Error(`${r.status}`);
+        return r.json();
+      })
       .then((data) => {
-        if (!cancelled && data) setFullEntryData(data);
+        if (!cancelled) setFullEntryData(data);
+      })
+      .catch(() => {
+        if (!cancelled) setErrorLoadingFull(true);
       })
       .finally(() => { if (!cancelled) setIsLoadingFull(false); });
     return () => { cancelled = true; };
@@ -553,6 +562,10 @@ export function ViewEntryDialog({
             {isLoadingFull ? (
               <div className="flex items-center justify-center py-8 text-sm text-slate-400">
                 Loading…
+              </div>
+            ) : errorLoadingFull ? (
+              <div className="flex items-center justify-center py-8 text-sm text-red-500">
+                Failed to load entry content.
               </div>
             ) : displayEntry.entry ? (
               <div

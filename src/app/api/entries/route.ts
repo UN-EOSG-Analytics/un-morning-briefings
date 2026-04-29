@@ -47,8 +47,9 @@ export async function GET(request: NextRequest) {
     const author = searchParams.get("author");
     const noConvert = searchParams.get("noConvert") === "true";
     const lite = searchParams.get("lite") === "true";
+    const search = searchParams.get("search");
 
-    const entries = await fetchEntries({ date, status, author, lite });
+    const entries = await fetchEntries({ date, status, author, search, lite });
 
     // Lite mode: skip image conversion, return minimal payload
     if (lite || noConvert) {

@@ -224,11 +224,11 @@ export async function getEntryById(id: string): Promise<any> {
  * @param authorEmail - Author email to filter by (looks up user via foreign key)
  * @returns Promise that resolves to array of draft entries
  */
-export async function getDraftEntries(authorEmail: string): Promise<any[]> {
+export async function getDraftEntries(authorEmail: string, search?: string): Promise<any[]> {
   try {
-    const response = await fetch(
-      `/api/entries?status=draft&author=${encodeURIComponent(authorEmail)}&lite=true`,
-    );
+    let url = `/api/entries?status=draft&author=${encodeURIComponent(authorEmail)}&lite=true`;
+    if (search) url += `&search=${encodeURIComponent(search)}`;
+    const response = await fetch(url);
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
@@ -250,11 +250,11 @@ export async function getDraftEntries(authorEmail: string): Promise<any[]> {
  *
  * @returns Promise that resolves to array of submitted entries
  */
-export async function getSubmittedEntries(): Promise<any[]> {
+export async function getSubmittedEntries(search?: string): Promise<any[]> {
   try {
-    const response = await fetch(
-      "/api/entries?status=submitted&lite=true",
-    );
+    let url = "/api/entries?status=submitted&lite=true";
+    if (search) url += `&search=${encodeURIComponent(search)}`;
+    const response = await fetch(url);
 
     if (!response.ok) {
       let errorData: any = {};
@@ -293,7 +293,8 @@ export async function getSubmittedEntriesFull(): Promise<any[]> {
       throw new Error(`Failed to fetch submitted entries (${response.status})`);
     }
 
-    return await response.json();
+    const entries = await response.json();
+    return await convertEntriesImageReferences(entries, "getSubmittedEntriesFull");
   } catch (error) {
     console.error("Error fetching submitted entries:", error);
     return [];

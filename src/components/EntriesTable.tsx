@@ -73,6 +73,7 @@ interface EntriesTableProps {
   onPostpone?: () => void;
   onSubmit?: (id: string) => Promise<void>;
   onUpdate?: (id: string, updates: any) => void;
+  onSearch?: (term: string) => void;
   showDiscussionColumn?: boolean;
   emptyMessage?: string;
   resultLabel?: string;
@@ -88,6 +89,7 @@ export function EntriesTable({
   onPostpone,
   onSubmit,
   onUpdate,
+  onSearch,
   showDiscussionColumn = false,
   emptyMessage = labels.entries.empty.noEntries,
   resultLabel = "entries",
@@ -135,6 +137,12 @@ export function EntriesTable({
     handleResetFilters,
     sortedEntries,
   } = useEntriesFilter(entries, initialDateFilter);
+
+  useEffect(() => {
+    if (!onSearch) return;
+    const timer = setTimeout(() => onSearch(searchTerm), 300);
+    return () => clearTimeout(timer);
+  }, [searchTerm, onSearch]);
 
   const handleRowClick = (entry: MorningMeetingEntry) => {
     setSelectedEntry(entry);

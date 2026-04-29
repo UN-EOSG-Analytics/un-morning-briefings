@@ -46,11 +46,13 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get("status");
     const author = searchParams.get("author");
     const noConvert = searchParams.get("noConvert") === "true";
+    const lite = searchParams.get("lite") === "true";
+    const search = searchParams.get("search");
 
-    const entries = await fetchEntries({ date, status, author });
+    const entries = await fetchEntries({ date, status, author, search, lite });
 
-    // Skip image conversion for list views (performance optimization)
-    if (noConvert) {
+    // Lite mode: skip image conversion, return minimal payload
+    if (lite || noConvert) {
       return NextResponse.json(entries, {
         headers: { "Cache-Control": "private, max-age=5" },
       });

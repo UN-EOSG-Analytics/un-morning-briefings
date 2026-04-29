@@ -169,8 +169,7 @@ export function useEntriesFilter(entries: any[], initialDateFilter?: string) {
       const matchesSearch =
         searchTerm === "" ||
         entry.headline?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        countryMatch ||
-        entry.entry?.toLowerCase().includes(searchTerm.toLowerCase());
+        countryMatch;
 
       const matchesRegion =
         filterRegion === "all" || entry.region === filterRegion;

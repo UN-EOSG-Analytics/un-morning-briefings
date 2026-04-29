@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { deleteEntry, getSubmittedEntries } from "@/lib/storage";
@@ -24,21 +24,30 @@ export function MorningMeetingList({
   const [entries, setEntries] = useState<MorningMeetingEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [showExportDialog, setShowExportDialog] = useState(false);
+  const searchRef = useRef("");
 
-  const loadEntries = useCallback(async () => {
-    const data = await getSubmittedEntries();
-    setEntries(data);
+  const loadEntries = useCallback(async (search?: string) => {
+    const data = await getSubmittedEntries(search);
+    if ((search || "") === searchRef.current) {
+      setEntries(data);
+    }
     setLoading(false);
   }, []);
+
+  const handleSearch = useCallback((term: string) => {
+    searchRef.current = term;
+    loadEntries(term || undefined);
+  }, [loadEntries]);
 
   useEffect(() => {
     loadEntries();
   }, [loadEntries]);
 
   useEffect(() => {
-    const interval = setInterval(loadEntries, 30_000);
+    const refresh = () => loadEntries(searchRef.current || undefined);
+    const interval = setInterval(refresh, 30_000);
     const onVisibility = () => {
-      if (document.visibilityState === "visible") loadEntries();
+      if (document.visibilityState === "visible") refresh();
     };
     document.addEventListener("visibilitychange", onVisibility);
     return () => {
@@ -148,6 +157,7 @@ export function MorningMeetingList({
         onToggleDiscussion={handleToggleDiscussion}
         onPostpone={handlePostpone}
         onUpdate={handleUpdateEntry}
+        onSearch={handleSearch}
         showDiscussionColumn={true}
         emptyMessage={labels.entries.empty.noEntries}
         resultLabel="entries"

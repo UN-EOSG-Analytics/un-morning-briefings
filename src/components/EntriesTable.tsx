@@ -73,6 +73,7 @@ interface EntriesTableProps {
   onPostpone?: () => void;
   onSubmit?: (id: string) => Promise<void>;
   onUpdate?: (id: string, updates: any) => void;
+  onSearch?: (term: string) => void;
   showDiscussionColumn?: boolean;
   emptyMessage?: string;
   resultLabel?: string;
@@ -88,6 +89,7 @@ export function EntriesTable({
   onPostpone,
   onSubmit,
   onUpdate,
+  onSearch,
   showDiscussionColumn = false,
   emptyMessage = labels.entries.empty.noEntries,
   resultLabel = "entries",
@@ -135,6 +137,12 @@ export function EntriesTable({
     handleResetFilters,
     sortedEntries,
   } = useEntriesFilter(entries, initialDateFilter);
+
+  useEffect(() => {
+    if (!onSearch) return;
+    const timer = setTimeout(() => onSearch(searchTerm), 300);
+    return () => clearTimeout(timer);
+  }, [searchTerm, onSearch]);
 
   const handleRowClick = (entry: MorningMeetingEntry) => {
     setSelectedEntry(entry);
@@ -523,9 +531,13 @@ export function EntriesTable({
                                   onClick={async () => {
                                     setExportingDate(currentBriefingDate);
                                     try {
-                                      // Filter entries for this briefing date
-                                      const entriesForDate = entries.filter(
-                                        (e) =>
+                                      // Fetch full entries for the briefing date (list data is lite)
+                                      const res = await fetch(
+                                        `/api/entries?status=submitted&noConvert=true`,
+                                      );
+                                      const allFull = res.ok ? await res.json() : [];
+                                      const entriesForDate = allFull.filter(
+                                        (e: any) =>
                                           isWithinCutoffRange(
                                             e.date,
                                             currentBriefingDate,
@@ -602,9 +614,9 @@ export function EntriesTable({
                             </span>
                             <span className="text-xs text-slate-500">
                               {isLateUpdate(entry.updatedAt ?? entry.createdAt ?? entry.date, currentBriefingDate) ? (
-                                <span className="mr-1 text-red-500" title="Updated after 6:15 AM on briefing day">●</span>
+                                <span className="mr-1 text-sm leading-none text-red-500" title="Updated after 6:15 AM on briefing day">●</span>
                               ) : isOvernightUpdate(entry.updatedAt ?? entry.createdAt ?? entry.date) ? (
-                                <span className="mr-1 text-[#009edb]" title="Overnight update">●</span>
+                                <span className="mr-1 text-sm leading-none text-[#009edb]" title="Overnight update">●</span>
                               ) : null}
                               {formatTimeNYC(entry.updatedAt ?? entry.createdAt ?? entry.date)}{" "}
                               <span className="text-slate-400">ET</span>

@@ -126,8 +126,8 @@ export function legacyToSources(row: {
 // ─── Entry SQL Fragments ─────────────────────────────────────────────────────
 
 /** Base SELECT for entries with author info and aggregated images */
-const ENTRY_SELECT = `
-  SELECT 
+const ENTRY_SELECT_FULL = `
+  SELECT
     e.id,
     e.category,
     e.priority,
@@ -171,10 +171,37 @@ const ENTRY_SELECT = `
   LEFT JOIN morning_briefings.users u ON e.author_id = u.id
   LEFT JOIN morning_briefings.images i ON e.id = i.entry_id`;
 
+/** Lightweight SELECT that omits heavy text columns (entry, puNote, aiSummary) */
+const ENTRY_SELECT_LITE = `
+  SELECT
+    e.id,
+    e.category,
+    e.priority,
+    e.region,
+    e.country,
+    e.headline,
+    e.date,
+    e.sources,
+    e.source_name as "sourceName",
+    e.source_url as "sourceUrl",
+    e.source_date as "sourceDate",
+    e.thematic,
+    COALESCE(CONCAT(u.first_name, ' ', u.last_name), 'Unknown') as author,
+    e.author_id as "authorId",
+    u.email as "authorEmail",
+    e.comment,
+    e.status,
+    COALESCE(e.discussion_status, 'pending') as "discussionStatus",
+    e.previous_entry_id as "previousEntryId",
+    e.created_at as "createdAt",
+    e.updated_at as "updatedAt"
+  FROM morning_briefings.entries e
+  LEFT JOIN morning_briefings.users u ON e.author_id = u.id`;
+
 /** Fetch a single entry by ID with images and author info */
 export async function fetchEntryById(id: string) {
   const result = await query(
-    `${ENTRY_SELECT} WHERE e.id = $1 GROUP BY e.id, u.id`,
+    `${ENTRY_SELECT_FULL} WHERE e.id = $1 GROUP BY e.id, u.id`,
     [id],
   );
   if (result.rows.length === 0) return null;
@@ -190,11 +217,14 @@ export async function fetchEntryById(id: string) {
   };
 }
 
-/** Fetch entries with optional filters, returning raw rows with parsed country */
+/** Fetch entries with optional filters, returning raw rows with parsed country.
+ *  Pass `lite: true` to omit heavy text columns (entry, puNote, aiSummary, images). */
 export async function fetchEntries(filters: {
   date?: string | null;
   status?: string | null;
   author?: string | null;
+  search?: string | null;
+  lite?: boolean;
 }) {
   const params: any[] = [];
   const conditions: string[] = [];
@@ -213,12 +243,20 @@ export async function fetchEntries(filters: {
     );
     params.push(filters.author);
   }
+  if (filters.search) {
+    conditions.push(`e.search_vector @@ websearch_to_tsquery('english', $${params.length + 1})`);
+    params.push(filters.search);
+  }
 
-  let sql = ENTRY_SELECT;
+  const base = filters.lite ? ENTRY_SELECT_LITE : ENTRY_SELECT_FULL;
+  let sql = base;
   if (conditions.length > 0) {
     sql += ` WHERE ${conditions.join(" AND ")}`;
   }
-  sql += ` GROUP BY e.id, u.id ORDER BY e.date DESC`;
+  if (!filters.lite) {
+    sql += ` GROUP BY e.id, u.id`;
+  }
+  sql += ` ORDER BY e.date DESC`;
 
   const result = await query(sql, params);
   return result.rows.map((row) => {
@@ -253,7 +291,7 @@ export async function fetchEntriesForBriefingDate(briefingDate: string) {
   const start = `${startYear}-${String(startMonth).padStart(2, "0")}-${String(startDay).padStart(2, "0")}T08:00`;
   const end = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}T08:00`;
 
-  const sql = `${ENTRY_SELECT}
+  const sql = `${ENTRY_SELECT_FULL}
     WHERE e.date >= $1 AND e.date < $2
       AND e.status = 'submitted'
     GROUP BY e.id, u.id

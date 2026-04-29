@@ -224,13 +224,11 @@ export async function getEntryById(id: string): Promise<any> {
  * @param authorEmail - Author email to filter by (looks up user via foreign key)
  * @returns Promise that resolves to array of draft entries
  */
-export async function getDraftEntries(authorEmail: string): Promise<any[]> {
+export async function getDraftEntries(authorEmail: string, search?: string): Promise<any[]> {
   try {
-    // Use noConvert=true to skip expensive image conversion for list view
-    // API filters by author email (foreign key lookup)
-    const response = await fetch(
-      `/api/entries?status=draft&author=${encodeURIComponent(authorEmail)}&noConvert=true`,
-    );
+    let url = `/api/entries?status=draft&author=${encodeURIComponent(authorEmail)}&lite=true`;
+    if (search) url += `&search=${encodeURIComponent(search)}`;
+    const response = await fetch(url);
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
@@ -239,10 +237,7 @@ export async function getDraftEntries(authorEmail: string): Promise<any[]> {
       );
     }
 
-    const entries = await response.json();
-
-    // Client-side fallback: Convert image-ref:// to data URLs using images array
-    return await convertEntriesImageReferences(entries, "getDraftEntries");
+    return await response.json();
   } catch (error) {
     console.error("Error fetching draft entries:", error);
     return [];
@@ -255,12 +250,11 @@ export async function getDraftEntries(authorEmail: string): Promise<any[]> {
  *
  * @returns Promise that resolves to array of submitted entries
  */
-export async function getSubmittedEntries(): Promise<any[]> {
+export async function getSubmittedEntries(search?: string): Promise<any[]> {
   try {
-    // Use noConvert=true to skip expensive image conversion for list view
-    const response = await fetch(
-      "/api/entries?status=submitted&noConvert=true",
-    );
+    let url = "/api/entries?status=submitted&lite=true";
+    if (search) url += `&search=${encodeURIComponent(search)}`;
+    const response = await fetch(url);
 
     if (!response.ok) {
       let errorData: any = {};
@@ -278,10 +272,29 @@ export async function getSubmittedEntries(): Promise<any[]> {
       );
     }
 
-    const entries = await response.json();
+    return await response.json();
+  } catch (error) {
+    console.error("Error fetching submitted entries:", error);
+    return [];
+  }
+}
 
-    // Client-side fallback: Convert image-ref:// to data URLs using images array
-    return await convertEntriesImageReferences(entries, "getSubmittedEntries");
+/**
+ * Fetch submitted entries with full content (entry body, puNote, aiSummary, images).
+ * Use for views that render entry content (briefing page, export).
+ */
+export async function getSubmittedEntriesFull(): Promise<any[]> {
+  try {
+    const response = await fetch(
+      "/api/entries?status=submitted&noConvert=true",
+    );
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch submitted entries (${response.status})`);
+    }
+
+    const entries = await response.json();
+    return await convertEntriesImageReferences(entries, "getSubmittedEntriesFull");
   } catch (error) {
     console.error("Error fetching submitted entries:", error);
     return [];

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { Card } from "@/components/ui/card";
 import { getDraftEntries, deleteEntry } from "@/lib/storage";
@@ -18,16 +18,23 @@ export default function DraftsPage() {
     error: showError,
   } = usePopup();
   const [entries, setEntries] = useState<MorningMeetingEntry[]>([]);
+  const searchRef = useRef("");
 
   // Get current user's email for API filtering
   const userEmail = session?.user?.email || "";
 
-  const loadEntries = useCallback(async () => {
+  const loadEntries = useCallback(async (search?: string) => {
     if (!userEmail) return;
-    // API now filters by user email via foreign key join
-    const data = await getDraftEntries(userEmail);
-    setEntries(data);
+    const data = await getDraftEntries(userEmail, search);
+    if ((search || "") === searchRef.current) {
+      setEntries(data);
+    }
   }, [userEmail]);
+
+  const handleSearch = useCallback((term: string) => {
+    searchRef.current = term;
+    loadEntries(term || undefined);
+  }, [loadEntries]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -108,6 +115,7 @@ export default function DraftsPage() {
             entries={entries}
             onDelete={handleDelete}
             onSubmit={handleSubmit}
+            onSearch={handleSearch}
             showDiscussionColumn={false}
             emptyMessage={labels.entries.empty.noDrafts}
             resultLabel="drafts"

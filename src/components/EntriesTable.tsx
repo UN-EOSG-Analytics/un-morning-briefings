@@ -602,9 +602,9 @@ export function EntriesTable({
                             </span>
                             <span className="text-xs text-slate-500">
                               {isLateUpdate(entry.updatedAt ?? entry.createdAt ?? entry.date, currentBriefingDate) ? (
-                                <span className="mr-1 text-red-500" title="Updated after 6:15 AM on briefing day">●</span>
+                                <span className="mr-1 text-sm leading-none text-red-500" title="Updated after 6:15 AM on briefing day">●</span>
                               ) : isOvernightUpdate(entry.updatedAt ?? entry.createdAt ?? entry.date) ? (
-                                <span className="mr-1 text-[#009edb]" title="Overnight update">●</span>
+                                <span className="mr-1 text-sm leading-none text-[#009edb]" title="Overnight update">●</span>
                               ) : null}
                               {formatTimeNYC(entry.updatedAt ?? entry.createdAt ?? entry.date)}{" "}
                               <span className="text-slate-400">ET</span>

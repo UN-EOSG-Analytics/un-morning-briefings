@@ -568,7 +568,7 @@ export const buildDocumentChildren = (
                   text: "● ",
                   color: "EF4444",
                   font: "Roboto",
-                  size: 20,
+                  size: 28,
                 }),
               );
             } else if (overnight) {
@@ -577,7 +577,7 @@ export const buildDocumentChildren = (
                   text: "● ",
                   color: "009edb",
                   font: "Roboto",
-                  size: 20,
+                  size: 28,
                 }),
               );
             }
